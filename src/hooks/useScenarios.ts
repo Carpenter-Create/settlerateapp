@@ -95,7 +95,26 @@ export function useScenarios() {
   const duplicateScenario = useCallback((id: string): Scenario | null => {
     const original = scenarios.find((s) => s.id === id);
     if (!original) return null;
-    return createScenario(`${original.name} (copy)`, { ...original.inputs });
+    
+    // Deep clone inputs to ensure complete independence
+    // structuredClone creates a true deep copy with no shared references
+    const clonedInputs: MortgageInputs = structuredClone(original.inputs);
+    
+    // Generate new name with "(Copy)" suffix
+    // Handle cases where original already has "(Copy)" suffix
+    let newName = original.name;
+    const copyMatch = newName.match(/^(.+?)\s*\(Copy(?:\s*(\d+))?\)$/i);
+    if (copyMatch) {
+      // Already a copy, increment the number
+      const baseName = copyMatch[1].trim();
+      const copyNum = copyMatch[2] ? parseInt(copyMatch[2], 10) + 1 : 2;
+      newName = `${baseName} (Copy ${copyNum})`;
+    } else {
+      newName = `${original.name} (Copy)`;
+    }
+    
+    // Create new scenario with fresh ID, deep-cloned inputs, and recomputed results
+    return createScenario(newName, clonedInputs);
   }, [scenarios, createScenario]);
 
   const deleteScenario = useCallback((id: string): void => {
