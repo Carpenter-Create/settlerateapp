@@ -8,6 +8,7 @@ import {
   detectMaterialChanges,
   MaterialChange,
 } from "@/lib/comparisonContract";
+import { exportComparisonPDF } from "@/lib/comparisonExport";
 import { Button } from "@/components/ui/button";
 import { Calculator, GitCompare, Plus, X, Download, Share2, Settings2, Save, FolderOpen, AlertCircle } from "lucide-react";
 import {
@@ -273,6 +274,21 @@ export default function Compare() {
     }
   };
 
+  const handleExportPDF = () => {
+    if (selectedScenarios.length < 2) return;
+    
+    const comparison = activeComparisonId ? getComparison(activeComparisonId) : null;
+    
+    exportComparisonPDF({
+      comparisonName: comparison?.name ?? "Comparison",
+      scenarios: selectedScenarios,
+      summary,
+      materialChanges,
+    });
+    
+    toast.success("Opening print dialog...");
+  };
+
   if (!isLoaded) {
     return (
       <div className="space-y-8">
@@ -529,6 +545,25 @@ export default function Compare() {
               )}
             </div>
           )}
+
+          {/* Decision confidence language (no scores, no gauges) */}
+          {summary.confidenceStatement && (
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl pt-2">
+              {summary.confidenceStatement}
+            </p>
+          )}
+
+          {/* Assumption sensitivity hints (max 2, observational) */}
+          {summary.sensitivityHints.length > 0 && (
+            <div className="pt-2">
+              <p className="section-label mb-2">What matters most in this comparison</p>
+              <ul className="space-y-1 text-sm text-muted-foreground max-w-2xl">
+                {summary.sensitivityHints.map((hint, idx) => (
+                  <li key={idx}>{hint}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 
@@ -569,7 +604,12 @@ export default function Compare() {
             <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
             {activeComparisonId ? "Update comparison" : "Save comparison"}
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5" disabled>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1.5"
+            onClick={handleExportPDF}
+          >
             <Download className="h-3.5 w-3.5" strokeWidth={1.5} />
             Export summary
           </Button>

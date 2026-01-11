@@ -210,6 +210,10 @@ export interface ComparisonSummary {
     scenario: ScenarioData;
     advice: string;
   } | null;
+  /** Decision confidence language - calm, advisory statement (no scores/gauges) */
+  confidenceStatement: string | null;
+  /** Assumption sensitivity hints - max 2 items explaining what drives outcomes */
+  sensitivityHints: string[];
 }
 
 /**
@@ -331,6 +335,12 @@ export function generateComparisonSummary(scenarios: ScenarioData[]): Comparison
     }
   }
 
+  // Generate confidence statement (language-based, no scores)
+  const confidenceStatement = generateConfidenceStatement(analyzed, recommended, byTotalInterest, byMonthlyPayment);
+  
+  // Generate sensitivity hints (max 2, only if material)
+  const sensitivityHints = generateSensitivityHints(analyzed);
+
   return {
     recommendation: {
       scenario: recommended.scenario,
@@ -339,7 +349,130 @@ export function generateComparisonSummary(scenarios: ScenarioData[]): Comparison
     benefits,
     tradeoffs,
     alternativeScenario,
+    confidenceStatement,
+    sensitivityHints,
   };
+}
+
+/**
+ * Generate calm, advisor-like confidence language.
+ * No scores, no gauges, no absolutes.
+ */
+function generateConfidenceStatement(
+  analyzed: AnalyzedScenario[],
+  recommended: AnalyzedScenario,
+  byTotalInterest: AnalyzedScenario[],
+  byMonthlyPayment: AnalyzedScenario[]
+): string | null {
+  if (analyzed.length < 2) return null;
+
+  const others = analyzed.filter((a) => a.scenario.id !== recommended.scenario.id);
+  if (others.length === 0) return null;
+
+  // Calculate variance to understand decision clarity
+  const interestValues = analyzed.map((a) => a.totalInterest);
+  const maxInterest = Math.max(...interestValues);
+  const minInterest = Math.min(...interestValues);
+  const interestSpread = maxInterest - minInterest;
+  const interestSpreadPct = (interestSpread / minInterest) * 100;
+
+  const monthlyValues = analyzed.map((a) => a.monthlyPayment);
+  const maxMonthly = Math.max(...monthlyValues);
+  const minMonthly = Math.min(...monthlyValues);
+  const monthlySpread = maxMonthly - minMonthly;
+  const monthlySpreadPct = (monthlySpread / minMonthly) * 100;
+
+  // Determine the nature of the tradeoff
+  const sameWinner = byTotalInterest[0].scenario.id === byMonthlyPayment[0].scenario.id;
+
+  if (sameWinner && interestSpreadPct > 10) {
+    return "This option meaningfully reduces your long-term cost.";
+  }
+
+  if (sameWinner && interestSpreadPct <= 10 && monthlySpreadPct <= 5) {
+    return "The differences between these options are modest. Either choice is reasonable.";
+  }
+
+  if (!sameWinner && monthlySpreadPct > 10 && interestSpreadPct > 10) {
+    return "This tradeoff is straightforward: lower monthly cost in exchange for higher total interest.";
+  }
+
+  if (!sameWinner && monthlySpreadPct <= 10) {
+    return "The difference between these options is primarily timing, not monthly cost.";
+  }
+
+  // Check if it's primarily a term-length decision
+  const terms = [...new Set(analyzed.map((a) => a.scenario.inputs.shared.loanTerm))];
+  if (terms.length > 1) {
+    return "The choice here largely depends on your preferred timeline for paying off the loan.";
+  }
+
+  return "These options represent different approaches to the same goal.";
+}
+
+/**
+ * Generate assumption sensitivity hints.
+ * Shows at most 2 items, only if one assumption materially outweighs others.
+ */
+function generateSensitivityHints(analyzed: AnalyzedScenario[]): string[] {
+  if (analyzed.length < 2) return [];
+
+  const hints: { weight: number; hint: string }[] = [];
+
+  // Analyze interest rate impact
+  const rates = analyzed.map((a) => a.scenario.inputs.shared.interestRate);
+  const rateSpread = Math.max(...rates) - Math.min(...rates);
+  const interestValues = analyzed.map((a) => a.totalInterest);
+  const interestSpread = Math.max(...interestValues) - Math.min(...interestValues);
+
+  if (rateSpread >= 0.25 && interestSpread > 5000) {
+    hints.push({
+      weight: interestSpread,
+      hint: "Interest rate differences are driving most of the cost gap between these options.",
+    });
+  }
+
+  // Analyze term length impact
+  const terms = analyzed.map((a) => a.scenario.inputs.shared.loanTerm);
+  const termSpread = Math.max(...terms) - Math.min(...terms);
+  
+  if (termSpread >= 5) {
+    const monthlyValues = analyzed.map((a) => a.monthlyPayment);
+    const monthlySpread = Math.max(...monthlyValues) - Math.min(...monthlyValues);
+    
+    hints.push({
+      weight: monthlySpread * 12 * Math.min(...terms), // Weight by total payment difference
+      hint: "Loan term length is the primary factor affecting total interest here.",
+    });
+  }
+
+  // Analyze loan amount impact
+  const loanAmounts = analyzed.map((a) => a.scenario.results.loanAmount);
+  const loanSpread = Math.max(...loanAmounts) - Math.min(...loanAmounts);
+  const loanSpreadPct = (loanSpread / Math.min(...loanAmounts)) * 100;
+
+  if (loanSpreadPct >= 5 && loanSpread > 10000) {
+    hints.push({
+      weight: loanSpread * 0.05, // Rough interest impact
+      hint: "Differences in down payment are significantly affecting total interest paid.",
+    });
+  }
+
+  // Analyze extra payments
+  const extraPayments = analyzed.map((a) => a.scenario.inputs.shared.extraMonthlyPayment || 0);
+  const hasExtraPayments = extraPayments.some((e) => e > 0);
+  const extraSpread = Math.max(...extraPayments) - Math.min(...extraPayments);
+
+  if (hasExtraPayments && extraSpread >= 100) {
+    hints.push({
+      weight: extraSpread * 12, // Annual extra payment difference
+      hint: "Extra monthly payments are materially shortening the payoff timeline in some options.",
+    });
+  }
+
+  // Sort by weight and return top 2
+  hints.sort((a, b) => b.weight - a.weight);
+  return hints.slice(0, 2).map((h) => h.hint);
 }
 
 // ============================================================================
