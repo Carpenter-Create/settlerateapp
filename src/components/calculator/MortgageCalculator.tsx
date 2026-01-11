@@ -15,7 +15,7 @@ import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "./CurrencyInput";
 import { Input } from "@/components/ui/input";
-import { Save, RotateCcw, ChevronDown, ChevronUp, Copy, MoreHorizontal, X, Pencil } from "lucide-react";
+import { Save, RotateCcw, ChevronDown, ChevronUp, Copy, MoreHorizontal, X, Pencil, FilePlus } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -24,6 +24,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export function MortgageCalculator() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -36,10 +44,13 @@ export function MortgageCalculator() {
     activeScenario,
     saveStatus,
     isLoaded,
+    isDirty,
     updateInput,
     batchUpdateInputs,
+    saveDraft,
     saveAsNew,
     duplicateCurrent,
+    discardDraft,
     isEditing,
   } = useActiveScenario(scenarioId);
 
@@ -48,6 +59,10 @@ export function MortgageCalculator() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isRenamingScenario, setIsRenamingScenario] = useState(false);
   const [scenarioName, setScenarioName] = useState("");
+  const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
+  const [saveAsName, setSaveAsName] = useState("");
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [pendingNavigate, setPendingNavigate] = useState<string | null>(null);
 
   // Start renaming
   const handleStartRename = useCallback(() => {
@@ -72,25 +87,56 @@ export function MortgageCalculator() {
 
   const handleReset = useCallback(() => {
     if (isEditing) {
-      // Reset to scenario's original inputs (close without saving further changes)
-      navigate("/");
+      // Reset to scenario's original inputs
+      discardDraft();
+      toast.success("Changes discarded");
     } else {
       batchUpdateInputs(DEFAULT_INPUTS);
     }
-  }, [isEditing, navigate, batchUpdateInputs]);
+  }, [isEditing, discardDraft, batchUpdateInputs]);
 
+  // Save existing scenario (overwrite)
   const handleSave = useCallback(() => {
+    if (isEditing) {
+      // Save draft to existing scenario
+      const success = saveDraft();
+      if (success) {
+        toast.success("Scenario saved");
+      } else {
+        toast.error("Failed to save scenario");
+      }
+    } else {
+      // Create new scenario
+      const typeLabel = inputs.scenarioType === "purchase" ? "Purchase" : "Refinance";
+      const name = `${typeLabel} ${scenarios.length + 1}`;
+      const newScenario = saveAsNew(name);
+      setSearchParams({ scenario: newScenario.id });
+      toast.success("Scenario saved", {
+        description: `"${name}" has been saved.`,
+      });
+    }
+  }, [isEditing, saveDraft, inputs.scenarioType, scenarios.length, saveAsNew, setSearchParams]);
+
+  // Open Save As dialog
+  const handleOpenSaveAs = useCallback(() => {
     const typeLabel = inputs.scenarioType === "purchase" ? "Purchase" : "Refinance";
-    const name = `${typeLabel} ${scenarios.length + 1}`;
-    const newScenario = saveAsNew(name);
+    const baseName = activeScenario?.name ?? `${typeLabel} ${scenarios.length + 1}`;
+    setSaveAsName(baseName);
+    setShowSaveAsDialog(true);
+  }, [inputs.scenarioType, scenarios.length, activeScenario]);
+
+  // Confirm Save As
+  const handleConfirmSaveAs = useCallback(() => {
+    if (!saveAsName.trim()) return;
     
-    // Navigate to the new scenario
+    const newScenario = saveAsNew(saveAsName.trim());
+    setShowSaveAsDialog(false);
     setSearchParams({ scenario: newScenario.id });
     
-    toast.success("Scenario saved", {
-      description: `"${name}" has been saved.`,
+    toast.success("Scenario created", {
+      description: `"${newScenario.name}" has been saved.`,
     });
-  }, [inputs.scenarioType, scenarios.length, saveAsNew, setSearchParams]);
+  }, [saveAsName, saveAsNew, setSearchParams]);
 
   const handleDuplicate = useCallback(() => {
     const newScenario = duplicateCurrent();
@@ -110,9 +156,24 @@ export function MortgageCalculator() {
     }
   }, [activeScenario, deleteScenario, navigate]);
 
+  // Handle close with unsaved changes check
   const handleClose = useCallback(() => {
-    navigate("/");
-  }, [navigate]);
+    if (isDirty) {
+      setPendingNavigate("/");
+      setShowDiscardDialog(true);
+    } else {
+      navigate("/");
+    }
+  }, [isDirty, navigate]);
+
+  // Confirm discard and navigate
+  const handleConfirmDiscard = useCallback(() => {
+    setShowDiscardDialog(false);
+    if (pendingNavigate) {
+      navigate(pendingNavigate);
+      setPendingNavigate(null);
+    }
+  }, [navigate, pendingNavigate]);
 
   // Calculate LTV for PMI logic
   const ltvRatio = useMemo(() => {
@@ -135,216 +196,290 @@ export function MortgageCalculator() {
   }
 
   return (
-    <div className="grid w-full max-w-full gap-8 lg:grid-cols-[1fr,360px] lg:gap-12">
-      {/* Inputs */}
-      <div className="min-w-0 space-y-6">
-        {/* Header - serif, understated */}
-        <div className="space-y-1">
-          {isEditing && activeScenario ? (
-            <div className="flex items-center gap-3">
-              {isRenamingScenario ? (
-                <Input
-                  value={scenarioName}
-                  onChange={(e) => setScenarioName(e.target.value)}
-                  onBlur={handleSaveRename}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSaveRename();
-                    if (e.key === "Escape") setIsRenamingScenario(false);
-                  }}
-                  className="h-9 max-w-xs font-serif text-xl"
-                  autoFocus
-                />
-              ) : (
-                <h1 
-                  className="cursor-pointer hover:text-muted-foreground transition-colors"
-                  onClick={handleStartRename}
-                  title="Click to rename"
-                >
-                  {activeScenario.name}
-                </h1>
-              )}
-              <SaveStatusIndicator status={saveStatus} />
-              <Button 
-                variant="ghost" 
-                size="icon-sm" 
-                onClick={handleClose}
-                className="ml-auto"
-                title="Close scenario"
-              >
-                <X className="h-4 w-4" strokeWidth={1.5} />
-              </Button>
-            </div>
-          ) : (
-            <h1>Mortgage Calculator</h1>
-          )}
-          <p className="text-muted-foreground">
-            {pageDescription}
-          </p>
-        </div>
-
-        <div className="card-elevated w-full p-5 sm:p-6">
-          <div className="space-y-5">
-            {/* Scenario Type Selector */}
-            <ScenarioTypeSelector
-              value={inputs.scenarioType}
-              onChange={handleScenarioTypeChange}
-            />
-
-            <div className="divider-subtle" />
-
-            {/* Conditional inputs based on scenario type */}
-            {inputs.scenarioType === "purchase" ? (
-              <PurchaseInputs
-                inputs={inputs}
-                onUpdate={updateInput}
-                onBatchUpdate={batchUpdateInputs}
-              />
-            ) : (
-              <RefinanceInputs
-                inputs={inputs}
-                onUpdate={updateInput}
-                onBatchUpdate={batchUpdateInputs}
-              />
-            )}
-
-            {/* Shared loan terms */}
-            <div className="grid gap-5 md:grid-cols-2">
-              <InputField 
-                label={inputs.scenarioType === "purchase" ? "Interest rate" : "New interest rate"}
-              >
-                <PercentInput
-                  value={inputs.interestRate}
-                  onChange={(v) => updateInput("interestRate", v)}
-                  min={0}
-                  max={25}
-                  step={0.125}
-                />
-              </InputField>
-
-              <LoanTermInput
-                value={inputs.loanTerm}
-                onChange={(v) => updateInput("loanTerm", v)}
-                label={inputs.scenarioType === "purchase" ? "Loan term" : "New loan term"}
-              />
-            </div>
-
-            <div className="divider-subtle" />
-
-            {/* Taxes & Insurance Section (Optional) */}
-            <TaxInsuranceSection
-              inputs={inputs}
-              ltvRatio={ltvRatio}
-              onUpdate={updateInput}
-              onBatchUpdate={batchUpdateInputs}
-            />
-
-            <div className="divider-subtle" />
-
-            {/* Advanced options toggle */}
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="flex w-full items-center justify-between py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <span>Extra payments</span>
-              {showAdvanced ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </button>
-
-            {/* Advanced inputs */}
-            {showAdvanced && (
-              <div className="space-y-5 animate-slide-up">
-                <InputField
-                  label="Extra monthly payment"
-                  description="Additional principal payment each month"
-                  optional
-                >
-                  <CurrencyInput
-                    value={inputs.extraMonthlyPayment}
-                    onChange={(v) => updateInput("extraMonthlyPayment", v)}
-                    min={0}
+    <>
+      <div className="grid w-full max-w-full gap-8 lg:grid-cols-[1fr,360px] lg:gap-12">
+        {/* Inputs */}
+        <div className="min-w-0 space-y-6">
+          {/* Header - serif, understated */}
+          <div className="space-y-1">
+            {isEditing && activeScenario ? (
+              <div className="flex items-center gap-3">
+                {isRenamingScenario ? (
+                  <Input
+                    value={scenarioName}
+                    onChange={(e) => setScenarioName(e.target.value)}
+                    onBlur={handleSaveRename}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveRename();
+                      if (e.key === "Escape") setIsRenamingScenario(false);
+                    }}
+                    className="h-9 max-w-xs font-serif text-xl"
+                    autoFocus
                   />
-                </InputField>
-
-                <InputField
-                  label="One-time principal payment"
-                  description="Lump sum payment toward principal"
-                  optional
+                ) : (
+                  <h1 
+                    className="cursor-pointer hover:text-muted-foreground transition-colors"
+                    onClick={handleStartRename}
+                    title="Click to rename"
+                  >
+                    {activeScenario.name}
+                  </h1>
+                )}
+                <SaveStatusIndicator status={saveStatus} isDirty={isDirty} />
+                <Button 
+                  variant="ghost" 
+                  size="icon-sm" 
+                  onClick={handleClose}
+                  className="ml-auto"
+                  title="Close scenario"
                 >
-                  <CurrencyInput
-                    value={inputs.oneTimePrincipalPayment ?? 0}
-                    onChange={(v) => updateInput("oneTimePrincipalPayment", v)}
-                    min={0}
-                  />
-                </InputField>
+                  <X className="h-4 w-4" strokeWidth={1.5} />
+                </Button>
               </div>
+            ) : (
+              <h1>Mortgage Calculator</h1>
             )}
+            <p className="text-muted-foreground">
+              {pageDescription}
+            </p>
+          </div>
+
+          <div className="card-elevated w-full p-5 sm:p-6">
+            <div className="space-y-5">
+              {/* Scenario Type Selector */}
+              <ScenarioTypeSelector
+                value={inputs.scenarioType}
+                onChange={handleScenarioTypeChange}
+              />
+
+              <div className="divider-subtle" />
+
+              {/* Conditional inputs based on scenario type */}
+              {inputs.scenarioType === "purchase" ? (
+                <PurchaseInputs
+                  inputs={inputs}
+                  onUpdate={updateInput}
+                  onBatchUpdate={batchUpdateInputs}
+                />
+              ) : (
+                <RefinanceInputs
+                  inputs={inputs}
+                  onUpdate={updateInput}
+                  onBatchUpdate={batchUpdateInputs}
+                />
+              )}
+
+              {/* Shared loan terms */}
+              <div className="grid gap-5 md:grid-cols-2">
+                <InputField 
+                  label={inputs.scenarioType === "purchase" ? "Interest rate" : "New interest rate"}
+                >
+                  <PercentInput
+                    value={inputs.interestRate}
+                    onChange={(v) => updateInput("interestRate", v)}
+                    min={0}
+                    max={25}
+                    step={0.125}
+                  />
+                </InputField>
+
+                <LoanTermInput
+                  value={inputs.loanTerm}
+                  onChange={(v) => updateInput("loanTerm", v)}
+                  label={inputs.scenarioType === "purchase" ? "Loan term" : "New loan term"}
+                />
+              </div>
+
+              <div className="divider-subtle" />
+
+              {/* Taxes & Insurance Section (Optional) */}
+              <TaxInsuranceSection
+                inputs={inputs}
+                ltvRatio={ltvRatio}
+                onUpdate={updateInput}
+                onBatchUpdate={batchUpdateInputs}
+              />
+
+              <div className="divider-subtle" />
+
+              {/* Advanced options toggle */}
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex w-full items-center justify-between py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <span>Extra payments</span>
+                {showAdvanced ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </button>
+
+              {/* Advanced inputs */}
+              {showAdvanced && (
+                <div className="space-y-5 animate-slide-up">
+                  <InputField
+                    label="Extra monthly payment"
+                    description="Additional principal payment each month"
+                    optional
+                  >
+                    <CurrencyInput
+                      value={inputs.extraMonthlyPayment}
+                      onChange={(v) => updateInput("extraMonthlyPayment", v)}
+                      min={0}
+                    />
+                  </InputField>
+
+                  <InputField
+                    label="One-time principal payment"
+                    description="Lump sum payment toward principal"
+                    optional
+                  >
+                    <CurrencyInput
+                      value={inputs.oneTimePrincipalPayment ?? 0}
+                      onChange={(v) => updateInput("oneTimePrincipalPayment", v)}
+                      min={0}
+                    />
+                  </InputField>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Actions - minimal */}
+          <div className="flex flex-wrap items-center gap-2">
+            {isEditing ? (
+              <>
+                <Button 
+                  onClick={handleSave} 
+                  size="sm" 
+                  className="gap-1.5"
+                  disabled={!isDirty}
+                >
+                  <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  Save
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-1.5">
+                      <MoreHorizontal className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      Actions
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={handleOpenSaveAs}>
+                      <FilePlus className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
+                      Save as new
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleDuplicate}>
+                      <Copy className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
+                      Duplicate
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleStartRename}>
+                      <Pencil className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={handleReset}
+                      disabled={!isDirty}
+                    >
+                      <RotateCcw className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
+                      Discard changes
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={handleDelete}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      Delete scenario
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button variant="ghost" size="sm" onClick={handleClose} className="gap-1.5">
+                  <X className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  Close
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button onClick={handleSave} size="sm" className="gap-1.5">
+                  <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  Save scenario
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1.5">
+                  <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  Reset
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* Amortization table */}
+          <div className="card-elevated w-full overflow-hidden p-5 sm:p-6">
+            <AmortizationTable schedule={results.amortizationSchedule} />
           </div>
         </div>
 
-        {/* Actions - minimal */}
-        <div className="flex flex-wrap items-center gap-2">
-          {isEditing ? (
-            <>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5">
-                    <MoreHorizontal className="h-3.5 w-3.5" strokeWidth={1.5} />
-                    Actions
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={handleStartRename}>
-                    <Pencil className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
-                    Rename
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleDuplicate}>
-                    <Copy className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
-                    Duplicate
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={handleDelete}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    Delete scenario
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button variant="ghost" size="sm" onClick={handleClose} className="gap-1.5">
-                <X className="h-3.5 w-3.5" strokeWidth={1.5} />
-                Close
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button onClick={handleSave} size="sm" className="gap-1.5">
-                <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
-                Save scenario
-              </Button>
-              <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1.5">
-                <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.5} />
-                Reset
-              </Button>
-            </>
-          )}
-        </div>
-
-        {/* Amortization table */}
-        <div className="card-elevated w-full overflow-hidden p-5 sm:p-6">
-          <AmortizationTable schedule={results.amortizationSchedule} />
+        {/* Results - sticky sidebar */}
+        <div className="min-w-0 lg:sticky lg:top-16 lg:h-fit">
+          <div className="card-elevated w-full p-5 sm:p-6">
+            <ResultsCard results={results} />
+          </div>
         </div>
       </div>
 
-      {/* Results - sticky sidebar */}
-      <div className="min-w-0 lg:sticky lg:top-16 lg:h-fit">
-        <div className="card-elevated w-full p-5 sm:p-6">
-          <ResultsCard results={results} />
-        </div>
-      </div>
-    </div>
+      {/* Save As Dialog */}
+      <Dialog open={showSaveAsDialog} onOpenChange={setShowSaveAsDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save as new scenario</DialogTitle>
+            <DialogDescription>
+              Create a new scenario with the current inputs. The original scenario will remain unchanged.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              value={saveAsName}
+              onChange={(e) => setSaveAsName(e.target.value)}
+              placeholder="Scenario name"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleConfirmSaveAs();
+              }}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveAsDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmSaveAs} disabled={!saveAsName.trim()}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Discard Changes Dialog */}
+      <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unsaved changes</DialogTitle>
+            <DialogDescription>
+              You have unsaved changes to this scenario. Do you want to discard them?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDiscardDialog(false)}>
+              Keep editing
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDiscard}>
+              Discard changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
