@@ -123,6 +123,48 @@ export type Database = {
         }
         Relationships: []
       }
+      scenarios: {
+        Row: {
+          assumptions_hash: string | null
+          created_at: string
+          derived: Json
+          id: string
+          inputs: Json
+          is_archived: boolean
+          name: string
+          scenario_type: string
+          schema_version: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assumptions_hash?: string | null
+          created_at?: string
+          derived?: Json
+          id?: string
+          inputs?: Json
+          is_archived?: boolean
+          name: string
+          scenario_type: string
+          schema_version?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assumptions_hash?: string | null
+          created_at?: string
+          derived?: Json
+          id?: string
+          inputs?: Json
+          is_archived?: boolean
+          name?: string
+          scenario_type?: string
+          schema_version?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_comparison_latest_version: {
@@ -149,7 +191,10 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      duplicate_scenario: {
+        Args: { new_name?: string; source_scenario_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
