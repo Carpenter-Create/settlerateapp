@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing: {
+        Row: {
+          current_period_end: string | null
+          price_id: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_period_end?: string | null
+          price_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_period_end?: string | null
+          price_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       comparison_items: {
         Row: {
           comparison_id: string
@@ -92,6 +122,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      contact_messages: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          message: string | null
+          status: string
+          topic: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          message?: string | null
+          status?: string
+          topic?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          message?: string | null
+          status?: string
+          topic?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+        }
+        Relationships: []
       }
       saved_comparisons: {
         Row: {
