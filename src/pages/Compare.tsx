@@ -133,21 +133,139 @@ function findBestIndex(
   return values.indexOf(target);
 }
 
-function generateExplanation(scenarios: Scenario[]): string {
-  if (scenarios.length < 2) return "";
-  
-  const [a, b] = scenarios;
-  const monthlyDiff = Math.abs(a.results.monthlyTotal - b.results.monthlyTotal);
-  const interestDiff = Math.abs(a.results.totalInterest - b.results.totalInterest);
-  
-  const lowerMonthly = a.results.monthlyTotal < b.results.monthlyTotal ? a : b;
-  const lowerInterest = a.results.totalInterest < b.results.totalInterest ? a : b;
-  
-  if (lowerMonthly === lowerInterest) {
-    return `${lowerMonthly.name} results in ${formatCurrency(monthlyDiff)} less per month and ${formatCurrency(interestDiff)} less in total interest over the loan term. The decision depends on your cash position at close and long-term cost tolerance.`;
+interface ComparisonSummary {
+  recommendation: {
+    scenario: Scenario;
+    reason: string;
+  } | null;
+  benefits: string[];
+  tradeoffs: string[];
+  alternativeAdvice: string | null;
+}
+
+function generateComparisonSummary(scenarios: Scenario[]): ComparisonSummary | null {
+  if (scenarios.length < 2) return null;
+
+  // Identify key metrics for each scenario
+  const analyzed = scenarios.map((s) => ({
+    scenario: s,
+    monthlyPayment: s.results.monthlyTotal,
+    totalInterest: s.results.totalInterest,
+    totalCost: s.results.totalCost,
+    payoffMonths: s.results.payoffMonths,
+  }));
+
+  // Find best in each category
+  const lowestMonthly = [...analyzed].sort((a, b) => a.monthlyPayment - b.monthlyPayment)[0];
+  const lowestTotalInterest = [...analyzed].sort((a, b) => a.totalInterest - b.totalInterest)[0];
+  const shortestPayoff = [...analyzed].sort((a, b) => a.payoffMonths - b.payoffMonths)[0];
+  const lowestTotalCost = [...analyzed].sort((a, b) => a.totalCost - b.totalCost)[0];
+
+  // Priority order for recommendation: lowest total interest > shortest payoff > meaningful monthly improvement
+  let recommended = lowestTotalInterest;
+  let reason = "This option provides the lowest total cost over time";
+
+  // Check if shortest payoff is different and also saves interest
+  if (shortestPayoff.scenario.id !== lowestTotalInterest.scenario.id) {
+    // If shortest payoff also has low interest, prefer it
+    const shortestInterest = shortestPayoff.totalInterest;
+    const lowestInterest = lowestTotalInterest.totalInterest;
+    if (shortestInterest <= lowestInterest * 1.05) {
+      recommended = shortestPayoff;
+      reason = "This option provides the fastest path to debt freedom with competitive total cost";
+    }
   }
-  
-  return `${lowerMonthly.name} has a lower monthly payment by ${formatCurrency(monthlyDiff)}, while ${lowerInterest.name} saves ${formatCurrency(interestDiff)} in total interest. Consider your monthly budget constraints against long-term cost.`;
+
+  // Check for meaningful monthly improvement (>5% reduction)
+  const monthlyDiff = lowestMonthly.monthlyPayment / recommended.monthlyPayment;
+  if (monthlyDiff < 0.95 && lowestMonthly.scenario.id !== recommended.scenario.id) {
+    // Check if the recommended still makes sense given monthly difference
+    const interestSavings = lowestMonthly.totalInterest - recommended.totalInterest;
+    if (interestSavings > 0) {
+      reason += " while meaningfully reducing your monthly payment";
+    }
+  } else if (recommended.scenario.id === lowestMonthly.scenario.id) {
+    reason += " while also offering the lowest monthly payment";
+  }
+
+  // Build benefits list
+  const benefits: string[] = [];
+  const rec = recommended;
+
+  // Compare to other scenarios
+  const others = analyzed.filter((a) => a.scenario.id !== rec.scenario.id);
+
+  // Monthly payment comparison
+  others.forEach((other) => {
+    const monthlyDiffAmount = other.monthlyPayment - rec.monthlyPayment;
+    if (monthlyDiffAmount > 10) {
+      benefits.push(
+        `${formatCurrency(monthlyDiffAmount)} lower monthly payment compared to ${other.scenario.name}`
+      );
+    }
+  });
+
+  // Total interest comparison
+  others.forEach((other) => {
+    const interestDiffAmount = other.totalInterest - rec.totalInterest;
+    if (interestDiffAmount > 1000) {
+      benefits.push(
+        `${formatCurrency(interestDiffAmount)} less total interest over the life of the loan`
+      );
+    }
+  });
+
+  // Payoff timeline comparison
+  others.forEach((other) => {
+    const monthsDiff = other.payoffMonths - rec.payoffMonths;
+    if (monthsDiff > 6) {
+      benefits.push(
+        `Shorter payoff timeline (${rec.payoffMonths} months vs. ${other.payoffMonths} months)`
+      );
+    }
+  });
+
+  // Add summary benefit if multiple advantages
+  if (benefits.length >= 2) {
+    benefits.push("This results in both improved cash flow and a faster path to debt freedom.");
+  }
+
+  // Build tradeoffs
+  const tradeoffs: string[] = [];
+  let alternativeAdvice: string | null = null;
+
+  // Find if another option has lower monthly
+  if (lowestMonthly.scenario.id !== rec.scenario.id) {
+    const monthlyDiffAmount = rec.monthlyPayment - lowestMonthly.monthlyPayment;
+    if (monthlyDiffAmount > 10) {
+      tradeoffs.push(`Requires a higher monthly payment than ${lowestMonthly.scenario.name}`);
+      
+      const interestDiffAmount = lowestMonthly.totalInterest - rec.totalInterest;
+      if (interestDiffAmount > 1000) {
+        tradeoffs.push(
+          `${lowestMonthly.scenario.name} minimizes monthly cost, but increases total interest paid`
+        );
+        alternativeAdvice = `If your priority is long-term cost and earlier payoff, ${rec.scenario.name} is the stronger choice. If your priority is the lowest possible monthly payment, ${lowestMonthly.scenario.name} may be preferable despite the higher lifetime cost.`;
+      }
+    }
+  }
+
+  // Check if recommended has higher monthly than any option
+  const higherMonthlyOptions = others.filter((o) => o.monthlyPayment < rec.monthlyPayment - 10);
+  if (higherMonthlyOptions.length > 0 && !alternativeAdvice) {
+    const lowestMonthlyAlt = higherMonthlyOptions[0];
+    alternativeAdvice = `If your priority is the lowest possible monthly payment, ${lowestMonthlyAlt.scenario.name} may be worth considering despite the higher lifetime cost.`;
+  }
+
+  return {
+    recommendation: {
+      scenario: rec.scenario,
+      reason,
+    },
+    benefits,
+    tradeoffs,
+    alternativeAdvice,
+  };
 }
 
 export default function Compare() {
@@ -204,8 +322,8 @@ export default function Compare() {
     };
   }, [selectedScenarios]);
 
-  const explanation = useMemo(
-    () => generateExplanation(selectedScenarios),
+  const summary = useMemo(
+    () => generateComparisonSummary(selectedScenarios),
     [selectedScenarios]
   );
 
@@ -393,13 +511,59 @@ export default function Compare() {
         </div>
       )}
 
-      {/* Explanation band */}
-      {selectedScenarios.length >= 2 && explanation && (
-        <div className="border-t border-border pt-6">
-          <p className="section-label mb-2">Summary</p>
-          <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-            {explanation}
-          </p>
+      {/* Refined Summary */}
+      {selectedScenarios.length >= 2 && summary && (
+        <div className="border-t border-border pt-6 space-y-6">
+          {/* Section 1 — Recommendation */}
+          {summary.recommendation && (
+            <div>
+              <p className="section-label mb-2">Recommendation</p>
+              <p className="text-sm">
+                <span className="font-medium">Recommended option: </span>
+                <span className="font-serif">{summary.recommendation.scenario.name}</span>
+              </p>
+              <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+                {summary.recommendation.reason}.
+              </p>
+            </div>
+          )}
+
+          {/* Section 2 — Why */}
+          {summary.benefits.length > 0 && (
+            <div>
+              <p className="section-label mb-2">Why</p>
+              <ul className="space-y-1.5 text-sm text-muted-foreground max-w-2xl">
+                {summary.benefits.map((benefit, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-foreground/50 select-none">•</span>
+                    <span>{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Section 3 — Tradeoffs */}
+          {(summary.tradeoffs.length > 0 || summary.alternativeAdvice) && (
+            <div>
+              <p className="section-label mb-2">Tradeoffs</p>
+              {summary.tradeoffs.length > 0 && (
+                <ul className="space-y-1.5 text-sm text-muted-foreground max-w-2xl mb-3">
+                  {summary.tradeoffs.map((tradeoff, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-foreground/50 select-none">•</span>
+                      <span>{tradeoff}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {summary.alternativeAdvice && (
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+                  {summary.alternativeAdvice}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
