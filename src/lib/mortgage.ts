@@ -1,7 +1,21 @@
+export type ScenarioType = "purchase" | "refinance";
+
 export interface MortgageInputs {
+  // Scenario type
+  scenarioType: ScenarioType;
+  
+  // Purchase-specific inputs
   purchasePrice: number;
   downPayment: number;
   downPaymentType: "percent" | "dollar";
+  
+  // Refinance-specific inputs
+  currentLoanBalance: number;
+  cashOutAmount: number;
+  closingCosts: number;
+  financeClosingCosts: boolean;
+  
+  // Shared inputs
   interestRate: number;
   loanTerm: number; // years
   
@@ -15,6 +29,9 @@ export interface MortgageInputs {
   homeInsuranceMonthly: number | null;
   hoaMonthly: number | null;
   pmiMonthly: number | null;
+  
+  // For refinance: estimated home value (used for LTV/PMI calculation)
+  estimatedHomeValue: number | null;
   
   // Extra payments
   extraMonthlyPayment: number;
@@ -49,6 +66,10 @@ export interface MortgageResults {
   ltvRatio: number;
   requiresPMI: boolean;
   usedEstimates: boolean;
+  scenarioType: ScenarioType;
+  // Refinance-specific results
+  cashOutAmount?: number;
+  closingCostsIncluded?: number;
 }
 
 export function calculateDownPaymentAmount(
@@ -73,11 +94,42 @@ export function calculateDownPaymentPercent(
   return purchasePrice > 0 ? (downPayment / purchasePrice) * 100 : 0;
 }
 
+/**
+ * Calculate loan amount based on scenario type
+ */
+export function calculateLoanAmount(inputs: MortgageInputs): {
+  loanAmount: number;
+  homeValue: number;
+  cashOut: number;
+  closingCostsIncluded: number;
+} {
+  if (inputs.scenarioType === "purchase") {
+    const downPaymentAmount = calculateDownPaymentAmount(
+      inputs.purchasePrice,
+      inputs.downPayment,
+      inputs.downPaymentType
+    );
+    return {
+      loanAmount: inputs.purchasePrice - downPaymentAmount,
+      homeValue: inputs.purchasePrice,
+      cashOut: 0,
+      closingCostsIncluded: 0,
+    };
+  } else {
+    // Refinance: loan = current balance + cash out + closing costs (if financed)
+    const closingCostsIncluded = inputs.financeClosingCosts ? inputs.closingCosts : 0;
+    return {
+      loanAmount: inputs.currentLoanBalance + inputs.cashOutAmount + closingCostsIncluded,
+      homeValue: inputs.estimatedHomeValue ?? inputs.currentLoanBalance * 1.25, // Fallback estimate
+      cashOut: inputs.cashOutAmount,
+      closingCostsIncluded,
+    };
+  }
+}
+
 export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
   const {
-    purchasePrice,
-    downPayment,
-    downPaymentType,
+    scenarioType,
     interestRate,
     loanTerm,
     includeEstimates,
@@ -91,14 +143,11 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
     usedZipEstimate,
   } = inputs;
 
-  // Calculate loan amount
-  const downPaymentAmount = calculateDownPaymentAmount(
-    purchasePrice,
-    downPayment,
-    downPaymentType
-  );
-  const loanAmount = purchasePrice - downPaymentAmount;
-  const ltvRatio = purchasePrice > 0 ? (loanAmount / purchasePrice) * 100 : 0;
+  // Calculate loan amount based on scenario type
+  const { loanAmount, homeValue, cashOut, closingCostsIncluded } = calculateLoanAmount(inputs);
+  
+  // Calculate LTV ratio
+  const ltvRatio = homeValue > 0 ? (loanAmount / homeValue) * 100 : 0;
   const requiresPMI = ltvRatio > 80;
 
   // Monthly interest rate
@@ -124,7 +173,7 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
   if (includeEstimates) {
     // Property tax calculation based on mode
     if (propertyTaxMode === "rate" && propertyTaxRate !== null) {
-      const annualTax = purchasePrice * (propertyTaxRate / 100);
+      const annualTax = homeValue * (propertyTaxRate / 100);
       monthlyPropertyTax = annualTax / 12;
     } else if (propertyTaxMode === "annual" && propertyTaxAnnual !== null) {
       monthlyPropertyTax = propertyTaxAnnual / 12;
@@ -158,7 +207,6 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
     
     // Cap payments to remaining balance
     if (principalPayment + extraPayment > balance) {
-      const totalPrincipalNeeded = balance;
       principalPayment = Math.min(principalPayment, balance);
       extraPayment = Math.min(extraPayment, balance - principalPayment);
     }
@@ -220,6 +268,11 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
     ltvRatio,
     requiresPMI,
     usedEstimates: includeEstimates && usedZipEstimate,
+    scenarioType,
+    ...(scenarioType === "refinance" && {
+      cashOutAmount: cashOut,
+      closingCostsIncluded,
+    }),
   };
 }
 
@@ -252,10 +305,39 @@ export function formatDate(date: Date): string {
   }).format(date);
 }
 
-export const DEFAULT_INPUTS: MortgageInputs = {
+export const DEFAULT_PURCHASE_INPUTS: Partial<MortgageInputs> = {
+  scenarioType: "purchase",
   purchasePrice: 450000,
   downPayment: 20,
   downPaymentType: "percent",
+};
+
+export const DEFAULT_REFINANCE_INPUTS: Partial<MortgageInputs> = {
+  scenarioType: "refinance",
+  currentLoanBalance: 300000,
+  cashOutAmount: 0,
+  closingCosts: 0,
+  financeClosingCosts: false,
+  estimatedHomeValue: 400000,
+};
+
+export const DEFAULT_INPUTS: MortgageInputs = {
+  // Scenario type
+  scenarioType: "purchase",
+  
+  // Purchase-specific
+  purchasePrice: 450000,
+  downPayment: 20,
+  downPaymentType: "percent",
+  
+  // Refinance-specific
+  currentLoanBalance: 300000,
+  cashOutAmount: 0,
+  closingCosts: 0,
+  financeClosingCosts: false,
+  estimatedHomeValue: null,
+  
+  // Shared
   interestRate: 6.5,
   loanTerm: 30,
   

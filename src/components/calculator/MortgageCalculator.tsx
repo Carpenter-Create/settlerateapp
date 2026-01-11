@@ -1,14 +1,16 @@
 import { useState, useMemo, useCallback } from "react";
-import { MortgageInputs, calculateMortgage, DEFAULT_INPUTS, calculateDownPaymentPercent } from "@/lib/mortgage";
-import { CurrencyInput } from "./CurrencyInput";
+import { MortgageInputs, ScenarioType, calculateMortgage, DEFAULT_INPUTS, calculateDownPaymentPercent, calculateLoanAmount } from "@/lib/mortgage";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
-import { DownPaymentInput } from "./DownPaymentInput";
 import { LoanTermInput } from "./LoanTermInput";
+import { ScenarioTypeSelector } from "./ScenarioTypeSelector";
+import { PurchaseInputs } from "./PurchaseInputs";
+import { RefinanceInputs } from "./RefinanceInputs";
 import { TaxInsuranceSection } from "./TaxInsuranceSection";
 import { ResultsCard } from "./ResultsCard";
 import { AmortizationTable } from "./AmortizationTable";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "./CurrencyInput";
 import { Save, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
 import { useScenarios } from "@/hooks/useScenarios";
 import { toast } from "sonner";
@@ -36,12 +38,17 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
     setInputs((prev) => ({ ...prev, ...updates }));
   }, []);
 
+  const handleScenarioTypeChange = useCallback((type: ScenarioType) => {
+    setInputs((prev) => ({ ...prev, scenarioType: type }));
+  }, []);
+
   const handleReset = useCallback(() => {
     setInputs(DEFAULT_INPUTS);
   }, []);
 
   const handleSave = useCallback(() => {
-    const name = `Scenario ${scenarios.length + 1}`;
+    const typeLabel = inputs.scenarioType === "purchase" ? "Purchase" : "Refinance";
+    const name = `${typeLabel} ${scenarios.length + 1}`;
     createScenario(name, inputs);
     toast.success("Scenario saved", {
       description: `"${name}" has been saved to your scenarios.`,
@@ -50,13 +57,14 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
 
   // Calculate LTV for PMI logic
   const ltvRatio = useMemo(() => {
-    const dpPercent = calculateDownPaymentPercent(
-      inputs.purchasePrice,
-      inputs.downPayment,
-      inputs.downPaymentType
-    );
-    return 100 - dpPercent;
-  }, [inputs.purchasePrice, inputs.downPayment, inputs.downPaymentType]);
+    const { loanAmount, homeValue } = calculateLoanAmount(inputs);
+    return homeValue > 0 ? (loanAmount / homeValue) * 100 : 0;
+  }, [inputs]);
+
+  // Helper text based on scenario type
+  const pageDescription = inputs.scenarioType === "purchase"
+    ? "Calculate your monthly payment and total costs for a new home purchase"
+    : "Compare your new loan terms and see potential savings";
 
   return (
     <div className="grid w-full max-w-full gap-6 lg:grid-cols-[1fr,380px] lg:gap-10">
@@ -65,38 +73,40 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
         <div>
           <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Mortgage Calculator</h1>
           <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-            Calculate your monthly payment and total costs
+            {pageDescription}
           </p>
         </div>
 
         <div className="card-elevated w-full p-4 sm:p-6 animate-fade-in">
-          <div className="space-y-5">
-            {/* Primary inputs - single column on mobile */}
-            <div className="grid gap-5 md:grid-cols-2">
-              <InputField label="Purchase price">
-                <CurrencyInput
-                  value={inputs.purchasePrice}
-                  onChange={(v) => updateInput("purchasePrice", v)}
-                  min={0}
-                />
-              </InputField>
+          <div className="space-y-6">
+            {/* Scenario Type Selector */}
+            <ScenarioTypeSelector
+              value={inputs.scenarioType}
+              onChange={handleScenarioTypeChange}
+            />
 
-              <DownPaymentInput
-                value={inputs.downPayment}
-                type={inputs.downPaymentType}
-                purchasePrice={inputs.purchasePrice}
-                onChange={(value, type) => {
-                  setInputs((prev) => ({
-                    ...prev,
-                    downPayment: value,
-                    downPaymentType: type,
-                  }));
-                }}
+            <div className="divider-subtle" />
+
+            {/* Conditional inputs based on scenario type */}
+            {inputs.scenarioType === "purchase" ? (
+              <PurchaseInputs
+                inputs={inputs}
+                onUpdate={updateInput}
+                onBatchUpdate={batchUpdateInputs}
               />
-            </div>
+            ) : (
+              <RefinanceInputs
+                inputs={inputs}
+                onUpdate={updateInput}
+                onBatchUpdate={batchUpdateInputs}
+              />
+            )}
 
+            {/* Shared loan terms */}
             <div className="grid gap-5 md:grid-cols-2">
-              <InputField label="Interest rate">
+              <InputField 
+                label={inputs.scenarioType === "purchase" ? "Interest rate" : "New interest rate"}
+              >
                 <PercentInput
                   value={inputs.interestRate}
                   onChange={(v) => updateInput("interestRate", v)}
@@ -109,6 +119,7 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
               <LoanTermInput
                 value={inputs.loanTerm}
                 onChange={(v) => updateInput("loanTerm", v)}
+                label={inputs.scenarioType === "purchase" ? "Loan term" : "New loan term"}
               />
             </div>
 
