@@ -14,10 +14,139 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      comparison_items: {
+        Row: {
+          comparison_id: string
+          created_at: string
+          id: string
+          label_override: string | null
+          scenario_id: string
+          sort_order: number
+        }
+        Insert: {
+          comparison_id: string
+          created_at?: string
+          id?: string
+          label_override?: string | null
+          scenario_id: string
+          sort_order?: number
+        }
+        Update: {
+          comparison_id?: string
+          created_at?: string
+          id?: string
+          label_override?: string | null
+          scenario_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comparison_items_comparison_id_fkey"
+            columns: ["comparison_id"]
+            isOneToOne: false
+            referencedRelation: "saved_comparisons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comparison_versions: {
+        Row: {
+          assumptions_hash: string
+          comparison_id: string
+          created_at: string
+          created_by: string
+          id: string
+          note: string | null
+          schema_version: number
+          snapshot: Json
+          version_number: number
+        }
+        Insert: {
+          assumptions_hash: string
+          comparison_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          note?: string | null
+          schema_version?: number
+          snapshot: Json
+          version_number: number
+        }
+        Update: {
+          assumptions_hash?: string
+          comparison_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          note?: string | null
+          schema_version?: number
+          snapshot?: Json
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comparison_versions_comparison_id_fkey"
+            columns: ["comparison_id"]
+            isOneToOne: false
+            referencedRelation: "saved_comparisons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_comparisons: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_archived: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      v_comparison_latest_version: {
+        Row: {
+          assumptions_hash: string | null
+          comparison_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string | null
+          note: string | null
+          schema_version: number | null
+          snapshot: Json | null
+          version_number: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comparison_versions_comparison_id_fkey"
+            columns: ["comparison_id"]
+            isOneToOne: false
+            referencedRelation: "saved_comparisons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
