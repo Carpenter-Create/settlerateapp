@@ -14,7 +14,7 @@
  */
 
 import { useState, useCallback, useMemo } from "react";
-import { MortgageInputs, MortgageResults, ScenarioType, DEFAULT_INPUTS, calculateLoanAmount } from "@/lib/mortgage";
+import { MortgageInputs, MortgageResults, ScenarioType, SharedInputs, DEFAULT_INPUTS, calculateLoanAmount } from "@/lib/mortgage";
 import { Scenario, SaveStatus } from "@/hooks/useScenarios";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
@@ -57,7 +57,6 @@ export interface ScenarioEditorProps {
   scenarioCount: number;
   
   // Input change handlers
-  onUpdateInput: <K extends keyof MortgageInputs>(key: K, value: MortgageInputs[K]) => void;
   onBatchUpdate: (updates: Partial<MortgageInputs>) => void;
   
   // Scenario actions - return new scenario ID for navigation
@@ -79,7 +78,6 @@ export function ScenarioEditor({
   isDirty,
   isEditing,
   scenarioCount,
-  onUpdateInput,
   onBatchUpdate,
   onSave,
   onSaveAsNew,
@@ -96,6 +94,13 @@ export function ScenarioEditor({
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
   const [saveAsName, setSaveAsName] = useState("");
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+
+  // Helper to update shared inputs
+  const updateShared = useCallback((updates: Partial<SharedInputs>) => {
+    onBatchUpdate({
+      shared: { ...inputs.shared, ...updates },
+    });
+  }, [inputs.shared, onBatchUpdate]);
 
   // Start renaming
   const handleStartRename = useCallback(() => {
@@ -114,7 +119,7 @@ export function ScenarioEditor({
   }, [scenarioName, onRename]);
 
   const handleScenarioTypeChange = useCallback((type: ScenarioType) => {
-    onBatchUpdate({ scenarioType: type });
+    onBatchUpdate({ mode: type });
   }, [onBatchUpdate]);
 
   const handleReset = useCallback(() => {
@@ -127,11 +132,11 @@ export function ScenarioEditor({
 
   // Open Save As dialog
   const handleOpenSaveAs = useCallback(() => {
-    const typeLabel = inputs.scenarioType === "purchase" ? "Purchase" : "Refinance";
+    const typeLabel = inputs.mode === "purchase" ? "Purchase" : "Refinance";
     const baseName = activeScenario?.name ?? `${typeLabel} ${scenarioCount + 1}`;
     setSaveAsName(baseName);
     setShowSaveAsDialog(true);
-  }, [inputs.scenarioType, scenarioCount, activeScenario]);
+  }, [inputs.mode, scenarioCount, activeScenario]);
 
   // Handle close with unsaved changes check
   const handleClose = useCallback(() => {
@@ -155,7 +160,7 @@ export function ScenarioEditor({
   }, [inputs]);
 
   // Helper text based on scenario type
-  const pageDescription = inputs.scenarioType === "purchase"
+  const pageDescription = inputs.mode === "purchase"
     ? "Calculate your monthly payment and total costs for a new home purchase"
     : "Compare your new loan terms and see potential savings";
 
@@ -212,23 +217,21 @@ export function ScenarioEditor({
             <div className="space-y-5">
               {/* Scenario Type Selector */}
               <ScenarioTypeSelector
-                value={inputs.scenarioType}
+                value={inputs.mode}
                 onChange={handleScenarioTypeChange}
               />
 
               <div className="divider-subtle" />
 
               {/* Conditional inputs based on scenario type */}
-              {inputs.scenarioType === "purchase" ? (
+              {inputs.mode === "purchase" ? (
                 <PurchaseInputs
                   inputs={inputs}
-                  onUpdate={onUpdateInput}
                   onBatchUpdate={onBatchUpdate}
                 />
               ) : (
                 <RefinanceInputs
                   inputs={inputs}
-                  onUpdate={onUpdateInput}
                   onBatchUpdate={onBatchUpdate}
                 />
               )}
@@ -236,11 +239,11 @@ export function ScenarioEditor({
               {/* Shared loan terms */}
               <div className="grid gap-5 md:grid-cols-2">
                 <InputField 
-                  label={inputs.scenarioType === "purchase" ? "Interest rate" : "New interest rate"}
+                  label={inputs.mode === "purchase" ? "Interest rate" : "New interest rate"}
                 >
                   <PercentInput
-                    value={inputs.interestRate}
-                    onChange={(v) => onUpdateInput("interestRate", v)}
+                    value={inputs.shared.interestRate}
+                    onChange={(v) => updateShared({ interestRate: v })}
                     min={0}
                     max={25}
                     step={0.125}
@@ -248,9 +251,9 @@ export function ScenarioEditor({
                 </InputField>
 
                 <LoanTermInput
-                  value={inputs.loanTerm}
-                  onChange={(v) => onUpdateInput("loanTerm", v)}
-                  label={inputs.scenarioType === "purchase" ? "Loan term" : "New loan term"}
+                  value={inputs.shared.loanTerm}
+                  onChange={(v) => updateShared({ loanTerm: v })}
+                  label={inputs.mode === "purchase" ? "Loan term" : "New loan term"}
                 />
               </div>
 
@@ -260,7 +263,6 @@ export function ScenarioEditor({
               <TaxInsuranceSection
                 inputs={inputs}
                 ltvRatio={ltvRatio}
-                onUpdate={onUpdateInput}
                 onBatchUpdate={onBatchUpdate}
               />
 
@@ -289,8 +291,8 @@ export function ScenarioEditor({
                     optional
                   >
                     <CurrencyInput
-                      value={inputs.extraMonthlyPayment}
-                      onChange={(v) => onUpdateInput("extraMonthlyPayment", v)}
+                      value={inputs.shared.extraMonthlyPayment}
+                      onChange={(v) => updateShared({ extraMonthlyPayment: v })}
                       min={0}
                     />
                   </InputField>
@@ -301,8 +303,8 @@ export function ScenarioEditor({
                     optional
                   >
                     <CurrencyInput
-                      value={inputs.oneTimePrincipalPayment ?? 0}
-                      onChange={(v) => onUpdateInput("oneTimePrincipalPayment", v)}
+                      value={inputs.shared.oneTimePrincipalPayment ?? 0}
+                      onChange={(v) => updateShared({ oneTimePrincipalPayment: v })}
                       min={0}
                     />
                   </InputField>

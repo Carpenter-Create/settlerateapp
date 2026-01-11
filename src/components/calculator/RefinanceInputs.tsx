@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MortgageInputs } from "@/lib/mortgage";
+import { MortgageInputs, RefinanceInputs as RefinanceInputsType } from "@/lib/mortgage";
 import { CurrencyInput } from "./CurrencyInput";
 import { InputField } from "./InputField";
 import { Switch } from "@/components/ui/switch";
@@ -8,14 +8,21 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface RefinanceInputsProps {
   inputs: MortgageInputs;
-  onUpdate: <K extends keyof MortgageInputs>(key: K, value: MortgageInputs[K]) => void;
   onBatchUpdate: (updates: Partial<MortgageInputs>) => void;
 }
 
-export function RefinanceInputs({ inputs, onUpdate, onBatchUpdate }: RefinanceInputsProps) {
+export function RefinanceInputs({ inputs, onBatchUpdate }: RefinanceInputsProps) {
+  const refinance = inputs.refinance;
+  
   const [showOptional, setShowOptional] = useState(
-    inputs.cashOutAmount > 0 || inputs.closingCosts > 0
+    refinance.cashOutAmount > 0 || refinance.closingCosts > 0
   );
+
+  const updateRefinance = (updates: Partial<RefinanceInputsType>) => {
+    onBatchUpdate({
+      refinance: { ...refinance, ...updates },
+    });
+  };
 
   return (
     <div className="space-y-5">
@@ -26,8 +33,8 @@ export function RefinanceInputs({ inputs, onUpdate, onBatchUpdate }: RefinanceIn
           description="The remaining balance on your existing mortgage"
         >
           <CurrencyInput
-            value={inputs.currentLoanBalance}
-            onChange={(v) => onUpdate("currentLoanBalance", v)}
+            value={refinance.currentLoanBalance}
+            onChange={(v) => updateRefinance({ currentLoanBalance: v })}
             min={0}
           />
         </InputField>
@@ -38,8 +45,8 @@ export function RefinanceInputs({ inputs, onUpdate, onBatchUpdate }: RefinanceIn
           optional
         >
           <CurrencyInput
-            value={inputs.estimatedHomeValue ?? 0}
-            onChange={(v) => onUpdate("estimatedHomeValue", v || null)}
+            value={refinance.estimatedHomeValue ?? 0}
+            onChange={(v) => updateRefinance({ estimatedHomeValue: v || null })}
             min={0}
           />
         </InputField>
@@ -68,8 +75,8 @@ export function RefinanceInputs({ inputs, onUpdate, onBatchUpdate }: RefinanceIn
               optional
             >
               <CurrencyInput
-                value={inputs.cashOutAmount}
-                onChange={(v) => onUpdate("cashOutAmount", v)}
+                value={refinance.cashOutAmount}
+                onChange={(v) => updateRefinance({ cashOutAmount: v })}
                 min={0}
               />
             </InputField>
@@ -80,19 +87,19 @@ export function RefinanceInputs({ inputs, onUpdate, onBatchUpdate }: RefinanceIn
               optional
             >
               <CurrencyInput
-                value={inputs.closingCosts}
-                onChange={(v) => onUpdate("closingCosts", v)}
+                value={refinance.closingCosts}
+                onChange={(v) => updateRefinance({ closingCosts: v })}
                 min={0}
               />
             </InputField>
           </div>
 
-          {inputs.closingCosts > 0 && (
+          {refinance.closingCosts > 0 && (
             <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
               <Switch
                 id="finance-closing"
-                checked={inputs.financeClosingCosts}
-                onCheckedChange={(checked) => onUpdate("financeClosingCosts", checked)}
+                checked={refinance.financeClosingCosts}
+                onCheckedChange={(checked) => updateRefinance({ financeClosingCosts: checked })}
               />
               <Label htmlFor="finance-closing" className="text-sm cursor-pointer">
                 Roll closing costs into the new loan

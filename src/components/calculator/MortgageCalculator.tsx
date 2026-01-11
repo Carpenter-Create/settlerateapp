@@ -21,7 +21,7 @@ import { useActiveScenario, useScenarios } from "@/hooks/useScenarios";
 import { useScenarioRoute } from "@/hooks/useScenarioRoute";
 import { ScenarioEditor } from "./ScenarioEditor";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, X, AlertCircle } from "lucide-react";
+import { RotateCcw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export function MortgageCalculator() {
@@ -37,7 +37,6 @@ export function MortgageCalculator() {
     isLoaded,
     isDirty,
     scenarioNotFound,
-    updateInput,
     batchUpdateInputs,
     saveDraft,
     saveAsNew,
@@ -65,7 +64,7 @@ export function MortgageCalculator() {
       return success;
     } else {
       // New scenario mode: create and navigate to new ID
-      const typeLabel = inputs.scenarioType === "purchase" ? "Purchase" : "Refinance";
+      const typeLabel = inputs.mode === "purchase" ? "Purchase" : "Refinance";
       const name = `${typeLabel} ${scenarios.length + 1}`;
       const newScenario = saveAsNew(name);
       
@@ -74,7 +73,7 @@ export function MortgageCalculator() {
       toast("Scenario saved.", { duration: 2000 });
       return true;
     }
-  }, [isEditing, saveDraft, inputs.scenarioType, scenarios.length, saveAsNew, navigateToScenario]);
+  }, [isEditing, saveDraft, inputs.mode, scenarios.length, saveAsNew, navigateToScenario]);
 
   // Save As New: create new scenario with custom name
   const handleSaveAsNew = useCallback((name: string): string => {
@@ -127,7 +126,7 @@ export function MortgageCalculator() {
 
   // Reset: only action that intentionally clears to defaults
   const handleReset = useCallback(() => {
-    batchUpdateInputs(DEFAULT_INPUTS);
+    batchUpdateInputs(structuredClone(DEFAULT_INPUTS));
   }, [batchUpdateInputs]);
 
   // Close: navigate away from current scenario
@@ -189,7 +188,6 @@ export function MortgageCalculator() {
       isDirty={isDirty}
       isEditing={isEditing}
       scenarioCount={scenarios.length}
-      onUpdateInput={updateInput}
       onBatchUpdate={batchUpdateInputs}
       onSave={handleSave}
       onSaveAsNew={handleSaveAsNew}

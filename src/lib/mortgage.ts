@@ -1,21 +1,33 @@
 export type ScenarioType = "purchase" | "refinance";
 
-export interface MortgageInputs {
-  // Scenario type
-  scenarioType: ScenarioType;
-  
-  // Purchase-specific inputs
+// =============================================================================
+// NAMESPACED INPUT TYPES (Mode-specific inputs)
+// =============================================================================
+
+/**
+ * Purchase-specific inputs
+ */
+export interface PurchaseInputs {
   purchasePrice: number;
   downPayment: number;
   downPaymentType: "percent" | "dollar";
-  
-  // Refinance-specific inputs
+}
+
+/**
+ * Refinance-specific inputs
+ */
+export interface RefinanceInputs {
   currentLoanBalance: number;
   cashOutAmount: number;
   closingCosts: number;
   financeClosingCosts: boolean;
-  
-  // Shared inputs
+  estimatedHomeValue: number | null;
+}
+
+/**
+ * Shared inputs (common to both modes)
+ */
+export interface SharedInputs {
   interestRate: number;
   loanTerm: number; // years
   
@@ -30,13 +42,182 @@ export interface MortgageInputs {
   hoaMonthly: number | null;
   pmiMonthly: number | null;
   
-  // For refinance: estimated home value (used for LTV/PMI calculation)
-  estimatedHomeValue: number | null;
-  
   // Extra payments
   extraMonthlyPayment: number;
   oneTimePrincipalPayment: number | null;
 }
+
+// =============================================================================
+// CANONICAL MORTGAGE INPUTS (Strict scenario shape contract)
+// =============================================================================
+
+/**
+ * MortgageInputs - The canonical input structure for the mortgage calculator.
+ * 
+ * STRICT CONTRACT:
+ * - `mode` is REQUIRED and determines which namespaced inputs are active
+ * - `purchase` contains purchase-specific inputs
+ * - `refinance` contains refinance-specific inputs
+ * - Both namespaces are always present to simplify code, but only one is "active"
+ * - When mode is toggled, the active namespace's values are used for calculation
+ * 
+ * This design ensures:
+ * 1. Mode never falls back to defaults after save/duplicate
+ * 2. Switching modes preserves previous values (can switch back)
+ * 3. Deep clone captures everything needed for accurate duplication
+ */
+export interface MortgageInputs {
+  // Mode is REQUIRED - determines which inputs are active
+  mode: ScenarioType;
+  
+  // Namespaced mode-specific inputs
+  purchase: PurchaseInputs;
+  refinance: RefinanceInputs;
+  
+  // Shared inputs (common to both modes)
+  shared: SharedInputs;
+}
+
+// Legacy flat interface for backward compatibility during migration
+// TODO: Remove after full migration
+export interface LegacyMortgageInputs {
+  scenarioType: ScenarioType;
+  purchasePrice: number;
+  downPayment: number;
+  downPaymentType: "percent" | "dollar";
+  currentLoanBalance: number;
+  cashOutAmount: number;
+  closingCosts: number;
+  financeClosingCosts: boolean;
+  interestRate: number;
+  loanTerm: number;
+  includeEstimates: boolean;
+  zipCode: string | null;
+  usedZipEstimate: boolean;
+  propertyTaxMode: "rate" | "annual";
+  propertyTaxRate: number | null;
+  propertyTaxAnnual: number | null;
+  homeInsuranceMonthly: number | null;
+  hoaMonthly: number | null;
+  pmiMonthly: number | null;
+  estimatedHomeValue: number | null;
+  extraMonthlyPayment: number;
+  oneTimePrincipalPayment: number | null;
+}
+
+// =============================================================================
+// DEFAULTS
+// =============================================================================
+
+export const DEFAULT_PURCHASE_INPUTS: PurchaseInputs = {
+  purchasePrice: 450000,
+  downPayment: 20,
+  downPaymentType: "percent",
+};
+
+export const DEFAULT_REFINANCE_INPUTS: RefinanceInputs = {
+  currentLoanBalance: 300000,
+  cashOutAmount: 0,
+  closingCosts: 0,
+  financeClosingCosts: false,
+  estimatedHomeValue: 400000,
+};
+
+export const DEFAULT_SHARED_INPUTS: SharedInputs = {
+  interestRate: 6.5,
+  loanTerm: 30,
+  includeEstimates: false,
+  zipCode: null,
+  usedZipEstimate: false,
+  propertyTaxMode: "rate",
+  propertyTaxRate: null,
+  propertyTaxAnnual: null,
+  homeInsuranceMonthly: null,
+  hoaMonthly: null,
+  pmiMonthly: null,
+  extraMonthlyPayment: 0,
+  oneTimePrincipalPayment: null,
+};
+
+/**
+ * Default canonical inputs (new scenario mode)
+ */
+export const DEFAULT_INPUTS: MortgageInputs = {
+  mode: "purchase",
+  purchase: { ...DEFAULT_PURCHASE_INPUTS },
+  refinance: { ...DEFAULT_REFINANCE_INPUTS },
+  shared: { ...DEFAULT_SHARED_INPUTS },
+};
+
+// =============================================================================
+// MIGRATION UTILITIES
+// =============================================================================
+
+/**
+ * Check if inputs are in legacy flat format
+ */
+export function isLegacyInputs(inputs: unknown): inputs is LegacyMortgageInputs {
+  if (!inputs || typeof inputs !== "object") return false;
+  const obj = inputs as Record<string, unknown>;
+  // Legacy format has scenarioType at top level, new format has mode
+  return "scenarioType" in obj && !("mode" in obj);
+}
+
+/**
+ * Migrate legacy flat inputs to namespaced structure
+ */
+export function migrateLegacyInputs(legacy: LegacyMortgageInputs): MortgageInputs {
+  return {
+    mode: legacy.scenarioType,
+    purchase: {
+      purchasePrice: legacy.purchasePrice,
+      downPayment: legacy.downPayment,
+      downPaymentType: legacy.downPaymentType,
+    },
+    refinance: {
+      currentLoanBalance: legacy.currentLoanBalance,
+      cashOutAmount: legacy.cashOutAmount,
+      closingCosts: legacy.closingCosts,
+      financeClosingCosts: legacy.financeClosingCosts,
+      estimatedHomeValue: legacy.estimatedHomeValue,
+    },
+    shared: {
+      interestRate: legacy.interestRate,
+      loanTerm: legacy.loanTerm,
+      includeEstimates: legacy.includeEstimates,
+      zipCode: legacy.zipCode,
+      usedZipEstimate: legacy.usedZipEstimate,
+      propertyTaxMode: legacy.propertyTaxMode,
+      propertyTaxRate: legacy.propertyTaxRate,
+      propertyTaxAnnual: legacy.propertyTaxAnnual,
+      homeInsuranceMonthly: legacy.homeInsuranceMonthly,
+      hoaMonthly: legacy.hoaMonthly,
+      pmiMonthly: legacy.pmiMonthly,
+      extraMonthlyPayment: legacy.extraMonthlyPayment,
+      oneTimePrincipalPayment: legacy.oneTimePrincipalPayment,
+    },
+  };
+}
+
+/**
+ * Ensure inputs are in canonical format (migrate if necessary)
+ */
+export function ensureCanonicalInputs(inputs: MortgageInputs | LegacyMortgageInputs | unknown): MortgageInputs {
+  if (!inputs || typeof inputs !== "object") {
+    return structuredClone(DEFAULT_INPUTS);
+  }
+  
+  if (isLegacyInputs(inputs)) {
+    return migrateLegacyInputs(inputs);
+  }
+  
+  // Already canonical
+  return inputs as MortgageInputs;
+}
+
+// =============================================================================
+// RESULT TYPES
+// =============================================================================
 
 export interface AmortizationEntry {
   month: number;
@@ -66,11 +247,15 @@ export interface MortgageResults {
   ltvRatio: number;
   requiresPMI: boolean;
   usedEstimates: boolean;
-  scenarioType: ScenarioType;
+  mode: ScenarioType;
   // Refinance-specific results
   cashOutAmount?: number;
   closingCostsIncluded?: number;
 }
+
+// =============================================================================
+// CALCULATION HELPERS
+// =============================================================================
 
 export function calculateDownPaymentAmount(
   purchasePrice: number,
@@ -95,7 +280,7 @@ export function calculateDownPaymentPercent(
 }
 
 /**
- * Calculate loan amount based on scenario type
+ * Calculate loan amount based on scenario mode
  */
 export function calculateLoanAmount(inputs: MortgageInputs): {
   loanAmount: number;
@@ -103,33 +288,39 @@ export function calculateLoanAmount(inputs: MortgageInputs): {
   cashOut: number;
   closingCostsIncluded: number;
 } {
-  if (inputs.scenarioType === "purchase") {
+  if (inputs.mode === "purchase") {
+    const purchase = inputs.purchase;
     const downPaymentAmount = calculateDownPaymentAmount(
-      inputs.purchasePrice,
-      inputs.downPayment,
-      inputs.downPaymentType
+      purchase.purchasePrice,
+      purchase.downPayment,
+      purchase.downPaymentType
     );
     return {
-      loanAmount: inputs.purchasePrice - downPaymentAmount,
-      homeValue: inputs.purchasePrice,
+      loanAmount: purchase.purchasePrice - downPaymentAmount,
+      homeValue: purchase.purchasePrice,
       cashOut: 0,
       closingCostsIncluded: 0,
     };
   } else {
     // Refinance: loan = current balance + cash out + closing costs (if financed)
-    const closingCostsIncluded = inputs.financeClosingCosts ? inputs.closingCosts : 0;
+    const refinance = inputs.refinance;
+    const closingCostsIncluded = refinance.financeClosingCosts ? refinance.closingCosts : 0;
     return {
-      loanAmount: inputs.currentLoanBalance + inputs.cashOutAmount + closingCostsIncluded,
-      homeValue: inputs.estimatedHomeValue ?? inputs.currentLoanBalance * 1.25, // Fallback estimate
-      cashOut: inputs.cashOutAmount,
+      loanAmount: refinance.currentLoanBalance + refinance.cashOutAmount + closingCostsIncluded,
+      homeValue: refinance.estimatedHomeValue ?? refinance.currentLoanBalance * 1.25, // Fallback estimate
+      cashOut: refinance.cashOutAmount,
       closingCostsIncluded,
     };
   }
 }
 
+// =============================================================================
+// MAIN CALCULATION
+// =============================================================================
+
 export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
+  const { mode, shared } = inputs;
   const {
-    scenarioType,
     interestRate,
     loanTerm,
     includeEstimates,
@@ -141,9 +332,9 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
     pmiMonthly,
     extraMonthlyPayment,
     usedZipEstimate,
-  } = inputs;
+  } = shared;
 
-  // Calculate loan amount based on scenario type
+  // Calculate loan amount based on scenario mode
   const { loanAmount, homeValue, cashOut, closingCostsIncluded } = calculateLoanAmount(inputs);
   
   // Calculate LTV ratio
@@ -268,13 +459,17 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
     ltvRatio,
     requiresPMI,
     usedEstimates: includeEstimates && usedZipEstimate,
-    scenarioType,
-    ...(scenarioType === "refinance" && {
+    mode,
+    ...(mode === "refinance" && {
       cashOutAmount: cashOut,
       closingCostsIncluded,
     }),
   };
 }
+
+// =============================================================================
+// FORMATTING UTILITIES
+// =============================================================================
 
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -305,54 +500,46 @@ export function formatDate(date: Date): string {
   }).format(date);
 }
 
-export const DEFAULT_PURCHASE_INPUTS: Partial<MortgageInputs> = {
-  scenarioType: "purchase",
-  purchasePrice: 450000,
-  downPayment: 20,
-  downPaymentType: "percent",
-};
+// =============================================================================
+// VALIDATION
+// =============================================================================
 
-export const DEFAULT_REFINANCE_INPUTS: Partial<MortgageInputs> = {
-  scenarioType: "refinance",
-  currentLoanBalance: 300000,
-  cashOutAmount: 0,
-  closingCosts: 0,
-  financeClosingCosts: false,
-  estimatedHomeValue: 400000,
-};
-
-export const DEFAULT_INPUTS: MortgageInputs = {
-  // Scenario type
-  scenarioType: "purchase",
+/**
+ * Validate that a MortgageInputs object has the required structure.
+ * Returns error messages if invalid.
+ */
+export function validateInputs(inputs: unknown): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
   
-  // Purchase-specific
-  purchasePrice: 450000,
-  downPayment: 20,
-  downPaymentType: "percent",
+  if (!inputs || typeof inputs !== "object") {
+    errors.push("Inputs must be an object");
+    return { valid: false, errors };
+  }
   
-  // Refinance-specific
-  currentLoanBalance: 300000,
-  cashOutAmount: 0,
-  closingCosts: 0,
-  financeClosingCosts: false,
-  estimatedHomeValue: null,
+  const obj = inputs as Record<string, unknown>;
   
-  // Shared
-  interestRate: 6.5,
-  loanTerm: 30,
+  // Check mode
+  if (!obj.mode) {
+    errors.push("Missing required field: mode");
+  } else if (obj.mode !== "purchase" && obj.mode !== "refinance") {
+    errors.push("Invalid mode: must be 'purchase' or 'refinance'");
+  }
   
-  // Taxes & insurance (optional, collapsed by default)
-  includeEstimates: false,
-  zipCode: null,
-  usedZipEstimate: false,
-  propertyTaxMode: "rate",
-  propertyTaxRate: null,
-  propertyTaxAnnual: null,
-  homeInsuranceMonthly: null,
-  hoaMonthly: null,
-  pmiMonthly: null,
+  // Check namespaced inputs
+  if (!obj.purchase || typeof obj.purchase !== "object") {
+    errors.push("Missing required field: purchase inputs");
+  }
   
-  // Extra payments
-  extraMonthlyPayment: 0,
-  oneTimePrincipalPayment: null,
-};
+  if (!obj.refinance || typeof obj.refinance !== "object") {
+    errors.push("Missing required field: refinance inputs");
+  }
+  
+  if (!obj.shared || typeof obj.shared !== "object") {
+    errors.push("Missing required field: shared inputs");
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
