@@ -341,7 +341,15 @@
     bottom: calc(env(safe-area-inset-bottom, 0px) + 80px) !important;
   }
 
-  /* Toast close button - minimal unboxed × glyph */
+  /* Toast close button - refined, institutional
+   * Requirements:
+   * - Top-right alignment
+   * - 32×32px minimum hit target
+   * - Visually lighter than toast content
+   * - No background, no heavy stroke
+   * - Subtle opacity change on hover
+   * - Feels intentional, quiet, institutional
+   */
   [data-sonner-toast] [data-close-button] {
     position: absolute;
     right: 4px;
@@ -357,40 +365,41 @@
     justify-content: center;
     background: transparent;
     border: none;
+    border-radius: 2px;
     cursor: pointer;
     color: hsl(var(--muted-foreground));
-    opacity: 0.5;
+    opacity: 0.4;
     transition: opacity 0.15s ease;
   }
 
   [data-sonner-toast] [data-close-button]:hover {
-    opacity: 0.8;
+    opacity: 0.7;
   }
 
   [data-sonner-toast] [data-close-button]:focus-visible {
     outline: none;
-    opacity: 0.8;
+    opacity: 0.7;
   }
 
-  /* Hide default SVG, use CSS × glyph */
+  /* Use native × glyph for clean, consistent look */
   [data-sonner-toast] [data-close-button] svg {
     display: none;
   }
 
   [data-sonner-toast] [data-close-button]::after {
     content: "×";
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 300;
     line-height: 1;
-    font-family: var(--font-sans), system-ui, sans-serif;
+    font-family: system-ui, -apple-system, sans-serif;
   }
 
   /* Toast content padding for close button */
   [data-sonner-toast] [data-content] {
-    padding-right: 28px;
+    padding-right: 32px;
   }
 
-  /* Swipe animation hint */
+  /* Swipe-to-dismiss animation */
   [data-sonner-toast][data-swipe-direction] {
     transition: transform 0.2s ease-out, opacity 0.2s ease-out;
   }

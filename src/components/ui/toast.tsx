@@ -60,6 +60,17 @@ const ToastAction = React.forwardRef<
 ));
 ToastAction.displayName = ToastPrimitives.Action.displayName;
 
+/**
+ * ToastClose - Refined close affordance
+ * 
+ * Requirements:
+ * - Aligned to top-right of toast container
+ * - Minimum hit target of 32×32px
+ * - Visually lighter than toast icon and title
+ * - No background circle, no heavy stroke, no emphasis color
+ * - Hover: subtle opacity change only
+ * - Feel intentional, quiet, and institutional
+ */
 const ToastClose = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Close>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Close>
@@ -67,13 +78,25 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity group-hover:opacity-100 group-[.destructive]:text-red-300 hover:text-foreground group-[.destructive]:hover:text-red-50 focus:opacity-100 focus:outline-none focus:ring-2 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
+      // Positioning: top-right, aligned properly
+      "absolute right-1 top-1",
+      // Hit target: 32x32px minimum
+      "flex h-8 w-8 items-center justify-center",
+      // Visual: lighter than title, no background
+      "rounded-sm text-muted-foreground/50",
+      // Interaction: subtle opacity change on hover
+      "transition-opacity duration-150",
+      "hover:text-muted-foreground/80",
+      // Focus: accessible but quiet
+      "focus:outline-none focus:text-muted-foreground/80",
+      // Destructive variant
+      "group-[.destructive]:text-destructive-foreground/50 group-[.destructive]:hover:text-destructive-foreground/80",
       className,
     )}
     toast-close=""
     {...props}
   >
-    <X className="h-4 w-4" />
+    <X className="h-3.5 w-3.5" strokeWidth={1.5} />
   </ToastPrimitives.Close>
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;

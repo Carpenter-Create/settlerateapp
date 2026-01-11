@@ -313,7 +313,16 @@ export default function Compare() {
 
   return (
     <div className="space-y-8">
-      {/* Page header */}
+      {/* ========================================================================
+       * COMPARE UX HIERARCHY (LOCKED ORDER - DO NOT REORDER)
+       * 1. Comparison header (scenario chips, no metrics, no CTAs)
+       * 2. Core comparison table (side-by-side numeric values)
+       * 3. Summary (Canonical Contract: recommendation, why, tradeoffs)
+       * 4. What's changed since last time (conditional)
+       * 5. Actions (save, share, adjust - always last)
+       * ======================================================================== */}
+
+      {/* SECTION 1: Comparison Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1>Compare Scenarios</h1>
@@ -327,32 +336,7 @@ export default function Compare() {
         </Button>
       </div>
 
-      {/* What's changed since last time - decision continuity */}
-      {materialChanges.length > 0 && (
-        <div className="rounded border border-border bg-muted/20 px-4 py-4 space-y-3">
-          <p className="section-label">What's changed since last time</p>
-          <ul className="space-y-2 text-sm">
-            {materialChanges.map((change, idx) => (
-              <li key={idx} className="flex flex-col gap-0.5">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-muted-foreground">{change.scenarioName}:</span>
-                  <span className="text-foreground">{change.fieldLabel}</span>
-                  <span className="font-mono text-muted-foreground">
-                    {change.oldValue} → {change.newValue}
-                  </span>
-                </div>
-                {change.impact && (
-                  <p className="text-xs text-muted-foreground pl-0">
-                    {change.impact}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Missing scenarios notice */}
+      {/* Missing scenarios notice (informational, not part of hierarchy) */}
       {missingScenarios.length > 0 && (
         <div className="flex items-start gap-3 rounded border border-border bg-muted/30 px-4 py-3 text-sm">
           <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" strokeWidth={1.5} />
@@ -362,7 +346,7 @@ export default function Compare() {
         </div>
       )}
 
-      {/* Scenario selector */}
+      {/* Scenario chips (header, no metrics) */}
       <div className="flex flex-wrap items-center gap-2">
         {selectedScenarios.map((scenario) => (
           <div
@@ -432,7 +416,7 @@ export default function Compare() {
         </div>
       )}
 
-      {/* Comparison table */}
+      {/* SECTION 2: Core Comparison Table */}
       {selectedScenarios.length >= 2 ? (
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <table className="w-full min-w-[500px] text-sm">
@@ -493,7 +477,7 @@ export default function Compare() {
         </div>
       )}
 
-      {/* Canonical Summary - 3 sections */}
+      {/* SECTION 3: Canonical Summary (3 sections) */}
       {selectedScenarios.length >= 2 && summary && (
         <div className="border-t border-border pt-6 space-y-6">
           {summary.recommendation && (
@@ -548,7 +532,32 @@ export default function Compare() {
         </div>
       )}
 
-      {/* Procedural actions */}
+      {/* SECTION 4: What's changed since last time (conditional - decision continuity) */}
+      {materialChanges.length > 0 && (
+        <div className="border-t border-border pt-6 space-y-3">
+          <p className="section-label">What's changed since last time</p>
+          <ul className="space-y-2 text-sm">
+            {materialChanges.map((change, idx) => (
+              <li key={idx} className="flex flex-col gap-0.5">
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <span className="text-muted-foreground">{change.scenarioName}:</span>
+                  <span className="text-foreground">{change.fieldLabel}</span>
+                  <span className="font-mono text-muted-foreground">
+                    {change.oldValue} → {change.newValue}
+                  </span>
+                </div>
+                {change.impact && (
+                  <p className="text-xs text-muted-foreground">
+                    {change.impact}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* SECTION 5: Actions (always last) */}
       {selectedScenarios.length >= 2 && (
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-6">
           <Button 
