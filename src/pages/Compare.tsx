@@ -599,56 +599,64 @@ export default function Compare() {
         </div>
       )}
 
-      {/* SECTION 3: Canonical Summary (3 sections) */}
+      {/* SECTION 3: Canonical Summary (Recommendation Engine Output) */}
       {selectedScenarios.length >= 2 && summary && (
         <div className="border-t border-border pt-6 space-y-6">
-          {summary.recommendation && (
+          {/* Recommendation headline */}
+          {summary.recommendationOutput && (
             <div>
-              <p className="section-label mb-2">Recommended option</p>
-              <p className="text-sm">
-                <span className="font-serif font-medium">{summary.recommendation.scenario.name}</span>
+              <p className="section-label mb-2">
+                {summary.recommendationOutput.isClearWinner ? "Recommendation" : "Analysis"}
               </p>
-              <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-                {summary.recommendation.reason}.
-              </p>
+              {summary.recommendationOutput.isClearWinner && summary.recommendation ? (
+                <>
+                  <p className="text-sm">
+                    <span className="font-serif font-medium">{summary.recommendation.scenario.name}</span>
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+                    {summary.recommendationOutput.headline}.
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground max-w-2xl">
+                  {summary.recommendationOutput.headline}. Both options are reasonable choices depending on your priorities.
+                </p>
+              )}
             </div>
           )}
 
-          {summary.benefits.length > 0 && (
+          {/* Summary lines (ordered: monthly, total cost, payoff, cash at close) */}
+          {summary.recommendationOutput && summary.recommendationOutput.summaryLines.length > 0 && (
             <div>
               <p className="section-label mb-2">Why it's recommended</p>
               <ul className="space-y-1.5 text-sm text-muted-foreground max-w-2xl">
-                {summary.benefits.map((benefit, idx) => (
+                {summary.recommendationOutput.summaryLines.map((line, idx) => (
                   <li key={idx} className="flex items-start gap-2">
                     <span className="text-foreground/50 select-none">•</span>
-                    <span>{benefit}</span>
+                    <span>{line}</span>
                   </li>
                 ))}
               </ul>
             </div>
           )}
 
-          {(summary.tradeoffs.length > 0 || summary.alternativeScenario) && (
+          {/* Tradeoff line (if conflicts exist) */}
+          {summary.recommendationOutput?.tradeoffLine && (
+            <div>
+              <p className="section-label mb-2">Tradeoffs</p>
+              <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+                {summary.recommendationOutput.tradeoffLine}
+              </p>
+            </div>
+          )}
+
+          {/* Alternative scenario advice */}
+          {summary.alternativeScenario && !summary.recommendationOutput?.tradeoffLine && (
             <div>
               <p className="section-label mb-2">When another option may make more sense</p>
-              {summary.tradeoffs.length > 0 && (
-                <ul className="space-y-1.5 text-sm text-muted-foreground max-w-2xl mb-3">
-                  {summary.tradeoffs.map((tradeoff, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="text-foreground/50 select-none">•</span>
-                      <span>
-                        {tradeoff.statement}
-                        {tradeoff.detail && <span className="text-muted-foreground/70"> — {tradeoff.detail}</span>}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {summary.alternativeScenario && (
-                <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                  {summary.alternativeScenario.advice}
-                </p>
-              )}
+              <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+                {summary.alternativeScenario.advice}
+              </p>
             </div>
           )}
 

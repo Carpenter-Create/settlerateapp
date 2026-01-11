@@ -14,6 +14,18 @@ import type { ScenarioData } from "@/lib/scenarioContract";
 
 export const COMPARISON_SCHEMA_VERSION = 2;
 
+// Tie thresholds - differences within these ranges are "effectively the same"
+export const TIE_THRESHOLDS = {
+  monthly: 25,           // $25/mo
+  totalInterest: 2500,   // $2,500
+  totalCost: 2500,       // $2,500
+  payoffMonths: 3,       // 3 months
+  cashAtClose: 500,      // $500
+} as const;
+
+// Conflict override threshold
+export const TOTAL_COST_OVERRIDE_THRESHOLD = 15000; // $15,000
+
 // ============================================================================
 // DATA MODEL
 // ============================================================================
@@ -83,7 +95,7 @@ export function createScenarioSnapshot(scenario: ScenarioData): ScenarioSnapshot
 
 /**
  * Detect material changes between a stored snapshot and current scenario state.
- * Only returns changes that affect decision-making.
+ * Only returns changes that exceed tie thresholds (to avoid noise).
  */
 export function detectMaterialChanges(
   snapshots: ScenarioSnapshot[],
@@ -97,8 +109,8 @@ export function detectMaterialChanges(
 
     const currentSnapshot = createScenarioSnapshot(current);
 
-    // Interest rate change
-    if (Math.abs(snapshot.interestRate - currentSnapshot.interestRate) >= 0.01) {
+    // Interest rate change (threshold: 0.125% - half a typical rate step)
+    if (Math.abs(snapshot.interestRate - currentSnapshot.interestRate) >= 0.125) {
       const interestDiff = currentSnapshot.totalInterest - snapshot.totalInterest;
       changes.push({
         scenarioId: snapshot.scenarioId,
@@ -107,14 +119,14 @@ export function detectMaterialChanges(
         fieldLabel: "Interest rate",
         oldValue: formatPercent(snapshot.interestRate),
         newValue: formatPercent(currentSnapshot.interestRate),
-        impact: interestDiff !== 0 
+        impact: Math.abs(interestDiff) >= TIE_THRESHOLDS.totalInterest
           ? `This ${interestDiff > 0 ? "increased" : "decreased"} total interest by ${formatCurrency(Math.abs(interestDiff))}`
           : null,
       });
     }
 
-    // Loan amount change (material if >$1,000)
-    if (Math.abs(snapshot.loanAmount - currentSnapshot.loanAmount) >= 1000) {
+    // Loan amount change (threshold: $2,500)
+    if (Math.abs(snapshot.loanAmount - currentSnapshot.loanAmount) >= 2500) {
       const interestDiff = currentSnapshot.totalInterest - snapshot.totalInterest;
       changes.push({
         scenarioId: snapshot.scenarioId,
@@ -123,13 +135,13 @@ export function detectMaterialChanges(
         fieldLabel: "Loan amount",
         oldValue: formatCurrency(snapshot.loanAmount),
         newValue: formatCurrency(currentSnapshot.loanAmount),
-        impact: interestDiff !== 0
+        impact: Math.abs(interestDiff) >= TIE_THRESHOLDS.totalInterest
           ? `This ${interestDiff > 0 ? "increased" : "decreased"} total interest by ${formatCurrency(Math.abs(interestDiff))}`
           : null,
       });
     }
 
-    // Term length change
+    // Term length change (any change is material)
     if (snapshot.loanTerm !== currentSnapshot.loanTerm) {
       const monthsDiff = currentSnapshot.payoffMonths - snapshot.payoffMonths;
       changes.push({
@@ -139,7 +151,7 @@ export function detectMaterialChanges(
         fieldLabel: "Loan term",
         oldValue: `${snapshot.loanTerm} years`,
         newValue: `${currentSnapshot.loanTerm} years`,
-        impact: monthsDiff !== 0
+        impact: Math.abs(monthsDiff) >= TIE_THRESHOLDS.payoffMonths
           ? `Payoff timeline ${monthsDiff > 0 ? "extended" : "shortened"} by ${Math.abs(monthsDiff)} months`
           : null,
       });
@@ -155,20 +167,20 @@ export function detectMaterialChanges(
         fieldLabel: "Taxes & insurance",
         oldValue: snapshot.includeTaxesInsurance ? "Included" : "Not included",
         newValue: currentSnapshot.includeTaxesInsurance ? "Included" : "Not included",
-        impact: monthlyDiff !== 0
+        impact: Math.abs(monthlyDiff) >= TIE_THRESHOLDS.monthly
           ? `Monthly payment ${monthlyDiff > 0 ? "increased" : "decreased"} by ${formatCurrency(Math.abs(monthlyDiff))}`
           : null,
       });
     }
 
-    // Significant monthly payment change (>$50) not explained by above
+    // Monthly payment change (only if exceeds threshold and not explained by above)
     const monthlyDiff = currentSnapshot.monthlyTotal - snapshot.monthlyTotal;
     const hasMonthlyExplanation = changes.some(
       (c) => c.scenarioId === snapshot.scenarioId && 
              (c.field === "interestRate" || c.field === "loanAmount" || 
               c.field === "loanTerm" || c.field === "includeTaxesInsurance")
     );
-    if (Math.abs(monthlyDiff) >= 50 && !hasMonthlyExplanation) {
+    if (Math.abs(monthlyDiff) >= TIE_THRESHOLDS.monthly && !hasMonthlyExplanation) {
       changes.push({
         scenarioId: snapshot.scenarioId,
         scenarioName: current.name,
@@ -179,21 +191,65 @@ export function detectMaterialChanges(
         impact: null,
       });
     }
+
+    // Total interest change (only if exceeds threshold and not explained by above)
+    const totalInterestDiff = currentSnapshot.totalInterest - snapshot.totalInterest;
+    const hasInterestExplanation = changes.some(
+      (c) => c.scenarioId === snapshot.scenarioId && 
+             (c.field === "interestRate" || c.field === "loanAmount" || c.field === "loanTerm")
+    );
+    if (Math.abs(totalInterestDiff) >= TIE_THRESHOLDS.totalInterest && !hasInterestExplanation) {
+      changes.push({
+        scenarioId: snapshot.scenarioId,
+        scenarioName: current.name,
+        field: "totalInterest",
+        fieldLabel: "Total interest",
+        oldValue: formatCurrency(snapshot.totalInterest),
+        newValue: formatCurrency(currentSnapshot.totalInterest),
+        impact: null,
+      });
+    }
   }
 
   return changes;
 }
 
 // ============================================================================
-// COMPARISON SUMMARY CONTRACT
+// COMPARISON SUMMARY CONTRACT - DETERMINISTIC RECOMMENDATION ENGINE
 // ============================================================================
 
 interface AnalyzedScenario {
   scenario: ScenarioData;
-  monthlyPayment: number;
+  monthlyPayment: number;       // Monthly total (P&I + T&I if included)
+  monthlyPI: number;            // Monthly P&I only
   totalInterest: number;
   totalCost: number;
   payoffMonths: number;
+  cashAtClose: number;
+}
+
+/**
+ * Winner determination result for a metric
+ */
+interface MetricWinner {
+  winnerId: string | null;
+  winnerValue: number;
+  isTie: boolean;
+  tieMembersIds: string[];
+  marginOverNext: number;
+}
+
+export interface RecommendationOutput {
+  /** Recommended scenario (null if "two strong options") */
+  recommendedId: string | null;
+  /** Headline reason */
+  headline: string;
+  /** Whether this is a clear winner or "two strong options" */
+  isClearWinner: boolean;
+  /** Ordered summary lines */
+  summaryLines: string[];
+  /** Tradeoff line (only if conflicts exist) */
+  tradeoffLine: string | null;
 }
 
 export interface ComparisonSummary {
@@ -201,6 +257,8 @@ export interface ComparisonSummary {
     scenario: ScenarioData;
     reason: string;
   } | null;
+  /** Full recommendation output */
+  recommendationOutput: RecommendationOutput | null;
   benefits: string[];
   tradeoffs: {
     statement: string;
@@ -217,7 +275,69 @@ export interface ComparisonSummary {
 }
 
 /**
+ * Determine winner for a metric using tie threshold
+ */
+function determineWinner(
+  analyzed: AnalyzedScenario[],
+  getValue: (a: AnalyzedScenario) => number,
+  threshold: number,
+  lowerIsBetter: boolean = true
+): MetricWinner {
+  const sorted = [...analyzed].sort((a, b) => 
+    lowerIsBetter ? getValue(a) - getValue(b) : getValue(b) - getValue(a)
+  );
+  
+  const bestValue = getValue(sorted[0]);
+  const tieMembersIds = sorted
+    .filter((a) => Math.abs(getValue(a) - bestValue) <= threshold)
+    .map((a) => a.scenario.id);
+  
+  const isTie = tieMembersIds.length > 1;
+  const marginOverNext = sorted.length > 1 
+    ? Math.abs(getValue(sorted[0]) - getValue(sorted[1]))
+    : 0;
+  
+  return {
+    winnerId: isTie ? null : sorted[0].scenario.id,
+    winnerValue: bestValue,
+    isTie,
+    tieMembersIds,
+    marginOverNext,
+  };
+}
+
+/**
+ * Calculate cash required at close for a scenario
+ */
+function calculateCashAtClose(scenario: ScenarioData): number {
+  if (scenario.inputs.mode === "purchase") {
+    const { purchasePrice, downPayment, downPaymentType } = scenario.inputs.purchase;
+    const downPaymentAmount = downPaymentType === "percent"
+      ? (purchasePrice * downPayment) / 100
+      : downPayment;
+    // Estimate closing costs at 3% + prepaid expenses
+    const closingCosts = purchasePrice * 0.03;
+    return downPaymentAmount + closingCosts;
+  } else {
+    // Refinance: closing costs (if not financed) + any adjustments
+    const closingCosts = scenario.inputs.refinance.financeClosingCosts 
+      ? 0 
+      : scenario.inputs.refinance.closingCosts;
+    return closingCosts;
+  }
+}
+
+/**
  * Generate a canonical comparison summary following strict priority rules.
+ * 
+ * RECOMMENDATION ENGINE LOGIC:
+ * 1. Compute winners across: lowest monthly, lowest total interest, lowest total cost,
+ *    fastest payoff, lowest cash at close
+ * 2. Use tie thresholds to determine "effectively the same"
+ * 3. Primary metric: Monthly total (for both purchase and refi)
+ * 4. If primary metric winner by > threshold, recommend unless total cost worse by ≥$15k
+ * 5. If primary tied, use total cost → fastest payoff → lowest cash at close
+ * 6. If no clean winner, output "Two strong options"
  */
 export function generateComparisonSummary(scenarios: ScenarioData[]): ComparisonSummary | null {
   if (scenarios.length < 2) return null;
@@ -225,127 +345,251 @@ export function generateComparisonSummary(scenarios: ScenarioData[]): Comparison
   const analyzed: AnalyzedScenario[] = scenarios.map((s) => ({
     scenario: s,
     monthlyPayment: s.results.monthlyTotal,
+    monthlyPI: s.results.monthlyPrincipalInterest,
     totalInterest: s.results.totalInterest,
     totalCost: s.results.totalCost,
     payoffMonths: s.results.payoffMonths,
+    cashAtClose: calculateCashAtClose(s),
   }));
 
-  const byTotalInterest = [...analyzed].sort((a, b) => a.totalInterest - b.totalInterest);
-  const byPayoffMonths = [...analyzed].sort((a, b) => a.payoffMonths - b.payoffMonths);
-  const byMonthlyPayment = [...analyzed].sort((a, b) => a.monthlyPayment - b.monthlyPayment);
+  // Determine winners for each metric
+  const monthlyWinner = determineWinner(analyzed, (a) => a.monthlyPayment, TIE_THRESHOLDS.monthly);
+  const totalInterestWinner = determineWinner(analyzed, (a) => a.totalInterest, TIE_THRESHOLDS.totalInterest);
+  const totalCostWinner = determineWinner(analyzed, (a) => a.totalCost, TIE_THRESHOLDS.totalCost);
+  const payoffWinner = determineWinner(analyzed, (a) => a.payoffMonths, TIE_THRESHOLDS.payoffMonths);
+  const cashWinner = determineWinner(analyzed, (a) => a.cashAtClose, TIE_THRESHOLDS.cashAtClose);
 
-  let recommended = byTotalInterest[0];
+  // Primary metric is monthly payment for both modes
+  const primaryWinner = monthlyWinner;
+  
+  // Determine recommended scenario
+  let recommendedId: string | null = null;
+  let isClearWinner = false;
+  let headline = "";
+  let tradeoffLine: string | null = null;
 
-  const lowestInterest = byTotalInterest[0].totalInterest;
-  const tiedByInterest = byTotalInterest.filter(
-    (a) => a.totalInterest <= lowestInterest * 1.01
-  );
-  if (tiedByInterest.length > 1) {
-    tiedByInterest.sort((a, b) => a.totalCost - b.totalCost);
-    recommended = tiedByInterest[0];
-  }
-
-  const shortestPayoff = byPayoffMonths[0];
-  if (shortestPayoff.scenario.id !== recommended.scenario.id) {
-    const payoffRatio = shortestPayoff.payoffMonths / recommended.payoffMonths;
-    const interestRatio = shortestPayoff.totalInterest / recommended.totalInterest;
-    if (payoffRatio <= 0.9 && interestRatio <= 1.05) {
-      recommended = shortestPayoff;
+  if (!primaryWinner.isTie && primaryWinner.winnerId) {
+    // Primary metric has a clear winner
+    const primaryScenario = analyzed.find((a) => a.scenario.id === primaryWinner.winnerId)!;
+    const totalCostScenario = analyzed.find((a) => a.scenario.id === totalCostWinner.winnerId);
+    
+    // Check for override: winner is significantly worse on total cost
+    if (totalCostScenario && totalCostScenario.scenario.id !== primaryScenario.scenario.id) {
+      const costDifference = primaryScenario.totalCost - totalCostScenario.totalCost;
+      
+      if (costDifference >= TOTAL_COST_OVERRIDE_THRESHOLD) {
+        // Total cost difference is too significant - recommend based on total cost
+        recommendedId = totalCostScenario.scenario.id;
+        isClearWinner = true;
+        headline = `${totalCostScenario.scenario.name} provides the lowest total cost over the life of the loan`;
+        tradeoffLine = `${primaryScenario.scenario.name} has a lower monthly payment but costs ${formatCurrency(costDifference)} more overall.`;
+      } else {
+        // Primary metric winner stands
+        recommendedId = primaryWinner.winnerId;
+        isClearWinner = true;
+        headline = `${primaryScenario.scenario.name} provides the lowest monthly payment`;
+        
+        if (costDifference > TIE_THRESHOLDS.totalCost) {
+          tradeoffLine = `This option costs ${formatCurrency(costDifference)} more over the full term than ${totalCostScenario.scenario.name}.`;
+        }
+      }
+    } else {
+      // Primary winner is also best/tied on total cost
+      recommendedId = primaryWinner.winnerId;
+      isClearWinner = true;
+      
+      if (totalCostWinner.winnerId === primaryWinner.winnerId) {
+        headline = `${primaryScenario.scenario.name} provides both the lowest monthly payment and lowest total cost`;
+      } else {
+        headline = `${primaryScenario.scenario.name} provides the lowest monthly payment`;
+      }
     }
-  }
-
-  const lowestMonthly = byMonthlyPayment[0];
-  if (lowestMonthly.scenario.id !== recommended.scenario.id) {
-    const monthlyRatio = lowestMonthly.monthlyPayment / recommended.monthlyPayment;
-    if (monthlyRatio <= 0.95) {
-      const interestRatio = lowestMonthly.totalInterest / recommended.totalInterest;
-      if (interestRatio <= 1.10) {
-        recommended = lowestMonthly;
+  } else if (primaryWinner.isTie) {
+    // Primary metric is tied - use tiebreakers
+    const tiedScenarios = analyzed.filter((a) => primaryWinner.tieMembersIds.includes(a.scenario.id));
+    
+    // Tiebreaker 1: Total cost
+    const tiedTotalCostWinner = determineWinner(tiedScenarios, (a) => a.totalCost, TIE_THRESHOLDS.totalCost);
+    
+    if (!tiedTotalCostWinner.isTie && tiedTotalCostWinner.winnerId) {
+      recommendedId = tiedTotalCostWinner.winnerId;
+      isClearWinner = true;
+      const winnerScenario = analyzed.find((a) => a.scenario.id === recommendedId)!;
+      headline = `${winnerScenario.scenario.name} offers lower total cost with a similar monthly payment`;
+    } else {
+      // Tiebreaker 2: Fastest payoff
+      const tiedPayoffWinner = determineWinner(tiedScenarios, (a) => a.payoffMonths, TIE_THRESHOLDS.payoffMonths);
+      
+      if (!tiedPayoffWinner.isTie && tiedPayoffWinner.winnerId) {
+        recommendedId = tiedPayoffWinner.winnerId;
+        isClearWinner = true;
+        const winnerScenario = analyzed.find((a) => a.scenario.id === recommendedId)!;
+        headline = `${winnerScenario.scenario.name} provides a faster path to payoff`;
+      } else {
+        // Tiebreaker 3: Lowest cash at close
+        const tiedCashWinner = determineWinner(tiedScenarios, (a) => a.cashAtClose, TIE_THRESHOLDS.cashAtClose);
+        
+        if (!tiedCashWinner.isTie && tiedCashWinner.winnerId) {
+          recommendedId = tiedCashWinner.winnerId;
+          isClearWinner = true;
+          const winnerScenario = analyzed.find((a) => a.scenario.id === recommendedId)!;
+          headline = `${winnerScenario.scenario.name} requires less cash at closing`;
+        } else {
+          // No clean winner
+          isClearWinner = false;
+          headline = "Two strong options";
+          
+          // Generate tradeoff description for the tied scenarios
+          if (tiedScenarios.length >= 2) {
+            const s1 = tiedScenarios[0];
+            const s2 = tiedScenarios[1];
+            tradeoffLine = `Both options are effectively equivalent on monthly cost. ${s1.scenario.name} and ${s2.scenario.name} represent similar value.`;
+          }
+        }
       }
     }
   }
 
-  const others = analyzed.filter((a) => a.scenario.id !== recommended.scenario.id);
+  // Build summary lines
+  const summaryLines: string[] = [];
+  const recommendedScenario = recommendedId 
+    ? analyzed.find((a) => a.scenario.id === recommendedId)
+    : null;
+  const others = analyzed.filter((a) => a.scenario.id !== recommendedId);
 
-  let reason = "";
-  if (recommended.scenario.id === byTotalInterest[0].scenario.id) {
-    reason = "This option provides the lowest total interest over the life of the loan";
-  } else if (recommended.scenario.id === byPayoffMonths[0].scenario.id) {
-    reason = "This option provides the fastest path to debt freedom";
-  } else if (recommended.scenario.id === byMonthlyPayment[0].scenario.id) {
-    reason = "This option provides meaningful monthly savings with acceptable lifetime cost";
+  if (recommendedScenario && others.length > 0) {
+    // Monthly lead
+    const monthlyDiff = others[0].monthlyPayment - recommendedScenario.monthlyPayment;
+    if (Math.abs(monthlyDiff) > TIE_THRESHOLDS.monthly) {
+      summaryLines.push(
+        monthlyDiff > 0 
+          ? `${formatCurrency(monthlyDiff)} lower monthly payment`
+          : `Monthly payment is effectively the same`
+      );
+    } else {
+      summaryLines.push(`Monthly payment is effectively the same`);
+    }
+
+    // Total cost
+    const costDiff = others[0].totalCost - recommendedScenario.totalCost;
+    if (Math.abs(costDiff) > TIE_THRESHOLDS.totalCost) {
+      summaryLines.push(
+        costDiff > 0
+          ? `${formatCurrency(costDiff)} less in total cost over the life of the loan`
+          : `Total cost is effectively the same`
+      );
+    }
+
+    // Payoff timeline
+    const monthsDiff = others[0].payoffMonths - recommendedScenario.payoffMonths;
+    if (Math.abs(monthsDiff) > TIE_THRESHOLDS.payoffMonths) {
+      summaryLines.push(
+        monthsDiff > 0
+          ? `${monthsDiff} months shorter payoff timeline`
+          : `Similar payoff timeline`
+      );
+    }
+
+    // Cash at close
+    const cashDiff = others[0].cashAtClose - recommendedScenario.cashAtClose;
+    if (Math.abs(cashDiff) > TIE_THRESHOLDS.cashAtClose) {
+      summaryLines.push(
+        cashDiff > 0
+          ? `${formatCurrency(cashDiff)} less cash required at close`
+          : `Similar cash required at close`
+      );
+    }
   }
 
-  if (recommended.scenario.id === byTotalInterest[0].scenario.id && 
-      recommended.scenario.id === byMonthlyPayment[0].scenario.id) {
-    reason = "This option provides both the lowest monthly payment and lowest total interest";
-  }
+  // Build recommendation output
+  const recommendationOutput: RecommendationOutput = {
+    recommendedId,
+    headline,
+    isClearWinner,
+    summaryLines,
+    tradeoffLine,
+  };
 
+  // Legacy fields for backward compatibility
+  const recommended = recommendedId 
+    ? analyzed.find((a) => a.scenario.id === recommendedId)
+    : analyzed[0];
+
+  const byTotalInterest = [...analyzed].sort((a, b) => a.totalInterest - b.totalInterest);
+  const byMonthlyPayment = [...analyzed].sort((a, b) => a.monthlyPayment - b.monthlyPayment);
+
+  // Generate benefits
   const benefits: string[] = [];
+  if (recommendedId) {
+    others.forEach((other) => {
+      const monthlyDiff = other.monthlyPayment - recommended!.monthlyPayment;
+      if (monthlyDiff > TIE_THRESHOLDS.monthly) {
+        benefits.push(
+          `${formatCurrency(monthlyDiff)} lower monthly payment compared to ${other.scenario.name}`
+        );
+      }
+    });
 
-  others.forEach((other) => {
-    const monthlyDiff = other.monthlyPayment - recommended.monthlyPayment;
-    if (monthlyDiff > 10) {
-      benefits.push(
-        `${formatCurrency(monthlyDiff)} lower monthly payment compared to ${other.scenario.name}`
-      );
-    }
-  });
+    others.forEach((other) => {
+      const interestDiff = other.totalInterest - recommended!.totalInterest;
+      if (interestDiff > TIE_THRESHOLDS.totalInterest) {
+        benefits.push(
+          `${formatCurrency(interestDiff)} less total interest over the life of the loan`
+        );
+      }
+    });
 
-  others.forEach((other) => {
-    const interestDiff = other.totalInterest - recommended.totalInterest;
-    if (interestDiff > 500) {
-      benefits.push(
-        `${formatCurrency(interestDiff)} less total interest over the life of the loan`
-      );
-    }
-  });
+    others.forEach((other) => {
+      const monthsDiff = other.payoffMonths - recommended!.payoffMonths;
+      if (monthsDiff > TIE_THRESHOLDS.payoffMonths) {
+        benefits.push(
+          `Shorter payoff timeline (${recommended!.payoffMonths} months vs. ${other.payoffMonths} months)`
+        );
+      }
+    });
+  }
 
-  others.forEach((other) => {
-    const monthsDiff = other.payoffMonths - recommended.payoffMonths;
-    if (monthsDiff > 6) {
-      benefits.push(
-        `Shorter payoff timeline (${recommended.payoffMonths} months vs. ${other.payoffMonths} months)`
-      );
-    }
-  });
-
+  // Generate tradeoffs
   const tradeoffs: { statement: string; detail?: string }[] = [];
   let alternativeScenario: ComparisonSummary["alternativeScenario"] = null;
 
-  if (lowestMonthly.scenario.id !== recommended.scenario.id) {
-    const monthlyDiff = recommended.monthlyPayment - lowestMonthly.monthlyPayment;
-    if (monthlyDiff > 10) {
+  const lowestMonthly = byMonthlyPayment[0];
+  if (recommendedId && lowestMonthly.scenario.id !== recommendedId) {
+    const monthlyDiff = recommended!.monthlyPayment - lowestMonthly.monthlyPayment;
+    if (monthlyDiff > TIE_THRESHOLDS.monthly) {
       tradeoffs.push({
         statement: `Requires a higher monthly payment than ${lowestMonthly.scenario.name}`,
       });
 
-      const interestDiff = lowestMonthly.totalInterest - recommended.totalInterest;
-      if (interestDiff > 500) {
+      const interestDiff = lowestMonthly.totalInterest - recommended!.totalInterest;
+      if (Math.abs(interestDiff) > TIE_THRESHOLDS.totalInterest) {
         tradeoffs.push({
           statement: `${lowestMonthly.scenario.name} minimizes monthly cost`,
-          detail: `but increases total interest paid by ${formatCurrency(interestDiff)}`,
+          detail: interestDiff > 0 
+            ? `but increases total interest paid by ${formatCurrency(interestDiff)}`
+            : `and also saves ${formatCurrency(Math.abs(interestDiff))} in total interest`,
         });
       }
 
       alternativeScenario = {
         scenario: lowestMonthly.scenario,
-        advice: `If your priority is the lowest possible monthly payment, ${lowestMonthly.scenario.name} may be preferable despite the higher lifetime cost of ${formatCurrency(interestDiff)}.`,
+        advice: `If your priority is the lowest possible monthly payment, ${lowestMonthly.scenario.name} may be preferable despite the higher lifetime cost of ${formatCurrency(interestDiff > 0 ? interestDiff : 0)}.`,
       };
     }
   }
 
-  // Generate confidence statement (language-based, no scores)
-  const confidenceStatement = generateConfidenceStatement(analyzed, recommended, byTotalInterest, byMonthlyPayment);
+  // Generate confidence statement
+  const confidenceStatement = generateConfidenceStatement(analyzed, recommended!, byTotalInterest, byMonthlyPayment);
   
-  // Generate sensitivity hints (max 2, only if material)
+  // Generate sensitivity hints
   const sensitivityHints = generateSensitivityHints(analyzed);
 
   return {
-    recommendation: {
-      scenario: recommended.scenario,
-      reason,
-    },
+    recommendation: recommendedId ? {
+      scenario: recommended!.scenario,
+      reason: headline,
+    } : null,
+    recommendationOutput,
     benefits,
     tradeoffs,
     alternativeScenario,

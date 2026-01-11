@@ -22,6 +22,30 @@ export interface RateSensitivityResult {
   };
 }
 
+export interface RefiRateSensitivityPoint {
+  rateAdjustment: number;
+  monthlyPayment: number;
+  monthlyChange: number;
+  totalInterest: number;
+  interestChange: number;
+}
+
+export interface RefiRateSensitivityResult {
+  /** Whether the analysis is valid */
+  isValid: boolean;
+  /** Base scenario info */
+  scenarioName: string;
+  baseRate: number;
+  baseMonthly: number;
+  baseTotalInterest: number;
+  /** Sensitivity points at different rate levels */
+  points: RefiRateSensitivityPoint[];
+  /** Break-even months if fees/points exist */
+  breakEvenMonths: number | null;
+  /** Primary narrative */
+  narrative: string;
+}
+
 /**
  * Generate a rate sensitivity narrative for a set of scenarios.
  * Uses ±0.5% adjustment applied uniformly to all scenarios.
@@ -106,5 +130,103 @@ export function generateRateSensitivityNarrative(
     narrative,
     orderingChanges,
     paymentChangeRange,
+  };
+}
+
+/**
+ * Generate multi-point rate sensitivity analysis for a refinance scenario.
+ * Shows impacts at base rate, base-0.25, base-0.50, and base-1.00.
+ */
+export function generateRefiRateSensitivity(
+  scenario: Scenario
+): RefiRateSensitivityResult {
+  if (scenario.inputs.mode !== "refinance") {
+    return {
+      isValid: false,
+      scenarioName: scenario.name,
+      baseRate: 0,
+      baseMonthly: 0,
+      baseTotalInterest: 0,
+      points: [],
+      breakEvenMonths: null,
+      narrative: "",
+    };
+  }
+
+  const baseRate = scenario.inputs.shared.interestRate;
+  const baseMonthly = scenario.results.monthlyTotal;
+  const baseTotalInterest = scenario.results.totalInterest;
+  const rateAdjustments = [-0.25, -0.50, -1.00];
+
+  const points: RefiRateSensitivityPoint[] = rateAdjustments.map((adj) => {
+    const adjustedInputs: MortgageInputs = {
+      ...scenario.inputs,
+      shared: {
+        ...scenario.inputs.shared,
+        interestRate: Math.max(0.1, baseRate + adj),
+      },
+    };
+
+    const adjustedResults = calculateMortgage(adjustedInputs);
+
+    return {
+      rateAdjustment: adj,
+      monthlyPayment: adjustedResults.monthlyTotal,
+      monthlyChange: adjustedResults.monthlyTotal - baseMonthly,
+      totalInterest: adjustedResults.totalInterest,
+      interestChange: adjustedResults.totalInterest - baseTotalInterest,
+    };
+  });
+
+  // Calculate break-even months if closing costs exist
+  let breakEvenMonths: number | null = null;
+  const closingCosts = scenario.inputs.refinance.closingCosts;
+  
+  if (closingCosts > 0) {
+    // Compare to a hypothetical scenario where you don't refinance
+    // Break-even = closingCosts / monthly savings
+    const currentLoanBalance = scenario.inputs.refinance.currentLoanBalance;
+    // Assume current rate is ~1% higher for rough break-even calc
+    const estimatedCurrentRate = baseRate + 1.0;
+    
+    const currentInputs: MortgageInputs = {
+      ...scenario.inputs,
+      shared: {
+        ...scenario.inputs.shared,
+        interestRate: estimatedCurrentRate,
+      },
+    };
+    const currentResults = calculateMortgage(currentInputs);
+    const monthlySavings = currentResults.monthlyPrincipalInterest - scenario.results.monthlyPrincipalInterest;
+    
+    if (monthlySavings > 0) {
+      breakEvenMonths = Math.ceil(closingCosts / monthlySavings);
+    }
+  }
+
+  // Generate narrative for 0.5% drop (most common consideration)
+  const halfPointDrop = points.find((p) => p.rateAdjustment === -0.50);
+  let narrative = "";
+  
+  if (halfPointDrop) {
+    const monthlySaving = Math.abs(halfPointDrop.monthlyChange);
+    const interestSaving = Math.abs(halfPointDrop.interestChange);
+    
+    narrative = `If rates drop by 0.50%, the monthly payment would decrease by approximately ${formatCurrency(monthlySaving)}, saving roughly ${formatCurrency(interestSaving)} in total interest over the loan term.`;
+    
+    if (breakEvenMonths !== null) {
+      narrative += ` With ${formatCurrency(closingCosts)} in closing costs, the break-even point would be approximately ${breakEvenMonths} months.`;
+    }
+  }
+
+  return {
+    isValid: true,
+    scenarioName: scenario.name,
+    baseRate,
+    baseMonthly,
+    baseTotalInterest,
+    points,
+    breakEvenMonths,
+    narrative,
   };
 }
