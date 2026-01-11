@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useScenarios, Scenario } from "@/hooks/useScenarios";
-import { formatCurrency, formatPercent, formatDate } from "@/lib/mortgage";
+import { formatCurrency, formatPercent, formatDate, calculateDownPaymentAmount } from "@/lib/mortgage";
 import { Button } from "@/components/ui/button";
-import { Calculator, GitCompare, Plus, X } from "lucide-react";
+import { Calculator, GitCompare, Plus, X, Download, Share2, Settings2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   Select,
@@ -13,50 +13,152 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-interface ComparisonRowProps {
+interface ComparisonMetric {
+  key: string;
   label: string;
-  values: (string | number)[];
-  highlight?: "lowest" | "highest";
-  format?: "currency" | "percent" | "text";
+  getValue: (s: Scenario) => number | string;
+  format: "currency" | "percent" | "months" | "date" | "text";
+  lowerIsBetter?: boolean;
 }
 
-function ComparisonRow({ label, values, highlight, format = "text" }: ComparisonRowProps) {
-  const numericValues = values.map((v) => (typeof v === "number" ? v : parseFloat(v.toString().replace(/[^0-9.-]/g, ""))));
-  
-  let highlightIndex = -1;
-  if (highlight && numericValues.some((v) => !isNaN(v))) {
-    const validValues = numericValues.filter((v) => !isNaN(v));
-    const targetValue = highlight === "lowest" ? Math.min(...validValues) : Math.max(...validValues);
-    highlightIndex = numericValues.findIndex((v) => v === targetValue);
-  }
+// Core metrics in the specified order
+const COMPARISON_METRICS: ComparisonMetric[] = [
+  {
+    key: "interestRate",
+    label: "Interest rate",
+    getValue: (s) => s.inputs.interestRate,
+    format: "percent",
+    lowerIsBetter: true,
+  },
+  {
+    key: "monthlyPayment",
+    label: "Monthly payment",
+    getValue: (s) => s.results.monthlyTotal,
+    format: "currency",
+    lowerIsBetter: true,
+  },
+  {
+    key: "cashAtClose",
+    label: "Cash required at close",
+    getValue: (s) => {
+      if (s.inputs.scenarioType === "purchase") {
+        const downPayment = calculateDownPaymentAmount(
+          s.inputs.purchasePrice,
+          s.inputs.downPayment,
+          s.inputs.downPaymentType
+        );
+        // Rough estimate: down payment + ~3% closing costs
+        return downPayment + (s.inputs.purchasePrice * 0.03);
+      }
+      return s.inputs.financeClosingCosts ? 0 : s.inputs.closingCosts;
+    },
+    format: "currency",
+    lowerIsBetter: true,
+  },
+  {
+    key: "totalInterest",
+    label: "Total interest (full term)",
+    getValue: (s) => s.results.totalInterest,
+    format: "currency",
+    lowerIsBetter: true,
+  },
+  {
+    key: "payoffMonths",
+    label: "Time to payoff",
+    getValue: (s) => s.results.payoffMonths,
+    format: "months",
+    lowerIsBetter: true,
+  },
+  {
+    key: "ltvRatio",
+    label: "Loan-to-value",
+    getValue: (s) => s.results.ltvRatio,
+    format: "percent",
+    lowerIsBetter: true,
+  },
+  {
+    key: "totalCost",
+    label: "Total cost",
+    getValue: (s) => s.results.totalCost,
+    format: "currency",
+    lowerIsBetter: true,
+  },
+];
 
-  return (
-    <div className="grid border-b border-border/50 last:border-0" style={{ gridTemplateColumns: `200px repeat(${values.length}, 1fr)` }}>
-      <div className="px-4 py-3 text-sm text-muted-foreground">{label}</div>
-      {values.map((value, idx) => (
-        <div
-          key={idx}
-          className={cn(
-            "px-4 py-3 text-sm font-mono tabular-nums text-right",
-            highlightIndex === idx && "text-primary font-medium"
-          )}
-        >
-          {value}
-        </div>
-      ))}
-    </div>
-  );
+function formatMetricValue(value: number | string, format: ComparisonMetric["format"]): string {
+  if (typeof value === "string") return value;
+  switch (format) {
+    case "currency":
+      return formatCurrency(value);
+    case "percent":
+      return formatPercent(value);
+    case "months":
+      return `${value} mo`;
+    case "date":
+      return formatDate(new Date(value));
+    default:
+      return String(value);
+  }
+}
+
+function findBestIndex(
+  scenarios: Scenario[],
+  metric: ComparisonMetric
+): number {
+  if (scenarios.length < 2) return -1;
+  
+  const values = scenarios.map((s) => {
+    const v = metric.getValue(s);
+    return typeof v === "number" ? v : parseFloat(String(v));
+  });
+  
+  if (values.some((v) => isNaN(v))) return -1;
+  
+  const target = metric.lowerIsBetter
+    ? Math.min(...values)
+    : Math.max(...values);
+  
+  return values.indexOf(target);
+}
+
+function generateExplanation(scenarios: Scenario[]): string {
+  if (scenarios.length < 2) return "";
+  
+  const [a, b] = scenarios;
+  const monthlyDiff = Math.abs(a.results.monthlyTotal - b.results.monthlyTotal);
+  const interestDiff = Math.abs(a.results.totalInterest - b.results.totalInterest);
+  
+  const lowerMonthly = a.results.monthlyTotal < b.results.monthlyTotal ? a : b;
+  const lowerInterest = a.results.totalInterest < b.results.totalInterest ? a : b;
+  
+  if (lowerMonthly === lowerInterest) {
+    return `${lowerMonthly.name} results in ${formatCurrency(monthlyDiff)} less per month and ${formatCurrency(interestDiff)} less in total interest over the loan term. The decision depends on your cash position at close and long-term cost tolerance.`;
+  }
+  
+  return `${lowerMonthly.name} has a lower monthly payment by ${formatCurrency(monthlyDiff)}, while ${lowerInterest.name} saves ${formatCurrency(interestDiff)} in total interest. Consider your monthly budget constraints against long-term cost.`;
 }
 
 export default function Compare() {
   const { scenarios, isLoaded } = useScenarios();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [emphasizedId, setEmphasizedId] = useState<string | null>(null);
 
   const selectedScenarios = selectedIds
     .map((id) => scenarios.find((s) => s.id === id))
     .filter((s): s is Scenario => s !== undefined);
 
   const availableScenarios = scenarios.filter((s) => !selectedIds.includes(s.id));
+
+  // Auto-emphasize the scenario with lowest total cost
+  const autoEmphasizedId = useMemo(() => {
+    if (selectedScenarios.length < 2) return null;
+    const sorted = [...selectedScenarios].sort(
+      (a, b) => a.results.totalCost - b.results.totalCost
+    );
+    return sorted[0]?.id ?? null;
+  }, [selectedScenarios]);
+
+  const currentEmphasis = emphasizedId ?? autoEmphasizedId;
 
   const addScenario = (id: string) => {
     if (selectedIds.length < 4) {
@@ -66,14 +168,41 @@ export default function Compare() {
 
   const removeScenario = (id: string) => {
     setSelectedIds(selectedIds.filter((i) => i !== id));
+    if (emphasizedId === id) setEmphasizedId(null);
   };
+
+  // Decision context - aggregate info
+  const decisionContext = useMemo(() => {
+    if (selectedScenarios.length === 0) return null;
+    
+    const prices = selectedScenarios
+      .filter((s) => s.inputs.scenarioType === "purchase")
+      .map((s) => s.inputs.purchasePrice);
+    
+    const loanAmounts = selectedScenarios.map((s) => s.results.loanAmount);
+    const terms = [...new Set(selectedScenarios.map((s) => s.inputs.loanTerm))];
+    
+    return {
+      propertyPrice: prices.length > 0 ? Math.max(...prices) : null,
+      loanRange: {
+        min: Math.min(...loanAmounts),
+        max: Math.max(...loanAmounts),
+      },
+      terms: terms.sort((a, b) => a - b),
+    };
+  }, [selectedScenarios]);
+
+  const explanation = useMemo(
+    () => generateExplanation(selectedScenarios),
+    [selectedScenarios]
+  );
 
   if (!isLoaded) {
     return (
       <div className="space-y-8">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Compare Scenarios</h1>
-          <p className="mt-1 text-muted-foreground">Loading...</p>
+          <h1>Compare Scenarios</h1>
+          <p className="mt-1">Loading scenarios...</p>
         </div>
       </div>
     );
@@ -83,23 +212,23 @@ export default function Compare() {
     return (
       <div className="space-y-8">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Compare Scenarios</h1>
-          <p className="mt-1 text-muted-foreground">
-            Compare up to 4 scenarios side-by-side
+          <h1>Compare Scenarios</h1>
+          <p className="mt-1">
+            Review mortgage options side-by-side
           </p>
         </div>
 
         <div className="card-elevated flex flex-col items-center justify-center px-6 py-16 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <GitCompare className="h-6 w-6 text-muted-foreground" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border">
+            <GitCompare className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
           </div>
-          <h3 className="mt-4 text-lg font-medium">Need more scenarios</h3>
+          <h3 className="mt-4 font-serif text-lg">Insufficient scenarios</h3>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Save at least 2 scenarios to compare them. Create scenarios using the calculator.
+            Save at least 2 scenarios to compare them.
           </p>
-          <Button asChild className="mt-6 gap-2">
+          <Button asChild size="sm" className="mt-6 gap-1.5">
             <Link to="/">
-              <Calculator className="h-4 w-4" />
+              <Calculator className="h-3.5 w-3.5" strokeWidth={1.5} />
               Open calculator
             </Link>
           </Button>
@@ -110,35 +239,42 @@ export default function Compare() {
 
   return (
     <div className="space-y-8">
+      {/* Page header */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Compare Scenarios</h1>
-        <p className="mt-1 text-muted-foreground">
-          Compare up to 4 scenarios side-by-side
+        <h1>Compare Scenarios</h1>
+        <p className="mt-1">
+          Review mortgage options side-by-side to understand the tradeoffs
         </p>
       </div>
 
-      {/* Scenario selector */}
-      <div className="flex flex-wrap items-center gap-3">
+      {/* Scenario selector - minimal */}
+      <div className="flex flex-wrap items-center gap-2">
         {selectedScenarios.map((scenario) => (
           <div
             key={scenario.id}
-            className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2"
+            className={cn(
+              "flex items-center gap-2 rounded border px-3 py-1.5 text-sm",
+              currentEmphasis === scenario.id
+                ? "border-foreground/30 bg-muted/50"
+                : "border-border"
+            )}
           >
-            <span className="text-sm font-medium">{scenario.name}</span>
+            <span className="font-medium">{scenario.name}</span>
             <button
               onClick={() => removeScenario(scenario.id)}
               className="text-muted-foreground transition-colors hover:text-foreground"
+              aria-label={`Remove ${scenario.name}`}
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" strokeWidth={1.5} />
             </button>
           </div>
         ))}
 
         {selectedIds.length < 4 && availableScenarios.length > 0 && (
           <Select onValueChange={addScenario}>
-            <SelectTrigger className="w-48">
-              <div className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
+            <SelectTrigger className="h-8 w-40 text-sm">
+              <div className="flex items-center gap-1.5">
+                <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
                 <span>Add scenario</span>
               </div>
             </SelectTrigger>
@@ -153,117 +289,134 @@ export default function Compare() {
         )}
       </div>
 
+      {/* Decision context block - static, above fold */}
+      {decisionContext && selectedScenarios.length >= 2 && (
+        <div className="flex flex-wrap gap-x-8 gap-y-2 border-y border-border py-4 text-sm">
+          {decisionContext.propertyPrice && (
+            <div>
+              <span className="text-muted-foreground">Property price</span>
+              <span className="ml-2 font-mono tabular-nums">
+                {formatCurrency(decisionContext.propertyPrice)}
+              </span>
+            </div>
+          )}
+          <div>
+            <span className="text-muted-foreground">Loan amount</span>
+            <span className="ml-2 font-mono tabular-nums">
+              {decisionContext.loanRange.min === decisionContext.loanRange.max
+                ? formatCurrency(decisionContext.loanRange.min)
+                : `${formatCurrency(decisionContext.loanRange.min)} – ${formatCurrency(decisionContext.loanRange.max)}`}
+            </span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Term</span>
+            <span className="ml-2 font-mono tabular-nums">
+              {decisionContext.terms.join(", ")} years
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Comparison table */}
       {selectedScenarios.length >= 2 ? (
-        <div className="card-elevated overflow-x-auto">
-          <div className="min-w-[600px]">
-            {/* Header */}
-            <div
-              className="grid border-b border-border bg-muted/50"
-              style={{ gridTemplateColumns: `200px repeat(${selectedScenarios.length}, 1fr)` }}
-            >
-              <div className="px-4 py-3 text-sm font-medium text-muted-foreground">Metric</div>
-              {selectedScenarios.map((s) => (
-                <div key={s.id} className="px-4 py-3 text-sm font-medium text-right">
-                  {s.name}
-                </div>
-              ))}
-            </div>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table className="w-full min-w-[500px] text-sm">
+            {/* Header row - scenario names */}
+            <thead>
+              <tr className="border-b border-border">
+                <th className="py-3 pr-4 text-left font-normal text-muted-foreground w-48" />
+                {selectedScenarios.map((s) => (
+                  <th
+                    key={s.id}
+                    className={cn(
+                      "py-3 px-4 text-right font-medium",
+                      currentEmphasis === s.id && "bg-muted/30"
+                    )}
+                  >
+                    {s.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
 
-            {/* Loan details */}
-            <div className="bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Loan Details
-            </div>
-            <ComparisonRow
-              label="Purchase price"
-              values={selectedScenarios.map((s) => formatCurrency(s.inputs.purchasePrice))}
-            />
-            <ComparisonRow
-              label="Down payment"
-              values={selectedScenarios.map((s) => 
-                s.inputs.downPaymentType === "percent" 
-                  ? formatPercent(s.inputs.downPayment)
-                  : formatCurrency(s.inputs.downPayment)
-              )}
-            />
-            <ComparisonRow
-              label="Loan amount"
-              values={selectedScenarios.map((s) => formatCurrency(s.results.loanAmount))}
-              highlight="lowest"
-            />
-            <ComparisonRow
-              label="Interest rate"
-              values={selectedScenarios.map((s) => formatPercent(s.inputs.interestRate))}
-              highlight="lowest"
-            />
-            <ComparisonRow
-              label="Loan term"
-              values={selectedScenarios.map((s) => `${s.inputs.loanTerm} years`)}
-            />
-
-            {/* Monthly costs */}
-            <div className="bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Monthly Costs
-            </div>
-            <ComparisonRow
-              label="Total payment"
-              values={selectedScenarios.map((s) => formatCurrency(s.results.monthlyTotal))}
-              highlight="lowest"
-            />
-            <ComparisonRow
-              label="Principal & interest"
-              values={selectedScenarios.map((s) => formatCurrency(s.results.monthlyPrincipalInterest))}
-              highlight="lowest"
-            />
-            <ComparisonRow
-              label="Property tax"
-              values={selectedScenarios.map((s) => formatCurrency(s.results.monthlyPropertyTax))}
-            />
-            <ComparisonRow
-              label="Home insurance"
-              values={selectedScenarios.map((s) => formatCurrency(s.results.monthlyHomeInsurance))}
-            />
-            {selectedScenarios.some((s) => s.results.monthlyPMI > 0) && (
-              <ComparisonRow
-                label="PMI"
-                values={selectedScenarios.map((s) => 
-                  s.results.monthlyPMI > 0 ? formatCurrency(s.results.monthlyPMI) : "—"
-                )}
-              />
-            )}
-            {selectedScenarios.some((s) => s.results.monthlyHOA > 0) && (
-              <ComparisonRow
-                label="HOA"
-                values={selectedScenarios.map((s) => 
-                  s.results.monthlyHOA > 0 ? formatCurrency(s.results.monthlyHOA) : "—"
-                )}
-              />
-            )}
-
-            {/* Totals */}
-            <div className="bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Total Costs
-            </div>
-            <ComparisonRow
-              label="Total interest"
-              values={selectedScenarios.map((s) => formatCurrency(s.results.totalInterest))}
-              highlight="lowest"
-            />
-            <ComparisonRow
-              label="Total cost"
-              values={selectedScenarios.map((s) => formatCurrency(s.results.totalCost))}
-              highlight="lowest"
-            />
-            <ComparisonRow
-              label="Payoff date"
-              values={selectedScenarios.map((s) => formatDate(s.results.payoffDate))}
-            />
-          </div>
+            {/* Data rows */}
+            <tbody>
+              {COMPARISON_METRICS.map((metric) => {
+                const bestIndex = findBestIndex(selectedScenarios, metric);
+                
+                return (
+                  <tr key={metric.key} className="border-b border-border/50">
+                    <td className="py-3 pr-4 text-muted-foreground">
+                      {metric.label}
+                    </td>
+                    {selectedScenarios.map((s, idx) => {
+                      const value = metric.getValue(s);
+                      const formatted = formatMetricValue(value, metric.format);
+                      const isBest = idx === bestIndex && selectedScenarios.length > 1;
+                      
+                      return (
+                        <td
+                          key={s.id}
+                          className={cn(
+                            "py-3 px-4 text-right font-mono tabular-nums",
+                            currentEmphasis === s.id && "bg-muted/30",
+                            isBest ? "font-medium text-foreground" : "text-foreground/80"
+                          )}
+                        >
+                          {formatted}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       ) : (
         <div className="card-elevated flex flex-col items-center justify-center px-6 py-12 text-center">
           <p className="text-sm text-muted-foreground">
             Select at least 2 scenarios to compare
+          </p>
+        </div>
+      )}
+
+      {/* Explanation band */}
+      {selectedScenarios.length >= 2 && explanation && (
+        <div className="border-t border-border pt-6">
+          <p className="section-label mb-2">Summary</p>
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+            {explanation}
+          </p>
+        </div>
+      )}
+
+      {/* Procedural actions - muted, non-emotional */}
+      {selectedScenarios.length >= 2 && (
+        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-6">
+          <Button variant="outline" size="sm" className="gap-1.5" disabled>
+            <Download className="h-3.5 w-3.5" strokeWidth={1.5} />
+            Export summary
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5" disabled>
+            <Share2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+            Share for review
+          </Button>
+          <Button variant="ghost" size="sm" className="gap-1.5" disabled>
+            <Settings2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+            Adjust assumptions
+          </Button>
+        </div>
+      )}
+
+      {/* Risk notes - footnote style */}
+      {selectedScenarios.length >= 2 && (
+        <div className="text-xs text-muted-foreground/70 space-y-1">
+          <p>
+            Cash at close estimate includes down payment and approximately 3% closing costs.
+          </p>
+          <p>
+            All figures assume standard amortization with no prepayment penalties.
           </p>
         </div>
       )}
