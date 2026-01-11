@@ -1,15 +1,15 @@
 import { useState, useMemo, useCallback } from "react";
-import { MortgageInputs, calculateMortgage, DEFAULT_INPUTS } from "@/lib/mortgage";
+import { MortgageInputs, calculateMortgage, DEFAULT_INPUTS, calculateDownPaymentPercent } from "@/lib/mortgage";
 import { CurrencyInput } from "./CurrencyInput";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
 import { DownPaymentInput } from "./DownPaymentInput";
 import { LoanTermInput } from "./LoanTermInput";
+import { TaxInsuranceSection } from "./TaxInsuranceSection";
 import { ResultsCard } from "./ResultsCard";
 import { AmortizationTable } from "./AmortizationTable";
 import { Button } from "@/components/ui/button";
 import { Save, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useScenarios } from "@/hooks/useScenarios";
 import { toast } from "sonner";
 
@@ -32,6 +32,10 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
     setInputs((prev) => ({ ...prev, [key]: value }));
   }, []);
 
+  const batchUpdateInputs = useCallback((updates: Partial<MortgageInputs>) => {
+    setInputs((prev) => ({ ...prev, ...updates }));
+  }, []);
+
   const handleReset = useCallback(() => {
     setInputs(DEFAULT_INPUTS);
   }, []);
@@ -43,6 +47,16 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
       description: `"${name}" has been saved to your scenarios.`,
     });
   }, [createScenario, inputs, scenarios.length]);
+
+  // Calculate LTV for PMI logic
+  const ltvRatio = useMemo(() => {
+    const dpPercent = calculateDownPaymentPercent(
+      inputs.purchasePrice,
+      inputs.downPayment,
+      inputs.downPaymentType
+    );
+    return 100 - dpPercent;
+  }, [inputs.purchasePrice, inputs.downPayment, inputs.downPaymentType]);
 
   return (
     <div className="grid w-full max-w-full gap-6 lg:grid-cols-[1fr,380px] lg:gap-10">
@@ -100,24 +114,15 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
 
             <div className="divider-subtle" />
 
-            {/* Taxes and insurance */}
-            <div className="grid gap-5 md:grid-cols-2">
-              <InputField label="Property tax" description="Annual amount">
-                <CurrencyInput
-                  value={inputs.propertyTax}
-                  onChange={(v) => updateInput("propertyTax", v)}
-                  min={0}
-                />
-              </InputField>
+            {/* Taxes & Insurance Section (Optional) */}
+            <TaxInsuranceSection
+              inputs={inputs}
+              ltvRatio={ltvRatio}
+              onUpdate={updateInput}
+              onBatchUpdate={batchUpdateInputs}
+            />
 
-              <InputField label="Home insurance" description="Annual amount">
-                <CurrencyInput
-                  value={inputs.homeInsurance}
-                  onChange={(v) => updateInput("homeInsurance", v)}
-                  min={0}
-                />
-              </InputField>
-            </div>
+            <div className="divider-subtle" />
 
             {/* Advanced options toggle */}
             <button
@@ -125,7 +130,7 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
               onClick={() => setShowAdvanced(!showAdvanced)}
               className="flex w-full items-center justify-between py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              <span>Advanced options</span>
+              <span>Extra payments</span>
               {showAdvanced ? (
                 <ChevronUp className="h-4 w-4" />
               ) : (
@@ -136,24 +141,6 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
             {/* Advanced inputs */}
             {showAdvanced && (
               <div className="space-y-5 animate-slide-up">
-                <div className="grid gap-5 md:grid-cols-2">
-                  <InputField label="PMI" description="Monthly amount" optional>
-                    <CurrencyInput
-                      value={inputs.pmi}
-                      onChange={(v) => updateInput("pmi", v)}
-                      min={0}
-                    />
-                  </InputField>
-
-                  <InputField label="HOA" description="Monthly amount" optional>
-                    <CurrencyInput
-                      value={inputs.hoa}
-                      onChange={(v) => updateInput("hoa", v)}
-                      min={0}
-                    />
-                  </InputField>
-                </div>
-
                 <InputField
                   label="Extra monthly payment"
                   description="Additional principal payment each month"
@@ -162,6 +149,18 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
                   <CurrencyInput
                     value={inputs.extraMonthlyPayment}
                     onChange={(v) => updateInput("extraMonthlyPayment", v)}
+                    min={0}
+                  />
+                </InputField>
+
+                <InputField
+                  label="One-time principal payment"
+                  description="Lump sum payment toward principal"
+                  optional
+                >
+                  <CurrencyInput
+                    value={inputs.oneTimePrincipalPayment ?? 0}
+                    onChange={(v) => updateInput("oneTimePrincipalPayment", v)}
                     min={0}
                   />
                 </InputField>

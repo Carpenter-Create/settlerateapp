@@ -4,11 +4,21 @@ export interface MortgageInputs {
   downPaymentType: "percent" | "dollar";
   interestRate: number;
   loanTerm: number; // years
-  propertyTax: number; // annual
-  homeInsurance: number; // annual
-  pmi: number; // monthly
-  hoa: number; // monthly
+  
+  // Taxes & Insurance (optional section)
+  includeEstimates: boolean;
+  zipCode: string | null;
+  usedZipEstimate: boolean;
+  propertyTaxMode: "rate" | "annual";
+  propertyTaxRate: number | null; // percent of home value
+  propertyTaxAnnual: number | null; // dollars per year
+  homeInsuranceMonthly: number | null;
+  hoaMonthly: number | null;
+  pmiMonthly: number | null;
+  
+  // Extra payments
   extraMonthlyPayment: number;
+  oneTimePrincipalPayment: number | null;
 }
 
 export interface AmortizationEntry {
@@ -38,6 +48,7 @@ export interface MortgageResults {
   amortizationSchedule: AmortizationEntry[];
   ltvRatio: number;
   requiresPMI: boolean;
+  usedEstimates: boolean;
 }
 
 export function calculateDownPaymentAmount(
@@ -69,11 +80,15 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
     downPaymentType,
     interestRate,
     loanTerm,
-    propertyTax,
-    homeInsurance,
-    pmi,
-    hoa,
+    includeEstimates,
+    propertyTaxMode,
+    propertyTaxRate,
+    propertyTaxAnnual,
+    homeInsuranceMonthly,
+    hoaMonthly,
+    pmiMonthly,
     extraMonthlyPayment,
+    usedZipEstimate,
   } = inputs;
 
   // Calculate loan amount
@@ -100,11 +115,30 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
     monthlyPrincipalInterest = loanAmount / totalPayments;
   }
 
-  // Monthly costs
-  const monthlyPropertyTax = propertyTax / 12;
-  const monthlyHomeInsurance = homeInsurance / 12;
-  const monthlyPMI = requiresPMI ? pmi : 0;
-  const monthlyHOA = hoa;
+  // Calculate monthly costs based on whether estimates are included
+  let monthlyPropertyTax = 0;
+  let monthlyHomeInsurance = 0;
+  let monthlyPMI = 0;
+  let monthlyHOA = 0;
+
+  if (includeEstimates) {
+    // Property tax calculation based on mode
+    if (propertyTaxMode === "rate" && propertyTaxRate !== null) {
+      const annualTax = purchasePrice * (propertyTaxRate / 100);
+      monthlyPropertyTax = annualTax / 12;
+    } else if (propertyTaxMode === "annual" && propertyTaxAnnual !== null) {
+      monthlyPropertyTax = propertyTaxAnnual / 12;
+    }
+
+    // Home insurance
+    monthlyHomeInsurance = homeInsuranceMonthly ?? 0;
+
+    // HOA
+    monthlyHOA = hoaMonthly ?? 0;
+
+    // PMI (only if required based on LTV)
+    monthlyPMI = requiresPMI ? (pmiMonthly ?? 0) : 0;
+  }
 
   // Generate amortization schedule with extra payments
   const amortizationSchedule: AmortizationEntry[] = [];
@@ -185,6 +219,7 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
     amortizationSchedule,
     ltvRatio,
     requiresPMI,
+    usedEstimates: includeEstimates && usedZipEstimate,
   };
 }
 
@@ -223,9 +258,19 @@ export const DEFAULT_INPUTS: MortgageInputs = {
   downPaymentType: "percent",
   interestRate: 6.5,
   loanTerm: 30,
-  propertyTax: 5400,
-  homeInsurance: 1800,
-  pmi: 150,
-  hoa: 0,
+  
+  // Taxes & insurance (optional, collapsed by default)
+  includeEstimates: false,
+  zipCode: null,
+  usedZipEstimate: false,
+  propertyTaxMode: "rate",
+  propertyTaxRate: null,
+  propertyTaxAnnual: null,
+  homeInsuranceMonthly: null,
+  hoaMonthly: null,
+  pmiMonthly: null,
+  
+  // Extra payments
   extraMonthlyPayment: 0,
+  oneTimePrincipalPayment: null,
 };
