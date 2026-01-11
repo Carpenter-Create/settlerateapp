@@ -1,14 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { MortgageInputs, MortgageResults, calculateMortgage, DEFAULT_INPUTS } from "@/lib/mortgage";
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from "react";
+import { MortgageInputs, calculateMortgage, DEFAULT_INPUTS } from "@/lib/mortgage";
 import {
   ScenarioData,
-  ScenarioAssumptions,
   DEFAULT_ASSUMPTIONS,
   createScenarioData,
   duplicateScenarioData,
   updateScenarioInputs,
   updateScenarioName,
-  validateScenarioIntegrity,
   validateDuplicateIndependence,
   CALCULATOR_VERSION,
 } from "@/lib/scenarioContract";
@@ -38,7 +36,7 @@ function migrateScenario(s: any): ScenarioData {
   };
 }
 
-function loadScenarios(): ScenarioData[] {
+function loadScenariosFromStorage(): ScenarioData[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -51,7 +49,7 @@ function loadScenarios(): ScenarioData[] {
   return [];
 }
 
-function saveScenarios(scenarios: ScenarioData[]): void {
+function saveScenariosToStorage(scenarios: ScenarioData[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(scenarios));
   } catch (e) {
@@ -59,65 +57,79 @@ function saveScenarios(scenarios: ScenarioData[]): void {
   }
 }
 
-/**
- * Synchronously save a single scenario to localStorage.
- * Used when we need to persist before navigation.
- */
-function saveScenariosSync(scenarios: ScenarioData[]): void {
-  saveScenarios(scenarios);
-}
+// ============================================================================
+// SCENARIO STORE - Singleton external store for consistent state across hooks
+// ============================================================================
 
-export function useScenarios() {
-  const [scenarios, setScenarios] = useState<ScenarioData[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+type Listener = () => void;
 
-  // Load on mount
-  useEffect(() => {
-    const loaded = loadScenarios();
-    setScenarios(loaded);
-    setIsLoaded(true);
-  }, []);
+class ScenarioStore {
+  private scenarios: ScenarioData[] = [];
+  private isLoaded = false;
+  private listeners = new Set<Listener>();
 
-  // Save on change
-  useEffect(() => {
-    if (isLoaded) {
-      saveScenarios(scenarios);
-    }
-  }, [scenarios, isLoaded]);
+  constructor() {
+    // Load from storage on initialization
+    this.scenarios = loadScenariosFromStorage();
+    this.isLoaded = true;
+  }
 
-  const createScenario = useCallback((name: string, inputs: MortgageInputs, sourceScenarioId?: string | null): ScenarioData => {
+  getSnapshot = (): { scenarios: ScenarioData[]; isLoaded: boolean } => {
+    return { scenarios: this.scenarios, isLoaded: this.isLoaded };
+  };
+
+  subscribe = (listener: Listener): (() => void) => {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  };
+
+  private notify() {
+    this.listeners.forEach((listener) => listener());
+  }
+
+  private persist() {
+    saveScenariosToStorage(this.scenarios);
+  }
+
+  getScenario(id: string): ScenarioData | undefined {
+    return this.scenarios.find((s) => s.id === id);
+  }
+
+  createScenario(name: string, inputs: MortgageInputs, sourceScenarioId?: string | null): ScenarioData {
     const scenario = createScenarioData(name, inputs, null, sourceScenarioId ?? null);
-    setScenarios((prev) => [...prev, scenario]);
+    this.scenarios = [...this.scenarios, scenario];
+    this.persist();
+    this.notify();
     return scenario;
-  }, []);
+  }
 
-  const updateScenario = useCallback((id: string, updates: Partial<Pick<ScenarioData, "name" | "inputs">>): void => {
-    setScenarios((prev) =>
-      prev.map((s) => {
-        if (s.id !== id) return s;
-        
-        let updated = s;
-        
-        if (updates.name !== undefined) {
-          updated = updateScenarioName(updated, updates.name);
-        }
-        
-        if (updates.inputs !== undefined) {
-          updated = updateScenarioInputs(updated, updates.inputs);
-        }
-        
-        return updated;
-      })
-    );
-  }, []);
+  updateScenario(id: string, updates: Partial<Pick<ScenarioData, "name" | "inputs">>): void {
+    this.scenarios = this.scenarios.map((s) => {
+      if (s.id !== id) return s;
 
-  const duplicateScenario = useCallback((id: string): ScenarioData | null => {
-    const original = scenarios.find((s) => s.id === id);
+      let updated = s;
+
+      if (updates.name !== undefined) {
+        updated = updateScenarioName(updated, updates.name);
+      }
+
+      if (updates.inputs !== undefined) {
+        updated = updateScenarioInputs(updated, updates.inputs);
+      }
+
+      return updated;
+    });
+    this.persist();
+    this.notify();
+  }
+
+  duplicateScenario(id: string): ScenarioData | null {
+    const original = this.scenarios.find((s) => s.id === id);
     if (!original) return null;
-    
+
     // Create deep clone with lineage tracking
     const duplicate = duplicateScenarioData(original);
-    
+
     // Validate independence in development
     if (process.env.NODE_ENV === "development") {
       const validation = validateDuplicateIndependence(original, duplicate);
@@ -125,25 +137,55 @@ export function useScenarios() {
         console.error("Duplicate independence validation failed:", validation.errors);
       }
     }
-    
-    // CRITICAL: Persist to localStorage SYNCHRONOUSLY before returning
-    // This ensures the scenario exists in storage before navigation triggers a reload
-    const newScenarios = [...scenarios, duplicate];
-    saveScenariosSync(newScenarios);
-    
-    // Also update React state
-    setScenarios(newScenarios);
-    
-    return duplicate;
-  }, [scenarios]);
 
-  const deleteScenario = useCallback((id: string): void => {
-    setScenarios((prev) => prev.filter((s) => s.id !== id));
-  }, []);
+    // Persist synchronously before returning
+    this.scenarios = [...this.scenarios, duplicate];
+    this.persist();
+    this.notify();
+
+    return duplicate;
+  }
+
+  deleteScenario(id: string): void {
+    this.scenarios = this.scenarios.filter((s) => s.id !== id);
+    this.persist();
+    this.notify();
+  }
+}
+
+// Global singleton store
+const scenarioStore = new ScenarioStore();
+
+// ============================================================================
+// HOOKS
+// ============================================================================
+
+export function useScenarios() {
+  const { scenarios, isLoaded } = useSyncExternalStore(
+    scenarioStore.subscribe,
+    scenarioStore.getSnapshot,
+    scenarioStore.getSnapshot // Server snapshot (same for client-only app)
+  );
 
   const getScenario = useCallback((id: string): ScenarioData | undefined => {
-    return scenarios.find((s) => s.id === id);
-  }, [scenarios]);
+    return scenarioStore.getScenario(id);
+  }, []);
+
+  const createScenario = useCallback((name: string, inputs: MortgageInputs, sourceScenarioId?: string | null): ScenarioData => {
+    return scenarioStore.createScenario(name, inputs, sourceScenarioId);
+  }, []);
+
+  const updateScenario = useCallback((id: string, updates: Partial<Pick<ScenarioData, "name" | "inputs">>): void => {
+    scenarioStore.updateScenario(id, updates);
+  }, []);
+
+  const duplicateScenario = useCallback((id: string): ScenarioData | null => {
+    return scenarioStore.duplicateScenario(id);
+  }, []);
+
+  const deleteScenario = useCallback((id: string): void => {
+    scenarioStore.deleteScenario(id);
+  }, []);
 
   return {
     scenarios,
@@ -167,16 +209,16 @@ export function useScenarios() {
  */
 export function useActiveScenario(scenarioId: string | null) {
   const { scenarios, isLoaded, updateScenario, getScenario, duplicateScenario, createScenario } = useScenarios();
-  
+
   // Draft state - local edits not yet persisted
   const [draftInputs, setDraftInputs] = useState<MortgageInputs>(DEFAULT_INPUTS);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [activeScenario, setActiveScenario] = useState<ScenarioData | null>(null);
   const [isDirty, setIsDirty] = useState(false);
-  
+
   // Track original inputs for dirty detection
   const originalInputsRef = useRef<string | null>(null);
-  
+
   // Track if we've loaded for this scenarioId
   const loadedScenarioIdRef = useRef<string | null>(null);
 
@@ -184,18 +226,11 @@ export function useActiveScenario(scenarioId: string | null) {
   // INVARIANT: If scenarioId is present, we MUST load from storage, never use defaults
   useEffect(() => {
     if (!isLoaded) return;
-    
+
     if (scenarioId) {
-      // First try to find in React state
-      let scenario = getScenario(scenarioId);
-      
-      // If not found in state, reload from localStorage directly
-      // This handles the case where navigation happens before state updates propagate
-      if (!scenario) {
-        const freshFromStorage = loadScenarios();
-        scenario = freshFromStorage.find(s => s.id === scenarioId);
-      }
-      
+      // Get scenario from the store (which is always in sync)
+      const scenario = getScenario(scenarioId);
+
       if (scenario) {
         setActiveScenario(scenario);
         setDraftInputs(structuredClone(scenario.inputs));
@@ -205,7 +240,6 @@ export function useActiveScenario(scenarioId: string | null) {
         setIsDirty(false);
       } else {
         // Scenario param exists but scenario not found - this is an error state
-        // Do NOT fall back to defaults silently
         console.error(`Scenario ${scenarioId} not found in storage`);
         setActiveScenario(null);
         setDraftInputs(DEFAULT_INPUTS);
@@ -228,7 +262,7 @@ export function useActiveScenario(scenarioId: string | null) {
   // Update active scenario reference when scenarios change (for name updates etc)
   useEffect(() => {
     if (scenarioId && isLoaded) {
-      const scenario = scenarios.find(s => s.id === scenarioId);
+      const scenario = scenarios.find((s) => s.id === scenarioId);
       if (scenario) {
         setActiveScenario(scenario);
       }
@@ -250,42 +284,48 @@ export function useActiveScenario(scenarioId: string | null) {
   }, []);
 
   // Update draft inputs (does NOT persist)
-  const updateInputs = useCallback((newInputs: MortgageInputs) => {
-    setDraftInputs(newInputs);
-    if (activeScenario) {
-      checkDirty(newInputs);
-    }
-  }, [activeScenario, checkDirty]);
+  const updateInputs = useCallback(
+    (newInputs: MortgageInputs) => {
+      setDraftInputs(newInputs);
+      if (activeScenario) {
+        checkDirty(newInputs);
+      }
+    },
+    [activeScenario, checkDirty]
+  );
 
   // Update a single input field
-  const updateInput = useCallback(<K extends keyof MortgageInputs>(
-    key: K,
-    value: MortgageInputs[K]
-  ) => {
-    setDraftInputs(prev => {
-      const newInputs = { ...prev, [key]: value };
-      if (activeScenario) {
-        checkDirty(newInputs);
-      }
-      return newInputs;
-    });
-  }, [activeScenario, checkDirty]);
+  const updateInput = useCallback(
+    <K extends keyof MortgageInputs>(key: K, value: MortgageInputs[K]) => {
+      setDraftInputs((prev) => {
+        const newInputs = { ...prev, [key]: value };
+        if (activeScenario) {
+          checkDirty(newInputs);
+        }
+        return newInputs;
+      });
+    },
+    [activeScenario, checkDirty]
+  );
 
   // Batch update inputs
-  const batchUpdateInputs = useCallback((updates: Partial<MortgageInputs>) => {
-    setDraftInputs(prev => {
-      const newInputs = { ...prev, ...updates };
-      if (activeScenario) {
-        checkDirty(newInputs);
-      }
-      return newInputs;
-    });
-  }, [activeScenario, checkDirty]);
+  const batchUpdateInputs = useCallback(
+    (updates: Partial<MortgageInputs>) => {
+      setDraftInputs((prev) => {
+        const newInputs = { ...prev, ...updates };
+        if (activeScenario) {
+          checkDirty(newInputs);
+        }
+        return newInputs;
+      });
+    },
+    [activeScenario, checkDirty]
+  );
 
   // Save draft to existing scenario (overwrite)
   const saveDraft = useCallback((): boolean => {
     if (!activeScenario) return false;
-    
+
     try {
       setSaveStatus("saving");
       updateScenario(activeScenario.id, { inputs: draftInputs });
@@ -301,11 +341,14 @@ export function useActiveScenario(scenarioId: string | null) {
   }, [activeScenario, draftInputs, updateScenario]);
 
   // Save as new scenario (with lineage)
-  const saveAsNew = useCallback((name: string): ScenarioData => {
-    const sourceId = activeScenario?.id ?? null;
-    const newScenario = createScenario(name, draftInputs, sourceId);
-    return newScenario;
-  }, [createScenario, draftInputs, activeScenario]);
+  const saveAsNew = useCallback(
+    (name: string): ScenarioData => {
+      const sourceId = activeScenario?.id ?? null;
+      const newScenario = createScenario(name, draftInputs, sourceId);
+      return newScenario;
+    },
+    [createScenario, draftInputs, activeScenario]
+  );
 
   // Duplicate current scenario - must duplicate from the SAVED scenario, not draft
   const duplicateCurrent = useCallback((): ScenarioData | null => {
@@ -313,17 +356,10 @@ export function useActiveScenario(scenarioId: string | null) {
       console.warn("Cannot duplicate: no active scenario");
       return null;
     }
-    
-    // Get the fresh saved scenario from storage (not draft state)
-    const savedScenario = getScenario(activeScenario.id);
-    if (!savedScenario) {
-      console.warn("Cannot duplicate: scenario not found in storage");
-      return null;
-    }
-    
+
     // Duplicate from the persisted scenario
-    return duplicateScenario(savedScenario.id);
-  }, [activeScenario, getScenario, duplicateScenario]);
+    return duplicateScenario(activeScenario.id);
+  }, [activeScenario, duplicateScenario]);
 
   // Discard draft changes and reload from saved
   const discardDraft = useCallback(() => {
