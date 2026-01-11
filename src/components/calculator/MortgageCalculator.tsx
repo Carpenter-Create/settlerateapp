@@ -45,6 +45,7 @@ export function MortgageCalculator() {
     saveStatus,
     isLoaded,
     isDirty,
+    scenarioNotFound,
     updateInput,
     batchUpdateInputs,
     saveDraft,
@@ -194,6 +195,30 @@ export function MortgageCalculator() {
       <div className="animate-pulse space-y-6">
         <div className="h-8 w-48 rounded bg-muted" />
         <div className="card-elevated h-96 p-6" />
+      </div>
+    );
+  }
+
+  // GUARDRAIL: If a scenario param was provided but not found, show error state
+  // This prevents silently falling back to defaults after duplicate/save actions
+  if (scenarioNotFound && scenarioId) {
+    return (
+      <div className="card-elevated flex flex-col items-center justify-center px-6 py-16 text-center">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border">
+          <X className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+        </div>
+        <h3 className="mt-4 font-serif text-lg">Scenario not found</h3>
+        <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+          The scenario "{scenarioId}" could not be found. It may have been deleted.
+        </p>
+        <Button 
+          onClick={() => navigate("/")} 
+          size="sm" 
+          className="mt-6 gap-1.5"
+        >
+          <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.5} />
+          Start new scenario
+        </Button>
       </div>
     );
   }
