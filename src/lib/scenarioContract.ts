@@ -16,6 +16,9 @@ import { MortgageInputs, MortgageResults, calculateMortgage } from "./mortgage";
 // Increment when calculation logic changes to ensure reproducibility
 export const CALCULATOR_VERSION = "1.0.0";
 
+// Schema version for migrations - increment when scenario shape changes
+export const LATEST_SCHEMA_VERSION = 1;
+
 /**
  * System-level assumptions that may change over time.
  * Frozen at scenario creation to ensure historical stability.
@@ -76,6 +79,9 @@ export interface ScenarioData {
   
   // Version for deterministic recomputation
   calculatorVersion: string;
+  
+  // Schema version for migrations (REQUIRED)
+  schemaVersion: number;
 }
 
 /**
@@ -108,6 +114,7 @@ export function createScenarioData(
     assumptions,
     results: calculateMortgage(inputs),
     calculatorVersion: CALCULATOR_VERSION,
+    schemaVersion: LATEST_SCHEMA_VERSION,
   };
 }
 
@@ -150,6 +157,7 @@ export function duplicateScenarioData(
     assumptions: clonedAssumptions,
     results: freshResults,
     calculatorVersion: CALCULATOR_VERSION,
+    schemaVersion: LATEST_SCHEMA_VERSION,
   };
 }
 
