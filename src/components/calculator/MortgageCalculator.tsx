@@ -135,11 +135,11 @@ export function MortgageCalculator() {
   }
 
   return (
-    <div className="grid w-full max-w-full gap-6 lg:grid-cols-[1fr,380px] lg:gap-10">
+    <div className="grid w-full max-w-full gap-8 lg:grid-cols-[1fr,360px] lg:gap-12">
       {/* Inputs */}
       <div className="min-w-0 space-y-6">
-        {/* Header */}
-        <div className="space-y-2">
+        {/* Header - serif, understated */}
+        <div className="space-y-1">
           {isEditing && activeScenario ? (
             <div className="flex items-center gap-3">
               {isRenamingScenario ? (
@@ -151,12 +151,12 @@ export function MortgageCalculator() {
                     if (e.key === "Enter") handleSaveRename();
                     if (e.key === "Escape") setIsRenamingScenario(false);
                   }}
-                  className="h-9 max-w-xs text-xl font-semibold"
+                  className="h-9 max-w-xs font-serif text-xl"
                   autoFocus
                 />
               ) : (
                 <h1 
-                  className="text-xl font-semibold tracking-tight sm:text-2xl cursor-pointer hover:text-primary transition-colors"
+                  className="cursor-pointer hover:text-muted-foreground transition-colors"
                   onClick={handleStartRename}
                   title="Click to rename"
                 >
@@ -171,19 +171,19 @@ export function MortgageCalculator() {
                 className="ml-auto"
                 title="Close scenario"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" strokeWidth={1.5} />
               </Button>
             </div>
           ) : (
-            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Mortgage Calculator</h1>
+            <h1>Mortgage Calculator</h1>
           )}
-          <p className="text-sm text-muted-foreground sm:text-base">
+          <p className="text-muted-foreground">
             {pageDescription}
           </p>
         </div>
 
-        <div className="card-elevated w-full p-4 sm:p-6 animate-fade-in">
-          <div className="space-y-6">
+        <div className="card-elevated w-full p-5 sm:p-6">
+          <div className="space-y-5">
             {/* Scenario Type Selector */}
             <ScenarioTypeSelector
               value={inputs.scenarioType}
@@ -285,24 +285,24 @@ export function MortgageCalculator() {
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex flex-wrap items-center gap-3">
+        {/* Actions - minimal */}
+        <div className="flex flex-wrap items-center gap-2">
           {isEditing ? (
             <>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <MoreHorizontal className="h-4 w-4" />
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <MoreHorizontal className="h-3.5 w-3.5" strokeWidth={1.5} />
                     Actions
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem onClick={handleStartRename}>
-                    <Pencil className="mr-2 h-4 w-4" />
+                    <Pencil className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
                     Rename
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleDuplicate}>
-                    <Copy className="mr-2 h-4 w-4" />
+                    <Copy className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
                     Duplicate
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -314,19 +314,19 @@ export function MortgageCalculator() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button variant="outline" onClick={handleClose} className="gap-2">
-                <X className="h-4 w-4" />
+              <Button variant="ghost" size="sm" onClick={handleClose} className="gap-1.5">
+                <X className="h-3.5 w-3.5" strokeWidth={1.5} />
                 Close
               </Button>
             </>
           ) : (
             <>
-              <Button onClick={handleSave} className="gap-2">
-                <Save className="h-4 w-4" />
+              <Button onClick={handleSave} size="sm" className="gap-1.5">
+                <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
                 Save scenario
               </Button>
-              <Button variant="outline" onClick={handleReset} className="gap-2">
-                <RotateCcw className="h-4 w-4" />
+              <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1.5">
+                <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.5} />
                 Reset
               </Button>
             </>
@@ -334,14 +334,14 @@ export function MortgageCalculator() {
         </div>
 
         {/* Amortization table */}
-        <div className="card-elevated w-full overflow-hidden p-4 sm:p-6">
+        <div className="card-elevated w-full overflow-hidden p-5 sm:p-6">
           <AmortizationTable schedule={results.amortizationSchedule} />
         </div>
       </div>
 
-      {/* Results */}
-      <div className="min-w-0 lg:sticky lg:top-20 lg:h-fit">
-        <div className="card-elevated w-full p-4 sm:p-6 animate-slide-up">
+      {/* Results - sticky sidebar */}
+      <div className="min-w-0 lg:sticky lg:top-16 lg:h-fit">
+        <div className="card-elevated w-full p-5 sm:p-6">
           <ResultsCard results={results} />
         </div>
       </div>

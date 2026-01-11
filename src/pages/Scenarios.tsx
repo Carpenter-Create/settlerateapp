@@ -71,16 +71,16 @@ function ScenarioCard({ scenario, onOpen, onRename, onDuplicate, onDelete }: Sce
 
   return (
     <div 
-      className="card-interactive p-5 animate-fade-in cursor-pointer transition-all hover:border-primary/30"
+      className="card-interactive p-5 cursor-pointer"
       onClick={handleCardClick}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
             {isPurchase ? (
-              <Home className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <Home className="h-3 w-3 text-muted-foreground shrink-0" strokeWidth={1.5} />
             ) : (
-              <RefreshCw className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <RefreshCw className="h-3 w-3 text-muted-foreground shrink-0" strokeWidth={1.5} />
             )}
             <span className="text-xs text-muted-foreground">
               {isPurchase ? "Purchase" : "Refinance"}
@@ -98,34 +98,34 @@ function ScenarioCard({ scenario, onOpen, onRename, onDuplicate, onDelete }: Sce
                   setIsEditing(false);
                 }
               }}
-              className="h-8 text-base font-medium"
+              className="h-8 text-sm font-medium"
               autoFocus
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
-            <h3 className="truncate text-base font-medium text-foreground">
+            <h3 className="truncate text-sm font-medium text-foreground">
               {scenario.name}
             </h3>
           )}
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Updated {formatRelativeTime(scenario.updatedAt)}
+            {formatRelativeTime(scenario.updatedAt)}
           </p>
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
             <Button variant="ghost" size="icon-sm" className="shrink-0">
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal className="h-4 w-4" strokeWidth={1.5} />
               <span className="sr-only">Actions</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => setIsEditing(true)}>
-              <Pencil className="mr-2 h-4 w-4" />
+              <Pencil className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
               Rename
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onDuplicate(scenario.id)}>
-              <Copy className="mr-2 h-4 w-4" />
+              <Copy className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
               Duplicate
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -133,43 +133,45 @@ function ScenarioCard({ scenario, onOpen, onRename, onDuplicate, onDelete }: Sce
               onClick={() => onDelete(scenario.id)}
               className="text-destructive focus:text-destructive"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
+              <Trash2 className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-4">
-        <div>
-          <p className="text-xs text-muted-foreground">Monthly payment</p>
-          <p className="font-mono text-lg font-semibold tabular-nums">
-            {formatCurrency(scenario.results.monthlyTotal)}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Total interest</p>
-          <p className="font-mono text-sm tabular-nums text-muted-foreground">
-            {formatCurrency(scenario.results.totalInterest)}
-          </p>
-        </div>
+      {/* Primary number, then label */}
+      <div className="mt-4">
+        <p className="font-mono text-xl font-medium tabular-nums">
+          {formatCurrency(scenario.results.monthlyTotal)}
+        </p>
+        <p className="text-xs text-muted-foreground">monthly payment</p>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
+      {/* Secondary metrics */}
+      <div className="mt-3 flex items-baseline gap-4 text-xs text-muted-foreground">
+        <span className="font-mono tabular-nums">
+          {formatCurrency(scenario.results.totalInterest)}
+        </span>
+        <span>total interest</span>
+      </div>
+
+      {/* Tags - minimal */}
+      <div className="mt-3 flex flex-wrap gap-1.5 text-xs text-muted-foreground">
         {isPurchase ? (
-          <span className="rounded bg-muted px-2 py-1">
+          <span className="rounded border border-border px-1.5 py-0.5">
             {formatCurrency(scenario.inputs.purchasePrice)}
           </span>
         ) : (
-          <span className="rounded bg-muted px-2 py-1">
-            {formatCurrency(scenario.inputs.currentLoanBalance)} balance
+          <span className="rounded border border-border px-1.5 py-0.5">
+            {formatCurrency(scenario.inputs.currentLoanBalance)}
           </span>
         )}
-        <span className="rounded bg-muted px-2 py-1">
-          {formatPercent(scenario.inputs.interestRate)} APR
+        <span className="rounded border border-border px-1.5 py-0.5">
+          {formatPercent(scenario.inputs.interestRate)}
         </span>
-        <span className="rounded bg-muted px-2 py-1">
-          {scenario.inputs.loanTerm} years
+        <span className="rounded border border-border px-1.5 py-0.5">
+          {scenario.inputs.loanTerm}yr
         </span>
       </div>
     </div>
@@ -213,9 +215,9 @@ export default function Scenarios() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Saved Scenarios</h1>
-        <p className="mt-1 text-muted-foreground">
-          Click a scenario to open and edit it
+        <h1>Saved Scenarios</h1>
+        <p className="mt-1">
+          Review and compare your saved mortgage analyses
         </p>
       </div>
 
@@ -231,16 +233,16 @@ export default function Scenarios() {
         </div>
       ) : sortedScenarios.length === 0 ? (
         <div className="card-elevated flex flex-col items-center justify-center px-6 py-16 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <FolderOpen className="h-6 w-6 text-muted-foreground" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border">
+            <FolderOpen className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
           </div>
-          <h3 className="mt-4 text-lg font-medium">No scenarios yet</h3>
+          <h3 className="mt-4 font-serif text-lg">No scenarios</h3>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
             Use the calculator to create and save mortgage scenarios for comparison.
           </p>
-          <Button asChild className="mt-6 gap-2">
+          <Button asChild size="sm" className="mt-6 gap-1.5">
             <Link to="/">
-              <Calculator className="h-4 w-4" />
+              <Calculator className="h-3.5 w-3.5" strokeWidth={1.5} />
               Open calculator
             </Link>
           </Button>
