@@ -57,16 +57,22 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
     ltvRatio,
     requiresPMI,
     usedEstimates,
+    scenarioType,
+    cashOutAmount,
+    closingCostsIncluded,
   } = results;
 
   const hasAdditionalCosts = monthlyPropertyTax > 0 || monthlyHomeInsurance > 0 || monthlyPMI > 0 || monthlyHOA > 0;
+  const isRefinance = scenarioType === "refinance";
 
   return (
     <div className={cn("space-y-6", className)}>
       {/* Main result */}
       <div className="text-center py-6">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <p className="text-sm text-muted-foreground">Monthly payment</p>
+          <p className="text-sm text-muted-foreground">
+            {isRefinance ? "New monthly payment" : "Monthly payment"}
+          </p>
           {usedEstimates && (
             <Badge variant="secondary" className="text-xs font-normal">
               Includes estimates
@@ -123,8 +129,19 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
 
       {/* Loan summary */}
       <div className="space-y-0.5">
-        <h3 className="text-sm font-medium text-foreground mb-3">Loan summary</h3>
-        <ResultRow label="Loan amount" value={formatCurrency(loanAmount)} />
+        <h3 className="text-sm font-medium text-foreground mb-3">
+          {isRefinance ? "New loan summary" : "Loan summary"}
+        </h3>
+        <ResultRow 
+          label={isRefinance ? "New loan amount" : "Loan amount"} 
+          value={formatCurrency(loanAmount)} 
+        />
+        {isRefinance && cashOutAmount !== undefined && cashOutAmount > 0 && (
+          <ResultRow label="Cash out" value={formatCurrency(cashOutAmount)} />
+        )}
+        {isRefinance && closingCostsIncluded !== undefined && closingCostsIncluded > 0 && (
+          <ResultRow label="Closing costs (financed)" value={formatCurrency(closingCostsIncluded)} />
+        )}
         <ResultRow label="Loan-to-value" value={formatPercent(ltvRatio)} />
         <ResultRow label="Total interest" value={formatCurrency(totalInterest)} />
         <ResultRow label="Total cost" value={formatCurrency(totalCost)} primary />
@@ -151,7 +168,10 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
           <div className="divider-subtle" />
           <div className="rounded-md bg-accent/50 p-3">
             <p className="text-xs text-accent-foreground">
-              <strong>PMI required.</strong> Your down payment is less than 20%, so private mortgage insurance applies until you reach 20% equity.
+              <strong>PMI {isRefinance ? "may be " : ""}required.</strong>{" "}
+              {isRefinance 
+                ? "Your new loan-to-value ratio is above 80%."
+                : "Your down payment is less than 20%, so private mortgage insurance applies until you reach 20% equity."}
             </p>
           </div>
         </>

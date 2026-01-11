@@ -12,11 +12,12 @@ const TERM_OPTIONS = [
 interface LoanTermInputProps {
   value: number;
   onChange: (value: number) => void;
+  label?: string;
 }
 
-export function LoanTermInput({ value, onChange }: LoanTermInputProps) {
+export function LoanTermInput({ value, onChange, label = "Loan term" }: LoanTermInputProps) {
   return (
-    <InputField label="Loan term">
+    <InputField label={label}>
       <div className="flex rounded-md border border-input bg-muted p-0.5">
         {TERM_OPTIONS.map((option) => (
           <Button
