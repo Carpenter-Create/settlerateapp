@@ -63,19 +63,27 @@ function saveScenariosToStorage(scenarios: ScenarioData[]): void {
 
 type Listener = () => void;
 
+interface StoreSnapshot {
+  scenarios: ScenarioData[];
+  isLoaded: boolean;
+}
+
 class ScenarioStore {
   private scenarios: ScenarioData[] = [];
   private isLoaded = false;
   private listeners = new Set<Listener>();
+  private snapshot: StoreSnapshot;
 
   constructor() {
     // Load from storage on initialization
     this.scenarios = loadScenariosFromStorage();
     this.isLoaded = true;
+    // Create initial snapshot
+    this.snapshot = { scenarios: this.scenarios, isLoaded: this.isLoaded };
   }
 
-  getSnapshot = (): { scenarios: ScenarioData[]; isLoaded: boolean } => {
-    return { scenarios: this.scenarios, isLoaded: this.isLoaded };
+  getSnapshot = (): StoreSnapshot => {
+    return this.snapshot;
   };
 
   subscribe = (listener: Listener): (() => void) => {
@@ -84,6 +92,8 @@ class ScenarioStore {
   };
 
   private notify() {
+    // Create new snapshot reference only when data changes
+    this.snapshot = { scenarios: this.scenarios, isLoaded: this.isLoaded };
     this.listeners.forEach((listener) => listener());
   }
 
