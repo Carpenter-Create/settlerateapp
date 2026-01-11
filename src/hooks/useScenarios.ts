@@ -273,11 +273,23 @@ export function useActiveScenario(scenarioId: string | null) {
     return newScenario;
   }, [createScenario, draftInputs, activeScenario]);
 
-  // Duplicate current scenario
+  // Duplicate current scenario - must duplicate from the SAVED scenario, not draft
   const duplicateCurrent = useCallback((): ScenarioData | null => {
-    if (!scenarioId) return null;
-    return duplicateScenario(scenarioId);
-  }, [scenarioId, duplicateScenario]);
+    if (!activeScenario) {
+      console.warn("Cannot duplicate: no active scenario");
+      return null;
+    }
+    
+    // Get the fresh saved scenario from storage (not draft state)
+    const savedScenario = getScenario(activeScenario.id);
+    if (!savedScenario) {
+      console.warn("Cannot duplicate: scenario not found in storage");
+      return null;
+    }
+    
+    // Duplicate from the persisted scenario
+    return duplicateScenario(savedScenario.id);
+  }, [activeScenario, getScenario, duplicateScenario]);
 
   // Discard draft changes and reload from saved
   const discardDraft = useCallback(() => {
