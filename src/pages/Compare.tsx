@@ -8,10 +8,12 @@ import {
   detectMaterialChanges,
   MaterialChange,
 } from "@/lib/comparisonContract";
-import { exportComparisonPDF } from "@/lib/comparisonExport";
+import { exportComparisonSummaryPDF, exportAssumptionsSheetPDF, exportBothPDFs } from "@/lib/comparisonExportV2";
+import { generateRateSensitivityNarrative, RateSensitivityResult } from "@/lib/rateSensitivity";
+import { IncomeContext, calculateHousingPercentOfIncome } from "@/components/calculator/IncomeContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calculator, GitCompare, Plus, X, Download, Share2, Settings2, Save, FolderOpen, AlertCircle } from "lucide-react";
+import { Calculator, GitCompare, Plus, X, Download, Share2, Settings2, Save, FolderOpen, AlertCircle, FileText } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -27,6 +29,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -160,6 +169,7 @@ export default function Compare() {
   const [comparisonName, setComparisonName] = useState("");
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
+  const [grossMonthlyIncome, setGrossMonthlyIncome] = useState<number | null>(null);
   
   // Track if we've already marked this comparison as viewed
   const hasMarkedViewedRef = useRef<string | null>(null);
@@ -276,6 +286,25 @@ export default function Compare() {
     [selectedScenarios]
   );
 
+  // Rate sensitivity analysis
+  const rateSensitivity = useMemo<RateSensitivityResult | null>(() => {
+    if (selectedScenarios.length < 2) return null;
+    return generateRateSensitivityNarrative(selectedScenarios, -0.5);
+  }, [selectedScenarios]);
+
+  // Income context for export
+  const incomeContext = useMemo(() => {
+    if (!grossMonthlyIncome || selectedScenarios.length === 0) return null;
+    // Use the recommended scenario's payment, or first scenario
+    const referencePayment = summary?.recommendation?.scenario.results.monthlyTotal 
+      ?? selectedScenarios[0]?.results.monthlyTotal 
+      ?? 0;
+    return {
+      grossMonthlyIncome,
+      percentOfIncome: calculateHousingPercentOfIncome(referencePayment, grossMonthlyIncome),
+    };
+  }, [grossMonthlyIncome, selectedScenarios, summary]);
+
   const handleOpenSaveDialog = () => {
     if (selectedIds.length < 2) return;
     
@@ -302,19 +331,34 @@ export default function Compare() {
     toast.success("Comparison saved");
   };
 
-  const handleExportPDF = () => {
-    if (selectedScenarios.length < 2) return;
-    
+  const getExportData = () => {
     const comparison = activeComparisonId ? getComparison(activeComparisonId) : null;
-    
-    exportComparisonPDF({
+    return {
       comparisonName: comparison?.name ?? "Comparison",
       scenarios: selectedScenarios,
       summary,
       materialChanges,
-    });
-    
+      rateSensitivity,
+      incomeContext,
+    };
+  };
+
+  const handleExportSummary = () => {
+    if (selectedScenarios.length < 2) return;
+    exportComparisonSummaryPDF(getExportData());
     toast.success("Opening print dialog...");
+  };
+
+  const handleExportAssumptions = () => {
+    if (selectedScenarios.length < 2) return;
+    exportAssumptionsSheetPDF(getExportData());
+    toast.success("Opening print dialog...");
+  };
+
+  const handleExportBoth = () => {
+    if (selectedScenarios.length < 2) return;
+    exportBothPDFs(getExportData());
+    toast.success("Opening print dialogs...");
   };
 
   const handleShare = () => {
@@ -733,6 +777,34 @@ export default function Compare() {
         </div>
       )}
 
+      {/* Income context - interpretation layer, after summary and annual snapshot */}
+      {selectedScenarios.length >= 2 && (
+        <div className="border-t border-border pt-6 space-y-3">
+          <p className="section-label">Income context</p>
+          <IncomeContext
+            monthlyHousingPayment={
+              summary?.recommendation?.scenario.results.monthlyTotal 
+                ?? selectedScenarios[0]?.results.monthlyTotal 
+                ?? 0
+            }
+            onIncomeChange={setGrossMonthlyIncome}
+          />
+        </div>
+      )}
+
+      {/* Rate sensitivity (illustrative) - decision robustness */}
+      {selectedScenarios.length >= 2 && rateSensitivity?.isValid && (
+        <div className="border-t border-border pt-6 space-y-3">
+          <p className="section-label">Rate sensitivity (illustrative)</p>
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+            {rateSensitivity.narrative}
+          </p>
+          <p className="text-xs text-muted-foreground/70">
+            This is illustrative only. Rates shown are not predictions.
+          </p>
+        </div>
+      )}
+
       {/* SECTION 5: Actions (always last) - hidden in shared view */}
       {selectedScenarios.length >= 2 && !isSharedView && (
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-6">
@@ -745,15 +817,32 @@ export default function Compare() {
             <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
             {activeComparisonId ? "Update comparison" : "Save comparison"}
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-1.5"
-            onClick={handleExportPDF}
-          >
-            <Download className="h-3.5 w-3.5" strokeWidth={1.5} />
-            Export summary
-          </Button>
+          
+          {/* Export dropdown with options */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Download className="h-3.5 w-3.5" strokeWidth={1.5} />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={handleExportSummary}>
+                <FileText className="h-3.5 w-3.5 mr-2" strokeWidth={1.5} />
+                Comparison summary
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportAssumptions}>
+                <FileText className="h-3.5 w-3.5 mr-2" strokeWidth={1.5} />
+                Assumptions sheet
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleExportBoth}>
+                <Download className="h-3.5 w-3.5 mr-2" strokeWidth={1.5} />
+                Export both documents
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <Button 
             variant="outline" 
             size="sm" 
