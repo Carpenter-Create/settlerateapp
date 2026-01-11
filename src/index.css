@@ -341,27 +341,53 @@
     bottom: calc(env(safe-area-inset-bottom, 0px) + 80px) !important;
   }
 
-  /* Toast close button - minimal X */
+  /* Toast close button - minimal unboxed × glyph */
   [data-sonner-toast] [data-close-button] {
-    @apply absolute right-1 top-1 p-1.5 rounded-md opacity-60 hover:opacity-100 transition-opacity;
-    @apply text-current bg-transparent border-none cursor-pointer;
-    @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none;
-    min-width: 28px;
-    min-height: 28px;
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    margin: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: hsl(var(--muted-foreground));
+    opacity: 0.5;
+    transition: opacity 0.15s ease;
   }
 
+  [data-sonner-toast] [data-close-button]:hover {
+    opacity: 0.8;
+  }
+
+  [data-sonner-toast] [data-close-button]:focus-visible {
+    outline: none;
+    opacity: 0.8;
+  }
+
+  /* Hide default SVG, use CSS × glyph */
   [data-sonner-toast] [data-close-button] svg {
-    width: 14px;
-    height: 14px;
-    stroke-width: 1.5;
+    display: none;
+  }
+
+  [data-sonner-toast] [data-close-button]::after {
+    content: "×";
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1;
+    font-family: var(--font-sans), system-ui, sans-serif;
   }
 
   /* Toast content padding for close button */
   [data-sonner-toast] [data-content] {
-    padding-right: 24px;
+    padding-right: 28px;
   }
 
   /* Swipe animation hint */
