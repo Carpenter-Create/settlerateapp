@@ -67,7 +67,7 @@ function ScenarioCard({ scenario, onOpen, onRename, onDuplicate, onDelete }: Sce
     onOpen(scenario.id);
   };
 
-  const isPurchase = scenario.inputs.scenarioType === "purchase";
+  const isPurchase = scenario.inputs.mode === "purchase";
 
   return (
     <div 
@@ -160,18 +160,18 @@ function ScenarioCard({ scenario, onOpen, onRename, onDuplicate, onDelete }: Sce
       <div className="mt-3 flex flex-wrap gap-1.5 text-xs text-muted-foreground">
         {isPurchase ? (
           <span className="rounded border border-border px-1.5 py-0.5">
-            {formatCurrency(scenario.inputs.purchasePrice)}
+            {formatCurrency(scenario.inputs.purchase.purchasePrice)}
           </span>
         ) : (
           <span className="rounded border border-border px-1.5 py-0.5">
-            {formatCurrency(scenario.inputs.currentLoanBalance)}
+            {formatCurrency(scenario.inputs.refinance.currentLoanBalance)}
           </span>
         )}
         <span className="rounded border border-border px-1.5 py-0.5">
-          {formatPercent(scenario.inputs.interestRate)}
+          {formatPercent(scenario.inputs.shared.interestRate)}
         </span>
         <span className="rounded border border-border px-1.5 py-0.5">
-          {scenario.inputs.loanTerm}yr
+          {scenario.inputs.shared.loanTerm}yr
         </span>
       </div>
     </div>

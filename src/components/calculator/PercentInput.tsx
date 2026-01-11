@@ -18,8 +18,8 @@ export const PercentInput = forwardRef<HTMLInputElement, PercentInputProps>(
     const [displayValue, setDisplayValue] = useState(() => formatForDisplay(value));
     const [isFocused, setIsFocused] = useState(false);
 
-    function formatForDisplay(num: number): string {
-      if (num === 0) return "";
+    function formatForDisplay(num: number | undefined | null): string {
+      if (num == null || num === 0) return "";
       // Show up to 3 decimal places, but trim trailing zeros
       return parseFloat(num.toFixed(3)).toString();
     }
