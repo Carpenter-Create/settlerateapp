@@ -196,6 +196,7 @@ export function ScenarioEditor({
                 size="sm" 
                 onClick={onOpenGuidedStart}
                 className="gap-1.5 shrink-0"
+                title="Answer a few questions to prefill the calculator."
               >
                 <Wand2 className="h-3.5 w-3.5" strokeWidth={1.5} />
                 Guided start

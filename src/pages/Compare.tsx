@@ -13,6 +13,7 @@ import { generateRateSensitivityNarrative, RateSensitivityResult } from "@/lib/r
 import { IncomeContext, calculateHousingPercentOfIncome } from "@/components/calculator/IncomeContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Calculator, GitCompare, Plus, X, Download, Share2, Settings2, Save, FolderOpen, AlertCircle, FileText } from "lucide-react";
 import {
   Select,
@@ -436,14 +437,14 @@ export default function Compare() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h1>Compare Scenarios</h1>
+            <h1>Compare scenarios</h1>
             {isSharedView && (
               <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted/50 rounded">
                 View-only
               </span>
             )}
           </div>
-          <p className="mt-1">Review mortgage options side-by-side to understand the tradeoffs</p>
+          <p className="mt-1">Side-by-side view of payment, payoff timeline, and total cost.</p>
         </div>
         {!isSharedView && (
           <Button asChild size="sm" variant="ghost" className="gap-1.5">
@@ -876,11 +877,13 @@ export default function Compare() {
               Give this comparison a name to help you recognize it later.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-4 space-y-2">
+            <Label htmlFor="comparison-name" className="text-sm">Comparison name</Label>
             <Input
+              id="comparison-name"
               value={comparisonName}
               onChange={(e) => setComparisonName(e.target.value)}
-              placeholder="e.g., Rate drop option, Aggressive payoff"
+              placeholder="Refi options — Jan 2026"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleConfirmSave();

@@ -80,7 +80,10 @@ export function MortgageCalculator() {
     navigateToScenario(newScenario.id);
     
     setShowGuidedStart(false);
-    toast("Draft created. Adjust anything.", { duration: 3000 });
+    toast.success("Draft created", { 
+      description: "Your estimate is ready. Adjust details any time.",
+      duration: 4000 
+    });
   }, [createScenario, navigateToScenario]);
 
   // Manual trigger for guided start
