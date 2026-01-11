@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Loader2, CheckCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,7 @@ import { toast } from "sonner";
 const topics = [
   { value: "general", label: "General inquiry" },
   { value: "support", label: "Technical support" },
-  { value: "billing", label: "Billing question" },
+  { value: "billing", label: "Billing" },
   { value: "feature", label: "Feature request" },
   { value: "partnership", label: "Partnership" },
 ];
@@ -30,25 +30,20 @@ export default function Contact() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
 
-  // Form state
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState(user?.email || "");
   const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
-  
-  // Honeypot field
   const [honeypot, setHoneypot] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Honeypot check
     if (honeypot) {
       toast.error("Submission blocked");
       return;
     }
 
-    // Rate limiting (5 second cooldown)
     const now = Date.now();
     if (now - lastSubmitTime < 5000) {
       toast.error("Please wait a moment before submitting again");
@@ -84,42 +79,36 @@ export default function Contact() {
 
   if (isSubmitted) {
     return (
-      <div className="mx-auto max-w-md py-12 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
-          <CheckCircle className="h-8 w-8 text-success" />
-        </div>
-        <h1 className="mt-6 text-2xl font-semibold tracking-tight">Thanks for reaching out</h1>
-        <p className="mt-3 text-muted-foreground">
-          We've received your message and will get back to you within 1–2 business days.
+      <div className="mx-auto max-w-md py-16 text-center">
+        <h1 className="font-serif text-2xl font-normal tracking-tight">
+          Message received
+        </h1>
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+          Thank you for reaching out. We will respond within 1–2 business days.
         </p>
-        <Button asChild variant="outline" className="mt-8">
-          <Link to="/">Back to home</Link>
-        </Button>
+        <Link
+          to="/"
+          className="mt-8 inline-block text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Return home
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-8">
-      <div>
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to home
-        </Link>
-      </div>
-
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Contact us</h1>
-        <p className="mt-2 text-muted-foreground">
-          Have a question or feedback? We'd love to hear from you.
+    <div className="mx-auto max-w-md space-y-10">
+      <div className="text-center">
+        <h1 className="font-serif text-2xl font-normal tracking-tight">
+          Contact
+        </h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Questions, feedback, or partnership inquiries.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Honeypot field - hidden from users */}
+        {/* Honeypot */}
         <input
           type="text"
           name="website"
@@ -132,7 +121,9 @@ export default function Contact() {
         />
 
         <div className="space-y-2">
-          <Label htmlFor="fullName">Full name</Label>
+          <Label htmlFor="fullName" className="text-sm font-normal">
+            Name
+          </Label>
           <Input
             id="fullName"
             type="text"
@@ -144,7 +135,9 @@ export default function Contact() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email address</Label>
+          <Label htmlFor="email" className="text-sm font-normal">
+            Email
+          </Label>
           <Input
             id="email"
             type="email"
@@ -156,7 +149,9 @@ export default function Contact() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="topic">Topic</Label>
+          <Label htmlFor="topic" className="text-sm font-normal">
+            Topic
+          </Label>
           <Select value={topic} onValueChange={setTopic} disabled={isSubmitting}>
             <SelectTrigger id="topic">
               <SelectValue placeholder="Select a topic" />
@@ -172,7 +167,9 @@ export default function Contact() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="message">Message</Label>
+          <Label htmlFor="message" className="text-sm font-normal">
+            Message
+          </Label>
           <Textarea
             id="message"
             value={message}
@@ -187,7 +184,7 @@ export default function Contact() {
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Sending...
+              Sending
             </>
           ) : (
             "Send message"
