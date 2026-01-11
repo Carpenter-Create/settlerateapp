@@ -76,63 +76,67 @@ export function AmortizationTable({ schedule, className }: AmortizationTableProp
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-border">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/50">
-              <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">
-                {showYearly ? "Year" : "Month"}
-              </th>
-              <th className="px-3 py-2.5 text-right font-medium text-muted-foreground">Principal</th>
-              <th className="px-3 py-2.5 text-right font-medium text-muted-foreground">Interest</th>
-              <th className="hidden px-3 py-2.5 text-right font-medium text-muted-foreground sm:table-cell">Extra</th>
-              <th className="px-3 py-2.5 text-right font-medium text-muted-foreground">Balance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visibleData.map((item, index) => {
-              const key = showYearly
-                ? (item as typeof yearlyArray[0]).year
-                : (item as AmortizationEntry).month;
-              const principal = showYearly
-                ? (item as typeof yearlyArray[0]).principal
-                : (item as AmortizationEntry).principal;
-              const interest = showYearly
-                ? (item as typeof yearlyArray[0]).interest
-                : (item as AmortizationEntry).interest;
-              const extra = showYearly
-                ? (item as typeof yearlyArray[0]).extraPayment
-                : (item as AmortizationEntry).extraPayment;
-              const balance = showYearly
-                ? (item as typeof yearlyArray[0]).balance
-                : (item as AmortizationEntry).balance;
-
-              return (
-                <tr
-                  key={key}
-                  className={cn(
-                    "border-b border-border/50 transition-colors",
-                    index % 2 === 0 ? "bg-background" : "bg-muted/30"
-                  )}
-                >
-                  <td className="px-3 py-2.5 font-medium tabular-nums">{key}</td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums text-muted-foreground">
-                    {formatCurrencyPrecise(principal)}
-                  </td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums text-muted-foreground">
-                    {formatCurrencyPrecise(interest)}
-                  </td>
-                  <td className="hidden px-3 py-2.5 text-right font-mono tabular-nums text-muted-foreground sm:table-cell">
-                    {extra > 0 ? formatCurrencyPrecise(extra) : "—"}
-                  </td>
-                  <td className="px-3 py-2.5 text-right font-mono tabular-nums font-medium">
-                    {formatCurrency(Math.max(0, balance))}
-                  </td>
+      <div className="-mx-4 overflow-x-auto sm:mx-0 sm:overflow-visible">
+        <div className="inline-block min-w-full px-4 sm:px-0">
+          <div className="overflow-hidden rounded-lg border border-border">
+            <table className="w-full min-w-[400px] text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="px-2 py-2 text-left text-xs font-medium text-muted-foreground sm:px-3 sm:py-2.5 sm:text-sm">
+                    {showYearly ? "Year" : "Mo."}
+                  </th>
+                  <th className="px-2 py-2 text-right text-xs font-medium text-muted-foreground sm:px-3 sm:py-2.5 sm:text-sm">Principal</th>
+                  <th className="px-2 py-2 text-right text-xs font-medium text-muted-foreground sm:px-3 sm:py-2.5 sm:text-sm">Interest</th>
+                  <th className="hidden px-2 py-2 text-right text-xs font-medium text-muted-foreground sm:table-cell sm:px-3 sm:py-2.5 sm:text-sm">Extra</th>
+                  <th className="px-2 py-2 text-right text-xs font-medium text-muted-foreground sm:px-3 sm:py-2.5 sm:text-sm">Balance</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {visibleData.map((item, index) => {
+                  const key = showYearly
+                    ? (item as typeof yearlyArray[0]).year
+                    : (item as AmortizationEntry).month;
+                  const principal = showYearly
+                    ? (item as typeof yearlyArray[0]).principal
+                    : (item as AmortizationEntry).principal;
+                  const interest = showYearly
+                    ? (item as typeof yearlyArray[0]).interest
+                    : (item as AmortizationEntry).interest;
+                  const extra = showYearly
+                    ? (item as typeof yearlyArray[0]).extraPayment
+                    : (item as AmortizationEntry).extraPayment;
+                  const balance = showYearly
+                    ? (item as typeof yearlyArray[0]).balance
+                    : (item as AmortizationEntry).balance;
+
+                  return (
+                    <tr
+                      key={key}
+                      className={cn(
+                        "border-b border-border/50 transition-colors",
+                        index % 2 === 0 ? "bg-background" : "bg-muted/30"
+                      )}
+                    >
+                      <td className="px-2 py-2 text-xs font-medium tabular-nums sm:px-3 sm:py-2.5 sm:text-sm">{key}</td>
+                      <td className="px-2 py-2 text-right font-mono text-xs tabular-nums text-muted-foreground sm:px-3 sm:py-2.5 sm:text-sm">
+                        {formatCurrencyPrecise(principal)}
+                      </td>
+                      <td className="px-2 py-2 text-right font-mono text-xs tabular-nums text-muted-foreground sm:px-3 sm:py-2.5 sm:text-sm">
+                        {formatCurrencyPrecise(interest)}
+                      </td>
+                      <td className="hidden px-2 py-2 text-right font-mono text-xs tabular-nums text-muted-foreground sm:table-cell sm:px-3 sm:py-2.5 sm:text-sm">
+                        {extra > 0 ? formatCurrencyPrecise(extra) : "—"}
+                      </td>
+                      <td className="px-2 py-2 text-right font-mono text-xs tabular-nums font-medium sm:px-3 sm:py-2.5 sm:text-sm">
+                        {formatCurrency(Math.max(0, balance))}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       {hasMore && (

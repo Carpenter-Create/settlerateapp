@@ -148,11 +148,23 @@
     @apply border-border;
   }
 
+  /* Prevent horizontal overflow globally */
+  html, body {
+    @apply overflow-x-hidden;
+    max-width: 100vw;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Ensure all content respects viewport width */
+  #root {
+    @apply overflow-x-hidden;
+    max-width: 100vw;
   }
 
   /* Typography scale */

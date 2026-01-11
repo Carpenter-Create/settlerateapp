@@ -45,20 +45,20 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
   }, [createScenario, inputs, scenarios.length]);
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr,400px] lg:gap-12">
+    <div className="grid w-full max-w-full gap-6 lg:grid-cols-[1fr,380px] lg:gap-10">
       {/* Inputs */}
-      <div className="space-y-8">
+      <div className="min-w-0 space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Mortgage Calculator</h1>
-          <p className="mt-1 text-muted-foreground">
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Mortgage Calculator</h1>
+          <p className="mt-1 text-sm text-muted-foreground sm:text-base">
             Calculate your monthly payment and total costs
           </p>
         </div>
 
-        <div className="card-elevated p-6 animate-fade-in">
-          <div className="space-y-6">
-            {/* Primary inputs */}
-            <div className="grid gap-6 sm:grid-cols-2">
+        <div className="card-elevated w-full p-4 sm:p-6 animate-fade-in">
+          <div className="space-y-5">
+            {/* Primary inputs - single column on mobile */}
+            <div className="grid gap-5 md:grid-cols-2">
               <InputField label="Purchase price">
                 <CurrencyInput
                   value={inputs.purchasePrice}
@@ -81,7 +81,7 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
               />
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-5 md:grid-cols-2">
               <InputField label="Interest rate">
                 <PercentInput
                   value={inputs.interestRate}
@@ -101,7 +101,7 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
             <div className="divider-subtle" />
 
             {/* Taxes and insurance */}
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-5 md:grid-cols-2">
               <InputField label="Property tax" description="Annual amount">
                 <CurrencyInput
                   value={inputs.propertyTax}
@@ -135,8 +135,8 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
 
             {/* Advanced inputs */}
             {showAdvanced && (
-              <div className="space-y-6 animate-slide-up">
-                <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-5 animate-slide-up">
+                <div className="grid gap-5 md:grid-cols-2">
                   <InputField label="PMI" description="Monthly amount" optional>
                     <CurrencyInput
                       value={inputs.pmi}
@@ -171,7 +171,7 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <Button onClick={handleSave} className="gap-2">
             <Save className="h-4 w-4" />
             Save scenario
@@ -183,14 +183,14 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
         </div>
 
         {/* Amortization table */}
-        <div className="card-elevated p-6">
+        <div className="card-elevated w-full overflow-hidden p-4 sm:p-6">
           <AmortizationTable schedule={results.amortizationSchedule} />
         </div>
       </div>
 
       {/* Results */}
-      <div className="lg:sticky lg:top-20 lg:h-fit">
-        <div className="card-elevated p-6 animate-slide-up">
+      <div className="min-w-0 lg:sticky lg:top-20 lg:h-fit">
+        <div className="card-elevated w-full p-4 sm:p-6 animate-slide-up">
           <ResultsCard results={results} />
         </div>
       </div>
