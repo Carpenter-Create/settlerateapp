@@ -9,7 +9,13 @@ import {
   updateScenarioName,
   validateDuplicateIndependence,
   CALCULATOR_VERSION,
+  LATEST_SCHEMA_VERSION,
 } from "@/lib/scenarioContract";
+import {
+  migrateScenario,
+  needsMigration,
+  MigrationOutcome,
+} from "@/lib/scenarioMigrations";
 
 // Re-export for backward compatibility
 export type Scenario = ScenarioData;
@@ -19,34 +25,62 @@ export type SaveStatus = "idle" | "draft" | "saving" | "saved" | "error";
 const STORAGE_KEY = "settlerate_scenarios";
 
 /**
- * Migrate legacy scenario format to new format with assumptions
+ * Load and migrate a single raw scenario from storage.
+ * Returns null if migration fails.
  */
-function migrateScenario(s: any): ScenarioData {
-  return {
-    id: s.id,
-    ownerId: s.ownerId ?? null,
-    name: s.name,
-    createdAt: new Date(s.createdAt),
-    updatedAt: new Date(s.updatedAt),
-    sourceScenarioId: s.sourceScenarioId ?? null,
-    inputs: s.inputs,
-    assumptions: s.assumptions ?? { ...DEFAULT_ASSUMPTIONS },
-    results: s.results ?? calculateMortgage(s.inputs),
-    calculatorVersion: s.calculatorVersion ?? CALCULATOR_VERSION,
+function loadAndMigrateScenario(raw: unknown): ScenarioData | null {
+  const result = migrateScenario(raw);
+  
+  if (!result.success) {
+    const errorResult = result as { success: false; error: string; details: string[] };
+    console.error("[Migration] Failed to migrate scenario:", errorResult.error, errorResult.details);
+    return null;
+  }
+  
+  const migrated = result.scenario;
+  
+  // Ensure dates are Date objects
+  const scenario: ScenarioData = {
+    id: migrated.id,
+    ownerId: migrated.ownerId ?? null,
+    name: migrated.name,
+    createdAt: new Date(migrated.createdAt),
+    updatedAt: new Date(migrated.updatedAt),
+    sourceScenarioId: migrated.sourceScenarioId ?? null,
+    inputs: migrated.inputs,
+    assumptions: migrated.assumptions as ScenarioData["assumptions"],
+    results: calculateMortgage(migrated.inputs), // Always recompute results
+    calculatorVersion: migrated.calculatorVersion,
+    schemaVersion: migrated.schemaVersion,
   };
+  
+  return scenario;
 }
 
-function loadScenariosFromStorage(): ScenarioData[] {
+function loadScenariosFromStorage(): { scenarios: ScenarioData[]; needsPersist: boolean } {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return parsed.map(migrateScenario);
+      const scenarios: ScenarioData[] = [];
+      let anyMigrated = false;
+      
+      for (const raw of parsed) {
+        const migrated = loadAndMigrateScenario(raw);
+        if (migrated) {
+          scenarios.push(migrated);
+          if (needsMigration(raw)) {
+            anyMigrated = true;
+          }
+        }
+      }
+      
+      return { scenarios, needsPersist: anyMigrated };
     }
   } catch (e) {
     console.error("Failed to load scenarios:", e);
   }
-  return [];
+  return { scenarios: [], needsPersist: false };
 }
 
 function saveScenariosToStorage(scenarios: ScenarioData[]): void {
@@ -76,10 +110,17 @@ class ScenarioStore {
 
   constructor() {
     // Load from storage on initialization
-    this.scenarios = loadScenariosFromStorage();
+    const { scenarios, needsPersist } = loadScenariosFromStorage();
+    this.scenarios = scenarios;
     this.isLoaded = true;
     // Create initial snapshot
     this.snapshot = { scenarios: this.scenarios, isLoaded: this.isLoaded };
+    
+    // Persist migrated scenarios back to storage
+    if (needsPersist) {
+      this.persist();
+      console.log("[ScenarioStore] Persisted migrated scenarios");
+    }
   }
 
   getSnapshot = (): StoreSnapshot => {
