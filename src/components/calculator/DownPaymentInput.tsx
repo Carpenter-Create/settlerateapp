@@ -50,8 +50,8 @@ export function DownPaymentInput({ value, type, purchasePrice, onChange }: DownP
           : `${percentAmount.toFixed(1)}% of purchase price`
       }
     >
-      <div className="flex gap-2">
-        <div className="flex-1">
+      <div className="flex w-full min-w-0 gap-2">
+        <div className="min-w-0 flex-1">
           {type === "percent" ? (
             <PercentInput
               value={value}
@@ -68,14 +68,14 @@ export function DownPaymentInput({ value, type, purchasePrice, onChange }: DownP
             />
           )}
         </div>
-        <div className="flex rounded-md border border-input bg-muted p-0.5">
+        <div className="flex shrink-0 rounded-md border border-input bg-muted p-0.5">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={() => handleTypeChange("percent")}
             className={cn(
-              "h-8 rounded px-3 text-xs font-medium",
+              "h-8 rounded px-2.5 text-xs font-medium sm:px-3",
               type === "percent"
                 ? "bg-background shadow-sm text-foreground"
                 : "text-muted-foreground hover:text-foreground hover:bg-transparent"
@@ -89,7 +89,7 @@ export function DownPaymentInput({ value, type, purchasePrice, onChange }: DownP
             size="sm"
             onClick={() => handleTypeChange("dollar")}
             className={cn(
-              "h-8 rounded px-3 text-xs font-medium",
+              "h-8 rounded px-2.5 text-xs font-medium sm:px-3",
               type === "dollar"
                 ? "bg-background shadow-sm text-foreground"
                 : "text-muted-foreground hover:text-foreground hover:bg-transparent"

@@ -8,9 +8,9 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="relative min-h-screen w-full max-w-full overflow-x-hidden bg-background">
       <Header />
-      <main className="container pb-20 pt-6 md:pb-12 md:pt-8">
+      <main className="w-full max-w-full px-4 pb-24 pt-4 sm:px-6 md:pb-12 md:pt-8 lg:container lg:px-8">
         {children}
       </main>
       <MobileNav />

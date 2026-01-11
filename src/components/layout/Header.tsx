@@ -13,9 +13,9 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="container flex h-14 items-center justify-between">
+      <div className="flex h-14 w-full max-w-full items-center justify-between px-4 sm:px-6 lg:container lg:px-8">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+        <Link to="/" className="flex shrink-0 items-center gap-2 transition-opacity hover:opacity-80">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <span className="text-sm font-bold text-primary-foreground">S</span>
           </div>
@@ -45,7 +45,7 @@ export function Header() {
         </nav>
 
         {/* Right section */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Link
             to="/pricing"
             className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:block"
