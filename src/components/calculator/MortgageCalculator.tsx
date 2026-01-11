@@ -141,10 +141,13 @@ export function MortgageCalculator() {
   const handleDuplicate = useCallback(() => {
     const newScenario = duplicateCurrent();
     if (newScenario) {
+      // Navigate to the newly created duplicate scenario
       setSearchParams({ scenario: newScenario.id });
-      toast.success("Scenario duplicated", {
-        description: `Created "${newScenario.name}"`,
+      toast("Scenario duplicated.", {
+        duration: 3000,
       });
+    } else {
+      toast.error("Could not duplicate scenario");
     }
   }, [duplicateCurrent, setSearchParams]);
 
