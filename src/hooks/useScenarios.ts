@@ -59,6 +59,14 @@ function saveScenarios(scenarios: ScenarioData[]): void {
   }
 }
 
+/**
+ * Synchronously save a single scenario to localStorage.
+ * Used when we need to persist before navigation.
+ */
+function saveScenariosSync(scenarios: ScenarioData[]): void {
+  saveScenarios(scenarios);
+}
+
 export function useScenarios() {
   const [scenarios, setScenarios] = useState<ScenarioData[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -118,7 +126,14 @@ export function useScenarios() {
       }
     }
     
-    setScenarios((prev) => [...prev, duplicate]);
+    // CRITICAL: Persist to localStorage SYNCHRONOUSLY before returning
+    // This ensures the scenario exists in storage before navigation triggers a reload
+    const newScenarios = [...scenarios, duplicate];
+    saveScenariosSync(newScenarios);
+    
+    // Also update React state
+    setScenarios(newScenarios);
+    
     return duplicate;
   }, [scenarios]);
 
@@ -161,31 +176,50 @@ export function useActiveScenario(scenarioId: string | null) {
   
   // Track original inputs for dirty detection
   const originalInputsRef = useRef<string | null>(null);
+  
+  // Track if we've loaded for this scenarioId
+  const loadedScenarioIdRef = useRef<string | null>(null);
 
   // Load scenario when ID changes or scenarios are loaded
+  // INVARIANT: If scenarioId is present, we MUST load from storage, never use defaults
   useEffect(() => {
     if (!isLoaded) return;
     
     if (scenarioId) {
-      const scenario = getScenario(scenarioId);
+      // First try to find in React state
+      let scenario = getScenario(scenarioId);
+      
+      // If not found in state, reload from localStorage directly
+      // This handles the case where navigation happens before state updates propagate
+      if (!scenario) {
+        const freshFromStorage = loadScenarios();
+        scenario = freshFromStorage.find(s => s.id === scenarioId);
+      }
+      
       if (scenario) {
         setActiveScenario(scenario);
         setDraftInputs(structuredClone(scenario.inputs));
         originalInputsRef.current = JSON.stringify(scenario.inputs);
+        loadedScenarioIdRef.current = scenarioId;
         setSaveStatus("saved");
         setIsDirty(false);
       } else {
-        // Scenario not found, reset to defaults
+        // Scenario param exists but scenario not found - this is an error state
+        // Do NOT fall back to defaults silently
+        console.error(`Scenario ${scenarioId} not found in storage`);
         setActiveScenario(null);
         setDraftInputs(DEFAULT_INPUTS);
         originalInputsRef.current = null;
+        loadedScenarioIdRef.current = null;
         setSaveStatus("idle");
         setIsDirty(false);
       }
     } else {
+      // No scenario param = new scenario mode, use defaults
       setActiveScenario(null);
       setDraftInputs(DEFAULT_INPUTS);
       originalInputsRef.current = null;
+      loadedScenarioIdRef.current = null;
       setSaveStatus("idle");
       setIsDirty(false);
     }
