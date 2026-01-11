@@ -176,7 +176,7 @@ export function ScenarioEditor({
                     {activeScenario.name}
                   </h1>
                 )}
-                <SaveStatusIndicator status={saveStatus} isDirty={isDirty} />
+                <SaveStatusIndicator status={saveStatus} isDirty={isDirty} isEditing={isEditing} />
               </div>
             ) : (
               <h1>Mortgage Calculator</h1>
