@@ -1,34 +1,49 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { MortgageInputs, MortgageResults, calculateMortgage, DEFAULT_INPUTS } from "@/lib/mortgage";
+import {
+  ScenarioData,
+  ScenarioAssumptions,
+  DEFAULT_ASSUMPTIONS,
+  createScenarioData,
+  duplicateScenarioData,
+  updateScenarioInputs,
+  updateScenarioName,
+  validateScenarioIntegrity,
+  validateDuplicateIndependence,
+  CALCULATOR_VERSION,
+} from "@/lib/scenarioContract";
 
-export interface Scenario {
-  id: string;
-  name: string;
-  inputs: MortgageInputs;
-  results: MortgageResults;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// Re-export for backward compatibility
+export type Scenario = ScenarioData;
 
-export type SaveStatus = "idle" | "saving" | "saved" | "error";
+export type SaveStatus = "idle" | "draft" | "saving" | "saved" | "error";
 
 const STORAGE_KEY = "settlerate_scenarios";
-const AUTOSAVE_DEBOUNCE_MS = 500;
 
-function generateId(): string {
-  return `scenario_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+/**
+ * Migrate legacy scenario format to new format with assumptions
+ */
+function migrateScenario(s: any): ScenarioData {
+  return {
+    id: s.id,
+    ownerId: s.ownerId ?? null,
+    name: s.name,
+    createdAt: new Date(s.createdAt),
+    updatedAt: new Date(s.updatedAt),
+    sourceScenarioId: s.sourceScenarioId ?? null,
+    inputs: s.inputs,
+    assumptions: s.assumptions ?? { ...DEFAULT_ASSUMPTIONS },
+    results: s.results ?? calculateMortgage(s.inputs),
+    calculatorVersion: s.calculatorVersion ?? CALCULATOR_VERSION,
+  };
 }
 
-function loadScenarios(): Scenario[] {
+function loadScenarios(): ScenarioData[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return parsed.map((s: any) => ({
-        ...s,
-        createdAt: new Date(s.createdAt),
-        updatedAt: new Date(s.updatedAt),
-      }));
+      return parsed.map(migrateScenario);
     }
   } catch (e) {
     console.error("Failed to load scenarios:", e);
@@ -36,7 +51,7 @@ function loadScenarios(): Scenario[] {
   return [];
 }
 
-function saveScenarios(scenarios: Scenario[]): void {
+function saveScenarios(scenarios: ScenarioData[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(scenarios));
   } catch (e) {
@@ -45,7 +60,7 @@ function saveScenarios(scenarios: Scenario[]): void {
 }
 
 export function useScenarios() {
-  const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  const [scenarios, setScenarios] = useState<ScenarioData[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load on mount
@@ -62,66 +77,56 @@ export function useScenarios() {
     }
   }, [scenarios, isLoaded]);
 
-  const createScenario = useCallback((name: string, inputs: MortgageInputs): Scenario => {
-    const now = new Date();
-    const scenario: Scenario = {
-      id: generateId(),
-      name,
-      inputs,
-      results: calculateMortgage(inputs),
-      createdAt: now,
-      updatedAt: now,
-    };
+  const createScenario = useCallback((name: string, inputs: MortgageInputs, sourceScenarioId?: string | null): ScenarioData => {
+    const scenario = createScenarioData(name, inputs, null, sourceScenarioId ?? null);
     setScenarios((prev) => [...prev, scenario]);
     return scenario;
   }, []);
 
-  const updateScenario = useCallback((id: string, updates: Partial<Pick<Scenario, "name" | "inputs">>): void => {
+  const updateScenario = useCallback((id: string, updates: Partial<Pick<ScenarioData, "name" | "inputs">>): void => {
     setScenarios((prev) =>
       prev.map((s) => {
         if (s.id !== id) return s;
-        const newInputs = updates.inputs ?? s.inputs;
-        return {
-          ...s,
-          name: updates.name ?? s.name,
-          inputs: newInputs,
-          results: updates.inputs ? calculateMortgage(newInputs) : s.results,
-          updatedAt: new Date(),
-        };
+        
+        let updated = s;
+        
+        if (updates.name !== undefined) {
+          updated = updateScenarioName(updated, updates.name);
+        }
+        
+        if (updates.inputs !== undefined) {
+          updated = updateScenarioInputs(updated, updates.inputs);
+        }
+        
+        return updated;
       })
     );
   }, []);
 
-  const duplicateScenario = useCallback((id: string): Scenario | null => {
+  const duplicateScenario = useCallback((id: string): ScenarioData | null => {
     const original = scenarios.find((s) => s.id === id);
     if (!original) return null;
     
-    // Deep clone inputs to ensure complete independence
-    // structuredClone creates a true deep copy with no shared references
-    const clonedInputs: MortgageInputs = structuredClone(original.inputs);
+    // Create deep clone with lineage tracking
+    const duplicate = duplicateScenarioData(original);
     
-    // Generate new name with "(Copy)" suffix
-    // Handle cases where original already has "(Copy)" suffix
-    let newName = original.name;
-    const copyMatch = newName.match(/^(.+?)\s*\(Copy(?:\s*(\d+))?\)$/i);
-    if (copyMatch) {
-      // Already a copy, increment the number
-      const baseName = copyMatch[1].trim();
-      const copyNum = copyMatch[2] ? parseInt(copyMatch[2], 10) + 1 : 2;
-      newName = `${baseName} (Copy ${copyNum})`;
-    } else {
-      newName = `${original.name} (Copy)`;
+    // Validate independence in development
+    if (process.env.NODE_ENV === "development") {
+      const validation = validateDuplicateIndependence(original, duplicate);
+      if (!validation.valid) {
+        console.error("Duplicate independence validation failed:", validation.errors);
+      }
     }
     
-    // Create new scenario with fresh ID, deep-cloned inputs, and recomputed results
-    return createScenario(newName, clonedInputs);
-  }, [scenarios, createScenario]);
+    setScenarios((prev) => [...prev, duplicate]);
+    return duplicate;
+  }, [scenarios]);
 
   const deleteScenario = useCallback((id: string): void => {
     setScenarios((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
-  const getScenario = useCallback((id: string): Scenario | undefined => {
+  const getScenario = useCallback((id: string): ScenarioData | undefined => {
     return scenarios.find((s) => s.id === id);
   }, [scenarios]);
 
@@ -137,16 +142,25 @@ export function useScenarios() {
 }
 
 /**
- * Hook for managing an active scenario with autosave
+ * Hook for managing an active scenario with draft editing semantics.
+ * 
+ * Draft Mode:
+ * - When a scenario is loaded, it enters draft state
+ * - Changes are held locally until explicitly saved
+ * - User must click "Save" to persist changes
+ * - "Save As New" creates a new scenario with lineage
  */
 export function useActiveScenario(scenarioId: string | null) {
   const { scenarios, isLoaded, updateScenario, getScenario, duplicateScenario, createScenario } = useScenarios();
-  const [inputs, setInputs] = useState<MortgageInputs>(DEFAULT_INPUTS);
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const [activeScenario, setActiveScenario] = useState<Scenario | null>(null);
   
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
-  const lastSavedInputsRef = useRef<string | null>(null);
+  // Draft state - local edits not yet persisted
+  const [draftInputs, setDraftInputs] = useState<MortgageInputs>(DEFAULT_INPUTS);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [activeScenario, setActiveScenario] = useState<ScenarioData | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  
+  // Track original inputs for dirty detection
+  const originalInputsRef = useRef<string | null>(null);
 
   // Load scenario when ID changes or scenarios are loaded
   useEffect(() => {
@@ -156,25 +170,28 @@ export function useActiveScenario(scenarioId: string | null) {
       const scenario = getScenario(scenarioId);
       if (scenario) {
         setActiveScenario(scenario);
-        setInputs(scenario.inputs);
-        lastSavedInputsRef.current = JSON.stringify(scenario.inputs);
+        setDraftInputs(structuredClone(scenario.inputs));
+        originalInputsRef.current = JSON.stringify(scenario.inputs);
         setSaveStatus("saved");
+        setIsDirty(false);
       } else {
         // Scenario not found, reset to defaults
         setActiveScenario(null);
-        setInputs(DEFAULT_INPUTS);
-        lastSavedInputsRef.current = null;
+        setDraftInputs(DEFAULT_INPUTS);
+        originalInputsRef.current = null;
         setSaveStatus("idle");
+        setIsDirty(false);
       }
     } else {
       setActiveScenario(null);
-      setInputs(DEFAULT_INPUTS);
-      lastSavedInputsRef.current = null;
+      setDraftInputs(DEFAULT_INPUTS);
+      originalInputsRef.current = null;
       setSaveStatus("idle");
+      setIsDirty(false);
     }
   }, [scenarioId, isLoaded, getScenario]);
 
-  // Update active scenario reference when scenarios change
+  // Update active scenario reference when scenarios change (for name updates etc)
   useEffect(() => {
     if (scenarioId && isLoaded) {
       const scenario = scenarios.find(s => s.id === scenarioId);
@@ -184,103 +201,111 @@ export function useActiveScenario(scenarioId: string | null) {
     }
   }, [scenarios, scenarioId, isLoaded]);
 
-  // Autosave with debounce
-  const saveInputs = useCallback((newInputs: MortgageInputs) => {
-    if (!scenarioId || !activeScenario) return;
-
-    // Clear existing debounce
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
-    const inputsJson = JSON.stringify(newInputs);
-    
-    // Skip if nothing changed
-    if (inputsJson === lastSavedInputsRef.current) {
+  // Check if draft has unsaved changes
+  const checkDirty = useCallback((newInputs: MortgageInputs) => {
+    if (!originalInputsRef.current) {
+      setIsDirty(false);
       return;
     }
-
-    setSaveStatus("saving");
-
-    debounceRef.current = setTimeout(() => {
-      try {
-        updateScenario(scenarioId, { inputs: newInputs });
-        lastSavedInputsRef.current = inputsJson;
-        setSaveStatus("saved");
-      } catch (error) {
-        console.error("Failed to save scenario:", error);
-        setSaveStatus("error");
-      }
-    }, AUTOSAVE_DEBOUNCE_MS);
-  }, [scenarioId, activeScenario, updateScenario]);
-
-  // Update inputs and trigger autosave
-  const updateInputs = useCallback((newInputs: MortgageInputs) => {
-    setInputs(newInputs);
-    if (activeScenario) {
-      saveInputs(newInputs);
+    const currentJson = JSON.stringify(newInputs);
+    const dirty = currentJson !== originalInputsRef.current;
+    setIsDirty(dirty);
+    if (dirty) {
+      setSaveStatus("draft");
     }
-  }, [activeScenario, saveInputs]);
+  }, []);
+
+  // Update draft inputs (does NOT persist)
+  const updateInputs = useCallback((newInputs: MortgageInputs) => {
+    setDraftInputs(newInputs);
+    if (activeScenario) {
+      checkDirty(newInputs);
+    }
+  }, [activeScenario, checkDirty]);
 
   // Update a single input field
   const updateInput = useCallback(<K extends keyof MortgageInputs>(
     key: K,
     value: MortgageInputs[K]
   ) => {
-    setInputs(prev => {
+    setDraftInputs(prev => {
       const newInputs = { ...prev, [key]: value };
       if (activeScenario) {
-        saveInputs(newInputs);
+        checkDirty(newInputs);
       }
       return newInputs;
     });
-  }, [activeScenario, saveInputs]);
+  }, [activeScenario, checkDirty]);
 
   // Batch update inputs
   const batchUpdateInputs = useCallback((updates: Partial<MortgageInputs>) => {
-    setInputs(prev => {
+    setDraftInputs(prev => {
       const newInputs = { ...prev, ...updates };
       if (activeScenario) {
-        saveInputs(newInputs);
+        checkDirty(newInputs);
       }
       return newInputs;
     });
-  }, [activeScenario, saveInputs]);
+  }, [activeScenario, checkDirty]);
 
-  // Create new scenario from current inputs
-  const saveAsNew = useCallback((name: string): Scenario => {
-    return createScenario(name, inputs);
-  }, [createScenario, inputs]);
+  // Save draft to existing scenario (overwrite)
+  const saveDraft = useCallback((): boolean => {
+    if (!activeScenario) return false;
+    
+    try {
+      setSaveStatus("saving");
+      updateScenario(activeScenario.id, { inputs: draftInputs });
+      originalInputsRef.current = JSON.stringify(draftInputs);
+      setIsDirty(false);
+      setSaveStatus("saved");
+      return true;
+    } catch (error) {
+      console.error("Failed to save scenario:", error);
+      setSaveStatus("error");
+      return false;
+    }
+  }, [activeScenario, draftInputs, updateScenario]);
+
+  // Save as new scenario (with lineage)
+  const saveAsNew = useCallback((name: string): ScenarioData => {
+    const sourceId = activeScenario?.id ?? null;
+    const newScenario = createScenario(name, draftInputs, sourceId);
+    return newScenario;
+  }, [createScenario, draftInputs, activeScenario]);
 
   // Duplicate current scenario
-  const duplicateCurrent = useCallback((): Scenario | null => {
+  const duplicateCurrent = useCallback((): ScenarioData | null => {
     if (!scenarioId) return null;
     return duplicateScenario(scenarioId);
   }, [scenarioId, duplicateScenario]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, []);
+  // Discard draft changes and reload from saved
+  const discardDraft = useCallback(() => {
+    if (activeScenario) {
+      setDraftInputs(structuredClone(activeScenario.inputs));
+      originalInputsRef.current = JSON.stringify(activeScenario.inputs);
+      setIsDirty(false);
+      setSaveStatus("saved");
+    }
+  }, [activeScenario]);
 
-  // Compute results from current inputs
-  const results = calculateMortgage(inputs);
+  // Compute results from current draft inputs
+  const results = calculateMortgage(draftInputs);
 
   return {
-    inputs,
+    inputs: draftInputs,
     results,
     activeScenario,
     saveStatus,
     isLoaded,
+    isDirty,
     updateInput,
     updateInputs,
     batchUpdateInputs,
+    saveDraft,
     saveAsNew,
     duplicateCurrent,
+    discardDraft,
     isEditing: !!activeScenario,
   };
 }
