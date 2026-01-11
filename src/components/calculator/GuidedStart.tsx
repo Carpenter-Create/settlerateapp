@@ -13,13 +13,23 @@
  * 4. Taxes & insurance: toggle estimates + editable values
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,14 +59,22 @@ interface GuidedStartProps {
 type Step = 1 | 2 | 3 | 4;
 
 const STEP_LABELS: Record<Step, string> = {
-  1: "Goal",
-  2: "Property",
+  1: "What are you doing?",
+  2: "Property details",
   3: "Loan basics",
   4: "Taxes & insurance",
 };
 
+const STEP_HELPERS: Record<Step, string> = {
+  1: "This sets the defaults. You can change anything later.",
+  2: "Used for estimates like taxes and insurance (optional).",
+  3: "", // Set dynamically based on mode
+  4: "Adds realism to the monthly estimate. Edit any time.",
+};
+
 export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps) {
   const [step, setStep] = useState<Step>(1);
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   
   // Form state - mirrors canonical MortgageInputs structure
   const [mode, setMode] = useState<ScenarioType>("purchase");
@@ -72,6 +90,16 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
   const [includeEstimates, setIncludeEstimates] = useState(true);
   const [propertyTaxRate, setPropertyTaxRate] = useState<number>(1.1);
   const [homeInsuranceMonthly, setHomeInsuranceMonthly] = useState<number>(150);
+
+  // Check if user has entered any data
+  const hasData = useMemo(() => {
+    return (
+      step > 1 ||
+      purchasePrice !== DEFAULT_PURCHASE_INPUTS.purchasePrice ||
+      currentLoanBalance !== DEFAULT_REFINANCE_INPUTS.currentLoanBalance ||
+      zipCode !== ""
+    );
+  }, [step, purchasePrice, currentLoanBalance, zipCode]);
 
   const resetForm = useCallback(() => {
     setStep(1);
@@ -91,11 +119,23 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
   }, []);
 
   const handleOpenChange = useCallback((newOpen: boolean) => {
-    if (!newOpen) {
-      // Don't reset form on close - user might want to come back
+    if (!newOpen && hasData) {
+      // Show confirmation if data entered
+      setShowDiscardDialog(true);
+      return;
     }
     onOpenChange(newOpen);
-  }, [onOpenChange]);
+  }, [onOpenChange, hasData]);
+
+  const handleConfirmDiscard = useCallback(() => {
+    setShowDiscardDialog(false);
+    resetForm();
+    onOpenChange(false);
+  }, [onOpenChange, resetForm]);
+
+  const handleCancelDiscard = useCallback(() => {
+    setShowDiscardDialog(false);
+  }, []);
 
   const handleZipChange = useCallback((value: string) => {
     const cleaned = value.replace(/\D/g, "").slice(0, 5);
@@ -185,13 +225,33 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
     }
   }, [step, mode, purchasePrice, currentLoanBalance, estimatedHomeValue, interestRate, loanTerm]);
 
+  // Determine step 3 helper based on mode
+  const getStepHelper = (s: Step) => {
+    if (s === 3) {
+      return mode === "purchase" 
+        ? "These inputs determine your principal + interest payment."
+        : "These inputs estimate your new payment.";
+    }
+    return STEP_HELPERS[s];
+  };
+
+  // Get step 3 label based on mode
+  const getStepLabel = (s: Step) => {
+    if (s === 3) {
+      return mode === "purchase" ? "Loan basics" : "New loan details";
+    }
+    return STEP_LABELS[s];
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-serif text-lg">
-            {STEP_LABELS[step]}
-          </DialogTitle>
+          <DialogTitle className="font-serif text-lg">Guided start</DialogTitle>
+          <p className="text-sm text-muted-foreground pt-1">
+            Prefill your estimate. Adjust details any time.
+          </p>
         </DialogHeader>
 
         {/* Progress indicator */}
@@ -212,37 +272,52 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
 
         {/* Step content */}
         <div className="space-y-5 py-2">
+          {/* Step heading */}
+          <div className="space-y-1">
+            <p className="text-sm font-medium">{getStepLabel(step)}</p>
+            {getStepHelper(step) && (
+              <p className="text-xs text-muted-foreground">{getStepHelper(step)}</p>
+            )}
+          </div>
+
           {step === 1 && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                What are you looking to do?
-              </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 <button
                   type="button"
                   onClick={() => setMode("purchase")}
                   className={cn(
-                    "flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all",
+                    "flex flex-col items-start gap-1 rounded-lg border-2 p-4 transition-all text-left",
                     mode === "purchase"
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-muted-foreground/50"
                   )}
                 >
-                  <Home className="h-5 w-5" strokeWidth={1.5} />
-                  <span className="text-sm font-medium">Buying a home</span>
+                  <div className="flex items-center gap-2">
+                    <Home className="h-4 w-4" strokeWidth={1.5} />
+                    <span className="text-sm font-medium">Buying a home</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    Estimate payment and total costs for a purchase.
+                  </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode("refinance")}
                   className={cn(
-                    "flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all",
+                    "flex flex-col items-start gap-1 rounded-lg border-2 p-4 transition-all text-left",
                     mode === "refinance"
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-muted-foreground/50"
                   )}
                 >
-                  <RefreshCw className="h-5 w-5" strokeWidth={1.5} />
-                  <span className="text-sm font-medium">Refinancing</span>
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4" strokeWidth={1.5} />
+                    <span className="text-sm font-medium">Refinancing</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    Estimate a new payment based on a new rate and term.
+                  </span>
                 </button>
               </div>
             </div>
@@ -251,18 +326,18 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
           {step === 2 && (
             <div className="space-y-5">
               <div className="space-y-2">
-                <Label className="text-sm">ZIP code <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                <Label className="text-sm">ZIP Code <span className="text-muted-foreground font-normal">(optional)</span></Label>
                 <Input
                   type="text"
                   inputMode="numeric"
-                  placeholder="e.g., 90210"
+                  placeholder="75201"
                   value={zipCode}
                   onChange={(e) => handleZipChange(e.target.value)}
                   maxLength={5}
                   className="w-32"
                 />
                 <p className="text-xs text-muted-foreground">
-                  We'll use this to estimate taxes and insurance.
+                  If provided, we can suggest typical tax and insurance ranges.
                 </p>
               </div>
 
@@ -274,24 +349,33 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                     onChange={setPurchasePrice}
                     min={0}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    The total price of the home.
+                  </p>
                 </div>
               ) : (
                 <>
                   <div className="space-y-2">
-                    <Label className="text-sm">Estimated home value</Label>
+                    <Label className="text-sm">Home value <span className="text-muted-foreground font-normal">(optional)</span></Label>
                     <CurrencyInput
                       value={estimatedHomeValue}
                       onChange={setEstimatedHomeValue}
                       min={0}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Used to estimate LTV. You can skip if unknown.
+                    </p>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm">Current loan balance</Label>
+                    <Label className="text-sm">Current balance</Label>
                     <CurrencyInput
                       value={currentLoanBalance}
                       onChange={setCurrentLoanBalance}
                       min={0}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Approximate is fine.
+                    </p>
                   </div>
                 </>
               )}
@@ -301,47 +385,82 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
           {step === 3 && (
             <div className="space-y-5">
               {mode === "purchase" ? (
-                <div className="space-y-2">
-                  <Label className="text-sm">Down payment</Label>
-                  <DownPaymentInput
-                    value={downPayment}
-                    type={downPaymentType}
-                    purchasePrice={purchasePrice}
-                    onChange={(value, type) => {
-                      setDownPayment(value);
-                      setDownPaymentType(type);
-                    }}
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-sm">Down payment</Label>
+                    <DownPaymentInput
+                      value={downPayment}
+                      type={downPaymentType}
+                      purchasePrice={purchasePrice}
+                      onChange={(value, type) => {
+                        setDownPayment(value);
+                        setDownPaymentType(type);
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Higher down payment lowers the loan amount.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm">Interest rate</Label>
+                    <PercentInput
+                      value={interestRate}
+                      onChange={setInterestRate}
+                      min={0}
+                      max={25}
+                      step={0.125}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Use your best estimate. You can compare multiple rates later.
+                    </p>
+                  </div>
+                  <LoanTermInput
+                    value={loanTerm}
+                    onChange={setLoanTerm}
+                    label="Loan term"
                   />
-                </div>
+                </>
               ) : (
-                <div className="space-y-2">
-                  <Label className="text-sm">Cash out <span className="text-muted-foreground font-normal">(optional)</span></Label>
-                  <CurrencyInput
-                    value={cashOutAmount}
-                    onChange={setCashOutAmount}
-                    min={0}
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-sm">Current balance</Label>
+                    <CurrencyInput
+                      value={currentLoanBalance}
+                      onChange={setCurrentLoanBalance}
+                      min={0}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Approximate is fine.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm">New interest rate</Label>
+                    <PercentInput
+                      value={interestRate}
+                      onChange={setInterestRate}
+                      min={0}
+                      max={25}
+                      step={0.125}
+                    />
+                  </div>
+                  <LoanTermInput
+                    value={loanTerm}
+                    onChange={setLoanTerm}
+                    label="New loan term"
                   />
-                </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm">Cash out <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                    <CurrencyInput
+                      value={cashOutAmount}
+                      onChange={setCashOutAmount}
+                      min={0}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Amount added to the new loan and paid to you at closing.
+                    </p>
+                  </div>
+                </>
               )}
-
-              <div className="space-y-2">
-                <Label className="text-sm">
-                  {mode === "purchase" ? "Interest rate" : "New interest rate"}
-                </Label>
-                <PercentInput
-                  value={interestRate}
-                  onChange={setInterestRate}
-                  min={0}
-                  max={25}
-                  step={0.125}
-                />
-              </div>
-
-              <LoanTermInput
-                value={loanTerm}
-                onChange={setLoanTerm}
-                label={mode === "purchase" ? "Loan term" : "New loan term"}
-              />
             </div>
           )}
 
@@ -349,10 +468,7 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
             <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <Label className="text-sm">Include estimates</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Add taxes and insurance to your payment
-                  </p>
+                  <Label className="text-sm">Include taxes & insurance</Label>
                 </div>
                 <Switch
                   checked={includeEstimates}
@@ -362,8 +478,14 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
 
               {includeEstimates && (
                 <div className="space-y-4 animate-slide-up">
+                  <div className="rounded-lg bg-muted/50 px-3 py-2">
+                    <p className="text-xs text-muted-foreground">
+                      Based on regional averages. You can override.
+                    </p>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label className="text-sm">Property tax rate</Label>
+                    <Label className="text-sm">Property tax (annual)</Label>
                     <PercentInput
                       value={propertyTaxRate}
                       onChange={setPropertyTaxRate}
@@ -377,14 +499,14 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm">Home insurance</Label>
+                    <Label className="text-sm">Home insurance (annual)</Label>
                     <CurrencyInput
-                      value={homeInsuranceMonthly}
-                      onChange={setHomeInsuranceMonthly}
+                      value={homeInsuranceMonthly * 12}
+                      onChange={(v) => setHomeInsuranceMonthly(Math.round(v / 12))}
                       min={0}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Monthly amount
+                      Annual premium amount
                     </p>
                   </div>
                 </div>
@@ -417,12 +539,29 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
             ) : (
               <Button size="sm" onClick={handleFinish} className="gap-1.5">
                 <Check className="h-3.5 w-3.5" strokeWidth={1.5} />
-                Finish
+                Prefill calculator
               </Button>
             )}
           </div>
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Discard confirmation dialog */}
+    <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Discard guided start?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Your inputs won't be saved unless you finish.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleCancelDiscard}>Continue</AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirmDiscard}>Discard</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
