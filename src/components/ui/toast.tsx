@@ -63,13 +63,14 @@ ToastAction.displayName = ToastPrimitives.Action.displayName;
 /**
  * ToastClose - Refined close affordance
  * 
- * Requirements:
- * - Aligned to top-right of toast container
- * - Minimum hit target of 32×32px
- * - Visually lighter than toast icon and title
- * - No background circle, no heavy stroke, no emphasis color
- * - Hover: subtle opacity change only
- * - Feel intentional, quiet, and institutional
+ * Requirements (LOCKED):
+ * - Minimum inset of 12-16px from container edge (breathing room)
+ * - Hit target of 32×32px minimum
+ * - Fully transparent background - no hover background
+ * - Light neutral icon color (secondary text tone)
+ * - Smaller visual weight than success icon and title
+ * - Hover: subtle opacity reduction only
+ * - Feels optional and quiet, not prominent or decorative
  */
 const ToastClose = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Close>,
@@ -78,25 +79,25 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      // Positioning: top-right, aligned properly
-      "absolute right-1 top-1",
-      // Hit target: 32x32px minimum
+      // Positioning: inset 12-16px from edge for breathing room
+      "absolute right-3 top-3",
+      // Hit target: 32x32px minimum, centered content
       "flex h-8 w-8 items-center justify-center",
-      // Visual: lighter than title, no background
-      "rounded-sm text-muted-foreground/50",
-      // Interaction: subtle opacity change on hover
+      // Visual: fully transparent bg, light icon color
+      "bg-transparent text-muted-foreground/40",
+      // Interaction: subtle opacity reduction on hover (NO background)
       "transition-opacity duration-150",
-      "hover:text-muted-foreground/80",
+      "hover:text-muted-foreground/60 hover:bg-transparent",
       // Focus: accessible but quiet
-      "focus:outline-none focus:text-muted-foreground/80",
+      "focus:outline-none focus:text-muted-foreground/60 focus:bg-transparent",
       // Destructive variant
-      "group-[.destructive]:text-destructive-foreground/50 group-[.destructive]:hover:text-destructive-foreground/80",
+      "group-[.destructive]:text-destructive-foreground/40 group-[.destructive]:hover:text-destructive-foreground/60",
       className,
     )}
     toast-close=""
     {...props}
   >
-    <X className="h-3.5 w-3.5" strokeWidth={1.5} />
+    <X className="h-3 w-3" strokeWidth={1.5} />
   </ToastPrimitives.Close>
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;

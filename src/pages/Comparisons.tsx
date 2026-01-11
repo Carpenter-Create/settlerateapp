@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useComparisons } from "@/hooks/useComparisons";
 import { useScenarios } from "@/hooks/useScenarios";
 import { Button } from "@/components/ui/button";
-import { GitCompare, Trash2, Calendar, AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { GitCompare, Trash2, Calendar, AlertCircle, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString("en-US", {
@@ -15,10 +18,15 @@ function formatDate(date: Date): string {
 
 export default function Comparisons() {
   const navigate = useNavigate();
-  const { comparisons, isLoaded, deleteComparison } = useComparisons();
+  const { comparisons, isLoaded, deleteComparison, updateComparison } = useComparisons();
   const { scenarios, isLoaded: scenariosLoaded } = useScenarios();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
 
   const handleOpenComparison = (comparison: { id: string; scenarioIds: string[] }) => {
+    // Don't navigate if we're editing
+    if (editingId) return;
+    
     // Navigate to compare page with scenario IDs as query params
     const params = new URLSearchParams();
     params.set("comparison", comparison.id);
@@ -31,6 +39,26 @@ export default function Comparisons() {
     if (window.confirm("Delete this comparison?")) {
       deleteComparison(id);
     }
+  };
+
+  const handleStartRename = (e: React.MouseEvent, comparison: { id: string; name: string }) => {
+    e.stopPropagation();
+    setEditingId(comparison.id);
+    setEditingName(comparison.name);
+  };
+
+  const handleSaveRename = () => {
+    if (editingId && editingName.trim()) {
+      updateComparison(editingId, { name: editingName.trim() });
+      toast.success("Comparison renamed");
+    }
+    setEditingId(null);
+    setEditingName("");
+  };
+
+  const handleCancelRename = () => {
+    setEditingId(null);
+    setEditingName("");
   };
 
   // Check for missing scenarios in each comparison
@@ -103,13 +131,15 @@ export default function Comparisons() {
       <div className="space-y-3">
         {comparisons.map((comparison) => {
           const status = getComparisonStatus(comparison.scenarioIds);
+          const isEditing = editingId === comparison.id;
           
           return (
             <div
               key={comparison.id}
               onClick={() => handleOpenComparison(comparison)}
               className={cn(
-                "group flex items-center justify-between rounded border px-4 py-3 transition-colors cursor-pointer",
+                "group flex items-center justify-between rounded border px-4 py-3 transition-colors",
+                !isEditing && "cursor-pointer",
                 status.valid
                   ? "border-border hover:border-foreground/20 hover:bg-muted/30"
                   : "border-border/50 bg-muted/20"
@@ -117,8 +147,23 @@ export default function Comparisons() {
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-medium truncate">{comparison.name}</h3>
-                  {!status.valid && (
+                  {isEditing ? (
+                    <Input
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      onBlur={handleSaveRename}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveRename();
+                        if (e.key === "Escape") handleCancelRename();
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="h-7 max-w-xs"
+                      autoFocus
+                    />
+                  ) : (
+                    <h3 className="font-medium truncate">{comparison.name}</h3>
+                  )}
+                  {!status.valid && !isEditing && (
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
                       <AlertCircle className="h-3 w-3" strokeWidth={1.5} />
                       {status.missingCount} scenario{status.missingCount > 1 ? "s" : ""} unavailable
@@ -134,15 +179,29 @@ export default function Comparisons() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  onClick={(e) => handleDelete(e, comparison.id)}
-                >
-                  <Trash2 className="h-4 w-4" strokeWidth={1.5} />
-                </Button>
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {!isEditing && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      onClick={(e) => handleStartRename(e, comparison)}
+                      title="Rename"
+                    >
+                      <Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={(e) => handleDelete(e, comparison.id)}
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           );
