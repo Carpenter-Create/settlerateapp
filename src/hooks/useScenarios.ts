@@ -225,6 +225,10 @@ export function useActiveScenario(scenarioId: string | null) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [activeScenario, setActiveScenario] = useState<ScenarioData | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+  
+  // CRITICAL: Track if scenario was requested but not found
+  // This enables the guardrail UI - we must NOT fall back to defaults silently
+  const [scenarioNotFound, setScenarioNotFound] = useState(false);
 
   // Track original inputs for dirty detection
   const originalInputsRef = useRef<string | null>(null);
@@ -248,8 +252,10 @@ export function useActiveScenario(scenarioId: string | null) {
         loadedScenarioIdRef.current = scenarioId;
         setSaveStatus("saved");
         setIsDirty(false);
+        setScenarioNotFound(false);
       } else {
-        // Scenario param exists but scenario not found - this is an error state
+        // GUARDRAIL: Scenario param exists but scenario not found
+        // Do NOT fall back to defaults - set error state instead
         console.error(`Scenario ${scenarioId} not found in storage`);
         setActiveScenario(null);
         setDraftInputs(DEFAULT_INPUTS);
@@ -257,6 +263,7 @@ export function useActiveScenario(scenarioId: string | null) {
         loadedScenarioIdRef.current = null;
         setSaveStatus("idle");
         setIsDirty(false);
+        setScenarioNotFound(true);
       }
     } else {
       // No scenario param = new scenario mode, use defaults
@@ -266,6 +273,7 @@ export function useActiveScenario(scenarioId: string | null) {
       loadedScenarioIdRef.current = null;
       setSaveStatus("idle");
       setIsDirty(false);
+      setScenarioNotFound(false);
     }
   }, [scenarioId, isLoaded, getScenario]);
 
@@ -391,6 +399,7 @@ export function useActiveScenario(scenarioId: string | null) {
     saveStatus,
     isLoaded,
     isDirty,
+    scenarioNotFound, // GUARDRAIL: true if scenarioId was provided but not found
     updateInput,
     updateInputs,
     batchUpdateInputs,

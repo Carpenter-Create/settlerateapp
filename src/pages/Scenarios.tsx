@@ -194,11 +194,13 @@ export default function Scenarios() {
   const handleDuplicate = (id: string) => {
     const newScenario = duplicateScenario(id);
     if (newScenario) {
-      // Navigate to the duplicated scenario
+      // ATOMIC: Navigate to the duplicated scenario after persist
       navigate(`/?scenario=${newScenario.id}`);
-      toast.success("Scenario duplicated", {
-        description: `Created "${newScenario.name}"`,
+      toast("Scenario duplicated.", {
+        duration: 3000,
       });
+    } else {
+      toast.error("Could not duplicate scenario");
     }
   };
 
