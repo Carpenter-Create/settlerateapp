@@ -468,6 +468,54 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
 }
 
 // =============================================================================
+// ANNUAL SCOPE CALCULATIONS (Year 1)
+// =============================================================================
+
+export interface AnnualFinancialSnapshot {
+  /** Total mortgage payments in Year 1 */
+  annualPayments: number;
+  /** Total interest paid in Year 1 */
+  annualInterest: number;
+  /** Total principal reduction in Year 1 */
+  annualPrincipalReduction: number;
+}
+
+/**
+ * Calculate Year 1 annual financial figures from mortgage results.
+ * These figures reflect the first 12 months only.
+ */
+export function calculateAnnualSnapshot(results: MortgageResults): AnnualFinancialSnapshot {
+  const { amortizationSchedule, monthlyTotal } = results;
+  
+  // Get first 12 months (or less if paid off sooner)
+  const yearOneMonths = amortizationSchedule.slice(0, 12);
+  
+  if (yearOneMonths.length === 0) {
+    return {
+      annualPayments: 0,
+      annualInterest: 0,
+      annualPrincipalReduction: 0,
+    };
+  }
+  
+  // Sum Year 1 figures
+  const annualInterest = yearOneMonths.reduce((sum, entry) => sum + entry.interest, 0);
+  const annualPrincipalReduction = yearOneMonths.reduce(
+    (sum, entry) => sum + entry.principal + entry.extraPayment, 
+    0
+  );
+  
+  // Annual payments = monthly total × 12 (includes taxes, insurance, etc.)
+  const annualPayments = monthlyTotal * yearOneMonths.length;
+  
+  return {
+    annualPayments,
+    annualInterest,
+    annualPrincipalReduction,
+  };
+}
+
+// =============================================================================
 // FORMATTING UTILITIES
 // =============================================================================
 

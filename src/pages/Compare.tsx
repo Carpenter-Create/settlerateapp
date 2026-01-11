@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { useScenarios, Scenario } from "@/hooks/useScenarios";
 import { useComparisons } from "@/hooks/useComparisons";
-import { formatCurrency, formatPercent, formatDate, calculateDownPaymentAmount } from "@/lib/mortgage";
+import { formatCurrency, formatPercent, formatDate, calculateDownPaymentAmount, calculateAnnualSnapshot } from "@/lib/mortgage";
 import { 
   generateComparisonSummary, 
   detectMaterialChanges,
@@ -589,6 +589,86 @@ export default function Compare() {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* Annual financial snapshot (Year 1) - secondary scope */}
+      {selectedScenarios.length >= 2 && (
+        <div className="border-t border-border pt-6 space-y-4">
+          <p className="section-label">Annual financial snapshot (Year 1)</p>
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <table className="w-full min-w-[500px] text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="py-2 pr-4 text-left font-normal text-muted-foreground w-48" />
+                  {selectedScenarios.map((s) => (
+                    <th
+                      key={s.id}
+                      className={cn(
+                        "py-2 px-4 text-right font-medium text-xs",
+                        currentEmphasis === s.id && "bg-muted/30"
+                      )}
+                    >
+                      {s.name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-border/50">
+                  <td className="py-2 pr-4 text-muted-foreground text-xs">Annual payments</td>
+                  {selectedScenarios.map((s) => {
+                    const annual = calculateAnnualSnapshot(s.results);
+                    return (
+                      <td
+                        key={s.id}
+                        className={cn(
+                          "py-2 px-4 text-right font-mono tabular-nums text-xs",
+                          currentEmphasis === s.id && "bg-muted/30"
+                        )}
+                      >
+                        {formatCurrency(annual.annualPayments)}
+                      </td>
+                    );
+                  })}
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="py-2 pr-4 text-muted-foreground text-xs">Annual interest</td>
+                  {selectedScenarios.map((s) => {
+                    const annual = calculateAnnualSnapshot(s.results);
+                    return (
+                      <td
+                        key={s.id}
+                        className={cn(
+                          "py-2 px-4 text-right font-mono tabular-nums text-xs",
+                          currentEmphasis === s.id && "bg-muted/30"
+                        )}
+                      >
+                        {formatCurrency(annual.annualInterest)}
+                      </td>
+                    );
+                  })}
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="py-2 pr-4 text-muted-foreground text-xs">Principal reduction</td>
+                  {selectedScenarios.map((s) => {
+                    const annual = calculateAnnualSnapshot(s.results);
+                    return (
+                      <td
+                        key={s.id}
+                        className={cn(
+                          "py-2 px-4 text-right font-mono tabular-nums text-xs",
+                          currentEmphasis === s.id && "bg-muted/30"
+                        )}
+                      >
+                        {formatCurrency(annual.annualPrincipalReduction)}
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
