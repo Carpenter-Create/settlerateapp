@@ -1,6 +1,7 @@
-import { MortgageResults } from "@/lib/mortgage";
+import { MortgageResults, calculateAnnualSnapshot } from "@/lib/mortgage";
 import { formatCurrency, formatCurrencyPrecise, formatDate, formatPercent } from "@/lib/mortgage";
 import { cn } from "@/lib/utils";
+import { useMemo } from "react";
 
 interface ResultsCardProps {
   results: MortgageResults;
@@ -53,6 +54,9 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
     cashOutAmount,
     closingCostsIncluded,
   } = results;
+
+  // Calculate Year 1 annual snapshot
+  const annualSnapshot = useMemo(() => calculateAnnualSnapshot(results), [results]);
 
   const hasAdditionalCosts = monthlyPropertyTax > 0 || monthlyHomeInsurance > 0 || monthlyPMI > 0 || monthlyHOA > 0;
   const isRefinance = mode === "refinance";
@@ -146,6 +150,22 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
             label="Months to payoff" 
             value={`${payoffMonths}`} 
           />
+        </div>
+      </div>
+
+      <div className="divider-subtle" />
+
+      {/* Annual perspective (Year 1) - secondary, contextual */}
+      <div>
+        <p className="section-label mb-3">Annual perspective (Year 1)</p>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+          In the first year, you'll pay approximately {formatCurrency(annualSnapshot.annualPayments)} toward this mortgage. 
+          Of that, {formatCurrency(annualSnapshot.annualInterest)} goes to interest and {formatCurrency(annualSnapshot.annualPrincipalReduction)} reduces your principal balance.
+        </p>
+        <div className="space-y-0">
+          <ResultRow label="Annual payments" value={formatCurrency(annualSnapshot.annualPayments)} />
+          <ResultRow label="Annual interest" value={formatCurrency(annualSnapshot.annualInterest)} />
+          <ResultRow label="Principal reduction" value={formatCurrency(annualSnapshot.annualPrincipalReduction)} />
         </div>
       </div>
 

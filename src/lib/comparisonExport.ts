@@ -11,7 +11,7 @@
  * - Consistent spacing and typography
  */
 
-import { formatCurrency, formatPercent, calculateDownPaymentAmount } from "@/lib/mortgage";
+import { formatCurrency, formatPercent, calculateDownPaymentAmount, calculateAnnualSnapshot } from "@/lib/mortgage";
 import type { ScenarioData } from "@/lib/scenarioContract";
 import type { ComparisonSummary, MaterialChange } from "@/lib/comparisonContract";
 
@@ -81,6 +81,22 @@ export function exportComparisonPDF(data: ExportData): void {
     {
       label: "Total cost",
       values: scenarios.map((s) => formatCurrency(s.results.totalCost)),
+    },
+  ];
+
+  // Build annual snapshot table (Year 1)
+  const annualMetrics: MetricRow[] = [
+    {
+      label: "Annual payments",
+      values: scenarios.map((s) => formatCurrency(calculateAnnualSnapshot(s.results).annualPayments)),
+    },
+    {
+      label: "Annual interest",
+      values: scenarios.map((s) => formatCurrency(calculateAnnualSnapshot(s.results).annualInterest)),
+    },
+    {
+      label: "Principal reduction",
+      values: scenarios.map((s) => formatCurrency(calculateAnnualSnapshot(s.results).annualPrincipalReduction)),
     },
   ];
 
@@ -274,6 +290,25 @@ export function exportComparisonPDF(data: ExportData): void {
     </table>
   </div>
   
+  <div class="section">
+    <p class="section-label">Annual Financial Snapshot (Year 1)</p>
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          ${scenarios.map((s) => `<th>${s.name}</th>`).join("")}
+        </tr>
+      </thead>
+      <tbody>
+        ${annualMetrics.map((m) => `
+        <tr>
+          <td>${m.label}</td>
+          ${m.values.map((v) => `<td>${v}</td>`).join("")}
+        </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  </div>
   ${summary ? `
   <div class="section">
     <p class="section-label">Summary</p>
