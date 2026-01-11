@@ -1,9 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { useScenarios, Scenario } from "@/hooks/useScenarios";
+import { useComparisons } from "@/hooks/useComparisons";
 import { formatCurrency, formatPercent, formatDate, calculateDownPaymentAmount } from "@/lib/mortgage";
+import { generateComparisonSummary } from "@/lib/comparisonContract";
 import { Button } from "@/components/ui/button";
-import { Calculator, GitCompare, Plus, X, Download, Share2, Settings2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Calculator, GitCompare, Plus, X, Download, Share2, Settings2, Save, FolderOpen, AlertCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -12,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface ComparisonMetric {
   key: string;
@@ -133,145 +136,45 @@ function findBestIndex(
   return values.indexOf(target);
 }
 
-interface ComparisonSummary {
-  recommendation: {
-    scenario: Scenario;
-    reason: string;
-  } | null;
-  benefits: string[];
-  tradeoffs: string[];
-  alternativeAdvice: string | null;
-}
-
-function generateComparisonSummary(scenarios: Scenario[]): ComparisonSummary | null {
-  if (scenarios.length < 2) return null;
-
-  // Identify key metrics for each scenario
-  const analyzed = scenarios.map((s) => ({
-    scenario: s,
-    monthlyPayment: s.results.monthlyTotal,
-    totalInterest: s.results.totalInterest,
-    totalCost: s.results.totalCost,
-    payoffMonths: s.results.payoffMonths,
-  }));
-
-  // Find best in each category
-  const lowestMonthly = [...analyzed].sort((a, b) => a.monthlyPayment - b.monthlyPayment)[0];
-  const lowestTotalInterest = [...analyzed].sort((a, b) => a.totalInterest - b.totalInterest)[0];
-  const shortestPayoff = [...analyzed].sort((a, b) => a.payoffMonths - b.payoffMonths)[0];
-  const lowestTotalCost = [...analyzed].sort((a, b) => a.totalCost - b.totalCost)[0];
-
-  // Priority order for recommendation: lowest total interest > shortest payoff > meaningful monthly improvement
-  let recommended = lowestTotalInterest;
-  let reason = "This option provides the lowest total cost over time";
-
-  // Check if shortest payoff is different and also saves interest
-  if (shortestPayoff.scenario.id !== lowestTotalInterest.scenario.id) {
-    // If shortest payoff also has low interest, prefer it
-    const shortestInterest = shortestPayoff.totalInterest;
-    const lowestInterest = lowestTotalInterest.totalInterest;
-    if (shortestInterest <= lowestInterest * 1.05) {
-      recommended = shortestPayoff;
-      reason = "This option provides the fastest path to debt freedom with competitive total cost";
-    }
-  }
-
-  // Check for meaningful monthly improvement (>5% reduction)
-  const monthlyDiff = lowestMonthly.monthlyPayment / recommended.monthlyPayment;
-  if (monthlyDiff < 0.95 && lowestMonthly.scenario.id !== recommended.scenario.id) {
-    // Check if the recommended still makes sense given monthly difference
-    const interestSavings = lowestMonthly.totalInterest - recommended.totalInterest;
-    if (interestSavings > 0) {
-      reason += " while meaningfully reducing your monthly payment";
-    }
-  } else if (recommended.scenario.id === lowestMonthly.scenario.id) {
-    reason += " while also offering the lowest monthly payment";
-  }
-
-  // Build benefits list
-  const benefits: string[] = [];
-  const rec = recommended;
-
-  // Compare to other scenarios
-  const others = analyzed.filter((a) => a.scenario.id !== rec.scenario.id);
-
-  // Monthly payment comparison
-  others.forEach((other) => {
-    const monthlyDiffAmount = other.monthlyPayment - rec.monthlyPayment;
-    if (monthlyDiffAmount > 10) {
-      benefits.push(
-        `${formatCurrency(monthlyDiffAmount)} lower monthly payment compared to ${other.scenario.name}`
-      );
-    }
-  });
-
-  // Total interest comparison
-  others.forEach((other) => {
-    const interestDiffAmount = other.totalInterest - rec.totalInterest;
-    if (interestDiffAmount > 1000) {
-      benefits.push(
-        `${formatCurrency(interestDiffAmount)} less total interest over the life of the loan`
-      );
-    }
-  });
-
-  // Payoff timeline comparison
-  others.forEach((other) => {
-    const monthsDiff = other.payoffMonths - rec.payoffMonths;
-    if (monthsDiff > 6) {
-      benefits.push(
-        `Shorter payoff timeline (${rec.payoffMonths} months vs. ${other.payoffMonths} months)`
-      );
-    }
-  });
-
-  // Add summary benefit if multiple advantages
-  if (benefits.length >= 2) {
-    benefits.push("This results in both improved cash flow and a faster path to debt freedom.");
-  }
-
-  // Build tradeoffs
-  const tradeoffs: string[] = [];
-  let alternativeAdvice: string | null = null;
-
-  // Find if another option has lower monthly
-  if (lowestMonthly.scenario.id !== rec.scenario.id) {
-    const monthlyDiffAmount = rec.monthlyPayment - lowestMonthly.monthlyPayment;
-    if (monthlyDiffAmount > 10) {
-      tradeoffs.push(`Requires a higher monthly payment than ${lowestMonthly.scenario.name}`);
-      
-      const interestDiffAmount = lowestMonthly.totalInterest - rec.totalInterest;
-      if (interestDiffAmount > 1000) {
-        tradeoffs.push(
-          `${lowestMonthly.scenario.name} minimizes monthly cost, but increases total interest paid`
-        );
-        alternativeAdvice = `If your priority is long-term cost and earlier payoff, ${rec.scenario.name} is the stronger choice. If your priority is the lowest possible monthly payment, ${lowestMonthly.scenario.name} may be preferable despite the higher lifetime cost.`;
-      }
-    }
-  }
-
-  // Check if recommended has higher monthly than any option
-  const higherMonthlyOptions = others.filter((o) => o.monthlyPayment < rec.monthlyPayment - 10);
-  if (higherMonthlyOptions.length > 0 && !alternativeAdvice) {
-    const lowestMonthlyAlt = higherMonthlyOptions[0];
-    alternativeAdvice = `If your priority is the lowest possible monthly payment, ${lowestMonthlyAlt.scenario.name} may be worth considering despite the higher lifetime cost.`;
-  }
-
-  return {
-    recommendation: {
-      scenario: rec.scenario,
-      reason,
-    },
-    benefits,
-    tradeoffs,
-    alternativeAdvice,
-  };
-}
-
 export default function Compare() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { scenarios, isLoaded } = useScenarios();
+  const { saveComparison, getComparison, updateComparison } = useComparisons();
+  
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [emphasizedId, setEmphasizedId] = useState<string | null>(null);
+  const [activeComparisonId, setActiveComparisonId] = useState<string | null>(null);
+  const [missingScenarios, setMissingScenarios] = useState<string[]>([]);
+
+  // Restore from URL params
+  useEffect(() => {
+    if (!isLoaded) return;
+    
+    const comparisonId = searchParams.get("comparison");
+    const scenarioIdsFromUrl = searchParams.getAll("s");
+    
+    if (comparisonId) {
+      const comparison = getComparison(comparisonId);
+      if (comparison) {
+        setActiveComparisonId(comparisonId);
+        // Check which scenarios still exist
+        const existing = comparison.scenarioIds.filter((id) => 
+          scenarios.find((s) => s.id === id)
+        );
+        const missing = comparison.scenarioIds.filter((id) => 
+          !scenarios.find((s) => s.id === id)
+        );
+        setSelectedIds(existing);
+        setMissingScenarios(missing);
+      }
+    } else if (scenarioIdsFromUrl.length > 0) {
+      const existing = scenarioIdsFromUrl.filter((id) =>
+        scenarios.find((s) => s.id === id)
+      );
+      setSelectedIds(existing);
+    }
+  }, [isLoaded, searchParams, scenarios, getComparison]);
 
   const selectedScenarios = selectedIds
     .map((id) => scenarios.find((s) => s.id === id))
@@ -327,6 +230,21 @@ export default function Compare() {
     [selectedScenarios]
   );
 
+  const handleSaveComparison = () => {
+    if (selectedIds.length < 2) return;
+    
+    if (activeComparisonId) {
+      // Update existing comparison
+      updateComparison(activeComparisonId, { scenarioIds: selectedIds });
+      toast.success("Comparison updated");
+    } else {
+      // Create new comparison
+      const comparison = saveComparison(selectedIds);
+      setActiveComparisonId(comparison.id);
+      toast.success("Comparison saved");
+    }
+  };
+
   if (!isLoaded) {
     return (
       <div className="space-y-8">
@@ -370,12 +288,30 @@ export default function Compare() {
   return (
     <div className="space-y-8">
       {/* Page header */}
-      <div>
-        <h1>Compare Scenarios</h1>
-        <p className="mt-1">
-          Review mortgage options side-by-side to understand the tradeoffs
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1>Compare Scenarios</h1>
+          <p className="mt-1">
+            Review mortgage options side-by-side to understand the tradeoffs
+          </p>
+        </div>
+        <Button asChild size="sm" variant="ghost" className="gap-1.5">
+          <Link to="/comparisons">
+            <FolderOpen className="h-3.5 w-3.5" strokeWidth={1.5} />
+            Saved comparisons
+          </Link>
+        </Button>
       </div>
+
+      {/* Missing scenarios notice */}
+      {missingScenarios.length > 0 && (
+        <div className="flex items-start gap-3 rounded border border-border bg-muted/30 px-4 py-3 text-sm">
+          <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" strokeWidth={1.5} />
+          <p className="text-muted-foreground">
+            {missingScenarios.length} scenario{missingScenarios.length > 1 ? "s" : ""} in this comparison {missingScenarios.length > 1 ? "are" : "is"} no longer available.
+          </p>
+        </div>
+      )}
 
       {/* Scenario selector - minimal */}
       <div className="flex flex-wrap items-center gap-2">
@@ -511,16 +447,15 @@ export default function Compare() {
         </div>
       )}
 
-      {/* Refined Summary */}
+      {/* Canonical Summary - 3 sections */}
       {selectedScenarios.length >= 2 && summary && (
         <div className="border-t border-border pt-6 space-y-6">
-          {/* Section 1 — Recommendation */}
+          {/* Section 1 — Recommended option */}
           {summary.recommendation && (
             <div>
-              <p className="section-label mb-2">Recommendation</p>
+              <p className="section-label mb-2">Recommended option</p>
               <p className="text-sm">
-                <span className="font-medium">Recommended option: </span>
-                <span className="font-serif">{summary.recommendation.scenario.name}</span>
+                <span className="font-serif font-medium">{summary.recommendation.scenario.name}</span>
               </p>
               <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
                 {summary.recommendation.reason}.
@@ -528,10 +463,10 @@ export default function Compare() {
             </div>
           )}
 
-          {/* Section 2 — Why */}
+          {/* Section 2 — Why it's recommended */}
           {summary.benefits.length > 0 && (
             <div>
-              <p className="section-label mb-2">Why</p>
+              <p className="section-label mb-2">Why it's recommended</p>
               <ul className="space-y-1.5 text-sm text-muted-foreground max-w-2xl">
                 {summary.benefits.map((benefit, idx) => (
                   <li key={idx} className="flex items-start gap-2">
@@ -543,23 +478,26 @@ export default function Compare() {
             </div>
           )}
 
-          {/* Section 3 — Tradeoffs */}
-          {(summary.tradeoffs.length > 0 || summary.alternativeAdvice) && (
+          {/* Section 3 — When another option may make more sense */}
+          {(summary.tradeoffs.length > 0 || summary.alternativeScenario) && (
             <div>
-              <p className="section-label mb-2">Tradeoffs</p>
+              <p className="section-label mb-2">When another option may make more sense</p>
               {summary.tradeoffs.length > 0 && (
                 <ul className="space-y-1.5 text-sm text-muted-foreground max-w-2xl mb-3">
                   {summary.tradeoffs.map((tradeoff, idx) => (
                     <li key={idx} className="flex items-start gap-2">
                       <span className="text-foreground/50 select-none">•</span>
-                      <span>{tradeoff}</span>
+                      <span>
+                        {tradeoff.statement}
+                        {tradeoff.detail && <span className="text-muted-foreground/70"> — {tradeoff.detail}</span>}
+                      </span>
                     </li>
                   ))}
                 </ul>
               )}
-              {summary.alternativeAdvice && (
+              {summary.alternativeScenario && (
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                  {summary.alternativeAdvice}
+                  {summary.alternativeScenario.advice}
                 </p>
               )}
             </div>
@@ -567,9 +505,18 @@ export default function Compare() {
         </div>
       )}
 
-      {/* Procedural actions - muted, non-emotional */}
+      {/* Procedural actions */}
       {selectedScenarios.length >= 2 && (
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-6">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1.5"
+            onClick={handleSaveComparison}
+          >
+            <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
+            {activeComparisonId ? "Update comparison" : "Save comparison"}
+          </Button>
           <Button variant="outline" size="sm" className="gap-1.5" disabled>
             <Download className="h-3.5 w-3.5" strokeWidth={1.5} />
             Export summary

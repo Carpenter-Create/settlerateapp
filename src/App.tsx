@@ -6,6 +6,7 @@ import { Layout } from "@/components/layout/Layout";
 import Index from "./pages/Index";
 import Scenarios from "./pages/Scenarios";
 import Compare from "./pages/Compare";
+import Comparisons from "./pages/Comparisons";
 import Pricing from "./pages/Pricing";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/scenarios" element={<Scenarios />} />
             <Route path="/compare" element={<Compare />} />
+            <Route path="/comparisons" element={<Comparisons />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/auth" element={<Auth />} />
