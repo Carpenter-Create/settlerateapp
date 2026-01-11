@@ -21,12 +21,22 @@ interface ComparisonMetric {
   lowerIsBetter?: boolean;
 }
 
+// Helper to get interest rate from namespaced inputs
+function getInterestRate(s: Scenario): number {
+  return s.inputs.shared.interestRate;
+}
+
+// Helper to get loan term from namespaced inputs (stored in years)
+function getLoanTermYears(s: Scenario): number {
+  return s.inputs.shared.loanTerm;
+}
+
 // Core metrics in the specified order
 const COMPARISON_METRICS: ComparisonMetric[] = [
   {
     key: "interestRate",
     label: "Interest rate",
-    getValue: (s) => s.inputs.interestRate,
+    getValue: (s) => getInterestRate(s),
     format: "percent",
     lowerIsBetter: true,
   },
@@ -41,16 +51,18 @@ const COMPARISON_METRICS: ComparisonMetric[] = [
     key: "cashAtClose",
     label: "Cash required at close",
     getValue: (s) => {
-      if (s.inputs.scenarioType === "purchase") {
-        const downPayment = calculateDownPaymentAmount(
-          s.inputs.purchasePrice,
-          s.inputs.downPayment,
-          s.inputs.downPaymentType
+      if (s.inputs.mode === "purchase") {
+        const { purchasePrice, downPayment, downPaymentType } = s.inputs.purchase;
+        const downPaymentAmount = calculateDownPaymentAmount(
+          purchasePrice,
+          downPayment,
+          downPaymentType
         );
         // Rough estimate: down payment + ~3% closing costs
-        return downPayment + (s.inputs.purchasePrice * 0.03);
+        return downPaymentAmount + (purchasePrice * 0.03);
       }
-      return s.inputs.financeClosingCosts ? 0 : s.inputs.closingCosts;
+      const closingCosts = s.inputs.refinance.closingCosts ?? 0;
+      return closingCosts;
     },
     format: "currency",
     lowerIsBetter: true,
@@ -176,11 +188,11 @@ export default function Compare() {
     if (selectedScenarios.length === 0) return null;
     
     const prices = selectedScenarios
-      .filter((s) => s.inputs.scenarioType === "purchase")
-      .map((s) => s.inputs.purchasePrice);
+      .filter((s) => s.inputs.mode === "purchase")
+      .map((s) => s.inputs.purchase.purchasePrice);
     
     const loanAmounts = selectedScenarios.map((s) => s.results.loanAmount);
-    const terms = [...new Set(selectedScenarios.map((s) => s.inputs.loanTerm))];
+    const terms = [...new Set(selectedScenarios.map((s) => getLoanTermYears(s)))];
     
     return {
       propertyPrice: prices.length > 0 ? Math.max(...prices) : null,
