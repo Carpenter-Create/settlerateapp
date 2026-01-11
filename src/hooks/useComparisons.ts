@@ -4,15 +4,18 @@
  * Comparisons are relational references to scenarios, not snapshots.
  */
 
-import { useState, useCallback, useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import {
   SavedComparison,
+  ScenarioSnapshot,
   createComparison,
   updateComparisonScenarios,
   updateComparisonName,
+  markComparisonViewed,
   migrateComparison,
   needsComparisonMigration,
 } from "@/lib/comparisonContract";
+import type { ScenarioData } from "@/lib/scenarioContract";
 
 const STORAGE_KEY = "settlerate_comparisons";
 
@@ -107,15 +110,19 @@ class ComparisonStore {
     return this.comparisons.find((c) => c.id === id);
   }
 
-  saveComparison(scenarioIds: string[], name?: string): SavedComparison {
-    const comparison = createComparison(scenarioIds, name);
+  saveComparison(scenarioIds: string[], scenarios: ScenarioData[], name?: string): SavedComparison {
+    const comparison = createComparison(scenarioIds, scenarios, name);
     this.comparisons = [...this.comparisons, comparison];
     this.persist();
     this.notify();
     return comparison;
   }
 
-  updateComparison(id: string, updates: Partial<Pick<SavedComparison, "name" | "scenarioIds">>): void {
+  updateComparison(
+    id: string, 
+    updates: Partial<Pick<SavedComparison, "name" | "scenarioIds">>,
+    scenarios?: ScenarioData[]
+  ): void {
     this.comparisons = this.comparisons.map((c) => {
       if (c.id !== id) return c;
       
@@ -125,11 +132,20 @@ class ComparisonStore {
         updated = updateComparisonName(updated, updates.name);
       }
       
-      if (updates.scenarioIds !== undefined) {
-        updated = updateComparisonScenarios(updated, updates.scenarioIds);
+      if (updates.scenarioIds !== undefined && scenarios) {
+        updated = updateComparisonScenarios(updated, updates.scenarioIds, scenarios);
       }
       
       return updated;
+    });
+    this.persist();
+    this.notify();
+  }
+
+  markViewed(id: string, scenarios: ScenarioData[]): void {
+    this.comparisons = this.comparisons.map((c) => {
+      if (c.id !== id) return c;
+      return markComparisonViewed(c, scenarios);
     });
     this.persist();
     this.notify();
@@ -160,12 +176,24 @@ export function useComparisons() {
     return comparisonStore.getComparison(id);
   }, []);
 
-  const saveComparison = useCallback((scenarioIds: string[], name?: string): SavedComparison => {
-    return comparisonStore.saveComparison(scenarioIds, name);
+  const saveComparison = useCallback((
+    scenarioIds: string[], 
+    scenarios: ScenarioData[],
+    name?: string
+  ): SavedComparison => {
+    return comparisonStore.saveComparison(scenarioIds, scenarios, name);
   }, []);
 
-  const updateComparison = useCallback((id: string, updates: Partial<Pick<SavedComparison, "name" | "scenarioIds">>): void => {
-    comparisonStore.updateComparison(id, updates);
+  const updateComparison = useCallback((
+    id: string, 
+    updates: Partial<Pick<SavedComparison, "name" | "scenarioIds">>,
+    scenarios?: ScenarioData[]
+  ): void => {
+    comparisonStore.updateComparison(id, updates, scenarios);
+  }, []);
+
+  const markComparisonAsViewed = useCallback((id: string, scenarios: ScenarioData[]): void => {
+    comparisonStore.markViewed(id, scenarios);
   }, []);
 
   const deleteComparison = useCallback((id: string): void => {
@@ -178,6 +206,7 @@ export function useComparisons() {
     getComparison,
     saveComparison,
     updateComparison,
+    markComparisonAsViewed,
     deleteComparison,
   };
 }
