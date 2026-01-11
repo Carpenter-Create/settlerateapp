@@ -16,6 +16,26 @@ function formatDate(date: Date): string {
   });
 }
 
+/**
+ * Format relative time for comparison version history.
+ * Human-readable, relative when recent, exact date when older.
+ */
+function formatRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) {
+    return "Updated today";
+  } else if (diffDays === 1) {
+    return "Updated yesterday";
+  } else if (diffDays < 7) {
+    return `Updated ${diffDays} days ago`;
+  } else {
+    return `Updated ${date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+  }
+}
+
 export default function Comparisons() {
   const navigate = useNavigate();
   const { comparisons, isLoaded, deleteComparison, updateComparison } = useComparisons();
@@ -171,9 +191,10 @@ export default function Comparisons() {
                   )}
                 </div>
                 <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                  <span>{formatRelativeTime(new Date(comparison.updatedAt))}</span>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" strokeWidth={1.5} />
-                    {formatDate(new Date(comparison.createdAt))}
+                    Created {formatDate(new Date(comparison.createdAt))}
                   </span>
                   <span>{comparison.scenarioIds.length} scenarios</span>
                 </div>

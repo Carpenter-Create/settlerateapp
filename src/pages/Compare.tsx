@@ -158,9 +158,14 @@ export default function Compare() {
   const [materialChanges, setMaterialChanges] = useState<MaterialChange[]>([]);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [comparisonName, setComparisonName] = useState("");
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
   
   // Track if we've already marked this comparison as viewed
   const hasMarkedViewedRef = useRef<string | null>(null);
+  
+  // Check if viewing in read-only shared mode
+  const isSharedView = searchParams.get("view") === "shared";
 
   // Restore from URL params and detect changes
   useEffect(() => {
@@ -312,6 +317,28 @@ export default function Compare() {
     toast.success("Opening print dialog...");
   };
 
+  const handleShare = () => {
+    if (selectedIds.length < 2) return;
+    
+    // Generate shareable URL with scenario IDs
+    const params = new URLSearchParams();
+    params.set("view", "shared");
+    selectedIds.forEach((id) => params.append("s", id));
+    
+    const url = `${window.location.origin}/compare?${params.toString()}`;
+    setShareUrl(url);
+    setShowShareDialog(true);
+  };
+
+  const handleCopyShareUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied to clipboard");
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  };
+
   if (!isLoaded) {
     return (
       <div className="space-y-8">
@@ -364,15 +391,24 @@ export default function Compare() {
       {/* SECTION 1: Comparison Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1>Compare Scenarios</h1>
+          <div className="flex items-center gap-3">
+            <h1>Compare Scenarios</h1>
+            {isSharedView && (
+              <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted/50 rounded">
+                View-only
+              </span>
+            )}
+          </div>
           <p className="mt-1">Review mortgage options side-by-side to understand the tradeoffs</p>
         </div>
-        <Button asChild size="sm" variant="ghost" className="gap-1.5">
-          <Link to="/comparisons">
-            <FolderOpen className="h-3.5 w-3.5" strokeWidth={1.5} />
-            Saved comparisons
-          </Link>
-        </Button>
+        {!isSharedView && (
+          <Button asChild size="sm" variant="ghost" className="gap-1.5">
+            <Link to="/comparisons">
+              <FolderOpen className="h-3.5 w-3.5" strokeWidth={1.5} />
+              Saved comparisons
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Missing scenarios notice (informational, not part of hierarchy) */}
@@ -398,17 +434,19 @@ export default function Compare() {
             )}
           >
             <span className="font-medium">{scenario.name}</span>
-            <button
-              onClick={() => removeScenario(scenario.id)}
-              className="text-muted-foreground transition-colors hover:text-foreground"
-              aria-label={`Remove ${scenario.name}`}
-            >
-              <X className="h-3.5 w-3.5" strokeWidth={1.5} />
-            </button>
+            {!isSharedView && (
+              <button
+                onClick={() => removeScenario(scenario.id)}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+                aria-label={`Remove ${scenario.name}`}
+              >
+                <X className="h-3.5 w-3.5" strokeWidth={1.5} />
+              </button>
+            )}
           </div>
         ))}
 
-        {selectedIds.length < 4 && availableScenarios.length > 0 && (
+        {!isSharedView && selectedIds.length < 4 && availableScenarios.length > 0 && (
           <Select onValueChange={addScenario}>
             <SelectTrigger className="h-8 w-40 text-sm">
               <div className="flex items-center gap-1.5">
@@ -695,8 +733,8 @@ export default function Compare() {
         </div>
       )}
 
-      {/* SECTION 5: Actions (always last) */}
-      {selectedScenarios.length >= 2 && (
+      {/* SECTION 5: Actions (always last) - hidden in shared view */}
+      {selectedScenarios.length >= 2 && !isSharedView && (
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-6">
           <Button 
             variant="outline" 
@@ -716,7 +754,12 @@ export default function Compare() {
             <Download className="h-3.5 w-3.5" strokeWidth={1.5} />
             Export summary
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5" disabled>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1.5"
+            onClick={handleShare}
+          >
             <Share2 className="h-3.5 w-3.5" strokeWidth={1.5} />
             Share for review
           </Button>
@@ -763,6 +806,39 @@ export default function Compare() {
             </Button>
             <Button onClick={handleConfirmSave}>
               Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Comparison Dialog */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share for review</DialogTitle>
+            <DialogDescription>
+              Anyone with this link can view this comparison. They cannot make changes or save it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-3">
+            <div className="flex gap-2">
+              <Input
+                value={shareUrl}
+                readOnly
+                className="font-mono text-xs"
+                onClick={(e) => (e.target as HTMLInputElement).select()}
+              />
+              <Button onClick={handleCopyShareUrl} size="sm">
+                Copy
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Shared links are read-only and do not require an account to view.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowShareDialog(false)}>
+              Done
             </Button>
           </DialogFooter>
         </DialogContent>
