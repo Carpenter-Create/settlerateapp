@@ -312,4 +312,55 @@
   .scrollbar-subtle::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground) / 0.3);
   }
+
+  /* Sonner toast styling */
+  [data-sonner-toaster] {
+    --normal-bg: hsl(var(--card));
+    --normal-border: hsl(var(--border));
+    --normal-text: hsl(var(--foreground));
+    --success-bg: hsl(var(--card));
+    --success-border: hsl(var(--success) / 0.3);
+    --success-text: hsl(var(--foreground));
+    --error-bg: hsl(var(--destructive));
+    --error-border: hsl(var(--destructive));
+    --error-text: hsl(var(--destructive-foreground));
+    font-family: inherit;
+  }
+
+  /* Position toasts below safe area on iOS */
+  [data-sonner-toaster][data-y-position="top"] {
+    top: max(env(safe-area-inset-top, 0px), 16px) !important;
+  }
+
+  [data-sonner-toaster][data-y-position="bottom"] {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 80px) !important;
+  }
+
+  /* Toast close button - minimal X */
+  [data-sonner-toast] [data-close-button] {
+    @apply absolute right-1 top-1 p-1.5 rounded-md opacity-60 hover:opacity-100 transition-opacity;
+    @apply text-current bg-transparent border-none cursor-pointer;
+    @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none;
+    min-width: 28px;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  [data-sonner-toast] [data-close-button] svg {
+    width: 14px;
+    height: 14px;
+    stroke-width: 1.5;
+  }
+
+  /* Toast content padding for close button */
+  [data-sonner-toast] [data-content] {
+    padding-right: 24px;
+  }
+
+  /* Swipe animation hint */
+  [data-sonner-toast][data-swipe-direction] {
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  }
 }
