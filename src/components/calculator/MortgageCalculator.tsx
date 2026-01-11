@@ -7,6 +7,7 @@
  * - Handle loading and error states
  * - Wire up navigation after save/duplicate actions
  * - Delegate UI rendering to ScenarioEditor
+ * - Manage GuidedStart modal for new users
  * 
  * ROUTING CONTRACT (HARD INVARIANTS):
  * 1. If scenario query param exists → NEVER initialize defaults
@@ -15,14 +16,18 @@
  * 4. Calculator has exactly two modes: new (no param) or existing (param)
  */
 
-import { useCallback } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { MortgageInputs, DEFAULT_INPUTS } from "@/lib/mortgage";
 import { useActiveScenario, useScenarios } from "@/hooks/useScenarios";
 import { useScenarioRoute } from "@/hooks/useScenarioRoute";
 import { ScenarioEditor } from "./ScenarioEditor";
+import { GuidedStart } from "./GuidedStart";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+
+// Local storage key for tracking first-time users
+const GUIDED_START_SHOWN_KEY = "settlerate_guided_start_shown";
 
 export function MortgageCalculator() {
   // Route state - single source of truth for URL
@@ -45,7 +50,43 @@ export function MortgageCalculator() {
     isEditing,
   } = useActiveScenario(scenarioId);
 
-  const { scenarios, deleteScenario, updateScenario } = useScenarios();
+  const { scenarios, deleteScenario, updateScenario, createScenario } = useScenarios();
+
+  // Guided Start modal state
+  const [showGuidedStart, setShowGuidedStart] = useState(false);
+  const [hasCheckedFirstTime, setHasCheckedFirstTime] = useState(false);
+
+  // Check if user is first-time (zero scenarios, never seen guided start)
+  useEffect(() => {
+    if (!isLoaded || hasCheckedFirstTime) return;
+    
+    const hasShownBefore = localStorage.getItem(GUIDED_START_SHOWN_KEY) === "true";
+    
+    // Auto-show for brand-new users with zero scenarios
+    if (scenarios.length === 0 && !hasShownBefore && !scenarioId) {
+      setShowGuidedStart(true);
+      localStorage.setItem(GUIDED_START_SHOWN_KEY, "true");
+    }
+    
+    setHasCheckedFirstTime(true);
+  }, [isLoaded, scenarios.length, scenarioId, hasCheckedFirstTime]);
+
+  // Handle guided start completion
+  const handleGuidedStartComplete = useCallback((guidedInputs: MortgageInputs, name: string) => {
+    // Create new scenario with the guided inputs
+    const newScenario = createScenario(name, guidedInputs, null);
+    
+    // Navigate to the new scenario
+    navigateToScenario(newScenario.id);
+    
+    setShowGuidedStart(false);
+    toast("Draft created. Adjust anything.", { duration: 3000 });
+  }, [createScenario, navigateToScenario]);
+
+  // Manual trigger for guided start
+  const handleOpenGuidedStart = useCallback(() => {
+    setShowGuidedStart(true);
+  }, []);
 
   // ============================================================================
   // ACTION HANDLERS - All navigation happens here, not in ScenarioEditor
@@ -175,22 +216,32 @@ export function MortgageCalculator() {
   // ============================================================================
 
   return (
-    <ScenarioEditor
-      inputs={inputs}
-      results={results}
-      activeScenario={activeScenario}
-      saveStatus={saveStatus}
-      isDirty={isDirty}
-      isEditing={isEditing}
-      scenarioCount={scenarios.length}
-      onBatchUpdate={batchUpdateInputs}
-      onSave={handleSave}
-      onSaveAsNew={handleSaveAsNew}
-      onDuplicate={handleDuplicate}
-      onDelete={handleDelete}
-      onRename={handleRename}
-      onDiscardChanges={handleDiscardChanges}
-      onReset={handleReset}
-    />
+    <>
+      <ScenarioEditor
+        inputs={inputs}
+        results={results}
+        activeScenario={activeScenario}
+        saveStatus={saveStatus}
+        isDirty={isDirty}
+        isEditing={isEditing}
+        scenarioCount={scenarios.length}
+        onBatchUpdate={batchUpdateInputs}
+        onSave={handleSave}
+        onSaveAsNew={handleSaveAsNew}
+        onDuplicate={handleDuplicate}
+        onDelete={handleDelete}
+        onRename={handleRename}
+        onDiscardChanges={handleDiscardChanges}
+        onReset={handleReset}
+        onOpenGuidedStart={handleOpenGuidedStart}
+      />
+
+      {/* Guided Start Modal */}
+      <GuidedStart
+        open={showGuidedStart}
+        onOpenChange={setShowGuidedStart}
+        onComplete={handleGuidedStartComplete}
+      />
+    </>
   );
 }
