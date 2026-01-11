@@ -49,13 +49,13 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
     ltvRatio,
     requiresPMI,
     usedEstimates,
-    scenarioType,
+    mode,
     cashOutAmount,
     closingCostsIncluded,
   } = results;
 
   const hasAdditionalCosts = monthlyPropertyTax > 0 || monthlyHomeInsurance > 0 || monthlyPMI > 0 || monthlyHOA > 0;
-  const isRefinance = scenarioType === "refinance";
+  const isRefinance = mode === "refinance";
 
   return (
     <div className={cn("space-y-6", className)}>

@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { MortgageInputs } from "@/lib/mortgage";
+import { MortgageInputs, SharedInputs } from "@/lib/mortgage";
 import { getZipEstimate, isValidZipCode } from "@/lib/zipEstimates";
 import { CurrencyInput } from "./CurrencyInput";
 import { PercentInput } from "./PercentInput";
@@ -16,37 +16,43 @@ import { toast } from "sonner";
 interface TaxInsuranceSectionProps {
   inputs: MortgageInputs;
   ltvRatio: number;
-  onUpdate: <K extends keyof MortgageInputs>(key: K, value: MortgageInputs[K]) => void;
   onBatchUpdate: (updates: Partial<MortgageInputs>) => void;
 }
 
 export function TaxInsuranceSection({
   inputs,
   ltvRatio,
-  onUpdate,
   onBatchUpdate,
 }: TaxInsuranceSectionProps) {
-  const [isExpanded, setIsExpanded] = useState(inputs.includeEstimates);
-  const [zipInput, setZipInput] = useState(inputs.zipCode ?? "");
+  const shared = inputs.shared;
+  const [isExpanded, setIsExpanded] = useState(shared.includeEstimates);
+  const [zipInput, setZipInput] = useState(shared.zipCode ?? "");
 
   const requiresPMI = ltvRatio > 80;
 
+  const updateShared = (updates: Partial<SharedInputs>) => {
+    onBatchUpdate({
+      shared: { ...shared, ...updates },
+    });
+  };
+
   const handleToggleEstimates = useCallback((checked: boolean) => {
-    onUpdate("includeEstimates", checked);
     setIsExpanded(checked);
     
     // If turning on and no values set, apply national defaults
-    if (checked && inputs.propertyTaxRate === null) {
+    if (checked && shared.propertyTaxRate === null) {
       const defaults = getZipEstimate();
-      onBatchUpdate({
+      updateShared({
         includeEstimates: true,
         propertyTaxRate: defaults.propertyTaxRate,
         homeInsuranceMonthly: defaults.homeInsuranceMonthly,
         pmiMonthly: requiresPMI ? defaults.pmiMonthly : 0,
         hoaMonthly: 0,
       });
+    } else {
+      updateShared({ includeEstimates: checked });
     }
-  }, [inputs.propertyTaxRate, onUpdate, onBatchUpdate, requiresPMI]);
+  }, [shared, requiresPMI]);
 
   const handleUseZipEstimate = useCallback(() => {
     if (!zipInput) {
@@ -61,7 +67,7 @@ export function TaxInsuranceSection({
 
     const estimate = getZipEstimate(zipInput);
     
-    onBatchUpdate({
+    updateShared({
       zipCode: zipInput,
       usedZipEstimate: true,
       includeEstimates: true,
@@ -80,21 +86,20 @@ export function TaxInsuranceSection({
     toast.success("Estimates applied", {
       description: `${stateMsg} You can adjust these anytime.`,
     });
-  }, [zipInput, onBatchUpdate, requiresPMI]);
+  }, [zipInput, shared, requiresPMI]);
 
   const handlePropertyTaxModeChange = useCallback((mode: "rate" | "annual") => {
-    onUpdate("propertyTaxMode", mode);
     // Clear the other value when switching
     if (mode === "rate") {
-      onUpdate("propertyTaxAnnual", null);
+      updateShared({ propertyTaxMode: mode, propertyTaxAnnual: null });
     } else {
-      onUpdate("propertyTaxRate", null);
+      updateShared({ propertyTaxMode: mode, propertyTaxRate: null });
     }
-  }, [onUpdate]);
+  }, [shared]);
 
   const handleClearEstimates = useCallback(() => {
-    onUpdate("usedZipEstimate", false);
-  }, [onUpdate]);
+    updateShared({ usedZipEstimate: false });
+  }, [shared]);
 
   return (
     <div className="space-y-4">
@@ -121,7 +126,7 @@ export function TaxInsuranceSection({
         <div className="flex items-center gap-2 shrink-0">
           <Switch
             id="include-estimates"
-            checked={inputs.includeEstimates}
+            checked={shared.includeEstimates}
             onCheckedChange={handleToggleEstimates}
           />
           <Label htmlFor="include-estimates" className="text-sm text-muted-foreground cursor-pointer">
@@ -165,7 +170,7 @@ export function TaxInsuranceSection({
           </div>
 
           {/* Estimate Badge Notice */}
-          {inputs.usedZipEstimate && (
+          {shared.usedZipEstimate && (
             <div className="flex items-center justify-between gap-2 rounded-md bg-accent/50 px-3 py-2">
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="text-xs font-normal">
@@ -190,7 +195,7 @@ export function TaxInsuranceSection({
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium flex items-center gap-2">
                 Property tax
-                {inputs.usedZipEstimate && (
+                {shared.usedZipEstimate && (
                   <Badge variant="outline" className="text-[10px] font-normal">
                     Est
                   </Badge>
@@ -202,7 +207,7 @@ export function TaxInsuranceSection({
                   onClick={() => handlePropertyTaxModeChange("rate")}
                   className={cn(
                     "px-3 py-1 text-xs font-medium rounded transition-colors",
-                    inputs.propertyTaxMode === "rate"
+                    shared.propertyTaxMode === "rate"
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   )}
@@ -214,7 +219,7 @@ export function TaxInsuranceSection({
                   onClick={() => handlePropertyTaxModeChange("annual")}
                   className={cn(
                     "px-3 py-1 text-xs font-medium rounded transition-colors",
-                    inputs.propertyTaxMode === "annual"
+                    shared.propertyTaxMode === "annual"
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   )}
@@ -223,18 +228,18 @@ export function TaxInsuranceSection({
                 </button>
               </div>
             </div>
-            {inputs.propertyTaxMode === "rate" ? (
+            {shared.propertyTaxMode === "rate" ? (
               <PercentInput
-                value={inputs.propertyTaxRate ?? 0}
-                onChange={(v) => onUpdate("propertyTaxRate", v)}
+                value={shared.propertyTaxRate ?? 0}
+                onChange={(v) => updateShared({ propertyTaxRate: v })}
                 min={0}
                 max={10}
                 step={0.01}
               />
             ) : (
               <CurrencyInput
-                value={inputs.propertyTaxAnnual ?? 0}
-                onChange={(v) => onUpdate("propertyTaxAnnual", v)}
+                value={shared.propertyTaxAnnual ?? 0}
+                onChange={(v) => updateShared({ propertyTaxAnnual: v })}
                 min={0}
               />
             )}
@@ -245,7 +250,7 @@ export function TaxInsuranceSection({
             label={
               <span className="flex items-center gap-2">
                 Home insurance
-                {inputs.usedZipEstimate && (
+                {shared.usedZipEstimate && (
                   <Badge variant="outline" className="text-[10px] font-normal">
                     Est
                   </Badge>
@@ -255,8 +260,8 @@ export function TaxInsuranceSection({
             description="Monthly amount"
           >
             <CurrencyInput
-              value={inputs.homeInsuranceMonthly ?? 0}
-              onChange={(v) => onUpdate("homeInsuranceMonthly", v)}
+              value={shared.homeInsuranceMonthly ?? 0}
+              onChange={(v) => updateShared({ homeInsuranceMonthly: v })}
               min={0}
             />
           </InputField>
@@ -264,8 +269,8 @@ export function TaxInsuranceSection({
           {/* HOA */}
           <InputField label="HOA" description="Monthly amount" optional>
             <CurrencyInput
-              value={inputs.hoaMonthly ?? 0}
-              onChange={(v) => onUpdate("hoaMonthly", v)}
+              value={shared.hoaMonthly ?? 0}
+              onChange={(v) => updateShared({ hoaMonthly: v })}
               min={0}
             />
           </InputField>
@@ -276,7 +281,7 @@ export function TaxInsuranceSection({
               label={
                 <span className="flex items-center gap-2">
                   PMI
-                  {inputs.usedZipEstimate && (
+                  {shared.usedZipEstimate && (
                     <Badge variant="outline" className="text-[10px] font-normal">
                       Est
                     </Badge>
@@ -286,8 +291,8 @@ export function TaxInsuranceSection({
               description="Monthly private mortgage insurance"
             >
               <CurrencyInput
-                value={inputs.pmiMonthly ?? 0}
-                onChange={(v) => onUpdate("pmiMonthly", v)}
+                value={shared.pmiMonthly ?? 0}
+                onChange={(v) => updateShared({ pmiMonthly: v })}
                 min={0}
               />
             </InputField>
