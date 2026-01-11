@@ -1,5 +1,6 @@
 import { MortgageResults } from "@/lib/mortgage";
 import { formatCurrency, formatCurrencyPrecise, formatDate, formatPercent } from "@/lib/mortgage";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface ResultsCardProps {
@@ -12,19 +13,25 @@ interface ResultRowProps {
   value: string;
   primary?: boolean;
   accent?: boolean;
+  isEstimate?: boolean;
 }
 
-function ResultRow({ label, value, primary, accent }: ResultRowProps) {
+function ResultRow({ label, value, primary, accent, isEstimate }: ResultRowProps) {
   return (
-    <div className="flex items-center justify-between py-2">
+    <div className="flex items-center justify-between py-2 gap-2">
       <span className={cn(
-        "text-sm",
+        "text-sm flex items-center gap-1.5",
         primary ? "font-medium text-foreground" : "text-muted-foreground"
       )}>
         {label}
+        {isEstimate && (
+          <Badge variant="outline" className="text-[10px] font-normal px-1.5 py-0">
+            Est
+          </Badge>
+        )}
       </span>
       <span className={cn(
-        "font-mono tabular-nums",
+        "font-mono tabular-nums text-right",
         primary ? "text-lg font-semibold text-foreground" : "text-sm",
         accent && "text-primary font-medium"
       )}>
@@ -49,16 +56,28 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
     payoffMonths,
     ltvRatio,
     requiresPMI,
+    usedEstimates,
   } = results;
+
+  const hasAdditionalCosts = monthlyPropertyTax > 0 || monthlyHomeInsurance > 0 || monthlyPMI > 0 || monthlyHOA > 0;
 
   return (
     <div className={cn("space-y-6", className)}>
       {/* Main result */}
       <div className="text-center py-6">
-        <p className="text-sm text-muted-foreground mb-1">Monthly payment</p>
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <p className="text-sm text-muted-foreground">Monthly payment</p>
+          {usedEstimates && (
+            <Badge variant="secondary" className="text-xs font-normal">
+              Includes estimates
+            </Badge>
+          )}
+        </div>
         <p className="currency-display">{formatCurrency(monthlyTotal)}</p>
         <p className="text-xs text-muted-foreground mt-2">
-          Principal & interest + taxes + insurance
+          {hasAdditionalCosts 
+            ? "Principal & interest + taxes + insurance"
+            : "Principal & interest only"}
         </p>
       </div>
 
@@ -67,11 +86,30 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
       {/* Payment breakdown */}
       <div className="space-y-0.5">
         <h3 className="text-sm font-medium text-foreground mb-3">Monthly breakdown</h3>
-        <ResultRow label="Principal & interest" value={formatCurrencyPrecise(monthlyPrincipalInterest)} />
-        <ResultRow label="Property tax" value={formatCurrencyPrecise(monthlyPropertyTax)} />
-        <ResultRow label="Home insurance" value={formatCurrencyPrecise(monthlyHomeInsurance)} />
+        <ResultRow 
+          label="Principal & interest" 
+          value={formatCurrencyPrecise(monthlyPrincipalInterest)} 
+        />
+        {monthlyPropertyTax > 0 && (
+          <ResultRow 
+            label="Property tax" 
+            value={formatCurrencyPrecise(monthlyPropertyTax)}
+            isEstimate={usedEstimates}
+          />
+        )}
+        {monthlyHomeInsurance > 0 && (
+          <ResultRow 
+            label="Home insurance" 
+            value={formatCurrencyPrecise(monthlyHomeInsurance)}
+            isEstimate={usedEstimates}
+          />
+        )}
         {requiresPMI && monthlyPMI > 0 && (
-          <ResultRow label="PMI" value={formatCurrencyPrecise(monthlyPMI)} />
+          <ResultRow 
+            label="PMI" 
+            value={formatCurrencyPrecise(monthlyPMI)}
+            isEstimate={usedEstimates}
+          />
         )}
         {monthlyHOA > 0 && (
           <ResultRow label="HOA" value={formatCurrencyPrecise(monthlyHOA)} />
@@ -114,6 +152,17 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
           <div className="rounded-md bg-accent/50 p-3">
             <p className="text-xs text-accent-foreground">
               <strong>PMI required.</strong> Your down payment is less than 20%, so private mortgage insurance applies until you reach 20% equity.
+            </p>
+          </div>
+        </>
+      )}
+
+      {usedEstimates && (
+        <>
+          <div className="divider-subtle" />
+          <div className="rounded-md bg-muted/50 p-3">
+            <p className="text-xs text-muted-foreground">
+              <strong>Using ZIP estimates.</strong> Update taxes and insurance with exact numbers when available for the most accurate calculation.
             </p>
           </div>
         </>

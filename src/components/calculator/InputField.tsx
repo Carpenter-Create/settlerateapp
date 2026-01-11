@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 interface InputFieldProps {
-  label: string;
+  label: ReactNode;
   description?: string;
   children: ReactNode;
   className?: string;
