@@ -29,7 +29,7 @@ import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "./CurrencyInput";
 import { Input } from "@/components/ui/input";
-import { Save, RotateCcw, ChevronDown, ChevronUp, Copy, MoreHorizontal, X, Pencil, FilePlus } from "lucide-react";
+import { Save, RotateCcw, ChevronDown, ChevronUp, Copy, MoreHorizontal, Pencil, FilePlus, Wand2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +67,7 @@ export interface ScenarioEditorProps {
   onRename: (name: string) => void;
   onDiscardChanges: () => void;
   onReset: () => void;
+  onOpenGuidedStart?: () => void;
 }
 
 export function ScenarioEditor({
@@ -85,6 +86,7 @@ export function ScenarioEditor({
   onRename,
   onDiscardChanges,
   onReset,
+  onOpenGuidedStart,
 }: ScenarioEditorProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isRenamingScenario, setIsRenamingScenario] = useState(false);
@@ -152,38 +154,53 @@ export function ScenarioEditor({
         {/* Inputs */}
         <div className="min-w-0 space-y-6">
           {/* Header - serif, understated */}
-          <div className="space-y-1">
-            {isEditing && activeScenario ? (
-              <div className="flex items-center gap-3">
-                {isRenamingScenario ? (
-                  <Input
-                    value={scenarioName}
-                    onChange={(e) => setScenarioName(e.target.value)}
-                    onBlur={handleSaveRename}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSaveRename();
-                      if (e.key === "Escape") setIsRenamingScenario(false);
-                    }}
-                    className="h-9 max-w-xs font-serif text-xl"
-                    autoFocus
-                  />
-                ) : (
-                  <h1 
-                    className="cursor-pointer hover:text-muted-foreground transition-colors"
-                    onClick={handleStartRename}
-                    title="Click to rename"
-                  >
-                    {activeScenario.name}
-                  </h1>
-                )}
-                <SaveStatusIndicator status={saveStatus} isDirty={isDirty} isEditing={isEditing} />
-              </div>
-            ) : (
-              <h1>Mortgage Calculator</h1>
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1 min-w-0">
+              {isEditing && activeScenario ? (
+                <div className="flex items-center gap-3">
+                  {isRenamingScenario ? (
+                    <Input
+                      value={scenarioName}
+                      onChange={(e) => setScenarioName(e.target.value)}
+                      onBlur={handleSaveRename}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveRename();
+                        if (e.key === "Escape") setIsRenamingScenario(false);
+                      }}
+                      className="h-9 max-w-xs font-serif text-xl"
+                      autoFocus
+                    />
+                  ) : (
+                    <h1 
+                      className="cursor-pointer hover:text-muted-foreground transition-colors"
+                      onClick={handleStartRename}
+                      title="Click to rename"
+                    >
+                      {activeScenario.name}
+                    </h1>
+                  )}
+                  <SaveStatusIndicator status={saveStatus} isDirty={isDirty} isEditing={isEditing} />
+                </div>
+              ) : (
+                <h1>Mortgage Calculator</h1>
+              )}
+              <p className="text-muted-foreground">
+                {pageDescription}
+              </p>
+            </div>
+            
+            {/* Guided Start button - right side of header */}
+            {!isEditing && onOpenGuidedStart && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onOpenGuidedStart}
+                className="gap-1.5 shrink-0"
+              >
+                <Wand2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                Guided start
+              </Button>
             )}
-            <p className="text-muted-foreground">
-              {pageDescription}
-            </p>
           </div>
 
           <div className="card-elevated w-full p-5 sm:p-6">
