@@ -1,9 +1,13 @@
-import { useState, useMemo, useEffect } from "react";
-import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 import { useScenarios, Scenario } from "@/hooks/useScenarios";
 import { useComparisons } from "@/hooks/useComparisons";
 import { formatCurrency, formatPercent, formatDate, calculateDownPaymentAmount } from "@/lib/mortgage";
-import { generateComparisonSummary } from "@/lib/comparisonContract";
+import { 
+  generateComparisonSummary, 
+  detectMaterialChanges,
+  MaterialChange,
+} from "@/lib/comparisonContract";
 import { Button } from "@/components/ui/button";
 import { Calculator, GitCompare, Plus, X, Download, Share2, Settings2, Save, FolderOpen, AlertCircle } from "lucide-react";
 import {
@@ -24,17 +28,14 @@ interface ComparisonMetric {
   lowerIsBetter?: boolean;
 }
 
-// Helper to get interest rate from namespaced inputs
 function getInterestRate(s: Scenario): number {
   return s.inputs.shared.interestRate;
 }
 
-// Helper to get loan term from namespaced inputs (stored in years)
 function getLoanTermYears(s: Scenario): number {
   return s.inputs.shared.loanTerm;
 }
 
-// Core metrics in the specified order
 const COMPARISON_METRICS: ComparisonMetric[] = [
   {
     key: "interestRate",
@@ -61,7 +62,6 @@ const COMPARISON_METRICS: ComparisonMetric[] = [
           downPayment,
           downPaymentType
         );
-        // Rough estimate: down payment + ~3% closing costs
         return downPaymentAmount + (purchasePrice * 0.03);
       }
       const closingCosts = s.inputs.refinance.closingCosts ?? 0;
@@ -137,17 +137,20 @@ function findBestIndex(
 }
 
 export default function Compare() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { scenarios, isLoaded } = useScenarios();
-  const { saveComparison, getComparison, updateComparison } = useComparisons();
+  const { saveComparison, getComparison, updateComparison, markComparisonAsViewed } = useComparisons();
   
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [emphasizedId, setEmphasizedId] = useState<string | null>(null);
   const [activeComparisonId, setActiveComparisonId] = useState<string | null>(null);
   const [missingScenarios, setMissingScenarios] = useState<string[]>([]);
+  const [materialChanges, setMaterialChanges] = useState<MaterialChange[]>([]);
+  
+  // Track if we've already marked this comparison as viewed
+  const hasMarkedViewedRef = useRef<string | null>(null);
 
-  // Restore from URL params
+  // Restore from URL params and detect changes
   useEffect(() => {
     if (!isLoaded) return;
     
@@ -158,6 +161,7 @@ export default function Compare() {
       const comparison = getComparison(comparisonId);
       if (comparison) {
         setActiveComparisonId(comparisonId);
+        
         // Check which scenarios still exist
         const existing = comparison.scenarioIds.filter((id) => 
           scenarios.find((s) => s.id === id)
@@ -167,12 +171,25 @@ export default function Compare() {
         );
         setSelectedIds(existing);
         setMissingScenarios(missing);
+        
+        // Detect material changes if this comparison was viewed before
+        if (comparison.lastViewedAt && comparison.scenarioSnapshots.length > 0) {
+          const existingScenarios = existing
+            .map((id) => scenarios.find((s) => s.id === id))
+            .filter((s): s is Scenario => s !== undefined);
+          
+          const changes = detectMaterialChanges(comparison.scenarioSnapshots, existingScenarios);
+          setMaterialChanges(changes);
+        } else {
+          setMaterialChanges([]);
+        }
       }
     } else if (scenarioIdsFromUrl.length > 0) {
       const existing = scenarioIdsFromUrl.filter((id) =>
         scenarios.find((s) => s.id === id)
       );
       setSelectedIds(existing);
+      setMaterialChanges([]);
     }
   }, [isLoaded, searchParams, scenarios, getComparison]);
 
@@ -182,7 +199,20 @@ export default function Compare() {
 
   const availableScenarios = scenarios.filter((s) => !selectedIds.includes(s.id));
 
-  // Auto-emphasize the scenario with lowest total cost
+  // Mark comparison as viewed after render (update snapshot)
+  useEffect(() => {
+    if (!activeComparisonId || !isLoaded || selectedScenarios.length < 2) return;
+    if (hasMarkedViewedRef.current === activeComparisonId) return;
+    
+    // Delay to ensure we've shown the changes first
+    const timer = setTimeout(() => {
+      markComparisonAsViewed(activeComparisonId, selectedScenarios);
+      hasMarkedViewedRef.current = activeComparisonId;
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [activeComparisonId, isLoaded, selectedScenarios, markComparisonAsViewed]);
+
   const autoEmphasizedId = useMemo(() => {
     if (selectedScenarios.length < 2) return null;
     const sorted = [...selectedScenarios].sort(
@@ -204,7 +234,6 @@ export default function Compare() {
     if (emphasizedId === id) setEmphasizedId(null);
   };
 
-  // Decision context - aggregate info
   const decisionContext = useMemo(() => {
     if (selectedScenarios.length === 0) return null;
     
@@ -234,13 +263,12 @@ export default function Compare() {
     if (selectedIds.length < 2) return;
     
     if (activeComparisonId) {
-      // Update existing comparison
-      updateComparison(activeComparisonId, { scenarioIds: selectedIds });
+      updateComparison(activeComparisonId, { scenarioIds: selectedIds }, selectedScenarios);
       toast.success("Comparison updated");
     } else {
-      // Create new comparison
-      const comparison = saveComparison(selectedIds);
+      const comparison = saveComparison(selectedIds, selectedScenarios);
       setActiveComparisonId(comparison.id);
+      hasMarkedViewedRef.current = comparison.id;
       toast.success("Comparison saved");
     }
   };
@@ -261,9 +289,7 @@ export default function Compare() {
       <div className="space-y-8">
         <div>
           <h1>Compare Scenarios</h1>
-          <p className="mt-1">
-            Review mortgage options side-by-side
-          </p>
+          <p className="mt-1">Review mortgage options side-by-side</p>
         </div>
 
         <div className="card-elevated flex flex-col items-center justify-center px-6 py-16 text-center">
@@ -291,9 +317,7 @@ export default function Compare() {
       <div className="flex items-center justify-between">
         <div>
           <h1>Compare Scenarios</h1>
-          <p className="mt-1">
-            Review mortgage options side-by-side to understand the tradeoffs
-          </p>
+          <p className="mt-1">Review mortgage options side-by-side to understand the tradeoffs</p>
         </div>
         <Button asChild size="sm" variant="ghost" className="gap-1.5">
           <Link to="/comparisons">
@@ -302,6 +326,31 @@ export default function Compare() {
           </Link>
         </Button>
       </div>
+
+      {/* What's changed since last time - decision continuity */}
+      {materialChanges.length > 0 && (
+        <div className="rounded border border-border bg-muted/20 px-4 py-4 space-y-3">
+          <p className="section-label">What's changed since last time</p>
+          <ul className="space-y-2 text-sm">
+            {materialChanges.map((change, idx) => (
+              <li key={idx} className="flex flex-col gap-0.5">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-muted-foreground">{change.scenarioName}:</span>
+                  <span className="text-foreground">{change.fieldLabel}</span>
+                  <span className="font-mono text-muted-foreground">
+                    {change.oldValue} → {change.newValue}
+                  </span>
+                </div>
+                {change.impact && (
+                  <p className="text-xs text-muted-foreground pl-0">
+                    {change.impact}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Missing scenarios notice */}
       {missingScenarios.length > 0 && (
@@ -313,7 +362,7 @@ export default function Compare() {
         </div>
       )}
 
-      {/* Scenario selector - minimal */}
+      {/* Scenario selector */}
       <div className="flex flex-wrap items-center gap-2">
         {selectedScenarios.map((scenario) => (
           <div
@@ -355,7 +404,7 @@ export default function Compare() {
         )}
       </div>
 
-      {/* Decision context block - static, above fold */}
+      {/* Decision context block */}
       {decisionContext && selectedScenarios.length >= 2 && (
         <div className="flex flex-wrap gap-x-8 gap-y-2 border-y border-border py-4 text-sm">
           {decisionContext.propertyPrice && (
@@ -387,7 +436,6 @@ export default function Compare() {
       {selectedScenarios.length >= 2 ? (
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <table className="w-full min-w-[500px] text-sm">
-            {/* Header row - scenario names */}
             <thead>
               <tr className="border-b border-border">
                 <th className="py-3 pr-4 text-left font-normal text-muted-foreground w-48" />
@@ -404,8 +452,6 @@ export default function Compare() {
                 ))}
               </tr>
             </thead>
-
-            {/* Data rows */}
             <tbody>
               {COMPARISON_METRICS.map((metric) => {
                 const bestIndex = findBestIndex(selectedScenarios, metric);
@@ -450,7 +496,6 @@ export default function Compare() {
       {/* Canonical Summary - 3 sections */}
       {selectedScenarios.length >= 2 && summary && (
         <div className="border-t border-border pt-6 space-y-6">
-          {/* Section 1 — Recommended option */}
           {summary.recommendation && (
             <div>
               <p className="section-label mb-2">Recommended option</p>
@@ -463,7 +508,6 @@ export default function Compare() {
             </div>
           )}
 
-          {/* Section 2 — Why it's recommended */}
           {summary.benefits.length > 0 && (
             <div>
               <p className="section-label mb-2">Why it's recommended</p>
@@ -478,7 +522,6 @@ export default function Compare() {
             </div>
           )}
 
-          {/* Section 3 — When another option may make more sense */}
           {(summary.tradeoffs.length > 0 || summary.alternativeScenario) && (
             <div>
               <p className="section-label mb-2">When another option may make more sense</p>
@@ -532,15 +575,11 @@ export default function Compare() {
         </div>
       )}
 
-      {/* Risk notes - footnote style */}
+      {/* Risk notes */}
       {selectedScenarios.length >= 2 && (
         <div className="text-xs text-muted-foreground/70 space-y-1">
-          <p>
-            Cash at close estimate includes down payment and approximately 3% closing costs.
-          </p>
-          <p>
-            All figures assume standard amortization with no prepayment penalties.
-          </p>
+          <p>Cash at close estimate includes down payment and approximately 3% closing costs.</p>
+          <p>All figures assume standard amortization with no prepayment penalties.</p>
         </div>
       )}
     </div>

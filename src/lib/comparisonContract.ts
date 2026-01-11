@@ -2,21 +2,40 @@
  * Comparison Contract - Data model and logic for saved comparisons.
  * 
  * Comparisons are relational references to scenarios, not snapshots.
- * They store only scenario IDs and metadata about the comparison itself.
+ * They store scenario IDs and a snapshot of key values for change detection.
  */
 
-import { formatCurrency } from "@/lib/mortgage";
+import { formatCurrency, formatPercent } from "@/lib/mortgage";
 import type { ScenarioData } from "@/lib/scenarioContract";
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-export const COMPARISON_SCHEMA_VERSION = 1;
+export const COMPARISON_SCHEMA_VERSION = 2;
 
 // ============================================================================
 // DATA MODEL
 // ============================================================================
+
+/**
+ * Snapshot of material values for a scenario at a point in time.
+ * Only decision-impacting fields are captured.
+ */
+export interface ScenarioSnapshot {
+  scenarioId: string;
+  scenarioName: string;
+  // Input values
+  interestRate: number;
+  loanTerm: number; // years
+  loanAmount: number;
+  includeTaxesInsurance: boolean;
+  // Computed outcomes
+  monthlyTotal: number;
+  totalInterest: number;
+  totalCost: number;
+  payoffMonths: number;
+}
 
 export interface SavedComparison {
   id: string;
@@ -25,6 +44,144 @@ export interface SavedComparison {
   schemaVersion: number;
   createdAt: Date;
   updatedAt: Date;
+  // v2 additions for change tracking
+  lastViewedAt: Date | null;
+  scenarioSnapshots: ScenarioSnapshot[]; // Snapshot at last view
+}
+
+// ============================================================================
+// CHANGE DETECTION
+// ============================================================================
+
+export interface MaterialChange {
+  scenarioId: string;
+  scenarioName: string;
+  field: string;
+  fieldLabel: string;
+  oldValue: string;
+  newValue: string;
+  impact: string | null; // e.g., "This increased total interest by $18,400"
+}
+
+/**
+ * Create a snapshot of material values from a scenario.
+ */
+export function createScenarioSnapshot(scenario: ScenarioData): ScenarioSnapshot {
+  return {
+    scenarioId: scenario.id,
+    scenarioName: scenario.name,
+    interestRate: scenario.inputs.shared.interestRate,
+    loanTerm: scenario.inputs.shared.loanTerm,
+    loanAmount: scenario.results.loanAmount,
+    includeTaxesInsurance: scenario.inputs.shared.includeEstimates,
+    monthlyTotal: scenario.results.monthlyTotal,
+    totalInterest: scenario.results.totalInterest,
+    totalCost: scenario.results.totalCost,
+    payoffMonths: scenario.results.payoffMonths,
+  };
+}
+
+/**
+ * Detect material changes between a stored snapshot and current scenario state.
+ * Only returns changes that affect decision-making.
+ */
+export function detectMaterialChanges(
+  snapshots: ScenarioSnapshot[],
+  currentScenarios: ScenarioData[]
+): MaterialChange[] {
+  const changes: MaterialChange[] = [];
+
+  for (const snapshot of snapshots) {
+    const current = currentScenarios.find((s) => s.id === snapshot.scenarioId);
+    if (!current) continue; // Scenario deleted - handled elsewhere
+
+    const currentSnapshot = createScenarioSnapshot(current);
+
+    // Interest rate change
+    if (Math.abs(snapshot.interestRate - currentSnapshot.interestRate) >= 0.01) {
+      const interestDiff = currentSnapshot.totalInterest - snapshot.totalInterest;
+      changes.push({
+        scenarioId: snapshot.scenarioId,
+        scenarioName: current.name,
+        field: "interestRate",
+        fieldLabel: "Interest rate",
+        oldValue: formatPercent(snapshot.interestRate),
+        newValue: formatPercent(currentSnapshot.interestRate),
+        impact: interestDiff !== 0 
+          ? `This ${interestDiff > 0 ? "increased" : "decreased"} total interest by ${formatCurrency(Math.abs(interestDiff))}`
+          : null,
+      });
+    }
+
+    // Loan amount change (material if >$1,000)
+    if (Math.abs(snapshot.loanAmount - currentSnapshot.loanAmount) >= 1000) {
+      const interestDiff = currentSnapshot.totalInterest - snapshot.totalInterest;
+      changes.push({
+        scenarioId: snapshot.scenarioId,
+        scenarioName: current.name,
+        field: "loanAmount",
+        fieldLabel: "Loan amount",
+        oldValue: formatCurrency(snapshot.loanAmount),
+        newValue: formatCurrency(currentSnapshot.loanAmount),
+        impact: interestDiff !== 0
+          ? `This ${interestDiff > 0 ? "increased" : "decreased"} total interest by ${formatCurrency(Math.abs(interestDiff))}`
+          : null,
+      });
+    }
+
+    // Term length change
+    if (snapshot.loanTerm !== currentSnapshot.loanTerm) {
+      const monthsDiff = currentSnapshot.payoffMonths - snapshot.payoffMonths;
+      changes.push({
+        scenarioId: snapshot.scenarioId,
+        scenarioName: current.name,
+        field: "loanTerm",
+        fieldLabel: "Loan term",
+        oldValue: `${snapshot.loanTerm} years`,
+        newValue: `${currentSnapshot.loanTerm} years`,
+        impact: monthsDiff !== 0
+          ? `Payoff timeline ${monthsDiff > 0 ? "extended" : "shortened"} by ${Math.abs(monthsDiff)} months`
+          : null,
+      });
+    }
+
+    // Taxes/insurance inclusion change
+    if (snapshot.includeTaxesInsurance !== currentSnapshot.includeTaxesInsurance) {
+      const monthlyDiff = currentSnapshot.monthlyTotal - snapshot.monthlyTotal;
+      changes.push({
+        scenarioId: snapshot.scenarioId,
+        scenarioName: current.name,
+        field: "includeTaxesInsurance",
+        fieldLabel: "Taxes & insurance",
+        oldValue: snapshot.includeTaxesInsurance ? "Included" : "Not included",
+        newValue: currentSnapshot.includeTaxesInsurance ? "Included" : "Not included",
+        impact: monthlyDiff !== 0
+          ? `Monthly payment ${monthlyDiff > 0 ? "increased" : "decreased"} by ${formatCurrency(Math.abs(monthlyDiff))}`
+          : null,
+      });
+    }
+
+    // Significant monthly payment change (>$50) not explained by above
+    const monthlyDiff = currentSnapshot.monthlyTotal - snapshot.monthlyTotal;
+    const hasMonthlyExplanation = changes.some(
+      (c) => c.scenarioId === snapshot.scenarioId && 
+             (c.field === "interestRate" || c.field === "loanAmount" || 
+              c.field === "loanTerm" || c.field === "includeTaxesInsurance")
+    );
+    if (Math.abs(monthlyDiff) >= 50 && !hasMonthlyExplanation) {
+      changes.push({
+        scenarioId: snapshot.scenarioId,
+        scenarioName: current.name,
+        field: "monthlyPayment",
+        fieldLabel: "Monthly payment",
+        oldValue: formatCurrency(snapshot.monthlyTotal),
+        newValue: formatCurrency(currentSnapshot.monthlyTotal),
+        impact: null,
+      });
+    }
+  }
+
+  return changes;
 }
 
 // ============================================================================
@@ -57,18 +214,10 @@ export interface ComparisonSummary {
 
 /**
  * Generate a canonical comparison summary following strict priority rules.
- * 
- * Priority order for recommendation:
- * 1. Lowest total interest paid
- * 2. Shortest payoff time
- * 3. Meaningful monthly payment reduction (≥5% difference)
- * 
- * If two scenarios tie, prefer the one with lower total cost.
  */
 export function generateComparisonSummary(scenarios: ScenarioData[]): ComparisonSummary | null {
   if (scenarios.length < 2) return null;
 
-  // Analyze each scenario
   const analyzed: AnalyzedScenario[] = scenarios.map((s) => ({
     scenario: s,
     monthlyPayment: s.results.monthlyTotal,
@@ -77,16 +226,12 @@ export function generateComparisonSummary(scenarios: ScenarioData[]): Comparison
     payoffMonths: s.results.payoffMonths,
   }));
 
-  // Sort by each priority criterion
   const byTotalInterest = [...analyzed].sort((a, b) => a.totalInterest - b.totalInterest);
   const byPayoffMonths = [...analyzed].sort((a, b) => a.payoffMonths - b.payoffMonths);
   const byMonthlyPayment = [...analyzed].sort((a, b) => a.monthlyPayment - b.monthlyPayment);
-  const byTotalCost = [...analyzed].sort((a, b) => a.totalCost - b.totalCost);
 
-  // Priority 1: Lowest total interest
   let recommended = byTotalInterest[0];
 
-  // Check for tie - if within 1% of each other, prefer lower total cost
   const lowestInterest = byTotalInterest[0].totalInterest;
   const tiedByInterest = byTotalInterest.filter(
     (a) => a.totalInterest <= lowestInterest * 1.01
@@ -96,22 +241,18 @@ export function generateComparisonSummary(scenarios: ScenarioData[]): Comparison
     recommended = tiedByInterest[0];
   }
 
-  // Priority 2: If shortest payoff is significantly better (>10% faster) and interest is close
   const shortestPayoff = byPayoffMonths[0];
   if (shortestPayoff.scenario.id !== recommended.scenario.id) {
     const payoffRatio = shortestPayoff.payoffMonths / recommended.payoffMonths;
     const interestRatio = shortestPayoff.totalInterest / recommended.totalInterest;
-    // If 10% faster and within 5% interest difference
     if (payoffRatio <= 0.9 && interestRatio <= 1.05) {
       recommended = shortestPayoff;
     }
   }
 
-  // Priority 3: Meaningful monthly improvement (≥5%) with acceptable interest
   const lowestMonthly = byMonthlyPayment[0];
   if (lowestMonthly.scenario.id !== recommended.scenario.id) {
     const monthlyRatio = lowestMonthly.monthlyPayment / recommended.monthlyPayment;
-    // If 5% or more lower monthly AND interest is still within 10%
     if (monthlyRatio <= 0.95) {
       const interestRatio = lowestMonthly.totalInterest / recommended.totalInterest;
       if (interestRatio <= 1.10) {
@@ -122,7 +263,6 @@ export function generateComparisonSummary(scenarios: ScenarioData[]): Comparison
 
   const others = analyzed.filter((a) => a.scenario.id !== recommended.scenario.id);
 
-  // Build recommendation reason
   let reason = "";
   if (recommended.scenario.id === byTotalInterest[0].scenario.id) {
     reason = "This option provides the lowest total interest over the life of the loan";
@@ -132,13 +272,11 @@ export function generateComparisonSummary(scenarios: ScenarioData[]): Comparison
     reason = "This option provides meaningful monthly savings with acceptable lifetime cost";
   }
 
-  // Add secondary benefits to reason
   if (recommended.scenario.id === byTotalInterest[0].scenario.id && 
       recommended.scenario.id === byMonthlyPayment[0].scenario.id) {
     reason = "This option provides both the lowest monthly payment and lowest total interest";
   }
 
-  // Build benefits list with absolute dollar amounts only
   const benefits: string[] = [];
 
   others.forEach((other) => {
@@ -168,11 +306,9 @@ export function generateComparisonSummary(scenarios: ScenarioData[]): Comparison
     }
   });
 
-  // Build tradeoffs section
   const tradeoffs: { statement: string; detail?: string }[] = [];
   let alternativeScenario: ComparisonSummary["alternativeScenario"] = null;
 
-  // Identify the lowest monthly payment scenario if different from recommended
   if (lowestMonthly.scenario.id !== recommended.scenario.id) {
     const monthlyDiff = recommended.monthlyPayment - lowestMonthly.monthlyPayment;
     if (monthlyDiff > 10) {
@@ -188,7 +324,6 @@ export function generateComparisonSummary(scenarios: ScenarioData[]): Comparison
         });
       }
 
-      // Build alternative advice
       alternativeScenario = {
         scenario: lowestMonthly.scenario,
         advice: `If your priority is the lowest possible monthly payment, ${lowestMonthly.scenario.name} may be preferable despite the higher lifetime cost of ${formatCurrency(interestDiff)}.`,
@@ -224,9 +359,15 @@ function getDefaultComparisonName(): string {
 
 export function createComparison(
   scenarioIds: string[],
+  scenarios: ScenarioData[],
   name?: string
 ): SavedComparison {
   const now = new Date();
+  const snapshots = scenarioIds
+    .map((id) => scenarios.find((s) => s.id === id))
+    .filter((s): s is ScenarioData => s !== undefined)
+    .map(createScenarioSnapshot);
+
   return {
     id: generateComparisonId(),
     name: name ?? getDefaultComparisonName(),
@@ -234,17 +375,27 @@ export function createComparison(
     schemaVersion: COMPARISON_SCHEMA_VERSION,
     createdAt: now,
     updatedAt: now,
+    lastViewedAt: now,
+    scenarioSnapshots: snapshots,
   };
 }
 
 export function updateComparisonScenarios(
   comparison: SavedComparison,
-  scenarioIds: string[]
+  scenarioIds: string[],
+  scenarios: ScenarioData[]
 ): SavedComparison {
+  const snapshots = scenarioIds
+    .map((id) => scenarios.find((s) => s.id === id))
+    .filter((s): s is ScenarioData => s !== undefined)
+    .map(createScenarioSnapshot);
+
   return {
     ...comparison,
     scenarioIds: [...scenarioIds],
+    scenarioSnapshots: snapshots,
     updatedAt: new Date(),
+    lastViewedAt: new Date(),
   };
 }
 
@@ -256,6 +407,22 @@ export function updateComparisonName(
     ...comparison,
     name,
     updatedAt: new Date(),
+  };
+}
+
+export function markComparisonViewed(
+  comparison: SavedComparison,
+  scenarios: ScenarioData[]
+): SavedComparison {
+  const snapshots = comparison.scenarioIds
+    .map((id) => scenarios.find((s) => s.id === id))
+    .filter((s): s is ScenarioData => s !== undefined)
+    .map(createScenarioSnapshot);
+
+  return {
+    ...comparison,
+    lastViewedAt: new Date(),
+    scenarioSnapshots: snapshots,
   };
 }
 
@@ -277,14 +444,12 @@ function getComparisonSchemaVersion(raw: unknown): number {
   return 0;
 }
 
-function migrate_v0_to_v1(raw: Record<string, unknown>): SavedComparison {
+function migrate_v0_to_v1(raw: Record<string, unknown>): Record<string, unknown> {
   const now = new Date();
   
-  // Ensure required fields
   const id = typeof raw.id === "string" ? raw.id : generateComparisonId();
   const name = typeof raw.name === "string" ? raw.name : getDefaultComparisonName();
   
-  // Handle scenarioIds
   let scenarioIds: string[] = [];
   if (Array.isArray(raw.scenarioIds)) {
     scenarioIds = raw.scenarioIds.filter((id): id is string => typeof id === "string");
@@ -292,7 +457,6 @@ function migrate_v0_to_v1(raw: Record<string, unknown>): SavedComparison {
     scenarioIds = raw.scenario_ids.filter((id): id is string => typeof id === "string");
   }
   
-  // Handle dates
   let createdAt = now;
   let updatedAt = now;
   
@@ -312,9 +476,23 @@ function migrate_v0_to_v1(raw: Record<string, unknown>): SavedComparison {
     id,
     name,
     scenarioIds,
-    schemaVersion: COMPARISON_SCHEMA_VERSION,
+    schemaVersion: 1,
     createdAt,
     updatedAt,
+  };
+}
+
+function migrate_v1_to_v2(raw: Record<string, unknown>): SavedComparison {
+  return {
+    id: raw.id as string,
+    name: raw.name as string,
+    scenarioIds: raw.scenarioIds as string[],
+    schemaVersion: COMPARISON_SCHEMA_VERSION,
+    createdAt: new Date(raw.createdAt as string | number | Date),
+    updatedAt: new Date(raw.updatedAt as string | number | Date),
+    // v2 additions - initialize as null/empty since we have no prior snapshot
+    lastViewedAt: null,
+    scenarioSnapshots: [],
   };
 }
 
@@ -323,33 +501,44 @@ export function migrateComparison(raw: unknown): ComparisonMigrationResult {
     return { success: false, error: "Invalid comparison: not an object" };
   }
   
-  const record = raw as Record<string, unknown>;
-  const version = getComparisonSchemaVersion(record);
+  let record = raw as Record<string, unknown>;
+  let version = getComparisonSchemaVersion(record);
   
   try {
-    let comparison: SavedComparison;
-    
+    // Run migrations in sequence
     if (version === 0) {
       console.log("[ComparisonMigration] Migrating v0 → v1");
-      comparison = migrate_v0_to_v1(record);
-    } else if (version === COMPARISON_SCHEMA_VERSION) {
+      record = migrate_v0_to_v1(record);
+      version = 1;
+    }
+    
+    if (version === 1) {
+      console.log("[ComparisonMigration] Migrating v1 → v2");
+      const comparison = migrate_v1_to_v2(record);
+      return { success: true, comparison };
+    }
+    
+    if (version === COMPARISON_SCHEMA_VERSION) {
       // Already current version
-      comparison = {
+      const comparison: SavedComparison = {
         id: record.id as string,
         name: record.name as string,
         scenarioIds: record.scenarioIds as string[],
         schemaVersion: COMPARISON_SCHEMA_VERSION,
         createdAt: new Date(record.createdAt as string | number | Date),
         updatedAt: new Date(record.updatedAt as string | number | Date),
+        lastViewedAt: record.lastViewedAt 
+          ? new Date(record.lastViewedAt as string | number | Date) 
+          : null,
+        scenarioSnapshots: (record.scenarioSnapshots as ScenarioSnapshot[]) ?? [],
       };
-    } else {
-      return { 
-        success: false, 
-        error: `Unknown comparison schema version: ${version}` 
-      };
+      return { success: true, comparison };
     }
     
-    return { success: true, comparison };
+    return { 
+      success: false, 
+      error: `Unknown comparison schema version: ${version}` 
+    };
   } catch (error) {
     return { 
       success: false, 
