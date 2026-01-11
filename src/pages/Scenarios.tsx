@@ -188,17 +188,15 @@ export default function Scenarios() {
 
   const handleRename = (id: string, name: string) => {
     updateScenario(id, { name });
-    toast.success("Scenario renamed");
+    toast("Scenario renamed.", { duration: 2000 });
   };
 
   const handleDuplicate = (id: string) => {
     const newScenario = duplicateScenario(id);
     if (newScenario) {
-      // ATOMIC: Navigate to the duplicated scenario after persist
+      // ROUTING CONTRACT: Navigate to duplicated scenario
       navigate(`/?scenario=${newScenario.id}`);
-      toast("Scenario duplicated.", {
-        duration: 3000,
-      });
+      toast("Scenario duplicated.", { duration: 2000 });
     } else {
       toast.error("Could not duplicate scenario");
     }
@@ -206,7 +204,7 @@ export default function Scenarios() {
 
   const handleDelete = (id: string) => {
     deleteScenario(id);
-    toast.success("Scenario deleted");
+    toast("Scenario deleted.", { duration: 2000 });
   };
 
   // Sort by updated date, newest first
