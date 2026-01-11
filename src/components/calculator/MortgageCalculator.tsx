@@ -1,5 +1,7 @@
-import { useState, useMemo, useCallback } from "react";
-import { MortgageInputs, ScenarioType, calculateMortgage, DEFAULT_INPUTS, calculateDownPaymentPercent, calculateLoanAmount } from "@/lib/mortgage";
+import { useState, useCallback, useMemo } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { MortgageInputs, ScenarioType, calculateMortgage, DEFAULT_INPUTS, calculateLoanAmount } from "@/lib/mortgage";
+import { useActiveScenario, useScenarios, Scenario } from "@/hooks/useScenarios";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
 import { LoanTermInput } from "./LoanTermInput";
@@ -9,51 +11,108 @@ import { RefinanceInputs } from "./RefinanceInputs";
 import { TaxInsuranceSection } from "./TaxInsuranceSection";
 import { ResultsCard } from "./ResultsCard";
 import { AmortizationTable } from "./AmortizationTable";
+import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "./CurrencyInput";
-import { Save, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
-import { useScenarios } from "@/hooks/useScenarios";
+import { Input } from "@/components/ui/input";
+import { Save, RotateCcw, ChevronDown, ChevronUp, Copy, MoreHorizontal, X, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-interface MortgageCalculatorProps {
-  initialInputs?: MortgageInputs;
-  onSave?: (name: string, inputs: MortgageInputs) => void;
-}
+export function MortgageCalculator() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const scenarioId = searchParams.get("scenario");
+  
+  const {
+    inputs,
+    results,
+    activeScenario,
+    saveStatus,
+    isLoaded,
+    updateInput,
+    batchUpdateInputs,
+    saveAsNew,
+    duplicateCurrent,
+    isEditing,
+  } = useActiveScenario(scenarioId);
 
-export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculatorProps) {
-  const [inputs, setInputs] = useState<MortgageInputs>(initialInputs ?? DEFAULT_INPUTS);
+  const { scenarios, deleteScenario, updateScenario } = useScenarios();
+  
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const { createScenario, scenarios } = useScenarios();
+  const [isRenamingScenario, setIsRenamingScenario] = useState(false);
+  const [scenarioName, setScenarioName] = useState("");
 
-  const results = useMemo(() => calculateMortgage(inputs), [inputs]);
+  // Start renaming
+  const handleStartRename = useCallback(() => {
+    if (activeScenario) {
+      setScenarioName(activeScenario.name);
+      setIsRenamingScenario(true);
+    }
+  }, [activeScenario]);
 
-  const updateInput = useCallback(<K extends keyof MortgageInputs>(
-    key: K,
-    value: MortgageInputs[K]
-  ) => {
-    setInputs((prev) => ({ ...prev, [key]: value }));
-  }, []);
-
-  const batchUpdateInputs = useCallback((updates: Partial<MortgageInputs>) => {
-    setInputs((prev) => ({ ...prev, ...updates }));
-  }, []);
+  // Save rename
+  const handleSaveRename = useCallback(() => {
+    if (activeScenario && scenarioName.trim()) {
+      updateScenario(activeScenario.id, { name: scenarioName.trim() });
+      toast.success("Scenario renamed");
+    }
+    setIsRenamingScenario(false);
+  }, [activeScenario, scenarioName, updateScenario]);
 
   const handleScenarioTypeChange = useCallback((type: ScenarioType) => {
-    setInputs((prev) => ({ ...prev, scenarioType: type }));
-  }, []);
+    batchUpdateInputs({ scenarioType: type });
+  }, [batchUpdateInputs]);
 
   const handleReset = useCallback(() => {
-    setInputs(DEFAULT_INPUTS);
-  }, []);
+    if (isEditing) {
+      // Reset to scenario's original inputs (close without saving further changes)
+      navigate("/");
+    } else {
+      batchUpdateInputs(DEFAULT_INPUTS);
+    }
+  }, [isEditing, navigate, batchUpdateInputs]);
 
   const handleSave = useCallback(() => {
     const typeLabel = inputs.scenarioType === "purchase" ? "Purchase" : "Refinance";
     const name = `${typeLabel} ${scenarios.length + 1}`;
-    createScenario(name, inputs);
+    const newScenario = saveAsNew(name);
+    
+    // Navigate to the new scenario
+    setSearchParams({ scenario: newScenario.id });
+    
     toast.success("Scenario saved", {
-      description: `"${name}" has been saved to your scenarios.`,
+      description: `"${name}" has been saved.`,
     });
-  }, [createScenario, inputs, scenarios.length]);
+  }, [inputs.scenarioType, scenarios.length, saveAsNew, setSearchParams]);
+
+  const handleDuplicate = useCallback(() => {
+    const newScenario = duplicateCurrent();
+    if (newScenario) {
+      setSearchParams({ scenario: newScenario.id });
+      toast.success("Scenario duplicated", {
+        description: `Created "${newScenario.name}"`,
+      });
+    }
+  }, [duplicateCurrent, setSearchParams]);
+
+  const handleDelete = useCallback(() => {
+    if (activeScenario) {
+      deleteScenario(activeScenario.id);
+      navigate("/");
+      toast.success("Scenario deleted");
+    }
+  }, [activeScenario, deleteScenario, navigate]);
+
+  const handleClose = useCallback(() => {
+    navigate("/");
+  }, [navigate]);
 
   // Calculate LTV for PMI logic
   const ltvRatio = useMemo(() => {
@@ -66,13 +125,59 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
     ? "Calculate your monthly payment and total costs for a new home purchase"
     : "Compare your new loan terms and see potential savings";
 
+  if (!isLoaded) {
+    return (
+      <div className="animate-pulse space-y-6">
+        <div className="h-8 w-48 rounded bg-muted" />
+        <div className="card-elevated h-96 p-6" />
+      </div>
+    );
+  }
+
   return (
     <div className="grid w-full max-w-full gap-6 lg:grid-cols-[1fr,380px] lg:gap-10">
       {/* Inputs */}
       <div className="min-w-0 space-y-6">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Mortgage Calculator</h1>
-          <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+        {/* Header */}
+        <div className="space-y-2">
+          {isEditing && activeScenario ? (
+            <div className="flex items-center gap-3">
+              {isRenamingScenario ? (
+                <Input
+                  value={scenarioName}
+                  onChange={(e) => setScenarioName(e.target.value)}
+                  onBlur={handleSaveRename}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSaveRename();
+                    if (e.key === "Escape") setIsRenamingScenario(false);
+                  }}
+                  className="h-9 max-w-xs text-xl font-semibold"
+                  autoFocus
+                />
+              ) : (
+                <h1 
+                  className="text-xl font-semibold tracking-tight sm:text-2xl cursor-pointer hover:text-primary transition-colors"
+                  onClick={handleStartRename}
+                  title="Click to rename"
+                >
+                  {activeScenario.name}
+                </h1>
+              )}
+              <SaveStatusIndicator status={saveStatus} />
+              <Button 
+                variant="ghost" 
+                size="icon-sm" 
+                onClick={handleClose}
+                className="ml-auto"
+                title="Close scenario"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Mortgage Calculator</h1>
+          )}
+          <p className="text-sm text-muted-foreground sm:text-base">
             {pageDescription}
           </p>
         </div>
@@ -181,15 +286,51 @@ export function MortgageCalculator({ initialInputs, onSave }: MortgageCalculator
         </div>
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3">
-          <Button onClick={handleSave} className="gap-2">
-            <Save className="h-4 w-4" />
-            Save scenario
-          </Button>
-          <Button variant="outline" onClick={handleReset} className="gap-2">
-            <RotateCcw className="h-4 w-4" />
-            Reset
-          </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          {isEditing ? (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <MoreHorizontal className="h-4 w-4" />
+                    Actions
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={handleStartRename}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleDuplicate}>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Duplicate
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={handleDelete}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    Delete scenario
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button variant="outline" onClick={handleClose} className="gap-2">
+                <X className="h-4 w-4" />
+                Close
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button onClick={handleSave} className="gap-2">
+                <Save className="h-4 w-4" />
+                Save scenario
+              </Button>
+              <Button variant="outline" onClick={handleReset} className="gap-2">
+                <RotateCcw className="h-4 w-4" />
+                Reset
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Amortization table */}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useScenarios, Scenario } from "@/hooks/useScenarios";
 import { formatCurrency, formatPercent } from "@/lib/mortgage";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,9 @@ import {
   Trash2, 
   Pencil, 
   FolderOpen,
-  Calculator
+  Calculator,
+  Home,
+  RefreshCw
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -39,12 +42,13 @@ function formatRelativeTime(date: Date): string {
 
 interface ScenarioCardProps {
   scenario: Scenario;
+  onOpen: (id: string) => void;
   onRename: (id: string, name: string) => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
-function ScenarioCard({ scenario, onRename, onDuplicate, onDelete }: ScenarioCardProps) {
+function ScenarioCard({ scenario, onOpen, onRename, onDuplicate, onDelete }: ScenarioCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(scenario.name);
 
@@ -55,10 +59,33 @@ function ScenarioCard({ scenario, onRename, onDuplicate, onDelete }: ScenarioCar
     setIsEditing(false);
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't open if clicking on input or dropdown
+    if ((e.target as HTMLElement).closest('input, button, [role="menu"]')) {
+      return;
+    }
+    onOpen(scenario.id);
+  };
+
+  const isPurchase = scenario.inputs.scenarioType === "purchase";
+
   return (
-    <div className="card-interactive p-5 animate-fade-in">
+    <div 
+      className="card-interactive p-5 animate-fade-in cursor-pointer transition-all hover:border-primary/30"
+      onClick={handleCardClick}
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            {isPurchase ? (
+              <Home className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            )}
+            <span className="text-xs text-muted-foreground">
+              {isPurchase ? "Purchase" : "Refinance"}
+            </span>
+          </div>
           {isEditing ? (
             <Input
               value={editName}
@@ -73,6 +100,7 @@ function ScenarioCard({ scenario, onRename, onDuplicate, onDelete }: ScenarioCar
               }}
               className="h-8 text-base font-medium"
               autoFocus
+              onClick={(e) => e.stopPropagation()}
             />
           ) : (
             <h3 className="truncate text-base font-medium text-foreground">
@@ -85,7 +113,7 @@ function ScenarioCard({ scenario, onRename, onDuplicate, onDelete }: ScenarioCar
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
             <Button variant="ghost" size="icon-sm" className="shrink-0">
               <MoreHorizontal className="h-4 w-4" />
               <span className="sr-only">Actions</span>
@@ -128,9 +156,15 @@ function ScenarioCard({ scenario, onRename, onDuplicate, onDelete }: ScenarioCar
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-        <span className="rounded bg-muted px-2 py-1">
-          {formatCurrency(scenario.inputs.purchasePrice)}
-        </span>
+        {isPurchase ? (
+          <span className="rounded bg-muted px-2 py-1">
+            {formatCurrency(scenario.inputs.purchasePrice)}
+          </span>
+        ) : (
+          <span className="rounded bg-muted px-2 py-1">
+            {formatCurrency(scenario.inputs.currentLoanBalance)} balance
+          </span>
+        )}
         <span className="rounded bg-muted px-2 py-1">
           {formatPercent(scenario.inputs.interestRate)} APR
         </span>
@@ -143,7 +177,12 @@ function ScenarioCard({ scenario, onRename, onDuplicate, onDelete }: ScenarioCar
 }
 
 export default function Scenarios() {
+  const navigate = useNavigate();
   const { scenarios, updateScenario, duplicateScenario, deleteScenario, isLoaded } = useScenarios();
+
+  const handleOpen = (id: string) => {
+    navigate(`/?scenario=${id}`);
+  };
 
   const handleRename = (id: string, name: string) => {
     updateScenario(id, { name });
@@ -153,6 +192,8 @@ export default function Scenarios() {
   const handleDuplicate = (id: string) => {
     const newScenario = duplicateScenario(id);
     if (newScenario) {
+      // Navigate to the duplicated scenario
+      navigate(`/?scenario=${newScenario.id}`);
       toast.success("Scenario duplicated", {
         description: `Created "${newScenario.name}"`,
       });
@@ -174,7 +215,7 @@ export default function Scenarios() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Saved Scenarios</h1>
         <p className="mt-1 text-muted-foreground">
-          Compare and manage your mortgage calculations
+          Click a scenario to open and edit it
         </p>
       </div>
 
@@ -210,6 +251,7 @@ export default function Scenarios() {
             <ScenarioCard
               key={scenario.id}
               scenario={scenario}
+              onOpen={handleOpen}
               onRename={handleRename}
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}

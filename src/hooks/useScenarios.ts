@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { MortgageInputs, MortgageResults, calculateMortgage, DEFAULT_INPUTS } from "@/lib/mortgage";
 
 export interface Scenario {
@@ -10,7 +10,10 @@ export interface Scenario {
   updatedAt: Date;
 }
 
+export type SaveStatus = "idle" | "saving" | "saved" | "error";
+
 const STORAGE_KEY = "settlerate_scenarios";
+const AUTOSAVE_DEBOUNCE_MS = 500;
 
 function generateId(): string {
   return `scenario_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -111,5 +114,154 @@ export function useScenarios() {
     duplicateScenario,
     deleteScenario,
     getScenario,
+  };
+}
+
+/**
+ * Hook for managing an active scenario with autosave
+ */
+export function useActiveScenario(scenarioId: string | null) {
+  const { scenarios, isLoaded, updateScenario, getScenario, duplicateScenario, createScenario } = useScenarios();
+  const [inputs, setInputs] = useState<MortgageInputs>(DEFAULT_INPUTS);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [activeScenario, setActiveScenario] = useState<Scenario | null>(null);
+  
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedInputsRef = useRef<string | null>(null);
+
+  // Load scenario when ID changes or scenarios are loaded
+  useEffect(() => {
+    if (!isLoaded) return;
+    
+    if (scenarioId) {
+      const scenario = getScenario(scenarioId);
+      if (scenario) {
+        setActiveScenario(scenario);
+        setInputs(scenario.inputs);
+        lastSavedInputsRef.current = JSON.stringify(scenario.inputs);
+        setSaveStatus("saved");
+      } else {
+        // Scenario not found, reset to defaults
+        setActiveScenario(null);
+        setInputs(DEFAULT_INPUTS);
+        lastSavedInputsRef.current = null;
+        setSaveStatus("idle");
+      }
+    } else {
+      setActiveScenario(null);
+      setInputs(DEFAULT_INPUTS);
+      lastSavedInputsRef.current = null;
+      setSaveStatus("idle");
+    }
+  }, [scenarioId, isLoaded, getScenario]);
+
+  // Update active scenario reference when scenarios change
+  useEffect(() => {
+    if (scenarioId && isLoaded) {
+      const scenario = scenarios.find(s => s.id === scenarioId);
+      if (scenario) {
+        setActiveScenario(scenario);
+      }
+    }
+  }, [scenarios, scenarioId, isLoaded]);
+
+  // Autosave with debounce
+  const saveInputs = useCallback((newInputs: MortgageInputs) => {
+    if (!scenarioId || !activeScenario) return;
+
+    // Clear existing debounce
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    const inputsJson = JSON.stringify(newInputs);
+    
+    // Skip if nothing changed
+    if (inputsJson === lastSavedInputsRef.current) {
+      return;
+    }
+
+    setSaveStatus("saving");
+
+    debounceRef.current = setTimeout(() => {
+      try {
+        updateScenario(scenarioId, { inputs: newInputs });
+        lastSavedInputsRef.current = inputsJson;
+        setSaveStatus("saved");
+      } catch (error) {
+        console.error("Failed to save scenario:", error);
+        setSaveStatus("error");
+      }
+    }, AUTOSAVE_DEBOUNCE_MS);
+  }, [scenarioId, activeScenario, updateScenario]);
+
+  // Update inputs and trigger autosave
+  const updateInputs = useCallback((newInputs: MortgageInputs) => {
+    setInputs(newInputs);
+    if (activeScenario) {
+      saveInputs(newInputs);
+    }
+  }, [activeScenario, saveInputs]);
+
+  // Update a single input field
+  const updateInput = useCallback(<K extends keyof MortgageInputs>(
+    key: K,
+    value: MortgageInputs[K]
+  ) => {
+    setInputs(prev => {
+      const newInputs = { ...prev, [key]: value };
+      if (activeScenario) {
+        saveInputs(newInputs);
+      }
+      return newInputs;
+    });
+  }, [activeScenario, saveInputs]);
+
+  // Batch update inputs
+  const batchUpdateInputs = useCallback((updates: Partial<MortgageInputs>) => {
+    setInputs(prev => {
+      const newInputs = { ...prev, ...updates };
+      if (activeScenario) {
+        saveInputs(newInputs);
+      }
+      return newInputs;
+    });
+  }, [activeScenario, saveInputs]);
+
+  // Create new scenario from current inputs
+  const saveAsNew = useCallback((name: string): Scenario => {
+    return createScenario(name, inputs);
+  }, [createScenario, inputs]);
+
+  // Duplicate current scenario
+  const duplicateCurrent = useCallback((): Scenario | null => {
+    if (!scenarioId) return null;
+    return duplicateScenario(scenarioId);
+  }, [scenarioId, duplicateScenario]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
+  // Compute results from current inputs
+  const results = calculateMortgage(inputs);
+
+  return {
+    inputs,
+    results,
+    activeScenario,
+    saveStatus,
+    isLoaded,
+    updateInput,
+    updateInputs,
+    batchUpdateInputs,
+    saveAsNew,
+    duplicateCurrent,
+    isEditing: !!activeScenario,
   };
 }
