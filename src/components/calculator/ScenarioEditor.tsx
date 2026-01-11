@@ -67,7 +67,6 @@ export interface ScenarioEditorProps {
   onRename: (name: string) => void;
   onDiscardChanges: () => void;
   onReset: () => void;
-  onClose: () => void;
 }
 
 export function ScenarioEditor({
@@ -86,14 +85,12 @@ export function ScenarioEditor({
   onRename,
   onDiscardChanges,
   onReset,
-  onClose,
 }: ScenarioEditorProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isRenamingScenario, setIsRenamingScenario] = useState(false);
   const [scenarioName, setScenarioName] = useState("");
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
   const [saveAsName, setSaveAsName] = useState("");
-  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
   // Helper to update shared inputs
   const updateShared = useCallback((updates: Partial<SharedInputs>) => {
@@ -138,21 +135,6 @@ export function ScenarioEditor({
     setShowSaveAsDialog(true);
   }, [inputs.mode, scenarioCount, activeScenario]);
 
-  // Handle close with unsaved changes check
-  const handleClose = useCallback(() => {
-    if (isDirty) {
-      setShowDiscardDialog(true);
-    } else {
-      onClose();
-    }
-  }, [isDirty, onClose]);
-
-  // Confirm discard and close
-  const handleConfirmDiscard = useCallback(() => {
-    setShowDiscardDialog(false);
-    onClose();
-  }, [onClose]);
-
   // Calculate LTV for PMI logic
   const ltvRatio = useMemo(() => {
     const { loanAmount, homeValue } = calculateLoanAmount(inputs);
@@ -195,15 +177,6 @@ export function ScenarioEditor({
                   </h1>
                 )}
                 <SaveStatusIndicator status={saveStatus} isDirty={isDirty} />
-                <Button 
-                  variant="ghost" 
-                  size="icon-sm" 
-                  onClick={handleClose}
-                  className="ml-auto"
-                  title="Close scenario"
-                >
-                  <X className="h-4 w-4" strokeWidth={1.5} />
-                </Button>
               </div>
             ) : (
               <h1>Mortgage Calculator</h1>
@@ -363,10 +336,6 @@ export function ScenarioEditor({
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="ghost" size="sm" onClick={handleClose} className="gap-1.5">
-                  <X className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  Close
-                </Button>
               </>
             ) : (
               <>
@@ -438,25 +407,6 @@ export function ScenarioEditor({
         </DialogContent>
       </Dialog>
 
-      {/* Discard Changes Dialog */}
-      <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Unsaved changes</DialogTitle>
-            <DialogDescription>
-              You have unsaved changes to this scenario. Do you want to discard them?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDiscardDialog(false)}>
-              Keep editing
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDiscard}>
-              Discard changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

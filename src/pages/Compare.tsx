@@ -10,6 +10,7 @@ import {
 } from "@/lib/comparisonContract";
 import { exportComparisonPDF } from "@/lib/comparisonExport";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Calculator, GitCompare, Plus, X, Download, Share2, Settings2, Save, FolderOpen, AlertCircle } from "lucide-react";
 import {
   Select,
@@ -18,6 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -147,6 +156,8 @@ export default function Compare() {
   const [activeComparisonId, setActiveComparisonId] = useState<string | null>(null);
   const [missingScenarios, setMissingScenarios] = useState<string[]>([]);
   const [materialChanges, setMaterialChanges] = useState<MaterialChange[]>([]);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [comparisonName, setComparisonName] = useState("");
   
   // Track if we've already marked this comparison as viewed
   const hasMarkedViewedRef = useRef<string | null>(null);
@@ -260,18 +271,30 @@ export default function Compare() {
     [selectedScenarios]
   );
 
-  const handleSaveComparison = () => {
+  const handleOpenSaveDialog = () => {
     if (selectedIds.length < 2) return;
     
     if (activeComparisonId) {
+      // If updating, just update directly (name already set)
       updateComparison(activeComparisonId, { scenarioIds: selectedIds }, selectedScenarios);
       toast.success("Comparison updated");
     } else {
-      const comparison = saveComparison(selectedIds, selectedScenarios);
-      setActiveComparisonId(comparison.id);
-      hasMarkedViewedRef.current = comparison.id;
-      toast.success("Comparison saved");
+      // For new comparison, show naming dialog
+      const defaultName = `Comparison – ${new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}`;
+      setComparisonName(defaultName);
+      setShowSaveDialog(true);
     }
+  };
+
+  const handleConfirmSave = () => {
+    if (selectedIds.length < 2) return;
+    
+    const name = comparisonName.trim() || `Comparison – ${new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}`;
+    const comparison = saveComparison(selectedIds, selectedScenarios, name);
+    setActiveComparisonId(comparison.id);
+    hasMarkedViewedRef.current = comparison.id;
+    setShowSaveDialog(false);
+    toast.success("Comparison saved");
   };
 
   const handleExportPDF = () => {
@@ -679,7 +702,7 @@ export default function Compare() {
             variant="outline" 
             size="sm" 
             className="gap-1.5"
-            onClick={handleSaveComparison}
+            onClick={handleOpenSaveDialog}
           >
             <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
             {activeComparisonId ? "Update comparison" : "Save comparison"}
@@ -711,6 +734,39 @@ export default function Compare() {
           <p>All figures assume standard amortization with no prepayment penalties.</p>
         </div>
       )}
+
+      {/* Save Comparison Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save comparison</DialogTitle>
+            <DialogDescription>
+              Give this comparison a name to help you recognize it later.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              value={comparisonName}
+              onChange={(e) => setComparisonName(e.target.value)}
+              placeholder="e.g., Rate drop option, Aggressive payoff"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleConfirmSave();
+                }
+              }}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmSave}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

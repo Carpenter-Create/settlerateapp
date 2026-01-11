@@ -129,11 +129,6 @@ export function MortgageCalculator() {
     batchUpdateInputs(structuredClone(DEFAULT_INPUTS));
   }, [batchUpdateInputs]);
 
-  // Close: navigate away from current scenario
-  const handleClose = useCallback(() => {
-    navigateToNew();
-  }, [navigateToNew]);
-
   // ============================================================================
   // LOADING STATE
   // ============================================================================
@@ -196,7 +191,6 @@ export function MortgageCalculator() {
       onRename={handleRename}
       onDiscardChanges={handleDiscardChanges}
       onReset={handleReset}
-      onClose={handleClose}
     />
   );
 }

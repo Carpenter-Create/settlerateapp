@@ -100,7 +100,7 @@ export function exportComparisonPDF(data: ExportData): void {
     },
   ];
 
-  // Create print-friendly HTML document
+  // Create print-friendly HTML document with branding
   const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -129,6 +129,14 @@ export function exportComparisonPDF(data: ExportData): void {
       font-weight: 500;
       margin-bottom: 4px;
       font-family: Georgia, "Times New Roman", serif;
+    }
+    
+    .brand {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 12pt;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 24px;
     }
     
     .header {
@@ -259,6 +267,8 @@ export function exportComparisonPDF(data: ExportData): void {
   </style>
 </head>
 <body>
+  <p class="brand">SettleRate</p>
+  
   <div class="header">
     <h1>Mortgage Comparison Summary</h1>
     <p class="meta">${dateStr}</p>
@@ -361,6 +371,7 @@ export function exportComparisonPDF(data: ExportData): void {
   
   <div class="footer">
     <p>This summary is for informational purposes only.</p>
+    <p style="margin-top: 8px; font-size: 8pt; color: #aaa;">Powered by SettleRate</p>
   </div>
 </body>
 </html>
