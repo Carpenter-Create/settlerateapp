@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { AnalyticalSurface } from "@/components/marketing/AnalyticalSurface";
 
 const useCases = [
   "Exploring alternative loan structures with clients",
@@ -22,74 +23,100 @@ const boundaries = [
 
 export default function Advisors() {
   return (
-    <div className="mx-auto max-w-2xl space-y-16">
-      {/* Page Title */}
-      <section>
-        <h1 className="font-serif text-3xl font-normal tracking-tight sm:text-4xl">
-          Structured mortgage scenario analysis for professionals.
-        </h1>
+    <div className="w-full">
+      {/* Hero Section */}
+      <section className="w-full bg-[hsl(40_20%_97%)]">
+        <div className="mx-auto max-w-[1280px] px-6 py-20 lg:px-12 lg:py-28 xl:px-16">
+          <div className="mx-auto max-w-3xl text-center">
+            <h1 className="font-serif text-3xl font-medium tracking-[-0.02em] leading-[1.15] text-foreground sm:text-4xl lg:text-5xl">
+              A standardized framework for mortgage evaluation.
+            </h1>
+            <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-foreground/70 sm:text-lg">
+              Structured outputs designed for client review, underwriting discussion, and documentation.
+            </p>
+          </div>
+
+          {/* Analytical Surface - Advisor variant */}
+          <div className="mx-auto mt-14 w-full max-w-4xl lg:mt-16">
+            <AnalyticalSurface variant="advisor" />
+          </div>
+        </div>
       </section>
 
-      {/* Opening Context */}
-      <section className="space-y-4">
-        <p className="text-base leading-relaxed text-muted-foreground">
-          SettleRate provides a neutral framework for modeling mortgage outcomes under consistent assumptions, designed to support professional review, comparison, and documentation.
-        </p>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          It is intended to complement—not replace—lenders, advisors, and underwriting processes by improving clarity and expectation alignment early in the decision process.
-        </p>
-      </section>
+      {/* Content Section */}
+      <section className="w-full bg-white">
+        <div className="mx-auto max-w-3xl px-6 py-16 lg:px-12 lg:py-24">
+          {/* Opening Context */}
+          <div className="space-y-4">
+            <p className="text-base leading-relaxed text-foreground/65">
+              SettleRate provides a neutral framework for modeling mortgage outcomes under consistent assumptions, designed to support professional review, comparison, and documentation.
+            </p>
+            <p className="text-base leading-relaxed text-foreground/65">
+              It is intended to complement—not replace—lenders, advisors, and underwriting processes by improving clarity and expectation alignment early in the decision process.
+            </p>
+          </div>
 
-      {/* Professional Use Cases */}
-      <section className="space-y-4">
-        <h2 className="font-serif text-xl font-normal tracking-tight">
-          Professional use cases
-        </h2>
-        <ul className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-          {useCases.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </section>
+          {/* Professional Use Cases */}
+          <div className="mt-14 space-y-4">
+            <h2 className="font-serif text-xl font-medium tracking-[-0.01em]">
+              Professional use cases
+            </h2>
+            <ul className="space-y-2.5 text-[15px] leading-relaxed text-foreground/60">
+              {useCases.map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/20" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
 
-      {/* Outputs & Documentation */}
-      <section className="space-y-4">
-        <h2 className="font-serif text-xl font-normal tracking-tight">
-          Outputs and documentation
-        </h2>
-        <ul className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-          {outputs.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </section>
+          {/* Outputs & Documentation */}
+          <div className="mt-14 space-y-4">
+            <h2 className="font-serif text-xl font-medium tracking-[-0.01em]">
+              Outputs and documentation
+            </h2>
+            <ul className="space-y-2.5 text-[15px] leading-relaxed text-foreground/60">
+              {outputs.map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/20" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
 
-      {/* Role Boundaries */}
-      <section className="space-y-4">
-        <h2 className="font-serif text-xl font-normal tracking-tight">
-          Role boundaries
-        </h2>
-        <ul className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-          {boundaries.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </section>
+          {/* Role Boundaries */}
+          <div className="mt-14 space-y-4">
+            <h2 className="font-serif text-xl font-medium tracking-[-0.01em]">
+              Role boundaries
+            </h2>
+            <ul className="space-y-2.5 text-[15px] leading-relaxed text-foreground/60">
+              {boundaries.map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/20" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
 
-      {/* Closing */}
-      <section className="border-t border-border/50 pt-12 text-center">
-        <p className="font-serif text-lg leading-relaxed text-foreground">
-          SettleRate is designed to support clarity and consistency in
-          professional mortgage discussions.
-        </p>
-        <p className="mt-6">
-          <Link
-            to="/contact"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Contact
-          </Link>
-        </p>
+          {/* Closing */}
+          <div className="mt-16 border-t border-border/50 pt-12 text-center">
+            <p className="font-serif text-lg leading-relaxed text-foreground">
+              SettleRate is designed to support clarity and consistency in
+              professional mortgage discussions.
+            </p>
+            <p className="mt-6">
+              <Link
+                to="/contact"
+                className="text-sm text-foreground/50 transition-colors hover:text-foreground"
+              >
+                Contact
+              </Link>
+            </p>
+          </div>
+        </div>
       </section>
     </div>
   );
