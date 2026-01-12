@@ -32,10 +32,10 @@ export default function Home() {
         <h1 className="mx-auto max-w-3xl font-serif text-3xl font-normal tracking-tight sm:text-4xl lg:text-5xl lg:leading-tight">
           Mortgage decisions, modeled precisely.
         </h1>
-        <p className="mx-auto mt-8 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg sm:leading-relaxed">
+        <p className="mx-auto mt-10 max-w-2xl text-base leading-relaxed text-muted-foreground sm:mt-12 sm:text-lg sm:leading-relaxed">
           A neutral framework for understanding mortgage outcomes.
         </p>
-        <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
+        <div className="mt-14 flex flex-col items-center justify-center gap-4 sm:mt-16 sm:flex-row">
           <Button asChild size="lg" className="min-w-40">
             <Link to="/auth">Start free</Link>
           </Button>
