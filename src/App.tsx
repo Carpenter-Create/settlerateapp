@@ -18,7 +18,6 @@ import Investors from "./pages/Investors";
 import Approach from "./pages/Approach";
 import HowItWorks from "./pages/HowItWorks";
 import Documentation from "./pages/Documentation";
-import Methodology from "./pages/Methodology";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -47,7 +46,6 @@ const App = () => (
             <Route path="/advisors" element={<PublicLayout><Advisors /></PublicLayout>} />
             <Route path="/investors" element={<PublicLayout><Investors /></PublicLayout>} />
             <Route path="/how-it-works" element={<PublicLayout><HowItWorks /></PublicLayout>} />
-            <Route path="/methodology" element={<PublicLayout><Methodology /></PublicLayout>} />
             <Route path="/documentation" element={<PublicLayout><Documentation /></PublicLayout>} />
             <Route path="/auth" element={<Auth />} />
 
