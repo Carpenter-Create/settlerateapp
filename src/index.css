@@ -495,10 +495,15 @@
     color: hsl(var(--foreground));
   }
 
-  /* Secondary action — magic link is secondary to password */
+  /* Secondary action — magic link is secondary to password
+   * LAYOUT STABILITY: Uses relative positioning so both actions
+   * occupy space but only one is visible at a time.
+   */
   .auth-secondary-action {
+    position: relative;
     text-align: center;
     margin-top: calc(var(--auth-secondary-gap) - var(--auth-section-gap));
+    min-height: 1.5rem; /* Ensures consistent height */
   }
 
   .auth-secondary-link {
@@ -508,7 +513,7 @@
     transition: color 0.15s ease;
   }
 
-  .auth-secondary-link:hover {
+  .auth-secondary-link:hover:not(:disabled) {
     color: hsl(var(--foreground));
     text-decoration: underline;
     text-underline-offset: 2px;
