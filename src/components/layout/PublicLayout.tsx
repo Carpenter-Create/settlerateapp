@@ -146,10 +146,21 @@ export function PublicLayout({ children }: PublicLayoutProps) {
             © {new Date().getFullYear()} SettleRate. All rights reserved.
           </p>
 
-          {/* Primary Disclosure (Canonical) */}
-          <p className="mx-auto mt-6 max-w-3xl text-center text-[11px] leading-relaxed text-muted-foreground/70">
-            SettleRate provides analytical modeling based on standardized assumptions. It does not originate, broker, recommend, or refer mortgage products, and does not provide financial, legal, or tax advice.
-          </p>
+          {/* Reordered Footer Disclosure (Canonical) */}
+          <div className="mx-auto mt-8 max-w-3xl space-y-4 text-center text-[11px] leading-relaxed text-muted-foreground/70">
+            {/* 1. What SettleRate is */}
+            <p className="font-medium text-muted-foreground/80">
+              SettleRate is a mortgage analysis and comparison tool designed to help users understand the financial implications of different loan scenarios.
+            </p>
+            {/* 2. What SettleRate does not do */}
+            <p>
+              SettleRate provides analytical modeling only and does not originate, broker, recommend, or refer mortgage products.
+            </p>
+            {/* 3. Standard legal disclaimers */}
+            <p>
+              Analysis is based on standardized assumptions and is provided for informational purposes only. SettleRate does not provide financial, legal, or tax advice.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
