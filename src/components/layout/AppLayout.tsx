@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Calculator, User, Settings, LogOut, ExternalLink } from "lucide-react";
+import { Calculator, User, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,16 +66,6 @@ export function AppLayout({ children }: AppLayoutProps) {
             })}
           </nav>
 
-          {/* Footer */}
-          <div className="border-t border-sidebar-border p-3">
-            <Link
-              to="/"
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            >
-              <ExternalLink className="h-4 w-4" strokeWidth={1.5} />
-              Back to site
-            </Link>
-          </div>
         </div>
       </aside>
 
@@ -114,13 +104,6 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <Link to="/app/settings" className="flex items-center gap-2">
                   <Settings className="h-4 w-4" />
                   Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/" className="flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4" />
-                  Back to site
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

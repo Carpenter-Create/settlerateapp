@@ -52,12 +52,12 @@ export function useScenarioRoute(): ScenarioRouteState {
   
   // Navigate to new calculator (clear scenario param)
   const navigateToNew = useCallback(() => {
-    navigate("/");
+    navigate("/app/calculator");
   }, [navigate]);
   
-  // Navigate to scenarios list
+  // Navigate to scenarios list (app index)
   const navigateToList = useCallback(() => {
-    navigate("/scenarios");
+    navigate("/app");
   }, [navigate]);
   
   return {
