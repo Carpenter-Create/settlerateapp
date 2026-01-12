@@ -68,9 +68,10 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════════════
           SECTION 1 — HERO (Context + Gravity)
           Purpose: Establish category and seriousness.
+          Height: ~75-80% viewport for spatial authority
           ═══════════════════════════════════════════════════════════════ */}
-      <section className="flex w-full min-h-[70vh] lg:min-h-[78vh] bg-[hsl(40_20%_97%)]">
-        <div className="mx-auto flex w-full max-w-[1280px] flex-col justify-center px-6 py-16 lg:px-12 lg:py-20 xl:px-16">
+      <section className="flex w-full min-h-[72vh] lg:min-h-[80vh] bg-[hsl(40_18%_96%)]">
+        <div className="mx-auto flex w-full max-w-[1320px] flex-col justify-center px-6 py-20 lg:px-12 lg:py-24 xl:px-16">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="font-serif text-4xl font-medium tracking-[-0.02em] leading-[1.1] text-foreground sm:text-5xl lg:text-6xl">
               Mortgage decisions,
@@ -80,7 +81,7 @@ export default function Home() {
             <p className="mx-auto mt-10 max-w-xl text-lg leading-relaxed text-foreground/70 sm:mt-12 sm:text-xl">
               A neutral framework for understanding mortgage outcomes.
             </p>
-            <div className="mt-12 sm:mt-14">
+            <div className="mt-14 sm:mt-16">
               <Button asChild size="lg" className="min-w-44 h-12 text-base">
                 <Link to="/auth">Start free</Link>
               </Button>
@@ -88,8 +89,8 @@ export default function Home() {
           </div>
 
           {/* Analytical Surface - Decision-Grade Document Fragment */}
-          <div className="mx-auto mt-16 w-full max-w-4xl sm:mt-20 lg:mt-24">
-            <AnalyticalSurface variant="consumer" />
+          <div className="mx-auto mt-20 w-full max-w-4xl sm:mt-24 lg:mt-28">
+            <AnalyticalSurface />
           </div>
         </div>
       </section>
