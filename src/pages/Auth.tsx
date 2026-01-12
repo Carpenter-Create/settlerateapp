@@ -1,12 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 import {
   AuthShell,
   AuthHeader,
@@ -18,19 +16,35 @@ import {
   AuthConfirmationState,
   AuthLegalCheckbox,
   AuthEscapeLink,
+  AuthSessionBanner,
 } from "@/components/auth/AuthShell";
 
 /**
- * Unified Access Page - Sign In / Create Account
+ * ═══════════════════════════════════════════════════════════════════════════
+ * Unified Access Page - PRODUCTION AUTH STANDARD
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 
  * Single page with two modes controlled by query param: ?mode=signin | ?mode=create
  * 
- * Typography: UI/system font ONLY. No Source Serif 4 on auth pages.
- * Layout and styling are locked via AuthShell component.
- * Do not add inline spacing overrides.
+ * LOCKED BEHAVIOR:
+ * - Typography: UI/system font ONLY
+ * - Method hierarchy: Password primary, magic link secondary
+ * - Error handling: Inline, neutral, factual
+ * - Loading states: Button text changes, form disabled
+ * - Session handling: Redirect with neutral banner
+ * ═══════════════════════════════════════════════════════════════════════════
  */
 
 type AccessMode = "signin" | "create";
 type ViewState = "form" | "magic-link-sent" | "confirm-email";
+
+// Inline error state type
+interface FieldErrors {
+  email?: string;
+  password?: string;
+  terms?: string;
+  general?: string;
+}
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -42,11 +56,15 @@ export default function Auth() {
   const modeParam = searchParams.get("mode");
   const mode: AccessMode = modeParam === "create" ? "create" : "signin";
 
+  // Check for session expired state from URL
+  const sessionExpired = searchParams.get("expired") === "true";
+
   const [viewState, setViewState] = useState<ViewState>("form");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
 
   // Redirect if already authenticated (non-anonymous)
   useEffect(() => {
@@ -56,26 +74,52 @@ export default function Auth() {
     }
   }, [user, isLoading, isAnonymous, navigate, location]);
 
-  // Reset view state when mode changes
+  // Reset view state and errors when mode changes
   useEffect(() => {
     setViewState("form");
     setPassword("");
     setAgreedToTerms(false);
+    setErrors({});
   }, [mode]);
+
+  // Clear field error when user starts typing
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+  };
 
   const setMode = (newMode: AccessMode) => {
     setSearchParams({ mode: newMode }, { replace: true });
   };
 
+  const clearSessionExpired = () => {
+    if (sessionExpired) {
+      searchParams.delete("expired");
+      setSearchParams(searchParams, { replace: true });
+    }
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearSessionExpired();
+    setErrors({});
 
+    // Validation
+    const newErrors: FieldErrors = {};
     if (!email.trim()) {
-      toast("Enter an email address.");
-      return;
+      newErrors.email = "Enter a valid email address.";
     }
     if (!password) {
-      toast("Enter your password.");
+      newErrors.password = "This field is required.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -90,13 +134,13 @@ export default function Auth() {
 
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
-          toast("Incorrect email or password.");
+          setErrors({ password: "The email or password is incorrect." });
         } else {
-          toast("Something went wrong. Please try again.");
+          setErrors({ general: "Unable to sign in. Please try again." });
         }
       }
     } catch {
-      toast("Something went wrong. Please try again.");
+      setErrors({ general: "Unable to sign in. Please try again." });
     } finally {
       setIsSubmitting(false);
     }
@@ -104,21 +148,25 @@ export default function Auth() {
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearSessionExpired();
+    setErrors({});
 
+    // Validation
+    const newErrors: FieldErrors = {};
     if (!email.trim()) {
-      toast("Enter an email address.");
-      return;
+      newErrors.email = "Enter a valid email address.";
     }
     if (!password) {
-      toast("Enter a password.");
-      return;
-    }
-    if (password.length < 12) {
-      toast("Password must be at least 12 characters.");
-      return;
+      newErrors.password = "This field is required.";
+    } else if (password.length < 12) {
+      newErrors.password = "Password does not meet requirements.";
     }
     if (!agreedToTerms) {
-      toast("Please agree to the Privacy Policy and Terms of Service.");
+      newErrors.terms = "Agreement required to continue.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -136,23 +184,26 @@ export default function Auth() {
 
       if (error) {
         if (error.message.includes("already registered")) {
-          toast("This email is already registered. Try signing in.");
+          setErrors({ email: "An account already exists for this email." });
         } else {
-          toast("Something went wrong. Please try again.");
+          setErrors({ general: "Unable to create account. Please try again." });
         }
       } else {
         setViewState("confirm-email");
       }
     } catch {
-      toast("Something went wrong. Please try again.");
+      setErrors({ general: "Unable to create account. Please try again." });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleMagicLink = async () => {
+    clearSessionExpired();
+    setErrors({});
+
     if (!email.trim()) {
-      toast("Enter an email address.");
+      setErrors({ email: "Enter a valid email address." });
       return;
     }
 
@@ -168,22 +219,25 @@ export default function Auth() {
       });
 
       if (error) {
-        toast("Something went wrong. Please try again.");
+        setErrors({ general: "Unable to send sign-in link. Please try again." });
       } else {
         setViewState("magic-link-sent");
       }
     } catch {
-      toast("Something went wrong. Please try again.");
+      setErrors({ general: "Unable to send sign-in link. Please try again." });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Loading state
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
+      <AuthShell>
+        <div className="flex items-center justify-center py-12">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+        </div>
+      </AuthShell>
     );
   }
 
@@ -191,14 +245,14 @@ export default function Auth() {
   if (viewState === "magic-link-sent") {
     return (
       <AuthConfirmationState
-        title="Check your email for a sign-in link."
-        body="A link has been sent to"
-        email={email}
+        title="Check your email"
+        body="If an account exists for this email, a sign-in link has been sent."
         actionLabel="Back to sign in"
         onAction={() => {
           setViewState("form");
           setEmail("");
           setPassword("");
+          setErrors({});
         }}
       />
     );
@@ -209,21 +263,34 @@ export default function Auth() {
     return (
       <AuthConfirmationState
         title="Confirm your email"
-        body="We sent a confirmation link to"
-        email={email}
+        body="If an account exists for this email, a confirmation link has been sent."
         actionLabel="Back to sign in"
         onAction={() => {
           setMode("signin");
           setViewState("form");
           setPassword("");
+          setErrors({});
         }}
       />
     );
   }
 
+  // Button loading text
+  const getButtonText = () => {
+    if (isSubmitting) {
+      return mode === "create" ? "Creating account…" : "Signing in…";
+    }
+    return mode === "create" ? "Create account" : "Sign in";
+  };
+
   // Main form view
   return (
     <AuthShell>
+      {/* Session expired banner */}
+      {sessionExpired && (
+        <AuthSessionBanner message="Your session has expired. Please sign in again." />
+      )}
+
       {/* Header */}
       <AuthHeader
         title={mode === "create" ? "Create account" : "Sign in"}
@@ -237,6 +304,11 @@ export default function Auth() {
       {/* Mode tabs (segmented control) */}
       <AuthSegmentedControl activeTab={mode} onTabChange={setMode} />
 
+      {/* General error */}
+      {errors.general && (
+        <p className="auth-error-inline">{errors.general}</p>
+      )}
+
       {/* Form */}
       <AuthForm onSubmit={mode === "create" ? handleCreateAccount : handleSignIn}>
         <div className="space-y-2">
@@ -247,12 +319,16 @@ export default function Auth() {
             id="email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => handleEmailChange(e.target.value)}
             placeholder="you@example.com"
             disabled={isSubmitting}
             autoComplete="email"
             autoFocus
+            aria-invalid={!!errors.email}
           />
+          {errors.email && (
+            <p className="auth-error-inline">{errors.email}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -260,10 +336,11 @@ export default function Auth() {
             <Label htmlFor="password" className="text-sm font-normal">
               Password
             </Label>
-            {mode === "signin" && (
+            {mode === "signin" && !isSubmitting && (
               <Link
                 to="/reset-password"
                 className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                tabIndex={isSubmitting ? -1 : 0}
               >
                 Forgot password?
               </Link>
@@ -273,32 +350,39 @@ export default function Auth() {
             id="password"
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => handlePasswordChange(e.target.value)}
             placeholder={mode === "create" ? "At least 12 characters" : ""}
             disabled={isSubmitting}
             autoComplete={mode === "create" ? "new-password" : "current-password"}
+            aria-invalid={!!errors.password}
           />
-          {mode === "create" && (
+          {errors.password && (
+            <p className="auth-error-inline">{errors.password}</p>
+          )}
+          {mode === "create" && !errors.password && (
             <p className="text-xs text-muted-foreground">At least 12 characters</p>
           )}
         </div>
 
         {/* Legal checkbox for create account */}
         {mode === "create" && (
-          <AuthLegalCheckbox
-            checked={agreedToTerms}
-            onCheckedChange={setAgreedToTerms}
-          />
+          <div>
+            <AuthLegalCheckbox
+              checked={agreedToTerms}
+              onCheckedChange={(checked) => {
+                setAgreedToTerms(checked);
+                if (errors.terms) setErrors((prev) => ({ ...prev, terms: undefined }));
+              }}
+              disabled={isSubmitting}
+            />
+            {errors.terms && (
+              <p className="auth-error-inline mt-1">{errors.terms}</p>
+            )}
+          </div>
         )}
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : mode === "create" ? (
-            "Create account"
-          ) : (
-            "Sign in"
-          )}
+          {getButtonText()}
         </Button>
       </AuthForm>
 
@@ -312,7 +396,7 @@ export default function Auth() {
       )}
       {mode === "create" && (
         <AuthSecondaryAction>
-          <AuthSecondaryLink onClick={() => setMode("signin")}>
+          <AuthSecondaryLink onClick={() => setMode("signin")} disabled={isSubmitting}>
             Already have an account? Sign in
           </AuthSecondaryLink>
         </AuthSecondaryAction>

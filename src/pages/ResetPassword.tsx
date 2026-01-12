@@ -1,85 +1,68 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import {
+  AuthShell,
+  AuthDisclaimer,
+  AuthEscapeLink,
+} from "@/components/auth/AuthShell";
 
 /**
- * Reset Password - Request reset email
+ * ═══════════════════════════════════════════════════════════════════════════
+ * Reset Password - PRODUCTION AUTH STANDARD
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 
+ * Request password reset email flow.
+ * Does NOT confirm account existence for security.
+ * ═══════════════════════════════════════════════════════════════════════════
  */
 
 export default function ResetPassword() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (error) setError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
     if (!email.trim()) {
-      toast("Email address required.");
+      setError("Enter a valid email address.");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: "https://app.settlerate.com/reset-password/confirm",
       });
 
-      if (error) {
-        toast("Something went wrong. Please try again.");
+      if (resetError) {
+        setError("Unable to send reset link. Please try again.");
       } else {
         setEmailSent(true);
       }
     } catch {
-      toast("Something went wrong. Please try again.");
+      setError("Unable to send reset link. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Confirmation state — does not confirm account existence
   if (emailSent) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="w-full max-w-sm space-y-space-6">
-          <div className="text-center">
-            <h1 className="font-serif text-2xl font-normal tracking-tight">
-              Check your email
-            </h1>
-            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              If an account exists for{" "}
-              <span className="text-foreground">{email}</span>, a password reset
-              link has been sent.
-            </p>
-          </div>
-
-          <div className="text-center">
-            <Link
-              to="/"
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Back to sign in
-            </Link>
-          </div>
-
-          {/* Disclaimer */}
-          <p className="text-center text-xs leading-relaxed text-muted-foreground/70">
-            SettleRate provides analytical tools only and does not provide
-            lending, brokerage, legal, tax, or investment advice.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-space-6">
-        {/* Header */}
+      <AuthShell>
         <div className="text-center">
           <Link
             to="/"
@@ -87,56 +70,78 @@ export default function ResetPassword() {
           >
             SettleRate
           </Link>
-          <h1 className="mt-space-6 font-serif text-2xl font-normal tracking-tight">
-            Reset password
-          </h1>
-          <p className="mt-space-2 text-sm text-muted-foreground">
-            We'll email you a link to set a new password.
+          <h1 className="auth-h1">Check your email</h1>
+          <p className="auth-confirmation-body">
+            If an account exists for this email, a reset link has been sent.
           </p>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-space-4">
-          <div className="space-y-space-2">
-            <Label htmlFor="email" className="text-sm font-normal">
-              Email address
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              disabled={isSubmitting}
-              autoComplete="email"
-              autoFocus
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              "Send reset link"
-            )}
-          </Button>
-        </form>
-
-        {/* Secondary action */}
-        <div className="text-center">
-          <Link
-            to="/"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
+          <Link to="/" className="auth-back-link">
             Back to sign in
           </Link>
         </div>
+        <AuthEscapeLink />
+        <AuthDisclaimer />
+      </AuthShell>
+    );
+  }
 
-        {/* Disclaimer */}
-        <p className="text-center text-xs leading-relaxed text-muted-foreground/70">
-          SettleRate provides analytical tools only and does not provide
-          lending, brokerage, legal, tax, or investment advice.
+  // Request form
+  return (
+    <AuthShell>
+      {/* Header */}
+      <div className="text-center">
+        <Link
+          to="/"
+          className="inline-block font-serif text-lg tracking-tight transition-opacity hover:opacity-70"
+        >
+          SettleRate
+        </Link>
+        <h1 className="auth-h1">Reset password</h1>
+        <p className="auth-subtitle">
+          Enter your email to receive a reset link.
         </p>
       </div>
-    </div>
+
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="auth-form">
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-sm font-normal">
+            Email address
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => handleEmailChange(e.target.value)}
+            placeholder="you@example.com"
+            disabled={isSubmitting}
+            autoComplete="email"
+            autoFocus
+            aria-invalid={!!error}
+          />
+          {error && (
+            <p className="auth-error-inline">{error}</p>
+          )}
+        </div>
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Sending link…" : "Send reset link"}
+        </Button>
+      </form>
+
+      {/* Secondary action */}
+      <div className="text-center">
+        <Link
+          to="/"
+          className="auth-secondary-link"
+        >
+          Back to sign in
+        </Link>
+      </div>
+
+      {/* Website escape link */}
+      <AuthEscapeLink />
+
+      {/* Disclaimer */}
+      <AuthDisclaimer />
+    </AuthShell>
   );
 }

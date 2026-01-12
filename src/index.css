@@ -558,6 +558,28 @@
   .auth-back-link:hover {
     color: hsl(var(--foreground));
   }
+
+  /* Inline error messages — neutral, factual */
+  .auth-error-inline {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: hsl(var(--destructive));
+    margin-top: 4px;
+  }
+
+  /* Session expired banner — non-alarming */
+  .auth-session-banner {
+    text-align: center;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: hsl(var(--muted-foreground));
+    padding: 12px 16px;
+    background: hsl(var(--muted) / 0.5);
+    border-radius: var(--auth-radius);
+    border: 1px solid hsl(var(--border));
+  }
 }
 
 @layer utilities {
