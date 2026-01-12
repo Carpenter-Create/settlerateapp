@@ -29,7 +29,7 @@ export default function Auth() {
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
-      toast.error("Please enter your email address");
+      toast("Please enter your email address.");
       return;
     }
 
@@ -48,7 +48,7 @@ export default function Auth() {
       if (error) throw error;
       setEmailSent(true);
     } catch (error: any) {
-      toast.error("Failed to send magic link", { description: error.message });
+      toast("Unable to send sign-in link. Please try again.");
     } finally {
       setIsSending(false);
     }
@@ -69,9 +69,7 @@ export default function Auth() {
 
       if (error) throw error;
     } catch (error: any) {
-      toast.error(`Failed to sign in with ${provider}`, {
-        description: error.message,
-      });
+      toast("Unable to sign in. Please try again.");
       setOauthLoading(null);
     }
   };
