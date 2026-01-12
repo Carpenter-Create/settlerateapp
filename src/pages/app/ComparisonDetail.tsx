@@ -1,11 +1,11 @@
 /**
- * Scenario Comparison View
+ * Comparison Detail View
  * 
  * Institutional, analytical comparison of two saved mortgage scenarios.
  * Designed for advisor and lender review - no recommendations or color-coding.
  */
 
-import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -251,18 +251,17 @@ function MobileScenarioBlock({ scenario, label }: MobileScenarioBlockProps) {
 }
 
 // ============================================================================
-// MAIN COMPARISON VIEW
+// MAIN COMPARISON DETAIL VIEW
 // ============================================================================
 
-export default function Compare() {
+export default function ComparisonDetail() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const { ids } = useParams<{ ids: string }>();
   const isMobile = useIsMobile();
   const { scenarios, isLoaded } = useScenarios();
 
-  // Get scenario IDs from URL params
-  const scenarioAId = searchParams.get("a");
-  const scenarioBId = searchParams.get("b");
+  // Parse scenario IDs from URL (format: id1...id2)
+  const [scenarioAId, scenarioBId] = (ids || "").split("...");
 
   // Find scenarios
   const scenarioA = scenarios.find((s) => s.id === scenarioAId);
@@ -289,12 +288,12 @@ export default function Compare() {
           Scenarios not found
         </h1>
         <p className="mt-3 max-w-md text-sm text-muted-foreground">
-          Select two scenarios from the list to compare.
+          The scenarios for this comparison could not be located.
         </p>
         <Button asChild className="mt-8" variant="outline">
-          <Link to="/app/scenarios">
+          <Link to="/app/comparisons">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Return to scenarios
+            Return to comparisons
           </Link>
         </Button>
       </div>
@@ -311,10 +310,10 @@ export default function Compare() {
             variant="ghost"
             size="sm"
             className="-ml-2 mb-2"
-            onClick={() => navigate("/app/scenarios")}
+            onClick={() => navigate("/app/comparisons")}
           >
             <ArrowLeft className="mr-1 h-4 w-4" />
-            Scenarios
+            Comparisons
           </Button>
           <h1 className="text-2xl font-medium tracking-tight">
             Scenario comparison
@@ -358,10 +357,10 @@ export default function Compare() {
             variant="ghost"
             size="sm"
             className="-ml-2 mb-2"
-            onClick={() => navigate("/app/scenarios")}
+            onClick={() => navigate("/app/comparisons")}
           >
             <ArrowLeft className="mr-1 h-4 w-4" />
-            Scenarios
+            Comparisons
           </Button>
           <h1 className="text-2xl font-medium tracking-tight">
             Scenario comparison

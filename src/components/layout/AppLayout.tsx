@@ -1,7 +1,7 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Calculator, User, Settings, LogOut, FolderOpen, Menu, X } from "lucide-react";
+import { Calculator, User, Settings, LogOut, FolderOpen, Menu, X, GitCompare, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,26 +18,39 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useCapabilities } from "@/hooks/useCapabilities";
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
+// Navigation items with optional gating
+import type { LucideIcon } from "lucide-react";
+
+interface NavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  requiresPro?: boolean;
+}
+
 // Desktop navigation (full list)
-const desktopNavigation = [
+const desktopNavigation: NavItem[] = [
   { name: "Scenarios", href: "/app/scenarios", icon: FolderOpen },
+  { name: "Comparisons", href: "/app/comparisons", icon: GitCompare, requiresPro: true },
   { name: "Calculator", href: "/app/calculator", icon: Calculator },
   { name: "Account", href: "/app/account", icon: User },
   { name: "Settings", href: "/app/settings", icon: Settings },
 ];
 
 // Mobile navigation structure for hamburger menu
-const mobilePrimaryNav = [
+const mobilePrimaryNav: NavItem[] = [
   { name: "Scenarios", href: "/app/scenarios", icon: FolderOpen },
+  { name: "Comparisons", href: "/app/comparisons", icon: GitCompare, requiresPro: true },
   { name: "Calculator", href: "/app/calculator", icon: Calculator },
 ];
 
-const mobileSecondaryNav = [
+const mobileSecondaryNav: NavItem[] = [
   { name: "Account", href: "/app/account", icon: User },
   { name: "Settings", href: "/app/settings", icon: Settings },
 ];
@@ -48,7 +61,10 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { user, signOut } = useAuth();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  const { canUsePro, isAdmin } = useCapabilities();
+  
+  // Check if user has access to pro features
+  const hasProAccess = canUsePro || isAdmin;
   const handleSignOut = async () => {
     setMobileMenuOpen(false);
     await signOut();
@@ -78,7 +94,9 @@ export function AppLayout({ children }: AppLayoutProps) {
           {/* Navigation */}
           <nav className="flex-1 space-y-1 p-3">
             {desktopNavigation.map((item) => {
-              const isActive = location.pathname === item.href;
+              const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + "/");
+              const isLocked = item.requiresPro && !hasProAccess;
+              
               return (
                 <Link
                   key={item.name}
@@ -87,11 +105,13 @@ export function AppLayout({ children }: AppLayoutProps) {
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                     isActive
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    isLocked && "opacity-60"
                   )}
                 >
                   <item.icon className="h-4 w-4" strokeWidth={1.5} />
-                  {item.name}
+                  <span className="flex-1">{item.name}</span>
+                  {isLocked && <Lock className="h-3 w-3 text-muted-foreground" strokeWidth={1.5} />}
                 </Link>
               );
             })}
@@ -186,7 +206,9 @@ export function AppLayout({ children }: AppLayoutProps) {
               <nav className="flex-1 px-3 py-4">
                 <div className="space-y-0.5">
                   {mobilePrimaryNav.map((item) => {
-                    const isActive = location.pathname === item.href;
+                    const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + "/");
+                    const isLocked = item.requiresPro && !hasProAccess;
+                    
                     return (
                       <button
                         key={item.name}
@@ -195,14 +217,16 @@ export function AppLayout({ children }: AppLayoutProps) {
                           "relative flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm transition-colors outline-none focus:outline-none focus-visible:outline-none",
                           isActive
                             ? "bg-muted/40 text-foreground"
-                            : "text-muted-foreground active:bg-muted/30"
+                            : "text-muted-foreground active:bg-muted/30",
+                          isLocked && "opacity-60"
                         )}
                       >
                         {isActive && (
                           <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-foreground/70" />
                         )}
                         <item.icon className="h-4 w-4" strokeWidth={1.5} />
-                        {item.name}
+                        <span className="flex-1">{item.name}</span>
+                        {isLocked && <Lock className="h-3 w-3 text-muted-foreground" strokeWidth={1.5} />}
                       </button>
                     );
                   })}

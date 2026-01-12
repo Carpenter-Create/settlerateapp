@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, MoreHorizontal, FileEdit, Copy, Trash2, GitCompare, X } from "lucide-react";
+import { Plus, MoreHorizontal, FileEdit, Copy, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -128,62 +127,20 @@ export default function ScenariosIndex() {
   const [scenarioToDelete, setScenarioToDelete] = useState<ScenarioData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
-  
-  // Selection state for comparison
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const isSelectionMode = selectedIds.size > 0;
 
   // Sort scenarios by updated_at desc
   const sortedScenarios = [...scenarios].sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   );
 
-  // Navigate to scenario detail view (only when not in selection mode)
+  // Navigate to scenario detail view
   const handleRowClick = (scenario: ScenarioData) => {
-    if (isSelectionMode) {
-      toggleSelection(scenario.id);
-    } else {
-      navigate(`/app/scenarios/${scenario.id}`);
-    }
+    navigate(`/app/scenarios/${scenario.id}`);
   };
 
-  // Navigate to calculator (for mobile card compatibility)
+  // Navigate to scenario detail (for mobile card compatibility)
   const handleOpen = (scenario: ScenarioData) => {
-    if (isSelectionMode) {
-      toggleSelection(scenario.id);
-    } else {
-      navigate(`/app/scenarios/${scenario.id}`);
-    }
-  };
-
-  // Toggle scenario selection
-  const toggleSelection = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else if (next.size < 2) {
-        next.add(id);
-      } else {
-        // Replace oldest selection with new one
-        const [first] = next;
-        next.delete(first);
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
-  // Clear selection
-  const clearSelection = () => {
-    setSelectedIds(new Set());
-  };
-
-  // Navigate to comparison
-  const handleCompare = () => {
-    if (selectedIds.size !== 2) return;
-    const [a, b] = Array.from(selectedIds);
-    navigate(`/app/compare?a=${a}&b=${b}`);
+    navigate(`/app/scenarios/${scenario.id}`);
   };
 
   const handleDuplicate = async (scenario: ScenarioData) => {
@@ -209,12 +166,6 @@ export default function ScenariosIndex() {
     setIsDeleting(true);
     try {
       await deleteScenario(scenarioToDelete.id);
-      // Remove from selection if selected
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        next.delete(scenarioToDelete.id);
-        return next;
-      });
       toast.success("Scenario deleted");
     } catch (error) {
       toast.error("Failed to delete scenario");
@@ -274,55 +225,17 @@ export default function ScenariosIndex() {
             Scenarios
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {isSelectionMode 
-              ? `${selectedIds.size} of 2 selected for comparison`
-              : "Saved mortgage models for comparison and export."}
+            Saved mortgage models for comparison and export.
           </p>
         </div>
-        {/* Desktop action buttons */}
+        {/* Desktop action button */}
         {!isMobile && (
-          <div className="flex items-center gap-2">
-            {isSelectionMode ? (
-              <>
-                <Button variant="ghost" size="sm" onClick={clearSelection}>
-                  <X className="mr-1.5 h-4 w-4" />
-                  Cancel
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleCompare}
-                  disabled={selectedIds.size !== 2}
-                >
-                  <GitCompare className="mr-1.5 h-4 w-4" />
-                  Compare
-                </Button>
-              </>
-            ) : (
-              <>
-                {sortedScenarios.length >= 2 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => {
-                      // Select first two scenarios to enter selection mode
-                      const [first, second] = sortedScenarios;
-                      setSelectedIds(new Set([first.id, second.id]));
-                    }}
-                  >
-                    <GitCompare className="mr-1.5 h-4 w-4" />
-                    Compare
-                  </Button>
-                )}
-                <Button asChild variant="outline" className="rounded-md">
-                  <Link to="/app/calculator">
-                    <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                    New scenario
-                  </Link>
-                </Button>
-              </>
-            )}
-          </div>
+          <Button asChild variant="outline" className="rounded-md">
+            <Link to="/app/calculator">
+              <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
+              New scenario
+            </Link>
+          </Button>
         )}
       </div>
 
@@ -330,30 +243,13 @@ export default function ScenariosIndex() {
       {isMobile ? (
         <div className="space-y-3 pb-20">
           {sortedScenarios.map((scenario) => (
-            <div key={scenario.id} className="relative">
-              {isSelectionMode && (
-                <div 
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSelection(scenario.id);
-                  }}
-                >
-                  <Checkbox 
-                    checked={selectedIds.has(scenario.id)}
-                    className="h-5 w-5"
-                  />
-                </div>
-              )}
-              <div className={isSelectionMode ? "pl-12" : ""}>
-                <ScenarioCard
-                  scenario={scenario}
-                  onOpen={handleOpen}
-                  onDuplicate={handleDuplicate}
-                  onDelete={handleDeleteClick}
-                />
-              </div>
-            </div>
+            <ScenarioCard
+              key={scenario.id}
+              scenario={scenario}
+              onOpen={handleOpen}
+              onDuplicate={handleDuplicate}
+              onDelete={handleDeleteClick}
+            />
           ))}
         </div>
       ) : (
@@ -362,9 +258,6 @@ export default function ScenariosIndex() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40 hover:bg-muted/40">
-                {isSelectionMode && (
-                  <TableHead className="w-[50px] h-10"></TableHead>
-                )}
                 <TableHead className="w-[35%] h-10 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Name
                 </TableHead>
@@ -387,22 +280,11 @@ export default function ScenariosIndex() {
               {sortedScenarios.map((scenario) => (
                 <TableRow
                   key={scenario.id}
-                  className={`cursor-pointer h-14 border-b border-border/50 last:border-b-0 hover:bg-muted/30 ${
-                    selectedIds.has(scenario.id) ? "bg-muted/50" : ""
-                  }`}
+                  className="cursor-pointer h-14 border-b border-border/50 last:border-b-0 hover:bg-muted/30"
                   onClick={() => handleRowClick(scenario)}
                   onMouseEnter={() => setHoveredRowId(scenario.id)}
                   onMouseLeave={() => setHoveredRowId(null)}
                 >
-                  {isSelectionMode && (
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Checkbox 
-                        checked={selectedIds.has(scenario.id)}
-                        onCheckedChange={() => toggleSelection(scenario.id)}
-                        className="h-4 w-4"
-                      />
-                    </TableCell>
-                  )}
                   <TableCell className="font-medium text-foreground">
                     {scenario.name || "Untitled scenario"}
                   </TableCell>
@@ -461,51 +343,17 @@ export default function ScenariosIndex() {
         </div>
       )}
 
-      {/* Mobile: Floating action buttons */}
+      {/* Mobile: Floating action button */}
       {isMobile && (
-        isSelectionMode ? (
-          <div className="fixed bottom-6 left-4 right-4 z-50 flex gap-3">
-            <Button 
-              variant="outline"
-              className="flex-1 rounded-full bg-background shadow-lg"
-              onClick={clearSelection}
-            >
-              <X className="mr-2 h-4 w-4" />
-              Cancel
-            </Button>
-            <Button 
-              className="flex-1 rounded-full shadow-lg"
-              onClick={handleCompare}
-              disabled={selectedIds.size !== 2}
-            >
-              <GitCompare className="mr-2 h-4 w-4" />
-              Compare
-            </Button>
-          </div>
-        ) : (
-          <div className="fixed bottom-6 right-4 z-50 flex flex-col gap-3">
-            {sortedScenarios.length >= 2 && (
-              <Button
-                variant="outline"
-                className="rounded-full bg-background px-5 py-3 shadow-lg"
-                onClick={() => {
-                  const [first, second] = sortedScenarios;
-                  setSelectedIds(new Set([first.id, second.id]));
-                }}
-              >
-                <GitCompare className="mr-2 h-4 w-4" />
-                Compare
-              </Button>
-            )}
-            <Link
-              to="/app/calculator"
-              className="flex items-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background shadow-lg transition-transform active:scale-95"
-            >
-              <Plus className="h-4 w-4" strokeWidth={2} />
-              New scenario
-            </Link>
-          </div>
-        )
+        <div className="fixed bottom-6 right-4 z-50">
+          <Link
+            to="/app/calculator"
+            className="flex items-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background shadow-lg transition-transform active:scale-95"
+          >
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            New scenario
+          </Link>
+        </div>
       )}
 
       {/* Delete confirmation dialog */}
