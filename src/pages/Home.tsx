@@ -98,19 +98,19 @@ function Section({
 export default function Home() {
   return (
     <div className="w-full">
-      {/* Hero Section - Neutral tinted background */}
-      <section className="w-full bg-[hsl(40_20%_97%)]">
-        <div className="mx-auto max-w-[1280px] px-6 py-24 lg:px-12 lg:py-32 xl:px-16 xl:py-40">
+      {/* Hero Section - 75-80vh on desktop, professional report opening */}
+      <section className="flex w-full min-h-[70vh] lg:min-h-[78vh] bg-[hsl(40_20%_97%)]">
+        <div className="mx-auto flex w-full max-w-[1280px] flex-col justify-center px-6 py-16 lg:px-12 lg:py-20 xl:px-16">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="font-serif text-4xl font-medium tracking-[-0.02em] leading-[1.1] text-foreground sm:text-5xl lg:text-6xl">
               Mortgage decisions,
               <br />
               modeled precisely.
             </h1>
-            <p className="mx-auto mt-8 max-w-xl text-lg leading-relaxed text-foreground/70 sm:text-xl">
+            <p className="mx-auto mt-10 max-w-xl text-lg leading-relaxed text-foreground/70 sm:mt-12 sm:text-xl">
               A neutral framework for understanding mortgage outcomes.
             </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
+            <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:mt-14 sm:flex-row sm:gap-6">
               <Button asChild size="lg" className="min-w-44 h-12 text-base">
                 <Link to="/auth">Start free</Link>
               </Button>
@@ -124,7 +124,7 @@ export default function Home() {
           </div>
 
           {/* Analytical Surface - Canonical Hero Visual */}
-          <div className="mx-auto mt-16 w-full max-w-4xl lg:mt-20">
+          <div className="mx-auto mt-16 w-full max-w-4xl sm:mt-20 lg:mt-24">
             <AnalyticalSurface variant="consumer" />
           </div>
         </div>
