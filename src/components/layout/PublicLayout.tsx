@@ -1,57 +1,55 @@
-import { ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { ReactNode, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
+import { Menu } from "lucide-react";
+import { PublicNavDrawer } from "./PublicNavDrawer";
 
 interface PublicLayoutProps {
   children: ReactNode;
 }
 
-const navigation = [
-  { name: "Pricing", href: "/pricing" },
-  { name: "Contact", href: "/contact" },
-];
-
 export function PublicLayout({ children }: PublicLayoutProps) {
-  const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleCloseMenu = useCallback(() => {
+    setIsMenuOpen(false);
+  }, []);
 
   return (
     <div className="relative min-h-screen w-full max-w-full overflow-x-hidden bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <header className="sticky top-0 z-40 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
-          {/* Logo */}
+          {/* Hamburger */}
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Open menu"
+            aria-expanded={isMenuOpen}
+            aria-controls="nav-drawer"
+          >
+            <Menu className="h-5 w-5" strokeWidth={1.5} />
+          </button>
+
+          {/* Logo (centered) */}
           <Link
             to="/"
-            className="flex shrink-0 items-center transition-opacity hover:opacity-70"
+            className="absolute left-1/2 -translate-x-1/2 font-serif text-lg tracking-tight transition-opacity hover:opacity-70"
           >
-            <span className="font-serif text-lg tracking-tight">SettleRate</span>
+            SettleRate
           </Link>
 
-          {/* Navigation */}
-          <nav className="flex items-center gap-8">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={cn(
-                  "text-sm transition-colors",
-                  location.pathname === item.href
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {item.name}
-              </Link>
-            ))}
-            <Link
-              to="/auth"
-              className="text-sm font-medium text-foreground transition-colors hover:text-foreground/80"
-            >
-              Sign in
-            </Link>
-          </nav>
+          {/* Sign in */}
+          <Link
+            to="/auth"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Sign in
+          </Link>
         </div>
       </header>
+
+      {/* Navigation Drawer */}
+      <PublicNavDrawer isOpen={isMenuOpen} onClose={handleCloseMenu} />
 
       {/* Main content */}
       <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
