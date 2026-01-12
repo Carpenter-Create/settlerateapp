@@ -84,7 +84,7 @@ export default function Contact() {
           Message received
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-          Thank you for reaching out. We will respond within 1–2 business days.
+          Thank you. Your message has been received.
         </p>
         <Link
           to="/"
