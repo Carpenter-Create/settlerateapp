@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { HeroStandard } from "@/components/layout/HeroStandard";
 
 /**
  * Contact Page - Institutional, Factual
@@ -84,118 +85,133 @@ export default function Contact() {
 
   if (isSubmitted) {
     return (
-      <div className="mx-auto max-w-md py-16 text-center">
-        <h1 className="font-serif text-2xl font-normal tracking-tight">
-          Message received
-        </h1>
-        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-          Your inquiry has been submitted.
-        </p>
-        <Link
-          to="/"
-          className="mt-8 inline-block text-sm text-muted-foreground transition-colors hover:text-foreground"
+      <div className="w-full">
+        <HeroStandard
+          headline="Message received"
+          subtitle="Your inquiry has been submitted. We'll respond within 1-2 business days."
+        />
+
+        <section
+          className="w-full bg-surface-secondary"
+          style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
         >
-          Return home
-        </Link>
+          <div className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16">
+            <div className="mx-auto max-w-md text-center">
+              <Link
+                to="/"
+                className="text-sm text-foreground/60 transition-colors hover:text-foreground"
+              >
+                Return home
+              </Link>
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-10">
-      <div className="text-center">
-        <h1 className="font-serif text-2xl font-normal tracking-tight">
-          Contact
-        </h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Questions, feedback, or partnership inquiries.
-        </p>
-      </div>
+    <div className="w-full">
+      <HeroStandard
+        headline="Contact"
+        subtitle="Questions, feedback, or partnership inquiries."
+      />
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Honeypot */}
-        <input
-          type="text"
-          name="website"
-          value={honeypot}
-          onChange={(e) => setHoneypot(e.target.value)}
-          className="absolute -left-[9999px] opacity-0"
-          tabIndex={-1}
-          autoComplete="off"
-          aria-hidden="true"
-        />
+      <section
+        className="w-full bg-surface-secondary"
+        style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
+      >
+        <div className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16">
+          <div className="mx-auto max-w-md">
+            <div className="rounded-2xl border border-foreground/10 bg-surface-primary p-8">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Honeypot */}
+                <input
+                  type="text"
+                  name="website"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  className="absolute -left-[9999px] opacity-0"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                />
 
-        <div className="space-y-2">
-          <Label htmlFor="fullName" className="text-sm font-normal">
-            Name
-          </Label>
-          <Input
-            id="fullName"
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            disabled={isSubmitting}
-            autoComplete="name"
-          />
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-sm font-normal">
+                    Name
+                  </Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    disabled={isSubmitting}
+                    autoComplete="name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-normal">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isSubmitting}
+                    autoComplete="email"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="topic" className="text-sm font-normal">
+                    Topic
+                  </Label>
+                  <Select value={topic} onValueChange={setTopic} disabled={isSubmitting}>
+                    <SelectTrigger id="topic">
+                      <SelectValue placeholder="Select a topic" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {topics.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="message" className="text-sm font-normal">
+                    Message
+                  </Label>
+                  <Textarea
+                    id="message"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    disabled={isSubmitting}
+                    rows={5}
+                    className="resize-none"
+                  />
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting…
+                    </>
+                  ) : (
+                    "Submit"
+                  )}
+                </Button>
+              </form>
+            </div>
+          </div>
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-normal">
-            Email
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isSubmitting}
-            autoComplete="email"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="topic" className="text-sm font-normal">
-            Topic
-          </Label>
-          <Select value={topic} onValueChange={setTopic} disabled={isSubmitting}>
-            <SelectTrigger id="topic">
-              <SelectValue placeholder="Select a topic" />
-            </SelectTrigger>
-            <SelectContent>
-              {topics.map((t) => (
-                <SelectItem key={t.value} value={t.value}>
-                  {t.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="message" className="text-sm font-normal">
-            Message
-          </Label>
-          <Textarea
-            id="message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            disabled={isSubmitting}
-            rows={5}
-            className="resize-none"
-          />
-        </div>
-
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Submitting…
-            </>
-          ) : (
-            "Submit"
-          )}
-        </Button>
-      </form>
+      </section>
     </div>
   );
 }
