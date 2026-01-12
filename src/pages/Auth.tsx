@@ -159,8 +159,8 @@ export default function Auth() {
     }
     if (!password) {
       newErrors.password = "This field is required.";
-    } else if (password.length < 12) {
-      newErrors.password = "Password does not meet requirements.";
+    } else if (password.length < 9) {
+      newErrors.password = "Password must be at least 9 characters.";
     }
     if (!agreedToTerms) {
       newErrors.terms = "Agreement required to continue.";
@@ -358,7 +358,7 @@ export default function Auth() {
               type="password"
               value={password}
               onChange={(e) => handlePasswordChange(e.target.value)}
-              placeholder={mode === "create" ? "At least 12 characters" : ""}
+              placeholder={mode === "create" ? "At least 9 characters" : ""}
               disabled={isSubmitting}
               autoComplete={mode === "create" ? "new-password" : "current-password"}
               aria-invalid={!!errors.password}
@@ -366,14 +366,6 @@ export default function Auth() {
             {errors.password && (
               <p className="auth-error-inline">{errors.password}</p>
             )}
-            {/* Password helper — always renders to preserve height, visibility toggles */}
-            <p 
-              className="text-xs text-muted-foreground"
-              style={{ visibility: mode === "create" && !errors.password ? "visible" : "hidden" }}
-              aria-hidden={mode !== "create" || !!errors.password}
-            >
-              At least 12 characters
-            </p>
           </div>
 
           {/* Legal checkbox — always in DOM to preserve layout, visibility toggles */}
