@@ -186,7 +186,7 @@ export default function Scenarios() {
       await updateScenario(id, { name });
       toast("Scenario renamed.", { duration: 2000 });
     } catch (error) {
-      toast.error("Failed to rename scenario");
+      toast("Rename unsuccessful. Try again.");
     }
   };
 
@@ -197,19 +197,19 @@ export default function Scenarios() {
         navigate(`/?scenario=${newScenario.id}`);
         toast("Scenario duplicated.", { duration: 2000 });
       } else {
-        toast.error("Could not duplicate scenario");
+        toast("Duplicate unsuccessful. Try again.");
       }
     } catch (error) {
-      toast.error("Could not duplicate scenario");
+      toast("Duplicate unsuccessful. Try again.");
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await deleteScenario(id);
-      toast("Scenario deleted.", { duration: 2000 });
+      toast("Scenario removed.", { duration: 2000 });
     } catch (error) {
-      toast.error("Failed to delete scenario");
+      toast("Delete unsuccessful. Try again.");
     }
   };
 

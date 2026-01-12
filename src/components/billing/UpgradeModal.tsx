@@ -14,17 +14,22 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 
+/**
+ * Upgrade Modal - Institutional, Administrative
+ * No emotional or consumer language.
+ */
+
 interface UpgradeModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 const features = [
-  "Unlimited mortgage scenarios",
-  "Cloud sync across devices",
-  "Lender-ready PDF exports",
+  "Unlimited scenario modeling",
+  "Saved scenarios and revisions",
+  "Exportable PDF summaries",
   "Side-by-side comparisons",
-  "Priority support",
+  "Advisor-ready outputs",
 ];
 
 export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
@@ -38,15 +43,14 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
   const annualPrice = 79;
   const displayPrice = isAnnual ? annualPrice : monthlyPrice;
   const period = isAnnual ? "year" : "month";
-  const savings = isAnnual ? Math.round((1 - annualPrice / (monthlyPrice * 12)) * 100) : 0;
 
   const handleSubscribe = async () => {
     // Block anonymous users - require sign-in first
     if (!user || isAnonymous) {
       onOpenChange(false);
       navigate("/auth", { state: { from: { pathname: "/app/calculator" } } });
-      toast.info("Sign in to subscribe", {
-        description: "Create an account to access Pro features.",
+      toast("Sign-in required.", {
+        description: "Create an account to access Professional features.",
       });
       return;
     }
@@ -71,7 +75,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to create subscription");
+        throw new Error(error.error || "Subscription request failed");
       }
 
       const { url } = await response.json();
@@ -79,7 +83,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
       // Redirect to Stripe Checkout
       window.location.href = url;
     } catch (error: any) {
-      toast.error("Failed to start subscription", { description: error.message });
+      toast("Payment unsuccessful.", { description: "Use a different payment method or try again." });
       setIsLoading(false);
     }
   };
@@ -88,7 +92,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center">Upgrade to Pro</DialogTitle>
+          <DialogTitle className="text-center">Professional Access</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
@@ -96,7 +100,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
           {isAnonymous && (
             <div className="rounded-md border border-border bg-muted/50 p-4 text-center">
               <p className="text-sm text-muted-foreground">
-                Sign in to subscribe and keep your scenarios.
+                Sign in to subscribe and retain scenarios.
               </p>
             </div>
           )}
@@ -119,9 +123,6 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
               className={isAnnual ? "font-medium" : "text-muted-foreground"}
             >
               Annual
-              {savings > 0 && (
-                <span className="ml-1 text-xs text-primary">Save {savings}%</span>
-              )}
             </Label>
           </div>
 
@@ -142,7 +143,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
           <ul className="space-y-3">
             {features.map((feature) => (
               <li key={feature} className="flex items-center gap-3 text-sm">
-                <Check className="h-4 w-4 shrink-0 text-primary" />
+                <Check className="h-4 w-4 shrink-0 text-foreground/40" />
                 {feature}
               </li>
             ))}
@@ -158,17 +159,17 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Setting up...
+                Processing…
               </>
             ) : isAnonymous ? (
               "Sign in to subscribe"
             ) : (
-              "Subscribe"
+              "Upgrade to Professional Access"
             )}
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
-            Cancel anytime. Secure payment via Stripe.
+            Secure payment via Stripe.
           </p>
         </div>
       </DialogContent>
