@@ -108,7 +108,7 @@ export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
             className="flex h-11 w-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Close menu"
           >
-            <X className="h-6 w-6" strokeWidth={2} />
+            <X className="h-5 w-5" strokeWidth={1.75} />
           </button>
         </div>
 
@@ -131,14 +131,14 @@ export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
                 key={item.name}
                 to={item.href}
                 className={cn(
-                  "flex h-14 items-center justify-between px-6 text-base transition-colors",
+                  "flex h-14 items-center justify-between px-6 text-[15px] transition-colors",
                   location.pathname === item.href
                     ? "font-medium text-foreground"
                     : "text-foreground/90 hover:bg-muted/60 hover:text-foreground"
                 )}
               >
                 <span>{item.name}</span>
-                <ChevronRight className="h-5 w-5 text-foreground/40" strokeWidth={2} />
+                <ChevronRight className="h-4 w-4 text-foreground/40" strokeWidth={1.75} />
               </Link>
             ))}
           </nav>
