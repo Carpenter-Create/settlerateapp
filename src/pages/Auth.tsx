@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 /**
- * Auth Page - Institutional, Factual
- * No emotional or consumer language.
+ * Auth Page - Root route for unauthenticated users
+ * Redirects authenticated users to /app/calculator
  */
 
 export default function Auth() {
@@ -120,12 +120,9 @@ export default function Auth() {
       <div className="w-full max-w-sm space-y-space-6">
         {/* Header */}
         <div className="text-center">
-          <Link
-            to="/"
-            className="inline-block font-serif text-lg tracking-tight transition-opacity hover:opacity-70"
-          >
+          <span className="inline-block font-serif text-lg tracking-tight">
             SettleRate
-          </Link>
+          </span>
           <h1 className="mt-space-6 font-serif text-2xl font-normal tracking-tight">
             Sign in
           </h1>
@@ -244,23 +241,9 @@ export default function Auth() {
           )}
         </div>
 
-        {/* Legal */}
-        <p className="text-center text-xs leading-relaxed text-muted-foreground">
-          By continuing, you agree to our{" "}
-          <Link
-            to="/terms"
-            className="text-foreground underline underline-offset-2"
-          >
-            Terms
-          </Link>{" "}
-          and{" "}
-          <Link
-            to="/privacy"
-            className="text-foreground underline underline-offset-2"
-          >
-            Privacy Policy
-          </Link>
-          .
+        {/* Minimal footer */}
+        <p className="text-center text-xs text-muted-foreground/70">
+          © {new Date().getFullYear()} SettleRate
         </p>
       </div>
     </div>
