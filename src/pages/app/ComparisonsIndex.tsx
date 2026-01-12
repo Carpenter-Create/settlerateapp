@@ -11,9 +11,9 @@
  * - Never blank, always recoverable
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { GitCompare, Lock, Trash2, Eye, MoreHorizontal, AlertTriangle } from "lucide-react";
+import { GitCompare, Lock, Trash2, Eye, MoreHorizontal, AlertTriangle, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -592,16 +592,16 @@ export default function ComparisonsIndex() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40 hover:bg-muted/40">
-                  <TableHead className="h-10 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <TableHead className="h-12 py-4 px-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Comparison
                   </TableHead>
-                  <TableHead className="h-10 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <TableHead className="h-12 py-4 px-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Scenarios
                   </TableHead>
-                  <TableHead className="h-10 text-right text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <TableHead className="h-12 py-4 px-4 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Created
                   </TableHead>
-                  <TableHead className="w-[50px] h-10"></TableHead>
+                  <TableHead className="w-[60px] h-12 py-4 px-4"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -613,13 +613,13 @@ export default function ComparisonsIndex() {
                   return (
                     <TableRow
                       key={comparison.id}
-                      className="cursor-pointer h-14 border-b border-border/50 last:border-b-0 hover:bg-muted/30"
+                      className="cursor-pointer h-14 border-b border-border/60 last:border-b-0 hover:bg-muted/30"
                       onClick={() => navigate(`/app/comparisons/${comparison.id}`)}
                       onMouseEnter={() => setHoveredRowId(comparison.id)}
                       onMouseLeave={() => setHoveredRowId(null)}
                     >
                       <TableCell 
-                        className="font-medium text-foreground"
+                        className="py-4 px-4 text-sm font-medium text-foreground"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <InlineEditableName
@@ -627,22 +627,22 @@ export default function ComparisonsIndex() {
                           onSave={(newName) => handleRename(comparison.id, newName)}
                         />
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="py-4 px-4 text-sm text-muted-foreground">
                         {hasInvalidScenarios ? (
                           <span className="flex items-center gap-1.5 text-muted-foreground/70">
                             <AlertTriangle className="h-3.5 w-3.5" />
                             Scenarios unavailable
                           </span>
                         ) : (
-                          <span className="truncate">
+                          <span className="truncate block max-w-[200px]">
                             {scenarioA?.name || "Unknown"} vs {scenarioB?.name || "Unknown"}
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right text-muted-foreground">
+                      <TableCell className="py-4 px-4 text-sm text-right text-muted-foreground tabular-nums">
                         {formatRelativeTime(new Date(comparison.created_at))}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-4 px-4">
                         <div 
                           className="transition-opacity duration-150"
                           style={{ opacity: hoveredRowId === comparison.id ? 1 : 0 }}
@@ -658,6 +658,17 @@ export default function ComparisonsIndex() {
                               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/app/comparisons/${comparison.id}`); }}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  // Focus the inline edit by clicking the name cell
+                                  const nameCell = e.currentTarget.closest('tr')?.querySelector('[data-inline-edit]') as HTMLElement;
+                                  nameCell?.click();
+                                }}
+                              >
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Rename
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem

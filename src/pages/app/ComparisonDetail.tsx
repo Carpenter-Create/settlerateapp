@@ -227,12 +227,21 @@ interface ComparisonRowProps {
   valueB: string | null;
 }
 
+/**
+ * ComparisonRow - Institutional-grade table row
+ * 
+ * Styling rules:
+ * - Labels: text-sm, muted, normal weight
+ * - Values: text-sm, font-medium (NOT bold), tabular-nums for alignment
+ * - Generous cell padding: py-4 px-4 desktop
+ * - Subtle row separator
+ */
 function ComparisonRow({ label, valueA, valueB }: ComparisonRowProps) {
   return (
-    <div className="grid grid-cols-3 border-b border-border/50 last:border-b-0">
-      <div className="py-3 text-sm text-muted-foreground">{label}</div>
-      <div className="py-3 text-right font-medium tabular-nums">{valueA ?? "—"}</div>
-      <div className="py-3 text-right font-medium tabular-nums">{valueB ?? "—"}</div>
+    <div className="grid grid-cols-3 gap-x-6 border-b border-border/60 last:border-b-0">
+      <div className="py-4 px-4 text-sm text-muted-foreground font-normal">{label}</div>
+      <div className="py-4 px-4 text-sm text-right font-medium tabular-nums">{valueA ?? "—"}</div>
+      <div className="py-4 px-4 text-sm text-right font-medium tabular-nums">{valueB ?? "—"}</div>
     </div>
   );
 }
@@ -240,12 +249,21 @@ function ComparisonRow({ label, valueA, valueB }: ComparisonRowProps) {
 interface ComparisonSectionProps {
   title: string;
   children: React.ReactNode;
+  isFirst?: boolean;
 }
 
-function ComparisonSection({ title, children }: ComparisonSectionProps) {
+/**
+ * ComparisonSection - Institutional ledger section
+ * 
+ * Styling rules:
+ * - Section headers: text-xs, uppercase, tracking-wider, muted
+ * - Spacing: mt-8 mb-3 (first section uses mt-4)
+ * - Container: subtle border, no elevation
+ */
+function ComparisonSection({ title, children, isFirst = false }: ComparisonSectionProps) {
   return (
-    <div className="mt-8 first:mt-0">
-      <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <div className={isFirst ? "mt-4" : "mt-8"}>
+      <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         {title}
       </h3>
       <div className="border border-border rounded-sm overflow-hidden bg-card">
@@ -615,23 +633,23 @@ export default function ComparisonDetail() {
         />
       </div>
 
-      {/* Scenario headers */}
-      <div className="grid grid-cols-3 border-b border-border pb-3">
-        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      {/* Scenario headers - institutional ledger style */}
+      <div className="grid grid-cols-3 gap-x-6 border-b border-border pb-4 px-4">
+        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Metric
         </div>
         <div className="text-right">
-          <div className="font-medium">{validScenarioA.name || "Untitled"}</div>
+          <div className="text-sm font-medium">{validScenarioA.name || "Untitled"}</div>
           <div className="text-xs text-muted-foreground">Scenario A</div>
         </div>
         <div className="text-right">
-          <div className="font-medium">{validScenarioB.name || "Untitled"}</div>
+          <div className="text-sm font-medium">{validScenarioB.name || "Untitled"}</div>
           <div className="text-xs text-muted-foreground">Scenario B</div>
         </div>
       </div>
 
       {/* Section 1: Scenario Overview */}
-      <ComparisonSection title="Scenario overview">
+      <ComparisonSection title="Scenario overview" isFirst>
         <ComparisonRow 
           label="Loan type" 
           valueA={TRANSACTION_TYPE_LABELS[validScenarioA.inputs.mode]}
