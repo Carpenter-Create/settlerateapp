@@ -1,19 +1,24 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Calendar, ExternalLink, User, CheckCircle } from "lucide-react";
+import { CreditCard, Calendar, ExternalLink, User, Shield } from "lucide-react";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+type BillingErrorCode = "NO_STRIPE_CUSTOMER" | "ADMIN_USER" | null;
+
 export default function Account() {
   const { user } = useAuth();
   const { isPro, subscriptionEnd, refresh, isLoading } = useSubscription();
+  const { isAdmin, isLoading: capabilitiesLoading } = useCapabilities();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [billingError, setBillingError] = useState<BillingErrorCode>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Handle subscription success redirect
@@ -23,7 +28,6 @@ export default function Account() {
         description: "Professional Access is now enabled.",
       });
       refresh();
-      // Clear the query param
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, refresh, setSearchParams]);
@@ -38,7 +42,9 @@ export default function Account() {
   };
 
   const handleManageBilling = async () => {
+    setBillingError(null);
     setPortalLoading(true);
+    
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
@@ -56,18 +62,38 @@ export default function Account() {
         }
       );
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to open billing portal");
+      const data = await response.json();
+
+      // Handle typed error codes
+      if (data.code === "NO_STRIPE_CUSTOMER") {
+        setBillingError("NO_STRIPE_CUSTOMER");
+        setPortalLoading(false);
+        return;
       }
 
-      const { url } = await response.json();
-      window.location.href = url;
+      if (data.code === "ADMIN_USER") {
+        setBillingError("ADMIN_USER");
+        setPortalLoading(false);
+        return;
+      }
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error || "Failed to open billing portal");
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
     } catch (error: any) {
+      console.error("Billing portal error:", error);
       toast("Unable to open billing portal.", { description: "Please try again." });
       setPortalLoading(false);
     }
   };
+
+  // Determine display state
+  const showAdminBadge = isAdmin && !capabilitiesLoading;
+  const effectivelyPro = isPro || isAdmin;
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -79,26 +105,36 @@ export default function Account() {
       </div>
 
       {/* Plan status */}
-      <div className="card-elevated p-6">
+      <div className="border border-border rounded-sm p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-              <CreditCard className="h-5 w-5 text-muted-foreground" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-muted">
+              {showAdminBadge ? (
+                <Shield className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <CreditCard className="h-5 w-5 text-muted-foreground" />
+              )}
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-medium">Current Plan</h3>
-                <Badge variant={isPro ? "default" : "secondary"}>
-                  {isPro ? "Professional" : "Analytical"}
-                </Badge>
+                {showAdminBadge ? (
+                  <Badge variant="outline">Administrator</Badge>
+                ) : (
+                  <Badge variant={isPro ? "default" : "secondary"}>
+                    {isPro ? "Professional" : "Analytical"}
+                  </Badge>
+                )}
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                {isPro
+                {showAdminBadge
+                  ? "Full platform access. Billing not required for administrator accounts."
+                  : isPro
                   ? "Full access including exports, saved scenarios, and income-context views."
                   : "Core mortgage modeling. Upgrade for extended features."}
               </p>
 
-              {isPro && subscriptionEnd && (
+              {!showAdminBadge && isPro && subscriptionEnd && (
                 <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   Renews on {formatDate(subscriptionEnd)}
@@ -108,53 +144,77 @@ export default function Account() {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          {isPro ? (
-            <Button 
-              variant="outline" 
-              onClick={handleManageBilling}
-              disabled={portalLoading}
-            >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              {portalLoading ? "Opening…" : "Manage billing"}
-            </Button>
-          ) : (
-            <Button onClick={() => setShowUpgradeModal(true)}>
-              Upgrade to Professional Access
-            </Button>
-          )}
-        </div>
+        {/* Billing actions - only for non-admin users */}
+        {!showAdminBadge && (
+          <div className="mt-6 space-y-3">
+            {/* Inline error messages */}
+            {billingError === "NO_STRIPE_CUSTOMER" && (
+              <div className="rounded-sm border border-border bg-muted/30 p-3 text-sm">
+                <p className="text-muted-foreground">
+                  No billing profile found.{" "}
+                  <button
+                    onClick={() => setShowUpgradeModal(true)}
+                    className="font-medium text-foreground underline underline-offset-2 hover:no-underline"
+                  >
+                    Subscribe to manage access.
+                  </button>
+                </p>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-3">
+              {isPro ? (
+                <Button 
+                  variant="outline" 
+                  className="rounded-sm"
+                  onClick={handleManageBilling}
+                  disabled={portalLoading}
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  {portalLoading ? "Opening…" : "Manage billing"}
+                </Button>
+              ) : (
+                <Button 
+                  className="rounded-sm"
+                  onClick={() => setShowUpgradeModal(true)}
+                >
+                  Upgrade to Professional Access
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Pro feature preview */}
-      {!isPro && (
-        <div className="card-elevated border-dashed p-6">
+      {/* Pro feature preview - only for non-pro, non-admin users */}
+      {!effectivelyPro && (
+        <div className="border border-dashed border-border rounded-sm p-6">
           <h3 className="font-medium">Professional Access includes</h3>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
               Unlimited scenario modeling
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
               Saved scenarios and revisions
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
               Exportable PDF summaries
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
               Advisor- and lender-ready outputs
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
               Income-context framing
             </li>
           </ul>
           <Button
             variant="outline"
-            className="mt-6"
+            className="mt-6 rounded-sm"
             onClick={() => setShowUpgradeModal(true)}
           >
             View upgrade options
@@ -163,9 +223,9 @@ export default function Account() {
       )}
 
       {/* Your data */}
-      <div className="card-elevated p-6">
+      <div className="border border-border rounded-sm p-6">
         <div className="flex items-start gap-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-muted">
             <User className="h-5 w-5 text-muted-foreground" />
           </div>
           <div>
