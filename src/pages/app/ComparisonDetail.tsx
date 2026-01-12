@@ -23,6 +23,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
 import { ComparisonExportButton } from "@/components/export/ExportButtons";
+import { ComparisonSummary } from "@/components/comparisons/ComparisonSummary";
 import { toast } from "sonner";
 
 // ============================================================================
@@ -587,7 +588,8 @@ export default function ComparisonDetail() {
           />
         </div>
 
-        {/* Mobile stacked layout */}
+        {/* Quantified Decision Summary */}
+        <ComparisonSummary scenarioA={validScenarioA} scenarioB={validScenarioB} />
         <div className="space-y-6">
           <MobileScenarioBlock scenario={validScenarioA} label="A" />
           <MobileScenarioBlock scenario={validScenarioB} label="B" />
@@ -634,6 +636,9 @@ export default function ComparisonDetail() {
           variant="outline"
         />
       </div>
+
+      {/* Quantified Decision Summary */}
+      <ComparisonSummary scenarioA={validScenarioA} scenarioB={validScenarioB} />
 
       {/* Scenario headers - institutional ledger style */}
       <div className="grid grid-cols-3 gap-x-6 border-b border-border pb-4 px-4">
