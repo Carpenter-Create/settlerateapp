@@ -4,11 +4,16 @@
  * Institutional, analytical comparison of two saved mortgage scenarios.
  * Designed for advisor and lender review - no recommendations or color-coding.
  * Loads from saved comparison record by ID.
+ * 
+ * HARDENED FOR PRODUCTION:
+ * - Explicit loading states (never blank)
+ * - Graceful error handling (API failures, missing data)
+ * - Clear recovery paths to /app/comparisons
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, GitCompare } from "lucide-react";
+import { ArrowLeft, GitCompare, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useScenarios } from "@/hooks/useScenarios";
@@ -99,6 +104,115 @@ function getPropertyValue(scenario: ScenarioData): number | null {
     return scenario.inputs.purchase?.purchasePrice || null;
   }
   return scenario.inputs.refinance?.estimatedHomeValue || null;
+}
+
+// ============================================================================
+// LOADING STATE COMPONENT
+// ============================================================================
+
+function LoadingState() {
+  const isMobile = useIsMobile();
+  
+  return (
+    <div className="space-y-6" role="status" aria-label="Loading comparison">
+      {/* Header skeleton */}
+      <div>
+        <Skeleton className="h-6 w-28 mb-4" />
+        <Skeleton className="h-8 w-64 mb-2" />
+        <Skeleton className="h-4 w-40" />
+      </div>
+      
+      {/* Content skeleton */}
+      {isMobile ? (
+        <div className="space-y-4">
+          <Skeleton className="h-80 w-full rounded-sm" />
+          <Skeleton className="h-80 w-full rounded-sm" />
+        </div>
+      ) : (
+        <>
+          <Skeleton className="h-16 w-full rounded-sm" />
+          <div className="space-y-4">
+            <Skeleton className="h-48 w-full rounded-sm" />
+            <Skeleton className="h-32 w-full rounded-sm" />
+            <Skeleton className="h-48 w-full rounded-sm" />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// ERROR STATE COMPONENTS
+// ============================================================================
+
+interface ErrorStateProps {
+  title: string;
+  message: string;
+  showRetry?: boolean;
+  onRetry?: () => void;
+  isRetrying?: boolean;
+}
+
+function ErrorState({ title, message, showRetry, onRetry, isRetrying }: ErrorStateProps) {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center text-center px-4">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
+        <AlertTriangle className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+      </div>
+      <h1 className="text-xl font-medium tracking-tight">
+        {title}
+      </h1>
+      <p className="mt-3 max-w-md text-sm text-muted-foreground">
+        {message}
+      </p>
+      <div className="mt-8 flex flex-col sm:flex-row gap-3">
+        {showRetry && onRetry && (
+          <Button 
+            variant="outline" 
+            onClick={onRetry}
+            disabled={isRetrying}
+          >
+            {isRetrying ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Retrying...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try again
+              </>
+            )}
+          </Button>
+        )}
+        <Button asChild variant={showRetry ? "ghost" : "outline"}>
+          <Link to="/app/comparisons">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to comparisons
+          </Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function ComparisonNotFoundState() {
+  return (
+    <ErrorState
+      title="Comparison not found"
+      message="This comparison may have been deleted or you don't have access to it."
+    />
+  );
+}
+
+function ScenariosUnavailableState() {
+  return (
+    <ErrorState
+      title="Comparison unavailable"
+      message="One or more scenarios in this comparison could not be loaded. The underlying scenarios may have been deleted."
+    />
+  );
 }
 
 // ============================================================================
@@ -257,6 +371,17 @@ function MobileScenarioBlock({ scenario, label }: MobileScenarioBlockProps) {
 }
 
 // ============================================================================
+// LOAD STATUS ENUM
+// ============================================================================
+
+type LoadStatus = 
+  | "loading"
+  | "success"
+  | "not_found"
+  | "scenarios_unavailable"
+  | "error";
+
+// ============================================================================
 // MAIN COMPARISON DETAIL VIEW
 // ============================================================================
 
@@ -268,84 +393,109 @@ export default function ComparisonDetail() {
   const { getComparison, isLoaded: comparisonsLoaded } = useComparisons();
   
   const [comparison, setComparison] = useState<SavedComparison | null>(null);
-  const [isLoadingComparison, setIsLoadingComparison] = useState(true);
+  const [loadStatus, setLoadStatus] = useState<LoadStatus>("loading");
+  const [isRetrying, setIsRetrying] = useState(false);
 
   // Load comparison by ID
-  useEffect(() => {
-    if (!id || !comparisonsLoaded) return;
+  const loadData = useCallback(async () => {
+    if (!id) {
+      setLoadStatus("not_found");
+      return;
+    }
+
+    setLoadStatus("loading");
     
-    const loadComparison = async () => {
-      setIsLoadingComparison(true);
+    try {
       const data = await getComparison(id);
+      
+      if (!data) {
+        setLoadStatus("not_found");
+        setComparison(null);
+        return;
+      }
+      
       setComparison(data);
-      setIsLoadingComparison(false);
-    };
+      setLoadStatus("success");
+    } catch (error) {
+      console.error("Failed to load comparison:", error);
+      setLoadStatus("error");
+    }
+  }, [id, getComparison]);
+
+  // Initial load when dependencies are ready
+  useEffect(() => {
+    if (!comparisonsLoaded) return;
+    loadData();
+  }, [comparisonsLoaded, loadData]);
+
+  // Retry handler
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    await loadData();
+    setIsRetrying(false);
+  };
+
+  // Find scenarios once comparison is loaded
+  const scenarioA = comparison && scenariosLoaded
+    ? scenarios.find((s) => s.id === comparison.scenario_a_id) ?? null
+    : null;
+  const scenarioB = comparison && scenariosLoaded
+    ? scenarios.find((s) => s.id === comparison.scenario_b_id) ?? null
+    : null;
+
+  // Check if scenarios are missing (deleted after comparison was created)
+  const scenariosMissing = comparison && scenariosLoaded && (!scenarioA || !scenarioB);
+
+  // Determine final render state
+  const renderStatus: LoadStatus = (() => {
+    // Still loading initial data
+    if (!comparisonsLoaded || !scenariosLoaded) return "loading";
+    if (loadStatus === "loading") return "loading";
     
-    loadComparison();
-  }, [id, comparisonsLoaded, getComparison]);
+    // Error states
+    if (loadStatus === "error") return "error";
+    if (loadStatus === "not_found" || !comparison) return "not_found";
+    if (scenariosMissing) return "scenarios_unavailable";
+    
+    return "success";
+  })();
 
-  // Find scenarios
-  const scenarioA = comparison ? scenarios.find((s) => s.id === comparison.scenario_a_id) : null;
-  const scenarioB = comparison ? scenarios.find((s) => s.id === comparison.scenario_b_id) : null;
+  // ============================================================================
+  // RENDER STATES
+  // ============================================================================
 
-  // Loading state
-  if (!scenariosLoaded || isLoadingComparison) {
+  // Loading
+  if (renderStatus === "loading") {
+    return <LoadingState />;
+  }
+
+  // API/Network error
+  if (renderStatus === "error") {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid gap-6 md:grid-cols-2">
-          <Skeleton className="h-96" />
-          <Skeleton className="h-96" />
-        </div>
-      </div>
+      <ErrorState
+        title="Unable to load comparison"
+        message="There was a problem connecting to the server. Please check your connection and try again."
+        showRetry
+        onRetry={handleRetry}
+        isRetrying={isRetrying}
+      />
     );
   }
 
   // Comparison not found
-  if (!comparison) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center px-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
-          <GitCompare className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
-        </div>
-        <h1 className="text-2xl font-medium tracking-tight">
-          Comparison not found
-        </h1>
-        <p className="mt-3 max-w-md text-sm text-muted-foreground">
-          This comparison may have been deleted or you don't have access to it.
-        </p>
-        <Button asChild className="mt-8" variant="outline">
-          <Link to="/app/comparisons">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Return to comparisons
-          </Link>
-        </Button>
-      </div>
-    );
+  if (renderStatus === "not_found") {
+    return <ComparisonNotFoundState />;
   }
 
-  // Scenarios not found (deleted after comparison was created)
-  if (!scenarioA || !scenarioB) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center px-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
-          <GitCompare className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
-        </div>
-        <h1 className="text-2xl font-medium tracking-tight">
-          Scenarios unavailable
-        </h1>
-        <p className="mt-3 max-w-md text-sm text-muted-foreground">
-          One or both scenarios in this comparison have been deleted.
-        </p>
-        <Button asChild className="mt-8" variant="outline">
-          <Link to="/app/comparisons">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Return to comparisons
-          </Link>
-        </Button>
-      </div>
-    );
+  // Scenarios unavailable
+  if (renderStatus === "scenarios_unavailable") {
+    return <ScenariosUnavailableState />;
   }
+
+  // Success - we have all data (TypeScript narrowing doesn't work here, so assert)
+  const validComparison = comparison!;
+  const validScenarioA = scenarioA!;
+  const validScenarioB = scenarioB!;
 
   // Mobile layout
   if (isMobile) {
@@ -363,18 +513,18 @@ export default function ComparisonDetail() {
             Comparisons
           </Button>
           <h1 className="text-2xl font-medium tracking-tight">
-            {comparison.name}
+            {validComparison.name}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Created {formatFullDate(new Date(comparison.created_at))}
+            Created {formatFullDate(new Date(validComparison.created_at))}
           </p>
         </div>
 
         {/* Export action */}
         <div className="flex justify-end">
           <ComparisonExportButton
-            scenarioA={scenarioA}
-            scenarioB={scenarioB}
+            scenarioA={validScenarioA}
+            scenarioB={validScenarioB}
             variant="outline"
             size="sm"
           />
@@ -382,18 +532,18 @@ export default function ComparisonDetail() {
 
         {/* Mobile stacked layout */}
         <div className="space-y-6">
-          <MobileScenarioBlock scenario={scenarioA} label="A" />
-          <MobileScenarioBlock scenario={scenarioB} label="B" />
+          <MobileScenarioBlock scenario={validScenarioA} label="A" />
+          <MobileScenarioBlock scenario={validScenarioB} label="B" />
         </div>
       </div>
     );
   }
 
   // Desktop layout
-  const monthlyPIA = getMonthlyPI(scenarioA);
-  const monthlyPIB = getMonthlyPI(scenarioB);
-  const propertyValueA = getPropertyValue(scenarioA);
-  const propertyValueB = getPropertyValue(scenarioB);
+  const monthlyPIA = getMonthlyPI(validScenarioA);
+  const monthlyPIB = getMonthlyPI(validScenarioB);
+  const propertyValueA = getPropertyValue(validScenarioA);
+  const propertyValueB = getPropertyValue(validScenarioB);
 
   return (
     <div className="space-y-6 pb-8">
@@ -410,16 +560,16 @@ export default function ComparisonDetail() {
             Comparisons
           </Button>
           <h1 className="text-2xl font-medium tracking-tight">
-            {comparison.name}
+            {validComparison.name}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Created {formatFullDate(new Date(comparison.created_at))}
+            Created {formatFullDate(new Date(validComparison.created_at))}
           </p>
         </div>
         
         <ComparisonExportButton
-          scenarioA={scenarioA}
-          scenarioB={scenarioB}
+          scenarioA={validScenarioA}
+          scenarioB={validScenarioB}
           variant="outline"
         />
       </div>
@@ -430,11 +580,11 @@ export default function ComparisonDetail() {
           Metric
         </div>
         <div className="text-right">
-          <div className="font-medium">{scenarioA.name || "Untitled"}</div>
+          <div className="font-medium">{validScenarioA.name || "Untitled"}</div>
           <div className="text-xs text-muted-foreground">Scenario A</div>
         </div>
         <div className="text-right">
-          <div className="font-medium">{scenarioB.name || "Untitled"}</div>
+          <div className="font-medium">{validScenarioB.name || "Untitled"}</div>
           <div className="text-xs text-muted-foreground">Scenario B</div>
         </div>
       </div>
@@ -443,28 +593,28 @@ export default function ComparisonDetail() {
       <ComparisonSection title="Scenario overview">
         <ComparisonRow 
           label="Loan type" 
-          valueA={TRANSACTION_TYPE_LABELS[scenarioA.inputs.mode]}
-          valueB={TRANSACTION_TYPE_LABELS[scenarioB.inputs.mode]}
+          valueA={TRANSACTION_TYPE_LABELS[validScenarioA.inputs.mode]}
+          valueB={TRANSACTION_TYPE_LABELS[validScenarioB.inputs.mode]}
         />
         <ComparisonRow 
           label="Loan amount" 
-          valueA={formatCurrency(scenarioA.results.loanAmount)}
-          valueB={formatCurrency(scenarioB.results.loanAmount)}
+          valueA={formatCurrency(validScenarioA.results.loanAmount)}
+          valueB={formatCurrency(validScenarioB.results.loanAmount)}
         />
         <ComparisonRow 
           label="Term" 
-          valueA={`${scenarioA.inputs.shared?.loanTerm || 30} years`}
-          valueB={`${scenarioB.inputs.shared?.loanTerm || 30} years`}
+          valueA={`${validScenarioA.inputs.shared?.loanTerm || 30} years`}
+          valueB={`${validScenarioB.inputs.shared?.loanTerm || 30} years`}
         />
         <ComparisonRow 
           label="Interest rate (assumed)" 
-          valueA={formatPercent(scenarioA.inputs.shared?.interestRate || 0)}
-          valueB={formatPercent(scenarioB.inputs.shared?.interestRate || 0)}
+          valueA={formatPercent(validScenarioA.inputs.shared?.interestRate || 0)}
+          valueB={formatPercent(validScenarioB.inputs.shared?.interestRate || 0)}
         />
         <ComparisonRow 
           label="LTV" 
-          valueA={scenarioA.results.ltvRatio ? formatPercent(scenarioA.results.ltvRatio) : null}
-          valueB={scenarioB.results.ltvRatio ? formatPercent(scenarioB.results.ltvRatio) : null}
+          valueA={validScenarioA.results.ltvRatio ? formatPercent(validScenarioA.results.ltvRatio) : null}
+          valueB={validScenarioB.results.ltvRatio ? formatPercent(validScenarioB.results.ltvRatio) : null}
         />
       </ComparisonSection>
 
@@ -477,27 +627,27 @@ export default function ComparisonDetail() {
         />
         <ComparisonRow 
           label="Total monthly payment" 
-          valueA={scenarioA.results.monthlyTotal ? formatCurrency(scenarioA.results.monthlyTotal) : null}
-          valueB={scenarioB.results.monthlyTotal ? formatCurrency(scenarioB.results.monthlyTotal) : null}
+          valueA={validScenarioA.results.monthlyTotal ? formatCurrency(validScenarioA.results.monthlyTotal) : null}
+          valueB={validScenarioB.results.monthlyTotal ? formatCurrency(validScenarioB.results.monthlyTotal) : null}
         />
       </ComparisonSection>
 
       {/* Section 3: Long-term Cost */}
       <ComparisonSection title="Long-term cost">
         <ComparisonRow 
-          label="Total payments over term" 
-          valueA={scenarioA.results.totalCost ? formatCurrency(scenarioA.results.totalCost) : null}
-          valueB={scenarioB.results.totalCost ? formatCurrency(scenarioB.results.totalCost) : null}
+          label="Total payments" 
+          valueA={validScenarioA.results.totalCost ? formatCurrency(validScenarioA.results.totalCost) : null}
+          valueB={validScenarioB.results.totalCost ? formatCurrency(validScenarioB.results.totalCost) : null}
         />
         <ComparisonRow 
-          label="Total interest paid" 
-          valueA={formatCurrency(scenarioA.results.totalInterest)}
-          valueB={formatCurrency(scenarioB.results.totalInterest)}
+          label="Total interest" 
+          valueA={formatCurrency(validScenarioA.results.totalInterest)}
+          valueB={formatCurrency(validScenarioB.results.totalInterest)}
         />
         <ComparisonRow 
-          label="Projected payoff date" 
-          valueA={getPayoffDate(scenarioA)}
-          valueB={getPayoffDate(scenarioB)}
+          label="Payoff date" 
+          valueA={getPayoffDate(validScenarioA)}
+          valueB={getPayoffDate(validScenarioB)}
         />
       </ComparisonSection>
 
@@ -509,14 +659,22 @@ export default function ComparisonDetail() {
           valueB={propertyValueB ? formatCurrency(propertyValueB) : null}
         />
         <ComparisonRow 
-          label="Taxes (annual)" 
-          valueA={scenarioA.inputs.shared?.propertyTaxAnnual ? formatCurrency(scenarioA.inputs.shared.propertyTaxAnnual) : null}
-          valueB={scenarioB.inputs.shared?.propertyTaxAnnual ? formatCurrency(scenarioB.inputs.shared.propertyTaxAnnual) : null}
+          label="Property taxes (annual)" 
+          valueA={validScenarioA.inputs.shared?.propertyTaxAnnual != null 
+            ? formatCurrency(validScenarioA.inputs.shared.propertyTaxAnnual) 
+            : null}
+          valueB={validScenarioB.inputs.shared?.propertyTaxAnnual != null 
+            ? formatCurrency(validScenarioB.inputs.shared.propertyTaxAnnual) 
+            : null}
         />
         <ComparisonRow 
-          label="Insurance (annual)" 
-          valueA={scenarioA.inputs.shared?.homeInsuranceMonthly ? formatCurrency(scenarioA.inputs.shared.homeInsuranceMonthly * 12) : null}
-          valueB={scenarioB.inputs.shared?.homeInsuranceMonthly ? formatCurrency(scenarioB.inputs.shared.homeInsuranceMonthly * 12) : null}
+          label="Home insurance (annual)" 
+          valueA={validScenarioA.inputs.shared?.homeInsuranceMonthly != null 
+            ? formatCurrency(validScenarioA.inputs.shared.homeInsuranceMonthly * 12) 
+            : null}
+          valueB={validScenarioB.inputs.shared?.homeInsuranceMonthly != null 
+            ? formatCurrency(validScenarioB.inputs.shared.homeInsuranceMonthly * 12) 
+            : null}
         />
       </ComparisonSection>
     </div>

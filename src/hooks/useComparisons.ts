@@ -50,7 +50,7 @@ export function useComparisons() {
     staleTime: 30 * 1000, // 30 seconds
   });
 
-  // Fetch a single comparison by ID
+  // Fetch a single comparison by ID (with error propagation for retry logic)
   const getComparison = async (id: string): Promise<SavedComparison | null> => {
     if (!user?.id || isAnonymous) return null;
 
@@ -63,7 +63,8 @@ export function useComparisons() {
 
     if (error) {
       console.error("Error fetching comparison:", error);
-      return null;
+      // Propagate error for retry handling in UI
+      throw error;
     }
 
     return data;

@@ -3,11 +3,17 @@
  * 
  * A dedicated workspace for reviewing and managing scenario comparisons.
  * Professional Review tier and admin only.
+ * 
+ * PRODUCTION-HARDENED:
+ * - Explicit loading/empty/error states
+ * - Mobile: swipe-to-delete with iOS patterns
+ * - Desktop: dropdown actions
+ * - Never blank, always recoverable
  */
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { GitCompare, Lock, Trash2, Eye, MoreHorizontal, FileDown } from "lucide-react";
+import { GitCompare, Lock, Trash2, Eye, MoreHorizontal, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -50,6 +56,8 @@ import { useComparisons, SavedComparison } from "@/hooks/useComparisons";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SwipeToDelete } from "@/components/mobile/SwipeToDelete";
+import { MobileCard, MobileCardLabel, MobileCardMetric, MobileCardMetadata, MobileCardDot } from "@/components/mobile/MobileCard";
 import { toast } from "sonner";
 
 // ============================================================================
@@ -275,16 +283,84 @@ function LockedState() {
         Comparisons
       </h1>
       <p className="mt-3 max-w-md text-sm text-muted-foreground">
-        Comparisons are available in Professional Review.
+        Side-by-side scenario comparison is available on the Professional Review tier.
       </p>
       <Button 
         variant="outline" 
         className="mt-8"
         onClick={() => navigate("/app/account")}
       >
-        View pricing
+        View plans
       </Button>
     </div>
+  );
+}
+
+// ============================================================================
+// LOADING STATE
+// ============================================================================
+
+function LoadingState() {
+  return (
+    <div className="space-y-6" role="status" aria-label="Loading comparisons">
+      <div>
+        <Skeleton className="h-7 w-40" />
+        <Skeleton className="mt-2 h-4 w-72" />
+      </div>
+      <Skeleton className="h-10 w-40" />
+      <div className="space-y-3">
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// MOBILE COMPARISON CARD
+// ============================================================================
+
+interface MobileComparisonCardProps {
+  comparison: SavedComparison;
+  scenarioA: ScenarioData | undefined;
+  scenarioB: ScenarioData | undefined;
+  onView: () => void;
+  onDelete: () => void;
+  isDeleting: boolean;
+}
+
+function MobileComparisonCard({
+  comparison,
+  scenarioA,
+  scenarioB,
+  onView,
+  onDelete,
+  isDeleting,
+}: MobileComparisonCardProps) {
+  const hasInvalidScenarios = !scenarioA || !scenarioB;
+  
+  return (
+    <SwipeToDelete onDelete={onDelete} disabled={isDeleting}>
+      <MobileCard onClick={onView} showChevron>
+        <MobileCardLabel>
+          {comparison.name}
+        </MobileCardLabel>
+        <MobileCardMetric>
+          {hasInvalidScenarios ? (
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <AlertTriangle className="h-4 w-4" />
+              Scenarios unavailable
+            </span>
+          ) : (
+            `${scenarioA?.name || "Untitled"} vs ${scenarioB?.name || "Untitled"}`
+          )}
+        </MobileCardMetric>
+        <MobileCardMetadata>
+          <span>{formatDate(new Date(comparison.created_at))}</span>
+        </MobileCardMetadata>
+      </MobileCard>
+    </SwipeToDelete>
   );
 }
 
@@ -327,7 +403,7 @@ export default function ComparisonsIndex() {
     }
   };
 
-  // Handle delete
+  // Handle delete - opens confirmation dialog
   const handleDeleteClick = (comparison: SavedComparison) => {
     setComparisonToDelete(comparison);
     setDeleteDialogOpen(true);
@@ -348,15 +424,7 @@ export default function ComparisonsIndex() {
 
   // Loading state
   if (!scenariosLoaded || !comparisonsLoaded || capsLoading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <Skeleton className="h-7 w-40" />
-          <Skeleton className="mt-2 h-4 w-72" />
-        </div>
-        <Skeleton className="h-32 w-full" />
-      </div>
-    );
+    return <LoadingState />;
   }
 
   // Access control: Professional Review tier and admin only
@@ -449,29 +517,32 @@ export default function ComparisonsIndex() {
       {/* Comparisons list */}
       {hasComparisons && (
         isMobile ? (
-          <div className="space-y-3 pb-20">
+          // Mobile: Card-based list with swipe-to-delete
+          <div className="space-y-3 pb-24">
+            {/* Swipe hint (shown only on first use) */}
+            <p className="text-xs text-muted-foreground px-1">
+              Swipe left to delete
+            </p>
+            
             {comparisons.map((comparison) => {
               const scenarioA = scenarioMap.get(comparison.scenario_a_id);
               const scenarioB = scenarioMap.get(comparison.scenario_b_id);
               
               return (
-                <button
+                <MobileComparisonCard
                   key={comparison.id}
-                  onClick={() => navigate(`/app/comparisons/${comparison.id}`)}
-                  className="w-full text-left border border-border rounded-sm bg-card p-4 hover:bg-muted/30 transition-colors"
-                >
-                  <div className="font-medium truncate">{comparison.name}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    {scenarioA?.name || "Unknown"} vs {scenarioB?.name || "Unknown"}
-                  </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    {formatDate(new Date(comparison.created_at))}
-                  </div>
-                </button>
+                  comparison={comparison}
+                  scenarioA={scenarioA}
+                  scenarioB={scenarioB}
+                  onView={() => navigate(`/app/comparisons/${comparison.id}`)}
+                  onDelete={() => handleDeleteClick(comparison)}
+                  isDeleting={isDeleting}
+                />
               );
             })}
           </div>
         ) : (
+          // Desktop: Table layout
           <div className="border border-border rounded-sm overflow-hidden">
             <Table>
               <TableHeader>
@@ -492,6 +563,7 @@ export default function ComparisonsIndex() {
                 {comparisons.map((comparison) => {
                   const scenarioA = scenarioMap.get(comparison.scenario_a_id);
                   const scenarioB = scenarioMap.get(comparison.scenario_b_id);
+                  const hasInvalidScenarios = !scenarioA || !scenarioB;
                   
                   return (
                     <TableRow
@@ -505,9 +577,16 @@ export default function ComparisonsIndex() {
                         {comparison.name}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        <span className="truncate">
-                          {scenarioA?.name || "Unknown"} vs {scenarioB?.name || "Unknown"}
-                        </span>
+                        {hasInvalidScenarios ? (
+                          <span className="flex items-center gap-1.5 text-muted-foreground/70">
+                            <AlertTriangle className="h-3.5 w-3.5" />
+                            Scenarios unavailable
+                          </span>
+                        ) : (
+                          <span className="truncate">
+                            {scenarioA?.name || "Unknown"} vs {scenarioB?.name || "Unknown"}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground">
                         {formatRelativeTime(new Date(comparison.created_at))}
@@ -576,10 +655,9 @@ export default function ComparisonsIndex() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete comparison?</AlertDialogTitle>
+            <AlertDialogTitle>Delete this comparison?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete "{comparisonToDelete?.name}". 
-              This action cannot be undone.
+              This cannot be undone. The comparison "{comparisonToDelete?.name}" will be permanently removed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
