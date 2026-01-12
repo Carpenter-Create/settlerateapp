@@ -3,14 +3,23 @@ import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 
 /**
- * AuthShell - Brand-locked authentication page layout
+ * ═══════════════════════════════════════════════════════════════════════════
+ * AuthShell - LOCKED NON-DRIFTING STANDARD
+ * ═══════════════════════════════════════════════════════════════════════════
  * 
  * Single source of truth for auth page structure, typography, and spacing.
  * All auth pages MUST use this shell. Do not inline custom spacing.
  * 
- * Typography: UI/system font ONLY. No Source Serif 4 on auth pages.
+ * LOCKED RULES (do not modify without explicit review):
+ * ─────────────────────────────────────────────────────
+ * 1. TYPOGRAPHY: UI/system font ONLY. No Source Serif 4 anywhere.
+ * 2. METHOD HIERARCHY: Password is primary, magic link is secondary.
+ * 3. LEGAL: Checkbox required for account creation.
+ * 4. ESCAPE LINK: Website link always visible.
+ * 5. TONE: Neutral, administrative. No marketing language.
  * 
  * Spacing and typography are driven by --auth-* tokens in index.css.
+ * ═══════════════════════════════════════════════════════════════════════════
  */
 
 interface AuthShellProps {
@@ -47,10 +56,10 @@ interface AuthLegalCheckboxProps {
   onCheckedChange: (checked: boolean) => void;
 }
 
-// Main shell container
+// Main shell container — vertically centered
 export function AuthShell({ children, className }: AuthShellProps) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <div className={cn("auth-container", className)}>
         {children}
       </div>
