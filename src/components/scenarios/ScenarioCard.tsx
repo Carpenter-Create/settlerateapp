@@ -1,16 +1,19 @@
 /**
- * ScenarioCard - Mobile-first scenario display component
+ * ScenarioCard - Scenario-specific mobile card implementation
  * 
- * Design Standard (LOCKED):
- * - Full-width card with subtle elevation
- * - Hierarchy: name (secondary) → payment (primary) → metadata (tertiary)
- * - Tappable with chevron affordance
- * - No table metaphors on mobile
+ * Built on MobileCard primitive (LOCKED standard).
+ * See docs/MOBILE_STANDARD.md for design rules.
  */
 
-import { ChevronRight, MoreHorizontal, Copy, Trash2 } from "lucide-react";
+import { MoreHorizontal, Copy, Trash2 } from "lucide-react";
 import { ScenarioData } from "@/lib/scenarioContract";
-import { cn } from "@/lib/utils";
+import {
+  MobileCard,
+  MobileCardLabel,
+  MobileCardMetric,
+  MobileCardMetadata,
+  MobileCardDot,
+} from "@/components/mobile/MobileCard";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -111,82 +114,50 @@ export function ScenarioCard({ scenario, onOpen, onDuplicate, onDelete }: Scenar
   const typeLabel = getScenarioTypeLabel(scenario);
   const updatedAt = formatRelativeTime(new Date(scenario.updatedAt));
 
-  return (
-    <div
-      onClick={() => onOpen(scenario)}
-      className={cn(
-        "group relative w-full cursor-pointer",
-        "rounded-[14px] bg-card",
-        "border border-border/50",
-        "shadow-[0_1px_3px_0_rgb(0_0_0/0.04),0_1px_2px_-1px_rgb(0_0_0/0.04)]",
-        "transition-all duration-150 ease-out",
-        "active:bg-muted/50 active:shadow-none",
-        "hover:border-border hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05)]",
-        "p-4 sm:p-5"
-      )}
-    >
-      <div className="flex items-start justify-between gap-3">
-        {/* Content */}
-        <div className="min-w-0 flex-1">
-          {/* Secondary: Scenario name */}
-          <p className="truncate text-sm text-muted-foreground">
-            {scenario.name || "Untitled scenario"}
-          </p>
-          
-          {/* Primary: Monthly payment */}
-          <p className="mt-1.5 font-serif text-2xl font-normal tracking-tight text-foreground">
-            {monthlyPayment != null ? (
-              <>
-                {formatCurrency(monthlyPayment)}
-                <span className="text-base text-muted-foreground"> / month</span>
-              </>
-            ) : (
-              <span className="text-muted-foreground">—</span>
-            )}
-          </p>
-          
-          {/* Tertiary: Metadata */}
-          <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground/80">
-            <span>{typeLabel}</span>
-            <span className="text-muted-foreground/40">•</span>
-            <span>Updated {updatedAt}</span>
-          </div>
-        </div>
+  const actions = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 md:opacity-100"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+          <span className="sr-only">Actions</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="bg-popover">
+        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(scenario); }}>
+          <Copy className="mr-2 h-4 w-4" />
+          Duplicate
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-destructive"
+          onClick={(e) => { e.stopPropagation(); onDelete(scenario); }}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
-        {/* Actions */}
-        <div className="flex items-center gap-1 shrink-0">
-          {/* Dropdown menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 md:opacity-100"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">Actions</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(scenario); }}>
-                <Copy className="mr-2 h-4 w-4" />
-                Duplicate
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={(e) => { e.stopPropagation(); onDelete(scenario); }}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          {/* Chevron affordance */}
-          <ChevronRight className="h-5 w-5 text-muted-foreground/40" />
-        </div>
-      </div>
-    </div>
+  return (
+    <MobileCard onClick={() => onOpen(scenario)} actions={actions}>
+      <MobileCardLabel>
+        {scenario.name || "Untitled scenario"}
+      </MobileCardLabel>
+      
+      <MobileCardMetric suffix="/ month">
+        {monthlyPayment != null ? formatCurrency(monthlyPayment) : "—"}
+      </MobileCardMetric>
+      
+      <MobileCardMetadata>
+        <span>{typeLabel}</span>
+        <MobileCardDot />
+        <span>Updated {updatedAt}</span>
+      </MobileCardMetadata>
+    </MobileCard>
   );
 }
