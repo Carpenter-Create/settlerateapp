@@ -18,9 +18,10 @@ import ScenariosIndex from "./pages/app/ScenariosIndex";
 import Calculator from "./pages/app/Calculator";
 import Account from "./pages/app/Account";
 import AppSettings from "./pages/app/Settings";
+import AdvisorRequest from "./pages/app/AdvisorRequest";
 
 // Admin pages
-import AdvisorRequests from "./pages/admin/AdvisorRequests";
+import AdvisorRequestsAdmin from "./pages/admin/AdvisorRequestsNew";
 
 const queryClient = new QueryClient();
 
@@ -43,9 +44,11 @@ const App = () => (
             <Route path="/app/calculator" element={<ProtectedRoute><AppLayout><Calculator /></AppLayout></ProtectedRoute>} />
             <Route path="/app/account" element={<ProtectedRoute><AppLayout><Account /></AppLayout></ProtectedRoute>} />
             <Route path="/app/settings" element={<ProtectedRoute><AppLayout><AppSettings /></AppLayout></ProtectedRoute>} />
+            <Route path="/app/advisor-request" element={<ProtectedRoute><AdvisorRequest /></ProtectedRoute>} />
 
             {/* Admin routes */}
-            <Route path="/admin/advisor-requests" element={<AdminRoute><AdvisorRequests /></AdminRoute>} />
+            <Route path="/admin/advisor-requests" element={<AdminRoute><AdvisorRequestsAdmin /></AdminRoute>} />
+            <Route path="/app/admin/advisors" element={<AdminRoute><AdvisorRequestsAdmin /></AdminRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

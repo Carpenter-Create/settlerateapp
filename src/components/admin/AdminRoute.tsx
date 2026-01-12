@@ -28,12 +28,12 @@ export function AdminRoute({ children }: AdminRouteProps) {
 
   // Not authenticated or anonymous
   if (!user || isAnonymous) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // Authenticated but not admin
   if (!isAdmin) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to="/app/scenarios" replace />;
   }
 
   return <>{children}</>;
