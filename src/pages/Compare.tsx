@@ -252,7 +252,8 @@ export default function Compare() {
   const currentEmphasis = emphasizedId ?? autoEmphasizedId;
 
   const addScenario = (id: string) => {
-    if (selectedIds.length < 4) {
+    // Hard limit: exactly two scenarios for comparison (per v1 spec)
+    if (selectedIds.length < 2) {
       setSelectedIds([...selectedIds, id]);
     }
   };
@@ -489,7 +490,7 @@ export default function Compare() {
           </div>
         ))}
 
-        {!isSharedView && selectedIds.length < 4 && availableScenarios.length > 0 && (
+        {!isSharedView && selectedIds.length < 2 && availableScenarios.length > 0 && (
           <Select onValueChange={addScenario}>
             <SelectTrigger className="h-8 w-40 text-sm">
               <div className="flex items-center gap-1.5">
