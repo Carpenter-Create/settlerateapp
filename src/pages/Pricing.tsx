@@ -5,27 +5,23 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
- * Pricing Page - Canonical Institutional Framing
+ * Pricing Page - Institutional, Administrative, Non-Sales
  * 
- * Feature language uses capability framing, not benefit framing.
- * SettleRate evaluates, models, normalizes, and surfaces—
- * it does not "help users find" or "make it easy."
+ * This page should feel like terms of service, not a checkout funnel.
+ * No testimonials, social proof, competitor comparisons, or urgency language.
  */
 
 const freeFeatures = [
-  "Single scenario modeling",
-  "Basic payment structure analysis",
-  "Standard assumptions applied",
+  "Create and model mortgage scenarios",
+  "Compare structural variables (term, down payment, PMI)",
+  "View modeled outcomes under standardized assumptions",
 ];
 
 const proFeatures = [
   "Unlimited scenario modeling",
-  "Normalized scenario comparison",
-  "ZIP-based tax and insurance normalization",
-  "Professional PDF outputs",
-  "Rate sensitivity analysis",
-  "Income-to-payment context",
-  "Priority support",
+  "Exportable PDF summaries",
+  "Saved scenarios and revisions",
+  "Advisor-ready documentation",
 ];
 
 type BillingInterval = "annual" | "monthly";
@@ -55,7 +51,7 @@ export default function Pricing() {
           Pricing
         </h1>
         <p className="mt-space-4 text-base text-muted-foreground">
-          Transparent pricing. No referral revenue. No hidden fees.
+          Access to structured mortgage scenario analysis and professional-grade outputs.
         </p>
       </div>
 
@@ -66,7 +62,7 @@ export default function Pricing() {
           <div className="space-y-1">
             <h3 className="text-base font-medium">Free</h3>
             <p className="text-sm text-muted-foreground">
-              Core scenario modeling
+              Analytical Access
             </p>
           </div>
 
@@ -86,9 +82,9 @@ export default function Pricing() {
             ))}
           </ul>
 
-          <p className="mt-space-6 text-center text-sm text-muted-foreground">
-            Available to all users
-          </p>
+          <Button asChild variant="outline" className="mt-space-6 w-full" size="lg">
+            <Link to="/auth">Begin analysis</Link>
+          </Button>
         </div>
 
         {/* Pro Plan */}
@@ -96,11 +92,11 @@ export default function Pricing() {
           <div className="space-y-1">
             <h3 className="text-base font-medium">Pro</h3>
             <p className="text-sm text-muted-foreground">
-              Complete analytical workspace
+              Professional Outputs
             </p>
           </div>
 
-          {/* Billing Toggle */}
+          {/* Billing Toggle - Annual visually primary */}
           <div className="mt-space-5 flex gap-1 rounded-sm border border-border p-1">
             <button
               onClick={() => setInterval("annual")}
@@ -151,14 +147,14 @@ export default function Pricing() {
           </ul>
 
           <Button asChild className="mt-space-6 w-full" size="lg">
-            <Link to="/auth">Start free</Link>
+            <Link to="/auth">Upgrade to Pro</Link>
           </Button>
         </div>
       </div>
 
-      {/* Independence Statement (appears once per page) */}
+      {/* Pricing Footnote (Critical) */}
       <p className="text-center text-xs text-muted-foreground/70">
-        SettleRate does not originate, broker, or recommend mortgage products. We do not sell user data or generate referral revenue.
+        SettleRate pricing reflects access to analytical tooling only. Fees are not contingent on loan outcomes, selections, or transactions.
       </p>
     </div>
   );

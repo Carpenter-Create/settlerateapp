@@ -146,9 +146,9 @@ export function PublicLayout({ children }: PublicLayoutProps) {
             © {new Date().getFullYear()} SettleRate. All rights reserved.
           </p>
 
-          {/* Disclaimer */}
+          {/* Primary Disclosure (Canonical) */}
           <p className="mx-auto mt-6 max-w-3xl text-center text-[11px] leading-relaxed text-muted-foreground/70">
-            SettleRate provides analytical tools to model mortgage-related scenarios. We are not a lender, broker, or financial advisor and do not offer mortgage products or personalized financial advice. Calculations and projections are estimates based on user-provided inputs and third-party data sources and may not reflect actual loan terms. Users should independently verify all information and consult qualified professionals before making financial decisions.
+            SettleRate provides analytical modeling based on standardized assumptions. It does not originate, broker, recommend, or refer mortgage products, and does not provide financial, legal, or tax advice.
           </p>
         </div>
       </footer>
