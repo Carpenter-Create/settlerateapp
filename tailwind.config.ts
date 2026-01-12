@@ -32,6 +32,13 @@ export default {
           "Times New Roman",
           "serif",
         ],
+        body: [
+          "Source Serif 4",
+          "Georgia",
+          "Cambria",
+          "Times New Roman",
+          "serif",
+        ],
         mono: [
           "SF Mono",
           "Monaco",
