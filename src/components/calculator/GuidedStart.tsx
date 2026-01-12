@@ -1,16 +1,20 @@
 /**
- * GuidedStart - Minimal onboarding stepper for new users
+ * GuidedStart - Structured configuration flow for new scenarios
  * 
- * NOT a marketing funnel. A calm, institutional flow that:
- * 1. Collects essential inputs across 4 steps
- * 2. Creates a draft scenario using canonical shape
- * 3. Routes to calculator with scenario loaded
+ * This is a configuration overlay, NOT onboarding or marketing.
+ * 
+ * Design principles:
+ * - Neutral, institutional, non-promotional
+ * - No language implying advice, recommendations, or outcomes
+ * - Treat user as a decision-maker, not a beginner
+ * - Simple fade transitions only
+ * - No progress celebration
  * 
  * Steps:
- * 1. Goal: Buying / Refinance
- * 2. Property: ZIP + price/value
- * 3. Loan basics: down payment/balance, term, rate
- * 4. Taxes & insurance: toggle estimates + editable values
+ * 1. Transaction type
+ * 2. Property & loan context
+ * 3. Payment structure
+ * 4. Review assumptions
  */
 
 import { useState, useCallback, useMemo } from "react";
@@ -49,7 +53,7 @@ import {
 } from "@/lib/mortgage";
 import { getZipEstimate, isValidZipCode } from "@/lib/zipEstimates";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, ArrowRight, Home, RefreshCw, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Home, RefreshCw } from "lucide-react";
 
 interface GuidedStartProps {
   open: boolean;
@@ -61,16 +65,16 @@ type Step = 1 | 2 | 3 | 4;
 
 const STEP_LABELS: Record<Step, string> = {
   1: "Transaction type",
-  2: "Property details",
-  3: "Loan basics",
-  4: "Taxes & insurance",
+  2: "Property & loan context",
+  3: "Payment structure",
+  4: "Review assumptions",
 };
 
 const STEP_HELPERS: Record<Step, string> = {
-  1: "Sets default inputs. All values are editable.",
-  2: "Used for tax and insurance estimates.",
-  3: "", // Set dynamically based on mode
-  4: "Refines monthly payment projection.",
+  1: "Sets default inputs.",
+  2: "Establish baseline assumptions.",
+  3: "Define rate, term, and payment assumptions.",
+  4: "You can revise any input after continuing.",
 };
 
 export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps) {
@@ -225,23 +229,9 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
     }
   }, [step, mode, purchasePrice, currentLoanBalance, estimatedHomeValue, interestRate, loanTerm]);
 
-  // Determine step 3 helper based on mode
-  const getStepHelper = (s: Step) => {
-    if (s === 3) {
-      return mode === "purchase" 
-        ? "Determines principal and interest payment."
-        : "Determines new payment amount.";
-    }
-    return STEP_HELPERS[s];
-  };
-
-  // Get step 3 label based on mode
-  const getStepLabel = (s: Step) => {
-    if (s === 3) {
-      return mode === "purchase" ? "Loan basics" : "New loan details";
-    }
-    return STEP_LABELS[s];
-  };
+  // Step labels remain consistent
+  const getStepLabel = (s: Step) => STEP_LABELS[s];
+  const getStepHelper = (s: Step) => STEP_HELPERS[s];
 
   return (
     <>
@@ -252,9 +242,6 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
       >
         <DialogHeader>
           <DialogTitle className="font-serif text-lg font-medium">Guided start</DialogTitle>
-          <p className="text-sm text-muted-foreground pt-1">
-            Prefill scenario inputs. All values are editable.
-          </p>
         </DialogHeader>
 
         {/* Progress indicator */}
@@ -401,11 +388,11 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                       }}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Higher down payment reduces loan principal.
+                      Amount applied to principal at closing.
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm">Interest rate (assumed)</Label>
+                    <Label className="text-sm">Interest rate</Label>
                     <PercentInput
                       value={interestRate}
                       onChange={setInterestRate}
@@ -414,7 +401,7 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                       step={0.125}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Best available rate estimate. Compare scenarios later.
+                      Starting assumption. Adjustable later.
                     </p>
                   </div>
                   <LoanTermInput
@@ -471,7 +458,7 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
             <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <Label className="text-sm">Include taxes & insurance</Label>
+                  <Label className="text-sm">Include tax & insurance estimates</Label>
                 </div>
                 <Switch
                   checked={includeEstimates}
@@ -480,10 +467,10 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
               </div>
 
               {includeEstimates && (
-                <div className="space-y-4 animate-slide-up">
-                  <div className="rounded-lg bg-muted/50 px-3 py-2">
+                <div className="space-y-4">
+                  <div className="rounded-md bg-muted/40 px-3 py-2">
                     <p className="text-xs text-muted-foreground">
-                      Based on regional averages. Values are editable.
+                      Regional averages applied. All values editable.
                     </p>
                   </div>
 
@@ -541,8 +528,8 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
               </Button>
             ) : (
               <Button size="sm" onClick={handleFinish} className="gap-1.5">
-                <Check className="h-3.5 w-3.5" strokeWidth={1.5} />
-                Create scenario
+                Start scenario
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
               </Button>
             )}
           </div>
