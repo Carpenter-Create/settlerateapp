@@ -67,7 +67,7 @@ export default function Advisors() {
         <div className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16">
           <div className="mx-auto max-w-3xl">
             <h2 className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-3xl">
-              Who Advisor Access is for
+              Who Advisor Access Is For
             </h2>
             <p 
               className="text-[15px] leading-[1.75] text-foreground/65 sm:text-base sm:leading-[1.8]"
@@ -109,7 +109,7 @@ export default function Advisors() {
         <div className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16">
           <div className="mx-auto max-w-3xl">
             <h2 className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-3xl">
-              What Advisor Access enables
+              What Advisor Access Enables
             </h2>
             <p 
               className="text-[15px] leading-[1.75] text-foreground/65 sm:text-base sm:leading-[1.8]"
