@@ -140,6 +140,10 @@ export function AdvisorRequestModal({ open, onOpenChange }: AdvisorRequestModalP
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5 py-2">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Advisor access requests are reviewed to ensure alignment with SettleRate's neutrality and usage standards.
+            </p>
+
             {/* Honeypot field - hidden from users */}
             <input
               type="text"
@@ -225,10 +229,6 @@ export function AdvisorRequestModal({ open, onOpenChange }: AdvisorRequestModalP
                 <p className="text-xs text-destructive">{errors.intendedUse}</p>
               )}
             </div>
-
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Advisor access requests are reviewed to ensure alignment with SettleRate's neutrality and usage standards. Approved advisors receive access instructions and subscription details directly.
-            </p>
 
             <Button
               type="submit"
