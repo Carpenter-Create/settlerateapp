@@ -72,9 +72,9 @@ export default function Account() {
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Account</h1>
-        <p className="mt-1 text-muted-foreground">
-          Manage your subscription and billing
+        <h1 className="text-2xl font-medium tracking-tight">Account</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Subscription and billing management
         </p>
       </div>
 
