@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Calculator, User, Settings, LogOut, FolderOpen } from "lucide-react";
+import { Calculator, User, Settings, LogOut, FolderOpen, MoreHorizontal } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,9 +16,21 @@ interface AppLayoutProps {
   children: ReactNode;
 }
 
-const navigation = [
+// Desktop navigation (full list)
+const desktopNavigation = [
   { name: "Scenarios", href: "/app/scenarios", icon: FolderOpen },
   { name: "Calculator", href: "/app/calculator", icon: Calculator },
+  { name: "Account", href: "/app/account", icon: User },
+  { name: "Settings", href: "/app/settings", icon: Settings },
+];
+
+// Mobile navigation (simplified - max 3 primary items + overflow)
+const mobileNavigation = [
+  { name: "Scenarios", href: "/app/scenarios", icon: FolderOpen },
+  { name: "Calculator", href: "/app/calculator", icon: Calculator },
+];
+
+const mobileOverflowItems = [
   { name: "Account", href: "/app/account", icon: User },
   { name: "Settings", href: "/app/settings", icon: Settings },
 ];
@@ -47,7 +59,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1 p-3">
-            {navigation.map((item) => {
+            {desktopNavigation.map((item) => {
               const isActive = location.pathname === item.href;
               return (
                 <Link
@@ -116,26 +128,53 @@ export function AppLayout({ children }: AppLayoutProps) {
           </DropdownMenu>
         </header>
 
-        {/* Mobile navigation */}
-        <nav className="flex items-center gap-1 border-b border-border bg-background px-4 py-2 md:hidden">
-          {navigation.map((item) => {
-            const isActive = location.pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors",
-                  isActive
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <item.icon className="h-4 w-4" strokeWidth={1.5} />
-                {item.name}
-              </Link>
-            );
-          })}
+        {/* Mobile navigation - simplified with overflow menu */}
+        <nav className="flex items-center justify-between border-b border-border bg-background px-4 py-2 md:hidden">
+          <div className="flex items-center gap-1">
+            {mobileNavigation.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors",
+                    isActive
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" strokeWidth={1.5} />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </div>
+          
+          {/* Overflow menu for Account/Settings */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">More</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {mobileOverflowItems.map((item) => (
+                <DropdownMenuItem key={item.name} asChild>
+                  <Link to={item.href} className="flex items-center gap-2">
+                    <item.icon className="h-4 w-4" />
+                    {item.name}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
         {/* Content */}
