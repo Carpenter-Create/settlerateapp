@@ -204,13 +204,39 @@ function generateScenarioHTML(scenario: ScenarioData): string {
       font-size: 9pt;
       color: #888;
       line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    
+    .footer-brand {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 12px;
+    }
+    
+    .footer-brand-left {
+      font-size: 8pt;
+      color: #999;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    
+    .footer-brand-left .footer-url {
+      font-size: 7pt;
+      color: #aaa;
+    }
+    
+    .footer-brand-right {
+      font-size: 8pt;
+      color: #999;
+      text-align: right;
     }
     
     .page-number {
       font-size: 9pt;
       color: #999;
       text-align: right;
-      margin-top: 12px;
     }
     
     @media print {
@@ -359,6 +385,15 @@ function generateScenarioHTML(scenario: ScenarioData): string {
       <p class="footer-disclaimer">
         This document is provided for analytical and planning purposes only and does not constitute financial or lending advice.
       </p>
+      <div class="footer-brand">
+        <div class="footer-brand-left">
+          <span>SettleRate™ — Mortgage decision support</span>
+          <span class="footer-url">https://settlerate.com</span>
+        </div>
+        <div class="footer-brand-right">
+          Generated on ${dateStr}
+        </div>
+      </div>
       <p class="page-number">Page 1 of 1</p>
     </div>
   </div>
