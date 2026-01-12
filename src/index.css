@@ -421,34 +421,41 @@
     color: hsl(var(--muted-foreground));
   }
 
-  /* Segmented control — mode toggle */
+  /* Segmented control — mode toggle
+   * LOCKED: Active state must be immediately obvious at a glance.
+   * Active = raised white card with border and shadow
+   * Inactive = transparent, receded, no border
+   */
   .auth-segmented-control {
     display: flex;
     padding: 4px;
     border-radius: var(--auth-radius);
-    border: 1px solid hsl(var(--border));
-    background: hsl(var(--muted) / 0.3);
+    background: #F3F4F6; /* gray-100 */
   }
 
   .auth-tab {
     flex: 1;
     padding: 8px 12px;
     border-radius: calc(var(--auth-radius) - 2px);
+    border: none;
+    background: transparent;
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 0.875rem;
-    font-weight: 500;
-    color: hsl(var(--muted-foreground));
-    transition: all 0.15s ease;
+    font-weight: 400;
+    color: #6B7280; /* gray-500 */
+    cursor: pointer;
   }
 
   .auth-tab:hover:not(.auth-tab-active) {
-    color: hsl(var(--foreground));
+    color: #374151; /* gray-700 */
   }
 
   .auth-tab-active {
-    background: hsl(var(--background));
-    color: hsl(var(--foreground));
-    box-shadow: var(--shadow-sm);
+    background: #FFFFFF;
+    border: 1px solid #D0D5DD;
+    color: #111827; /* gray-900 */
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   }
 
   /* Form — consistent field spacing */
