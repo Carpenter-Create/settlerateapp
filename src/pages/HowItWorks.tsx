@@ -1,30 +1,55 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
+/**
+ * How It Works Page - Canonical Institutional Framing
+ * 
+ * Feature language uses capability framing, not benefit framing.
+ * If a sentence sounds like onboarding copy, it's wrong.
+ */
+
 const steps = [
   {
     number: "01",
-    title: "Define your scenario",
+    title: "Scenario modeling",
     description:
-      "Enter loan parameters, property details, and financing assumptions. All inputs are explicit and documented.",
+      "Mortgage structures are evaluated under consistent assumptions. Loan parameters, property details, and financing inputs are explicit and documented.",
   },
   {
     number: "02",
-    title: "Review structured outputs",
+    title: "Cost visibility",
     description:
-      "See monthly payments, amortization schedules, and total cost breakdowns based on your inputs—not optimized defaults.",
+      "Long-term interest, capital requirements, and total cost of capital are surfaced explicitly—rather than inferred from monthly payment alone.",
   },
   {
     number: "03",
-    title: "Compare alternatives",
+    title: "Structural tradeoff analysis",
     description:
-      "Model multiple loan structures side by side with normalized assumptions to surface meaningful differences.",
+      "Down payment strategy, PMI exposure, and term selection are evaluated as interdependent variables under normalized assumptions.",
   },
   {
     number: "04",
-    title: "Export for review",
+    title: "Professional outputs",
     description:
-      "Generate professional documentation suitable for underwriting conversations, advisor review, or personal records.",
+      "Exportable summaries designed for advisor discussion, lender review, and documentation—without embedded recommendations or referral bias.",
+  },
+];
+
+const principles = [
+  {
+    title: "Normalized assumptions",
+    description:
+      "Rates, taxes, insurance, and PMI are standardized across scenarios to prevent distortion and ensure analytical integrity.",
+  },
+  {
+    title: "Time-horizon analysis",
+    description:
+      "Outcomes are evaluated across the full life of the loan, including the point at which principal accumulation overtakes interest.",
+  },
+  {
+    title: "Reproducibility",
+    description:
+      "Scenarios can be exported, shared, and independently verified by professionals. Every calculation is documented.",
   },
 ];
 
@@ -37,7 +62,7 @@ export default function HowItWorks() {
           How SettleRate works
         </h1>
         <p className="mt-space-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
-          A structured approach to mortgage scenario modeling.
+          A structured approach to mortgage scenario evaluation.
         </p>
       </section>
 
@@ -68,22 +93,23 @@ export default function HowItWorks() {
       {/* Principles */}
       <section className="max-w-3xl border-t border-border/50 pt-space-8">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-foreground">
-          Core principles
+          Core methodology
         </h2>
         <div className="mt-space-6 space-y-space-4 text-sm leading-relaxed text-muted-foreground">
-          <p>
-            <strong className="font-medium text-foreground">Transparency.</strong>{" "}
-            Every calculation uses documented assumptions. No hidden optimizations or promotional defaults.
-          </p>
-          <p>
-            <strong className="font-medium text-foreground">Neutrality.</strong>{" "}
-            We have no financial relationship with lenders. Our outputs are not influenced by transaction incentives.
-          </p>
-          <p>
-            <strong className="font-medium text-foreground">Reproducibility.</strong>{" "}
-            Scenarios can be exported, shared, and independently verified by professionals.
-          </p>
+          {principles.map((principle) => (
+            <p key={principle.title}>
+              <strong className="font-medium text-foreground">{principle.title}.</strong>{" "}
+              {principle.description}
+            </p>
+          ))}
         </div>
+      </section>
+
+      {/* Independence Statement */}
+      <section className="max-w-3xl border-t border-border/50 pt-space-8">
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          SettleRate does not originate, broker, or recommend mortgage products. Outputs are analytical in nature and intended to support independent decision-making.
+        </p>
       </section>
 
       {/* CTA */}
