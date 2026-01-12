@@ -46,48 +46,58 @@ const commonStyles = `
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 11pt;
-    line-height: 1.5;
+    line-height: 1.6;
     color: #1a1a1a;
+    padding: 0;
+    max-width: 100%;
+  }
+  
+  .page {
     padding: 48px;
     max-width: 800px;
     margin: 0 auto;
   }
   
-  h1 {
-    font-size: 18pt;
-    font-weight: 500;
-    margin-bottom: 4px;
-    font-family: Georgia, "Times New Roman", serif;
-  }
-  
-  h2 {
-    font-size: 14pt;
-    font-weight: 500;
-    margin-bottom: 8px;
-    font-family: Georgia, "Times New Roman", serif;
-  }
-  
   .brand {
     font-family: Georgia, "Times New Roman", serif;
-    font-size: 12pt;
+    font-size: 11pt;
     font-weight: 500;
-    color: #333;
+    color: #666;
     margin-bottom: 24px;
   }
   
   .header {
-    margin-bottom: 32px;
+    margin-bottom: 36px;
     padding-bottom: 16px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid #d0d0d0;
+  }
+  
+  .doc-title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 20pt;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #1a1a1a;
+  }
+  
+  h2, .section-title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 13pt;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e8e8e8;
   }
   
   .meta {
     font-size: 10pt;
     color: #666;
+    margin-bottom: 2px;
   }
   
   .section {
-    margin-bottom: 28px;
+    margin-bottom: 32px;
   }
   
   .section-label {
@@ -111,14 +121,15 @@ const commonStyles = `
   }
   
   th, td {
-    padding: 8px 12px;
+    padding: 10px 12px;
     text-align: right;
-    border-bottom: 1px solid #e8e8e8;
+    border-bottom: 1px solid #f0f0f0;
   }
   
   th {
     font-weight: 500;
     font-size: 10pt;
+    color: #333;
   }
   
   th:first-child,
@@ -154,7 +165,8 @@ const commonStyles = `
   li {
     padding-left: 16px;
     position: relative;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    line-height: 1.5;
   }
   
   li::before {
@@ -165,11 +177,22 @@ const commonStyles = `
   }
   
   .footer {
-    margin-top: 40px;
+    margin-top: 48px;
     padding-top: 16px;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid #d0d0d0;
+  }
+  
+  .footer-disclaimer {
+    font-size: 9pt;
+    color: #888;
+    line-height: 1.5;
+  }
+  
+  .page-number {
     font-size: 9pt;
     color: #999;
+    text-align: right;
+    margin-top: 12px;
   }
   
   .note {
@@ -181,11 +204,17 @@ const commonStyles = `
   
   @media print {
     body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    
+    .page {
       padding: 0;
     }
     
     @page {
       margin: 0.75in;
+      size: letter;
     }
   }
 `;
@@ -269,127 +298,131 @@ export function generateComparisonSummaryHTML(data: ExportData): string {
   <style>${commonStyles}</style>
 </head>
 <body>
-  <p class="brand">SettleRate</p>
-  
-  <div class="header">
-    <h1>Mortgage Comparison Summary</h1>
-    <p class="meta">${dateStr}</p>
-    ${comparisonName !== "Comparison" ? `<p class="meta">${comparisonName}</p>` : ""}
-  </div>
-  
-  <div class="section">
-    <p class="section-label">Scenarios Compared</p>
-    <p class="scenarios-list">${scenarios.map((s) => s.name).join(", ")}</p>
-  </div>
-  
-  <div class="section">
-    <p class="section-label">Core Comparison</p>
-    <table>
-      <thead>
-        <tr>
-          <th></th>
-          ${scenarios.map((s) => `<th>${s.name}</th>`).join("")}
-        </tr>
-      </thead>
-      <tbody>
-        ${metrics.map((m) => `
-        <tr>
-          <td>${m.label}</td>
-          ${m.values.map((v) => `<td>${v}</td>`).join("")}
-        </tr>
-        `).join("")}
-      </tbody>
-    </table>
-  </div>
-  
-  ${summary ? `
-  <div class="section">
-    <p class="section-label">Summary</p>
+  <div class="page">
+    <p class="brand">SettleRate</p>
     
-    ${summary.recommendation ? `
-    <div class="summary-block">
-      <p><strong>Recommended option:</strong> <span class="recommendation-name">${summary.recommendation.scenario.name}</span></p>
-      <p>${summary.recommendation.reason}.</p>
+    <div class="header">
+      <h1 class="doc-title">Mortgage Comparison Summary</h1>
+      <p class="meta">Generated ${dateStr}</p>
+      ${comparisonName !== "Comparison" ? `<p class="meta">${comparisonName}</p>` : ""}
     </div>
-    ` : ""}
     
-    ${summary.benefits.length > 0 ? `
-    <div class="summary-block">
-      <p><strong>Why it's recommended:</strong></p>
-      <ul>
-        ${summary.benefits.map((b) => `<li>${b}</li>`).join("")}
-      </ul>
+    <div class="section">
+      <h2 class="section-title">Scenarios Compared</h2>
+      <p class="scenarios-list">${scenarios.map((s) => s.name).join(", ")}</p>
     </div>
-    ` : ""}
     
-    ${summary.tradeoffs.length > 0 || summary.alternativeScenario ? `
-    <div class="summary-block">
-      <p><strong>When another option may make more sense:</strong></p>
-      ${summary.tradeoffs.length > 0 ? `
-      <ul>
-        ${summary.tradeoffs.map((t) => `<li>${t.statement}${t.detail ? ` — ${t.detail}` : ""}</li>`).join("")}
-      </ul>
+    <div class="section">
+      <h2 class="section-title">Core Comparison</h2>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            ${scenarios.map((s) => `<th>${s.name}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          ${metrics.map((m) => `
+          <tr>
+            <td>${m.label}</td>
+            ${m.values.map((v) => `<td>${v}</td>`).join("")}
+          </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+    
+    ${summary ? `
+    <div class="section">
+      <h2 class="section-title">Summary</h2>
+      
+      ${summary.recommendation ? `
+      <div class="summary-block">
+        <p><strong>Recommended option:</strong> <span class="recommendation-name">${summary.recommendation.scenario.name}</span></p>
+        <p>${summary.recommendation.reason}.</p>
+      </div>
       ` : ""}
-      ${summary.alternativeScenario ? `<p>${summary.alternativeScenario.advice}</p>` : ""}
+      
+      ${summary.benefits.length > 0 ? `
+      <div class="summary-block">
+        <p><strong>Why it's recommended:</strong></p>
+        <ul>
+          ${summary.benefits.map((b) => `<li>${b}</li>`).join("")}
+        </ul>
+      </div>
+      ` : ""}
+      
+      ${summary.tradeoffs.length > 0 || summary.alternativeScenario ? `
+      <div class="summary-block">
+        <p><strong>When another option may make more sense:</strong></p>
+        ${summary.tradeoffs.length > 0 ? `
+        <ul>
+          ${summary.tradeoffs.map((t) => `<li>${t.statement}${t.detail ? ` — ${t.detail}` : ""}</li>`).join("")}
+        </ul>
+        ` : ""}
+        ${summary.alternativeScenario ? `<p>${summary.alternativeScenario.advice}</p>` : ""}
+      </div>
+      ` : ""}
     </div>
     ` : ""}
-  </div>
-  ` : ""}
-  
-  <div class="section">
-    <p class="section-label">Annual Financial Snapshot (Year 1)</p>
-    <table>
-      <thead>
-        <tr>
-          <th></th>
-          ${scenarios.map((s) => `<th>${s.name}</th>`).join("")}
-        </tr>
-      </thead>
-      <tbody>
-        ${annualMetrics.map((m) => `
-        <tr>
-          <td>${m.label}</td>
-          ${m.values.map((v) => `<td>${v}</td>`).join("")}
-        </tr>
-        `).join("")}
-      </tbody>
-    </table>
-  </div>
-  
-  ${incomeContext ? `
-  <div class="section">
-    <p class="section-label">Income Context</p>
-    <p>At this payment level, housing costs represent approximately <strong>${incomeContext.percentOfIncome}%</strong> of gross monthly income, based on user-provided income data.</p>
-  </div>
-  ` : ""}
-  
-  ${rateSensitivity?.isValid ? `
-  <div class="section">
-    <p class="section-label">Rate Sensitivity (Illustrative)</p>
-    <p>${rateSensitivity.narrative}</p>
-    <p class="note">This is illustrative only. Rates shown are not predictions.</p>
-  </div>
-  ` : ""}
-  
-  ${materialChanges.length > 0 ? `
-  <div class="section">
-    <p class="section-label">What's Changed Since Last Time</p>
-    ${materialChanges.map((c) => `
-    <div style="margin-bottom: 8px;">
-      <p>
-        <span style="color: #666;">${c.scenarioName}:</span> 
-        ${c.fieldLabel} 
-        <span style="font-family: monospace;">${c.oldValue} → ${c.newValue}</span>
-      </p>
-      ${c.impact ? `<p class="note">${c.impact}</p>` : ""}
+    
+    <div class="section">
+      <h2 class="section-title">Annual Financial Snapshot (Year 1)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            ${scenarios.map((s) => `<th>${s.name}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          ${annualMetrics.map((m) => `
+          <tr>
+            <td>${m.label}</td>
+            ${m.values.map((v) => `<td>${v}</td>`).join("")}
+          </tr>
+          `).join("")}
+        </tbody>
+      </table>
     </div>
-    `).join("")}
-  </div>
-  ` : ""}
-  
-  <div class="footer">
-    <p>For informational purposes only.</p>
-    <p style="margin-top: 8px; font-size: 8pt; color: #aaa;">Powered by SettleRate</p>
+    
+    ${incomeContext ? `
+    <div class="section">
+      <h2 class="section-title">Income Context</h2>
+      <p>At this payment level, housing costs represent approximately <strong>${incomeContext.percentOfIncome}%</strong> of gross monthly income, based on user-provided income data.</p>
+    </div>
+    ` : ""}
+    
+    ${rateSensitivity?.isValid ? `
+    <div class="section">
+      <h2 class="section-title">Rate Sensitivity (Illustrative)</h2>
+      <p>${rateSensitivity.narrative}</p>
+      <p class="note">This is illustrative only. Rates shown are not predictions.</p>
+    </div>
+    ` : ""}
+    
+    ${materialChanges.length > 0 ? `
+    <div class="section">
+      <h2 class="section-title">Changes Since Last Saved</h2>
+      ${materialChanges.map((c) => `
+      <div style="margin-bottom: 8px;">
+        <p>
+          <span style="color: #666;">${c.scenarioName}:</span> 
+          ${c.fieldLabel} 
+          <span style="font-family: monospace;">${c.oldValue} → ${c.newValue}</span>
+        </p>
+        ${c.impact ? `<p class="note">${c.impact}</p>` : ""}
+      </div>
+      `).join("")}
+    </div>
+    ` : ""}
+    
+    <div class="footer">
+      <p class="footer-disclaimer">
+        This document is provided for analytical and planning purposes only and does not constitute financial or lending advice.
+      </p>
+      <p class="page-number">Page 1 of 1</p>
+    </div>
   </div>
 </body>
 </html>
@@ -417,130 +450,135 @@ export function generateAssumptionsSheetHTML(data: ExportData): string {
   <style>${commonStyles}</style>
 </head>
 <body>
-  <p class="brand">SettleRate</p>
-  
-  <div class="header">
-    <h1>Assumptions Sheet</h1>
-    <p class="meta">${dateStr}</p>
-  </div>
-  
-  <div class="section">
-    <p class="section-label">Scenarios</p>
-    <p class="scenarios-list">${scenarios.map((s) => s.name).join(", ")}</p>
-  </div>
-  
-  <div class="section">
-    <p class="section-label">Loan Parameters</p>
-    <table>
-      <thead>
-        <tr>
-          <th></th>
-          ${scenarios.map((s) => `<th>${s.name}</th>`).join("")}
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Type</td>
-          ${scenarios.map((s) => `<td style="text-transform: capitalize;">${s.inputs.mode}</td>`).join("")}
-        </tr>
-        <tr>
-          <td>Loan amount</td>
-          ${scenarios.map((s) => `<td>${formatCurrency(s.results.loanAmount)}</td>`).join("")}
-        </tr>
-        <tr>
-          <td>Interest rate</td>
-          ${scenarios.map((s) => `<td>${formatPercent(s.inputs.shared.interestRate)}</td>`).join("")}
-        </tr>
-        <tr>
-          <td>Loan term</td>
-          ${scenarios.map((s) => `<td>${s.inputs.shared.loanTerm} years</td>`).join("")}
-        </tr>
-        ${scenarios.some((s) => s.inputs.mode === "purchase") ? `
-        <tr>
-          <td>Down payment</td>
-          ${scenarios.map((s) => {
-            if (s.inputs.mode === "purchase") {
-              const amount = calculateDownPaymentAmount(
-                s.inputs.purchase.purchasePrice,
-                s.inputs.purchase.downPayment,
-                s.inputs.purchase.downPaymentType
-              );
-              return `<td>${formatCurrency(amount)}</td>`;
-            }
-            return `<td>—</td>`;
-          }).join("")}
-        </tr>
-        ` : ""}
-      </tbody>
-    </table>
-  </div>
-  
-  <div class="section">
-    <p class="section-label">Taxes & Insurance</p>
-    <table>
-      <thead>
-        <tr>
-          <th></th>
-          ${scenarios.map((s) => `<th>${s.name}</th>`).join("")}
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Included in calculation</td>
-          ${scenarios.map((s) => `<td>${s.inputs.shared.includeEstimates ? "Yes" : "No"}</td>`).join("")}
-        </tr>
-        <tr>
-          <td>Source</td>
-          ${scenarios.map((s) => {
-            if (!s.inputs.shared.includeEstimates) return `<td>—</td>`;
-            return `<td>${s.inputs.shared.usedZipEstimate ? "ZIP estimate" : "User-provided"}</td>`;
-          }).join("")}
-        </tr>
-        <tr>
-          <td>Monthly property tax</td>
-          ${scenarios.map((s) => `<td>${s.results.monthlyPropertyTax > 0 ? formatCurrency(s.results.monthlyPropertyTax) : "—"}</td>`).join("")}
-        </tr>
-        <tr>
-          <td>Monthly insurance</td>
-          ${scenarios.map((s) => `<td>${s.results.monthlyHomeInsurance > 0 ? formatCurrency(s.results.monthlyHomeInsurance) : "—"}</td>`).join("")}
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  
-  ${scenarios.some((s) => s.inputs.shared.extraMonthlyPayment > 0) ? `
-  <div class="section">
-    <p class="section-label">Extra Payments</p>
-    <table>
-      <thead>
-        <tr>
-          <th></th>
-          ${scenarios.map((s) => `<th>${s.name}</th>`).join("")}
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Extra monthly payment</td>
-          ${scenarios.map((s) => `<td>${s.inputs.shared.extraMonthlyPayment > 0 ? formatCurrency(s.inputs.shared.extraMonthlyPayment) : "—"}</td>`).join("")}
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  ` : ""}
-  
-  <div class="section">
-    <p class="section-label">Important Notes</p>
-    <ul style="color: #666; font-size: 10pt;">
-      <li>Rates shown are illustrative estimates and not lender quotes.</li>
-      <li>Final lender terms may differ based on credit profile, property type, and market conditions.</li>
-      <li>Calculations assume standard amortization with no prepayment penalties.</li>
-      ${scenarios.some((s) => s.inputs.shared.usedZipEstimate) ? `<li>Tax and insurance figures are ZIP-based estimates and may vary.</li>` : ""}
-    </ul>
-  </div>
-  
-  <div class="footer">
-    <p>This sheet is for reference only and does not constitute financial advice.</p>
-    <p style="margin-top: 8px; font-size: 8pt; color: #aaa;">Powered by SettleRate</p>
+  <div class="page">
+    <p class="brand">SettleRate</p>
+    
+    <div class="header">
+      <h1 class="doc-title">Assumptions Sheet</h1>
+      <p class="meta">Generated ${dateStr}</p>
+    </div>
+    
+    <div class="section">
+      <h2 class="section-title">Scenarios</h2>
+      <p class="scenarios-list">${scenarios.map((s) => s.name).join(", ")}</p>
+    </div>
+    
+    <div class="section">
+      <h2 class="section-title">Loan Parameters</h2>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            ${scenarios.map((s) => `<th>${s.name}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Type</td>
+            ${scenarios.map((s) => `<td style="text-transform: capitalize;">${s.inputs.mode}</td>`).join("")}
+          </tr>
+          <tr>
+            <td>Loan amount</td>
+            ${scenarios.map((s) => `<td>${formatCurrency(s.results.loanAmount)}</td>`).join("")}
+          </tr>
+          <tr>
+            <td>Interest rate (assumed)</td>
+            ${scenarios.map((s) => `<td>${formatPercent(s.inputs.shared.interestRate)}</td>`).join("")}
+          </tr>
+          <tr>
+            <td>Loan term</td>
+            ${scenarios.map((s) => `<td>${s.inputs.shared.loanTerm} years</td>`).join("")}
+          </tr>
+          ${scenarios.some((s) => s.inputs.mode === "purchase") ? `
+          <tr>
+            <td>Down payment</td>
+            ${scenarios.map((s) => {
+              if (s.inputs.mode === "purchase") {
+                const amount = calculateDownPaymentAmount(
+                  s.inputs.purchase.purchasePrice,
+                  s.inputs.purchase.downPayment,
+                  s.inputs.purchase.downPaymentType
+                );
+                return `<td>${formatCurrency(amount)}</td>`;
+              }
+              return `<td>—</td>`;
+            }).join("")}
+          </tr>
+          ` : ""}
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="section">
+      <h2 class="section-title">Estimated Taxes & Insurance</h2>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            ${scenarios.map((s) => `<th>${s.name}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Included in calculation</td>
+            ${scenarios.map((s) => `<td>${s.inputs.shared.includeEstimates ? "Yes" : "No"}</td>`).join("")}
+          </tr>
+          <tr>
+            <td>Source</td>
+            ${scenarios.map((s) => {
+              if (!s.inputs.shared.includeEstimates) return `<td>—</td>`;
+              return `<td>${s.inputs.shared.usedZipEstimate ? "ZIP estimate" : "User-provided"}</td>`;
+            }).join("")}
+          </tr>
+          <tr>
+            <td>Monthly property tax (estimated)</td>
+            ${scenarios.map((s) => `<td>${s.results.monthlyPropertyTax > 0 ? formatCurrency(s.results.monthlyPropertyTax) : "—"}</td>`).join("")}
+          </tr>
+          <tr>
+            <td>Monthly insurance (estimated)</td>
+            ${scenarios.map((s) => `<td>${s.results.monthlyHomeInsurance > 0 ? formatCurrency(s.results.monthlyHomeInsurance) : "—"}</td>`).join("")}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    ${scenarios.some((s) => s.inputs.shared.extraMonthlyPayment > 0) ? `
+    <div class="section">
+      <h2 class="section-title">Additional Principal Payments</h2>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            ${scenarios.map((s) => `<th>${s.name}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Extra monthly payment</td>
+            ${scenarios.map((s) => `<td>${s.inputs.shared.extraMonthlyPayment > 0 ? formatCurrency(s.inputs.shared.extraMonthlyPayment) : "—"}</td>`).join("")}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    ` : ""}
+    
+    <div class="section">
+      <h2 class="section-title">Assumptions & Notes</h2>
+      <ul style="color: #666; font-size: 10pt;">
+        <li>Interest rates shown are assumed rates and not lender quotes.</li>
+        <li>Final lender terms may differ based on credit profile, property type, and market conditions.</li>
+        <li>Calculations assume standard amortization with no prepayment penalties.</li>
+        ${scenarios.some((s) => s.inputs.shared.usedZipEstimate) ? `<li>Tax and insurance figures are ZIP-based estimates and may vary by property.</li>` : ""}
+        <li>This sheet is for reference only and does not constitute financial advice.</li>
+      </ul>
+    </div>
+    
+    <div class="footer">
+      <p class="footer-disclaimer">
+        This document is provided for analytical and planning purposes only and does not constitute financial or lending advice.
+      </p>
+      <p class="page-number">Page 1 of 1</p>
+    </div>
   </div>
 </body>
 </html>
