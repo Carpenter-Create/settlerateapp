@@ -11,20 +11,20 @@ import { toast } from "sonner";
 export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isAnonymous, prepareForSignIn } = useAuth();
 
   const [email, setEmail] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (non-anonymous)
   useEffect(() => {
-    if (!isLoading && user) {
+    if (!isLoading && user && !isAnonymous) {
       const from = (location.state as any)?.from?.pathname || "/app/calculator";
       navigate(from, { replace: true });
     }
-  }, [user, isLoading, navigate, location]);
+  }, [user, isLoading, isAnonymous, navigate, location]);
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +32,9 @@ export default function Auth() {
       toast.error("Please enter your email address");
       return;
     }
+
+    // Prepare for migration before sign-in
+    prepareForSignIn();
 
     setIsSending(true);
     try {
@@ -52,6 +55,9 @@ export default function Auth() {
   };
 
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
+    // Prepare for migration before sign-in
+    prepareForSignIn();
+    
     setOauthLoading(provider);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -117,6 +123,11 @@ export default function Auth() {
           <h1 className="mt-8 font-serif text-2xl font-normal tracking-tight">
             Sign in to SettleRate
           </h1>
+          {isAnonymous && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Your scenarios will be saved to your account.
+            </p>
+          )}
         </div>
 
         {/* Magic link form */}

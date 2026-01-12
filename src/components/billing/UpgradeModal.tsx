@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +28,8 @@ const features = [
 ];
 
 export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
-  const { user } = useAuth();
+  const { user, isAnonymous } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isAnnual, setIsAnnual] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,8 +41,13 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
   const savings = isAnnual ? Math.round((1 - annualPrice / (monthlyPrice * 12)) * 100) : 0;
 
   const handleSubscribe = async () => {
-    if (!user) {
-      toast.error("Please sign in first");
+    // Block anonymous users - require sign-in first
+    if (!user || isAnonymous) {
+      onOpenChange(false);
+      navigate("/auth", { state: { from: { pathname: "/app/calculator" } } });
+      toast.info("Sign in to subscribe", {
+        description: "Create an account to access Pro features.",
+      });
       return;
     }
 
@@ -85,6 +92,15 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Sign-in prompt for anonymous users */}
+          {isAnonymous && (
+            <div className="rounded-md border border-border bg-muted/50 p-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                Sign in to subscribe and keep your scenarios.
+              </p>
+            </div>
+          )}
+
           {/* Billing toggle */}
           <div className="flex items-center justify-center gap-3">
             <Label
@@ -144,6 +160,8 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Setting up...
               </>
+            ) : isAnonymous ? (
+              "Sign in to subscribe"
             ) : (
               "Subscribe"
             )}
