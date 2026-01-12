@@ -155,9 +155,9 @@ export default function Account() {
           <Button
             variant="outline"
             className="mt-6"
-            asChild
+            onClick={() => setShowUpgradeModal(true)}
           >
-            <Link to="/pricing">View pricing</Link>
+            View upgrade options
           </Button>
         </div>
       )}

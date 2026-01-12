@@ -108,14 +108,11 @@
     /* ═══════════════════════════════════════════════════════════════
        SPACING TOKENS (Locked)
        Tokenized, enforceable, future-proof.
-       Prevents visual drift across institutional surfaces.
        ═══════════════════════════════════════════════════════════════ */
     --space-section: 96px;
     --space-section-tight: 64px;
     --space-card-gap: 24px;
     --space-text-stack: 12px;
-    --space-hero-top: 120px;
-    --space-hero-bottom: 96px;
   }
 
   .dark {
@@ -235,32 +232,6 @@
 }
 
 @layer components {
-  /* ═══════════════════════════════════════════════════════════════
-     COLOR-BLOCKING SURFACE UTILITIES (Locked)
-     Use these for homepage section backgrounds.
-     No gradients. No drop shadows unless functionally necessary.
-     ═══════════════════════════════════════════════════════════════ */
-  
-  /* Surface / Primary - Core reading background (warm white) */
-  .surface-primary {
-    background-color: hsl(var(--surface-primary));
-  }
-  
-  /* Surface / Secondary - Structural section breaks */
-  .surface-secondary {
-    background-color: hsl(var(--surface-secondary));
-  }
-  
-  /* Surface / Tertiary - Emphasis panels / authority breaks */
-  .surface-tertiary {
-    background-color: hsl(var(--surface-tertiary));
-  }
-  
-  /* Border / Subtle - For dividers and cards */
-  .border-subtle {
-    border-color: hsl(var(--border-subtle) / 0.08);
-  }
-
   /* Card variants - minimal, institutional */
   .card-elevated {
     @apply bg-card rounded border border-border;

@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 import { Calculator, FolderOpen, GitCompare, User } from "lucide-react";
 
 const navigation = [
-  { name: "Calculator", href: "/", icon: Calculator },
-  { name: "Scenarios", href: "/scenarios", icon: FolderOpen },
+  { name: "Calculator", href: "/app/calculator", icon: Calculator },
+  { name: "Scenarios", href: "/app", icon: FolderOpen },
   { name: "Compare", href: "/compare", icon: GitCompare },
 ];
 
@@ -15,7 +15,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
       <div className="flex h-12 w-full max-w-full items-center justify-between px-4 sm:px-6 lg:container lg:px-8">
         {/* Logo - serif, institutional */}
-        <Link to="/" className="flex shrink-0 items-center gap-2 transition-opacity hover:opacity-70">
+        <Link to="/app" className="flex shrink-0 items-center gap-2 transition-opacity hover:opacity-70">
           <span className="font-serif text-lg tracking-tight">SettleRate</span>
         </Link>
 
@@ -44,16 +44,10 @@ export function Header() {
         {/* Right section */}
         <div className="flex shrink-0 items-center gap-3">
           <Link
-            to="/pricing"
-            className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
-          >
-            Pricing
-          </Link>
-          <Link
-            to="/settings"
+            to="/app/settings"
             className={cn(
               "flex h-8 w-8 items-center justify-center transition-colors",
-              location.pathname === "/settings"
+              location.pathname === "/app/settings"
                 ? "text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}

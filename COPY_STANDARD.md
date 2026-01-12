@@ -214,13 +214,6 @@ All UI states use neutral, factual language only.
 - No softening language
 - Third-person framing
 
-### Marketing Copy
-
-- Declarative
-- Minimal
-- No savings or fear claims
-- Focus on clarity and understanding
-
 ---
 
 ## One Governing Rule
@@ -246,44 +239,12 @@ If copy violates this, it does not ship.
 
 ## Implementation Review Checklist
 
-### Landing Screen
-
-- [ ] One affirmative "what we are" sentence visible
-- [ ] No "FinTech" language
-- [ ] CTA: "Begin analysis"
-- [ ] Supporting line from approved list only
-
 ### Calculator UI
 
 - [ ] "Scenario" used consistently
 - [ ] Percent-of-income language is neutral
 - [ ] Rate language says "illustrative"
 - [ ] No advice verbs ("should," "best")
-
-### /how-it-works
-
-- [ ] Matches canonical definition
-- [ ] Explains process, not outcomes
-- [ ] No sales framing
-- [ ] Institutional but readable tone
-
-### /advisors
-
-- [ ] Positions as "preparation, not advice"
-- [ ] Clear role separation
-- [ ] No competitive framing
-
-### /pricing
-
-- [ ] Access scope framing, not feature marketing
-- [ ] No urgency or savings language
-- [ ] "Begin analysis" and "Upgrade access" CTAs only
-
-### Footer
-
-- [ ] Single consolidated disclaimer
-- [ ] No marketing language
-- [ ] No duplicate regulatory copy
 
 ### Exports (PDF)
 
