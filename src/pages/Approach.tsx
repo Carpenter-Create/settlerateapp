@@ -131,7 +131,7 @@ export default function Approach() {
           {/* Closing Statement */}
           <div className="mt-16 border-t border-border/50 pt-12 text-center">
             <p className="font-serif text-lg leading-relaxed text-foreground">
-              SettleRate is designed to support clarity, not replace judgment.
+              SettleRate is analysis—not advice, not advocacy, and not a marketplace.
             </p>
             <p className="mt-6">
               <Link
