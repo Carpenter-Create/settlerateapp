@@ -1,73 +1,107 @@
-# Welcome to your Lovable project
+# SettleRate — Application Repository
 
-## Project info
+The authenticated application surface for SettleRate, a mortgage analysis and comparison tool.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Overview
 
-## How can I edit this code?
+This repository contains the core product experience for authenticated users. Marketing and public-facing pages are maintained in a separate repository.
 
-There are several ways of editing your application.
+## Technology Stack
 
-**Use Lovable**
+- **Frontend**: React, Vite, TypeScript, Tailwind CSS
+- **UI Components**: shadcn/ui
+- **Backend**: Supabase (database, auth, edge functions)
+- **Payments**: Stripe (subscription management)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Routing
 
-Changes made via Lovable will be committed automatically to this repo.
+| Route | Description |
+|-------|-------------|
+| `/` | Authentication (sign in) |
+| `/app/*` | Protected application pages |
+| `/admin/*` | Admin-only pages |
 
-**Use your preferred IDE**
+**Note**: This repository does not contain marketing pages (`/pricing`, `/terms`, etc.). Those belong in the marketing repository.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Project Structure
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+```
+src/
+├── components/       # Reusable UI components
+│   ├── ui/          # shadcn/ui components
+│   ├── calculator/  # Mortgage calculator components
+│   ├── layout/      # App layout components
+│   └── auth/        # Authentication components
+├── pages/           # Route pages
+│   ├── app/         # Protected app pages
+│   └── admin/       # Admin pages
+├── hooks/           # Custom React hooks
+├── contexts/        # React contexts
+├── lib/             # Utility functions
+└── integrations/    # External service integrations
 
-Follow these steps:
+docs/                # Project standards and documentation
+supabase/
+├── functions/       # Edge functions
+└── config.toml      # Supabase configuration
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Documentation
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Standards and guidelines are maintained in the `/docs` folder:
 
-# Step 3: Install the necessary dependencies.
-npm i
+- [APP_SCOPE.md](docs/APP_SCOPE.md) — Repository scope definition
+- [COPY_STANDARD.md](docs/COPY_STANDARD.md) — Copy and language guidelines
+- [UI_STANDARD.md](docs/UI_STANDARD.md) — UI and design system standards
+- [ROUTING_STANDARD.md](docs/ROUTING_STANDARD.md) — Route structure and guards
+- [SECURITY_MODEL.md](docs/SECURITY_MODEL.md) — Security and access control
+- [ROLES_AND_ENTITLEMENTS.md](docs/ROLES_AND_ENTITLEMENTS.md) — User roles and subscription tiers
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+## Environment
+
+### Supabase
+
+This project is connected to Supabase for:
+- User authentication (email, OAuth)
+- Database with Row-Level Security
+- Edge functions for server-side logic
+
+Project ID: `vpcxzbaxhpucvevnkalo`
+
+### Stripe
+
+Subscription management is handled via Stripe:
+- Checkout sessions created via edge function
+- Webhook events sync subscription status to Supabase
+- Customer portal for billing management
+
+**Important**: Stripe secret keys are stored as edge function secrets, never in client code.
+
+## Development
+
+This project uses [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) for development.
+
+### Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Security
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- All user data tables have Row-Level Security enabled
+- Admin access requires explicit role assignment
+- Entitlements are enforced server-side via Supabase
+- See [SECURITY_MODEL.md](docs/SECURITY_MODEL.md) for details
 
-**Use GitHub Codespaces**
+## Deployment
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click Share → Publish.
 
-## What technologies are used for this project?
+## License
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Proprietary. All rights reserved.
