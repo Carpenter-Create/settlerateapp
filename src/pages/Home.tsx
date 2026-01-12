@@ -4,24 +4,18 @@ import { cn } from "@/lib/utils";
 import { AnalyticalSurface } from "@/components/marketing/AnalyticalSurface";
 
 /**
- * Homepage - Canonical Institutional Framing (Locked)
+ * Homepage - StoryBrand Narrative Structure
  * 
- * Micro-Copy Rules:
- * - Buttons administer access, not persuade
- * - Captions frame analysis, not coach
- * - Footers set boundaries, not reassure
- * 
- * Color-Blocking System:
- * Structure without gloss. Authority without marketing theatrics.
+ * Narrative Flow:
+ * 1. Hero - User as decision-maker
+ * 2. Problem - Structural distortion in existing tools
+ * 3. Guide/Positioning - SettleRate outside incentive chain
+ * 4. Framework - Methodological structure
+ * 5. Proof - Scenario demonstration
+ * 6. Stakes - Why clarity matters
+ * 7. Scope - What we don't do
+ * 8. Final CTA - Begin analysis
  */
-
-// Canonical feature language - capability framing, not benefit framing
-const structureCapabilities = [
-  "Time-horizon analysis",
-  "Structural tradeoff evaluation",
-  "PMI exposure modeling",
-  "Refinance break-even analysis",
-];
 
 const frameworkPillars = [
   {
@@ -80,9 +74,9 @@ export default function Home() {
   return (
     <div className="w-full">
       {/* ═══════════════════════════════════════════════════════════════
-          SECTION 1 — HERO (Context + Gravity)
-          Surface: Primary (warm white)
-          Purpose: Calm authority. No interruption.
+          SECTION 1 — HERO
+          Surface: Primary
+          Purpose: Center user as decision-maker. Minimal, calm.
           ═══════════════════════════════════════════════════════════════ */}
       <section className="flex w-full min-h-[72vh] lg:min-h-[80vh] bg-surface-primary">
         <div className="mx-auto flex w-full max-w-[1320px] flex-col justify-center px-6 py-20 lg:px-12 lg:py-24 xl:px-16">
@@ -93,145 +87,74 @@ export default function Home() {
               modeled precisely.
             </h1>
             <p className="mx-auto mt-10 max-w-xl text-lg leading-relaxed text-foreground/70 sm:mt-12 sm:text-xl">
-              A neutral decision-support tool that helps buyers understand mortgage outcomes clearly—before engaging with listings, agents, or lenders.
+              A neutral decision-support tool that helps you understand mortgage outcomes clearly—before engaging with listings, agents, or lenders.
             </p>
             <div className="mt-14 sm:mt-16">
               <Button asChild size="lg" className="min-w-44 h-12 text-base">
                 <Link to="/auth">Begin analysis</Link>
               </Button>
             </div>
-
-            {/* Primary Definition */}
-            <p className="mx-auto mt-10 max-w-xl text-[15px] leading-relaxed text-foreground/65">
-              SettleRate is a mortgage analysis and comparison tool designed to help users understand the financial implications of different loan scenarios.
-            </p>
-            {/* Supporting Clarifier */}
-            <p className="mx-auto mt-3 max-w-md text-xs text-foreground/50">
-              It is designed to support informed decisions—not to sell or recommend loans.
+            <p className="mt-6 text-xs text-foreground/50">
+              Analytical access. No product promotion.
             </p>
           </div>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════
-          SECTION 2 — SCENARIO DEMONSTRATION BLOCK
+          SECTION 2 — PROBLEM
           Surface: Secondary
-          Purpose: "Here is proof." Visual transition into analysis.
-          ═══════════════════════════════════════════════════════════════ */}
-      <Section surface="secondary" className="py-16 lg:py-20">
-        <div className="mx-auto max-w-4xl">
-          {/* Caption - Institutional framing */}
-          <p className="mb-4 text-center text-xs text-foreground/50">
-            Example of normalized scenario modeling using transparent assumptions.
-          </p>
-          {/* Card inset using Surface Primary with thin border */}
-          <div className="rounded-md border border-foreground/[0.08] bg-surface-primary">
-            <AnalyticalSurface />
-          </div>
-          {/* Secondary caption */}
-          <p className="mt-3 text-center text-[11px] text-foreground/40">
-            Illustrative outputs for comparative evaluation only.
-          </p>
-        </div>
-      </Section>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          SECTION 3 — FRAMEWORK / PRINCIPLES
-          Surface: Primary (white)
-          Purpose: Intellectual positioning. Reads like a memo.
-          ═══════════════════════════════════════════════════════════════ */}
-      <Section surface="primary" className="py-20 lg:py-28">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-center font-serif text-xl font-medium tracking-[-0.01em] text-foreground sm:text-2xl">
-            Most borrowers compare rates. SettleRate compares structures.
-          </p>
-          
-          <ul className="mt-12 grid gap-4 sm:grid-cols-2 sm:gap-6">
-            {structureCapabilities.map((item) => (
-              <li
-                key={item}
-                className="flex items-center gap-4 text-[15px] text-foreground/65"
-              >
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/25" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </Section>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          SECTION 4 — THE PROBLEM WITH MORTGAGE CALCULATORS
-          Surface: Secondary
-          Purpose: Justify existence intellectually.
+          Purpose: Articulate structural distortion. Justify existence.
           ═══════════════════════════════════════════════════════════════ */}
       <Section surface="secondary" className="py-20 lg:py-28">
         <div className="mx-auto max-w-3xl">
           <h2 className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-3xl lg:text-4xl">
-            The problem with mortgage calculators
+            Most mortgage tools are built to convert—not to clarify.
           </h2>
           <div className="mt-8 space-y-6 text-[15px] leading-[1.75] text-foreground/65 sm:text-base sm:leading-[1.8]">
             <p>
-              Most mortgage calculators exist within ecosystems designed to generate leads. 
-              Their purpose is conversion, not clarity. Default inputs are often optimized 
-              to produce attractive monthly payments, obscuring the long-term cost of debt 
-              and the assumptions that drive those figures.
+              Most mortgage calculators exist inside ecosystems designed to generate leads. 
+              Their purpose is conversion, not understanding. Default inputs often minimize 
+              visible cost, obscure long-term tradeoffs, and rely on assumptions that are 
+              rarely surfaced or explained.
             </p>
             <p>
-              This creates a structural distortion: the tools meant to inform borrowers 
-              are built by parties with a financial interest in the transaction. Tax and 
-              insurance estimates are frequently understated. Points and fees are minimized 
-              in default views. Rate assumptions favor lender inventory.
+              This creates a structural distortion: tools meant to inform borrowers are 
+              built by parties with a financial interest in the transaction.
             </p>
-            <p>
-              SettleRate exists outside this incentive chain. We standardize assumptions 
-              using conservative, documented inputs—property tax rates from county assessors, 
-              insurance estimates from regional averages, and amortization schedules that 
-              surface total interest paid over the loan term. Every calculation is reproducible 
-              and exportable for professional review.
-            </p>
-          </div>
-
-          {/* Constraints Subsection */}
-          <div className="mt-12 border-t border-foreground/[0.08] pt-10">
-            <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/50">
-              Scope
-            </p>
-            <h3 className="mt-2 text-sm font-medium text-foreground">
-              What SettleRate does not do
-            </h3>
-            <ul className="mt-6 space-y-4">
-              {constraints.map((constraint, index) => (
-                <li
-                  key={index}
-                  className="flex items-start gap-4 text-[15px] leading-relaxed text-foreground/65"
-                >
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/25" />
-                  <span>{constraint}</span>
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
       </Section>
 
       {/* ═══════════════════════════════════════════════════════════════
-          SECTION 5 — AUTHORITY BREAK (Mid-Page Anchor)
+          SECTION 3 — GUIDE / POSITIONING
           Surface: Tertiary
-          Purpose: Gravitas + pacing reset. Statement, not pitch.
+          Purpose: Single canonical statement of neutrality.
           ═══════════════════════════════════════════════════════════════ */}
       <Section surface="tertiary" className="py-20 lg:py-28">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.25] text-foreground sm:text-3xl">
-            Built to reduce uncertainty—not sell loans.
-          </p>
+        <div className="mx-auto max-w-3xl">
+          <h2 className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-3xl lg:text-4xl">
+            SettleRate exists outside the incentive chain.
+          </h2>
+          <div className="mt-8 space-y-6 text-[15px] leading-[1.75] text-foreground/65 sm:text-base sm:leading-[1.8]">
+            <p>
+              SettleRate is a neutral modeling environment designed to support informed 
+              decision-making—not to sell or recommend loans.
+            </p>
+            <p>
+              Assumptions are standardized using documented, conservative inputs, and 
+              outcomes typically hidden—total interest paid, capital requirements, and 
+              time-horizon tradeoffs—are surfaced explicitly. Every calculation is 
+              reproducible and exportable for professional review.
+            </p>
+          </div>
         </div>
       </Section>
 
       {/* ═══════════════════════════════════════════════════════════════
-          SECTION 6 — THE SETTLERATE FRAMEWORK
+          SECTION 4 — FRAMEWORK
           Surface: Primary
-          Purpose: Institutionalize the product. Reads like methodology.
+          Purpose: Methodological structure, not feature cards.
           ═══════════════════════════════════════════════════════════════ */}
       <Section surface="primary" className="py-20 lg:py-28">
         <div className="mb-12 lg:mb-16">
@@ -265,7 +188,83 @@ export default function Home() {
       </Section>
 
       {/* ═══════════════════════════════════════════════════════════════
-          SECTION 7 — FINAL CTA
+          SECTION 5 — PROOF / COMPARISON
+          Surface: Secondary
+          Purpose: Demonstrate normalized scenario modeling.
+          ═══════════════════════════════════════════════════════════════ */}
+      <Section surface="secondary" className="py-20 lg:py-28">
+        <div className="mx-auto max-w-3xl mb-10">
+          <p className="text-center font-serif text-xl font-medium tracking-[-0.01em] text-foreground sm:text-2xl">
+            Most borrowers compare rates. SettleRate compares structures.
+          </p>
+          <p className="mt-6 text-center text-[15px] leading-relaxed text-foreground/60">
+            Below is an example of normalized scenario modeling using transparent assumptions.
+          </p>
+        </div>
+        <div className="mx-auto max-w-4xl">
+          {/* Card inset using Surface Primary with thin border */}
+          <div className="rounded-md border border-foreground/[0.08] bg-surface-primary">
+            <AnalyticalSurface />
+          </div>
+          {/* Secondary caption */}
+          <p className="mt-3 text-center text-[11px] text-foreground/40">
+            Illustrative outputs for comparative evaluation only.
+          </p>
+        </div>
+      </Section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 6 — STAKES
+          Surface: Tertiary
+          Purpose: Why clarity matters. Transition to decision.
+          ═══════════════════════════════════════════════════════════════ */}
+      <Section surface="tertiary" className="py-20 lg:py-28">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-3xl">
+            Understanding outcomes changes the conversation.
+          </h2>
+          <div className="mt-8 space-y-6 text-[15px] leading-[1.75] text-foreground/65 sm:text-base sm:leading-[1.8]">
+            <p>
+              When assumptions are consistent and outcomes are visible, decisions improve. 
+              Conversations with advisors and lenders start from clarity rather than confusion.
+            </p>
+            <p>
+              Without that clarity, borrowers often optimize for monthly payment alone—discovering 
+              long-term cost or structural constraints only after committing.
+            </p>
+          </div>
+        </div>
+      </Section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 7 — SCOPE
+          Surface: Primary
+          Purpose: What we don't do. Appears only once.
+          ═══════════════════════════════════════════════════════════════ */}
+      <Section surface="primary" className="py-20 lg:py-28">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/50">
+            Scope
+          </p>
+          <h2 className="mt-2 font-serif text-xl font-medium tracking-[-0.01em] text-foreground sm:text-2xl">
+            What SettleRate does not do
+          </h2>
+          <ul className="mt-8 space-y-4">
+            {constraints.map((constraint, index) => (
+              <li
+                key={index}
+                className="flex items-start gap-4 text-[15px] leading-relaxed text-foreground/65"
+              >
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/25" />
+                <span>{constraint}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 8 — FINAL CTA
           Surface: Secondary
           Purpose: Decision moment. Minimal copy. One CTA.
           ═══════════════════════════════════════════════════════════════ */}
@@ -277,13 +276,8 @@ export default function Home() {
           <Button asChild size="lg" className="mt-8 min-w-44 h-12 text-base">
             <Link to="/auth">Begin analysis</Link>
           </Button>
-
           <p className="mt-6 text-xs text-foreground/50">
             Analytical access. No product promotion.
-          </p>
-
-          <p className="mx-auto mt-12 max-w-lg text-[11px] leading-relaxed text-foreground/40">
-            SettleRate provides analytical modeling only and does not originate, broker, or recommend mortgage products.
           </p>
         </div>
       </Section>
