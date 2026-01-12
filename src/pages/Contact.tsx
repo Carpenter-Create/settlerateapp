@@ -16,6 +16,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
+/**
+ * Contact Page - Institutional, Factual
+ * No emotional language in toasts or validation.
+ */
+
 const topics = [
   { value: "general", label: "General inquiry" },
   { value: "support", label: "Technical support" },
@@ -40,18 +45,18 @@ export default function Contact() {
     e.preventDefault();
 
     if (honeypot) {
-      toast.error("Submission blocked");
+      toast("Submission blocked.");
       return;
     }
 
     const now = Date.now();
     if (now - lastSubmitTime < 5000) {
-      toast.error("Please wait a moment before submitting again");
+      toast("Request rate limited. Wait a moment before resubmitting.");
       return;
     }
 
     if (!fullName.trim() || !email.trim() || !topic || !message.trim()) {
-      toast.error("Please fill in all fields");
+      toast("Required fields missing.");
       return;
     }
 
@@ -71,7 +76,7 @@ export default function Contact() {
 
       setIsSubmitted(true);
     } catch (error: any) {
-      toast.error("Failed to send message", { description: error.message });
+      toast("Message not sent. Review inputs and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -84,7 +89,7 @@ export default function Contact() {
           Message received
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-          Thank you. Your message has been received.
+          Your inquiry has been submitted.
         </p>
         <Link
           to="/"
@@ -184,10 +189,10 @@ export default function Contact() {
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Sending
+              Submitting…
             </>
           ) : (
-            "Send message"
+            "Submit"
           )}
         </Button>
       </form>

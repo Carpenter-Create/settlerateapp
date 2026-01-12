@@ -18,6 +18,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+/**
+ * Settings Page - Institutional, Factual
+ * No emotional or consumer language.
+ */
+
 export default function AppSettings() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -44,7 +49,7 @@ export default function AppSettings() {
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmation !== "delete my account") {
-      toast.error("Please type the confirmation text exactly");
+      toast("Confirmation text required.");
       return;
     }
 
@@ -53,12 +58,10 @@ export default function AppSettings() {
     try {
       // Sign out and notify user to contact support for account deletion
       await signOut();
-      toast.success("Signed out. Please contact support to complete account deletion.");
-
-      toast.success("Account deleted");
+      toast("Signed out. Contact support to complete account deletion.");
       navigate("/");
     } catch (error: any) {
-      toast.error("Failed to delete account", { description: error.message });
+      toast("Delete unsuccessful. Try again.");
     } finally {
       setIsDeleting(false);
     }
@@ -69,7 +72,7 @@ export default function AppSettings() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
         <p className="mt-1 text-muted-foreground">
-          Manage your profile and account
+          Manage profile and account
         </p>
       </div>
 
@@ -83,7 +86,7 @@ export default function AppSettings() {
             <div>
               <h3 className="font-medium">Profile</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Your personal information
+                Account information
               </p>
             </div>
 
@@ -106,7 +109,7 @@ export default function AppSettings() {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Enter your name"
+                  placeholder="Enter name"
                 />
               </div>
 
@@ -117,10 +120,10 @@ export default function AppSettings() {
                 {updateProfile.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
+                    Updating…
                   </>
                 ) : (
-                  "Save changes"
+                  "Update profile"
                 )}
               </Button>
             </div>
@@ -136,9 +139,9 @@ export default function AppSettings() {
           </div>
           <div className="flex-1 space-y-4">
             <div>
-              <h3 className="font-medium text-destructive">Delete Account</h3>
+              <h3 className="font-medium text-destructive">Remove Account</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Permanently delete your account and all associated data. This action cannot be undone.
+                Permanently remove account and all associated data. This action cannot be undone.
               </p>
             </div>
 
@@ -148,7 +151,7 @@ export default function AppSettings() {
                 <div>
                   <p className="font-medium text-warning-foreground">Active subscription</p>
                   <p className="mt-0.5 text-muted-foreground">
-                    Please cancel your subscription before deleting your account.
+                    Cancel subscription before removing account.
                   </p>
                   <Button variant="link" asChild className="mt-1 h-auto p-0">
                     <a
@@ -169,7 +172,7 @@ export default function AppSettings() {
               onClick={() => setShowDeleteDialog(true)}
               disabled={userIsPro}
             >
-              Delete my account
+              Remove account
             </Button>
           </div>
         </div>
@@ -179,9 +182,9 @@ export default function AppSettings() {
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete your account?</DialogTitle>
+            <DialogTitle>Remove account</DialogTitle>
             <DialogDescription>
-              This will permanently delete your account, scenarios, and all associated data.
+              This will permanently remove your account, scenarios, and all associated data.
               This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
@@ -216,10 +219,10 @@ export default function AppSettings() {
               {isDeleting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
+                  Removing…
                 </>
               ) : (
-                "Delete account"
+                "Remove"
               )}
             </Button>
           </DialogFooter>

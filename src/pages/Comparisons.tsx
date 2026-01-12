@@ -70,7 +70,7 @@ export default function Comparisons() {
   const handleSaveRename = () => {
     if (editingId && editingName.trim()) {
       updateComparison(editingId, { name: editingName.trim() });
-      toast.success("Comparison renamed");
+      toast("Comparison renamed.");
     }
     setEditingId(null);
     setEditingName("");

@@ -8,6 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
+/**
+ * Auth Page - Institutional, Factual
+ * No emotional or consumer language.
+ */
+
 export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,7 +34,7 @@ export default function Auth() {
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
-      toast("Please enter your email address.");
+      toast("Email address required.");
       return;
     }
 
@@ -48,7 +53,7 @@ export default function Auth() {
       if (error) throw error;
       setEmailSent(true);
     } catch (error: any) {
-      toast("Unable to send sign-in link. Please try again.");
+      toast("Unable to send sign-in link. Try again.");
     } finally {
       setIsSending(false);
     }
@@ -69,7 +74,7 @@ export default function Auth() {
 
       if (error) throw error;
     } catch (error: any) {
-      toast("Unable to sign in. Please try again.");
+      toast("Sign-in unsuccessful. Try again.");
       setOauthLoading(null);
     }
   };
@@ -87,11 +92,14 @@ export default function Auth() {
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="w-full max-w-sm text-center">
           <h1 className="font-serif text-2xl font-normal tracking-tight">
-            Check your email
+            Link sent
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-            We sent a sign-in link to{" "}
+            If the email address is valid, a sign-in link has been sent to{" "}
             <span className="text-foreground">{email}</span>
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground/70">
+            Links expire for security.
           </p>
           <button
             onClick={() => {
@@ -119,11 +127,14 @@ export default function Auth() {
             SettleRate
           </Link>
           <h1 className="mt-space-6 font-serif text-2xl font-normal tracking-tight">
-            Sign in to SettleRate
+            Sign in
           </h1>
+          <p className="mt-space-2 text-sm text-muted-foreground">
+            Receive a secure sign-in link via email.
+          </p>
           {isAnonymous && (
-            <p className="mt-space-2 text-sm text-muted-foreground">
-              Your scenarios will be saved to your account.
+            <p className="mt-space-2 text-xs text-muted-foreground/70">
+              Scenarios will be saved to your account.
             </p>
           )}
         </div>
@@ -153,7 +164,7 @@ export default function Auth() {
             {isSending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              "Continue with email"
+              "Send link"
             )}
           </Button>
         </form>
@@ -201,7 +212,7 @@ export default function Auth() {
                 />
               </svg>
             )}
-            Continue with Google
+            Sign in with Google
           </Button>
 
           <Button
@@ -222,7 +233,7 @@ export default function Auth() {
                 <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
               </svg>
             )}
-            Continue with Apple
+            Sign in with Apple
           </Button>
 
           {/* Dev mode note for Apple */}
