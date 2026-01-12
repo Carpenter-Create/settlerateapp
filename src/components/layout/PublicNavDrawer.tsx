@@ -10,6 +10,7 @@ interface PublicNavDrawerProps {
 
 const menuItems = [
   { name: "Pricing", href: "/pricing" },
+  { name: "For Advisors", href: "/advisors" },
   { name: "Contact", href: "/contact" },
   { name: "Privacy", href: "/privacy" },
   { name: "Terms", href: "/terms" },

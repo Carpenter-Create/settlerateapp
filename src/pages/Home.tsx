@@ -13,9 +13,9 @@ const capabilities = [
       "Evaluate multiple loan structures side by side with consistent inputs.",
   },
   {
-    title: "Reports lenders can actually use",
+    title: "Reports suitable for professional review",
     description:
-      "Export clean, professional summaries designed for real underwriting conversations.",
+      "Export clean, structured summaries designed for underwriting conversations and documentation.",
   },
   {
     title: "Cost implications, surfaced clearly",

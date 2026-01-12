@@ -13,6 +13,8 @@ import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import Advisors from "./pages/Advisors";
+import Investors from "./pages/Investors";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +39,8 @@ const App = () => (
             <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
             <Route path="/privacy" element={<PublicLayout><Privacy /></PublicLayout>} />
             <Route path="/terms" element={<PublicLayout><Terms /></PublicLayout>} />
+            <Route path="/advisors" element={<PublicLayout><Advisors /></PublicLayout>} />
+            <Route path="/investors" element={<PublicLayout><Investors /></PublicLayout>} />
             <Route path="/auth" element={<Auth />} />
 
             {/* Protected app routes */}
