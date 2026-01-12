@@ -31,11 +31,12 @@ export default function Advisors() {
       </section>
 
       {/* Opening Context */}
-      <section>
+      <section className="space-y-4">
         <p className="text-base leading-relaxed text-muted-foreground">
-          SettleRate provides structured, assumption-based mortgage scenario
-          modeling designed to support professional review, comparison, and
-          documentation.
+          SettleRate provides a neutral framework for modeling mortgage outcomes under consistent assumptions, designed to support professional review, comparison, and documentation.
+        </p>
+        <p className="text-base leading-relaxed text-muted-foreground">
+          It is intended to complement—not replace—lenders, advisors, and underwriting processes by improving clarity and expectation alignment early in the decision process.
         </p>
       </section>
 
