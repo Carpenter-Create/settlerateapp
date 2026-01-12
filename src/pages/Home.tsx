@@ -121,6 +121,67 @@ export default function Home() {
               </Link>
             </div>
           </div>
+
+          {/* Analytical Preview Panel */}
+          <div className="mx-auto mt-16 w-full max-w-4xl lg:mt-20">
+            <div className="rounded-lg border border-foreground/[0.06] bg-[hsl(40_15%_94%)] px-6 py-8 sm:px-10 sm:py-10 lg:px-12 lg:py-12">
+              {/* Panel Header */}
+              <div className="mb-6 flex items-baseline justify-between border-b border-foreground/[0.08] pb-4">
+                <span className="text-xs font-medium uppercase tracking-[0.1em] text-foreground/40">
+                  Scenario Comparison
+                </span>
+                <span className="text-[11px] text-foreground/30">
+                  Sample output
+                </span>
+              </div>
+
+              {/* Comparison Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr>
+                      <th className="pb-4 text-left text-sm font-normal text-foreground/40"></th>
+                      <th className="pb-4 text-right text-sm font-medium text-foreground/70">
+                        30-yr Fixed
+                      </th>
+                      <th className="pb-4 text-right text-sm font-medium text-foreground/70">
+                        15-yr Fixed
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="font-mono text-sm tabular-nums">
+                    <tr className="border-t border-foreground/[0.06]">
+                      <td className="py-3 text-left text-foreground/50">Monthly Payment</td>
+                      <td className="py-3 text-right text-foreground/70">$2,418</td>
+                      <td className="py-3 text-right text-foreground/70">$3,212</td>
+                    </tr>
+                    <tr className="border-t border-foreground/[0.06]">
+                      <td className="py-3 text-left text-foreground/50">Total Interest</td>
+                      <td className="py-3 text-right text-foreground/70">$381,204</td>
+                      <td className="py-3 text-right text-foreground/70">$192,110</td>
+                    </tr>
+                    <tr className="border-t border-foreground/[0.06]">
+                      <td className="py-3 text-left text-foreground/50">Loan Term</td>
+                      <td className="py-3 text-right text-foreground/70">360 mo</td>
+                      <td className="py-3 text-right text-foreground/70">180 mo</td>
+                    </tr>
+                    <tr className="border-t border-foreground/[0.06]">
+                      <td className="py-3 text-left text-foreground/50">Interest Saved</td>
+                      <td className="py-3 text-right text-foreground/40">—</td>
+                      <td className="py-3 text-right text-foreground/70">$189,094</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Footer Note */}
+              <div className="mt-6 border-t border-foreground/[0.06] pt-4">
+                <p className="text-[11px] leading-relaxed text-foreground/35">
+                  Based on $450,000 loan amount at 6.75% APR. Estimates only—actual terms vary.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
