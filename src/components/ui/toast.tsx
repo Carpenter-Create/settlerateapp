@@ -25,7 +25,8 @@ ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 const toastVariants = cva(
   // Institutional toast: generous padding, soft shadow, calm presence
   // Uses flex layout - close button will be placed in content flow, not absolute
-  "group pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-lg border p-4 shadow-sm transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+  // p-4 = 16px padding on all sides, ensuring close button is well-inset
+  "group pointer-events-auto relative flex w-full items-start gap-4 overflow-hidden rounded-lg border p-4 shadow-sm transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
   {
     variants: {
       variant: {
@@ -83,9 +84,9 @@ const ToastClose = React.forwardRef<
     className={cn(
       // Inline layout: shrink-0 to maintain size, no absolute positioning
       "shrink-0",
-      // Hit target: 24x24px, centered content
-      "flex h-6 w-6 items-center justify-center",
-      // Visual: fully transparent bg, subtle muted icon (~75% opacity)
+      // Hit target: 32x32px for comfortable tap target (mobile-friendly)
+      "flex h-8 w-8 items-center justify-center",
+      // Visual: fully transparent bg, subtle muted icon (~40% opacity)
       "bg-transparent text-foreground/40",
       // Interaction: cursor change + subtle opacity increase on hover (NO background)
       "cursor-pointer transition-colors duration-100",
@@ -99,7 +100,7 @@ const ToastClose = React.forwardRef<
     toast-close=""
     {...props}
   >
-    <X className="h-3.5 w-3.5" strokeWidth={1.5} />
+    <X className="h-4 w-4" strokeWidth={1.5} />
   </ToastPrimitives.Close>
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;

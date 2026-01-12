@@ -11,7 +11,7 @@
  * - Never blank, always recoverable
  */
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { GitCompare, Lock, Trash2, Eye, MoreHorizontal, AlertTriangle, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
-import { InlineEditableName } from "@/components/ui/InlineEditableName";
+import { RenameComparisonDialog } from "@/components/comparisons/RenameComparisonDialog";
 import { useScenarios } from "@/hooks/useScenarios";
 import { useComparisons, SavedComparison } from "@/hooks/useComparisons";
 import { useCapabilities } from "@/hooks/useCapabilities";
@@ -357,7 +357,7 @@ interface MobileComparisonCardProps {
   scenarioB: ScenarioData | undefined;
   onView: () => void;
   onDelete: () => void;
-  onRename: (newName: string) => Promise<void>;
+  onRename: () => void;
   isDeleting: boolean;
 }
 
@@ -376,11 +376,12 @@ function MobileComparisonCard({
     <SwipeToDelete onDelete={onDelete} disabled={isDeleting}>
       <MobileCard onClick={onView} showChevron>
         <MobileCardLabel>
-          <InlineEditableName
-            value={comparison.name}
-            onSave={onRename}
-            className="font-medium"
-          />
+          <span 
+            className="font-medium truncate cursor-pointer hover:text-muted-foreground transition-colors"
+            onClick={(e) => { e.stopPropagation(); onRename(); }}
+          >
+            {comparison.name}
+          </span>
         </MobileCardLabel>
         <MobileCardMetric>
           {hasInvalidScenarios ? (
@@ -414,17 +415,25 @@ export default function ComparisonsIndex() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [comparisonToDelete, setComparisonToDelete] = useState<SavedComparison | null>(null);
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [comparisonToRename, setComparisonToRename] = useState<SavedComparison | null>(null);
 
-  // Rename handler (shared between list and detail)
-  const handleRename = useCallback(async (comparisonId: string, newName: string) => {
+  // Open rename dialog
+  const openRenameDialog = (comparison: SavedComparison) => {
+    setComparisonToRename(comparison);
+    setRenameDialogOpen(true);
+  };
+
+  // Rename handler
+  const handleRename = useCallback(async (newName: string) => {
+    if (!comparisonToRename) return;
     try {
-      await renameComparison({ id: comparisonId, name: newName });
-      // Silent save - no success toast per spec
+      await renameComparison({ id: comparisonToRename.id, name: newName });
+      toast.success("Comparison renamed.");
     } catch (error) {
-      toast.error("Unable to save name");
-      throw error; // Re-throw so InlineEditableName knows to revert
+      throw error; // Let dialog handle the error
     }
-  }, [renameComparison]);
+  }, [comparisonToRename, renameComparison]);
 
   // Sort scenarios by updated_at desc
   const sortedScenarios = [...scenarios].sort(
@@ -580,7 +589,7 @@ export default function ComparisonsIndex() {
                   scenarioB={scenarioB}
                   onView={() => navigate(`/app/comparisons/${comparison.id}`)}
                   onDelete={() => handleDeleteClick(comparison)}
-                  onRename={(newName) => handleRename(comparison.id, newName)}
+                  onRename={() => openRenameDialog(comparison)}
                   isDeleting={isDeleting}
                 />
               );
@@ -620,12 +629,14 @@ export default function ComparisonsIndex() {
                     >
                       <TableCell 
                         className="py-4 px-4 text-sm font-medium text-foreground"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); openRenameDialog(comparison); }}
                       >
-                        <InlineEditableName
-                          value={comparison.name}
-                          onSave={(newName) => handleRename(comparison.id, newName)}
-                        />
+                        <span 
+                          className="cursor-pointer hover:text-muted-foreground transition-colors truncate block"
+                          title="Click to rename"
+                        >
+                          {comparison.name}
+                        </span>
                       </TableCell>
                       <TableCell className="py-4 px-4 text-sm text-muted-foreground">
                         {hasInvalidScenarios ? (
@@ -662,9 +673,7 @@ export default function ComparisonsIndex() {
                               <DropdownMenuItem 
                                 onClick={(e) => { 
                                   e.stopPropagation(); 
-                                  // Focus the inline edit by clicking the name cell
-                                  const nameCell = e.currentTarget.closest('tr')?.querySelector('[data-inline-edit]') as HTMLElement;
-                                  nameCell?.click();
+                                  openRenameDialog(comparison);
                                 }}
                               >
                                 <Pencil className="mr-2 h-4 w-4" />
@@ -734,6 +743,14 @@ export default function ComparisonsIndex() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Rename dialog */}
+      <RenameComparisonDialog
+        open={renameDialogOpen}
+        onOpenChange={setRenameDialogOpen}
+        currentName={comparisonToRename?.name || ""}
+        onSave={handleRename}
+      />
     </div>
   );
 }
