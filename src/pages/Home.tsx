@@ -26,22 +26,22 @@ const capabilities = [
 
 export default function Home() {
   return (
-    <div className="space-y-32">
+    <div className="space-y-24 sm:space-y-32">
       {/* Hero */}
-      <section className="pt-space-6 text-center sm:pt-space-7 lg:pt-space-8">
+      <section className="pt-space-8 text-center sm:pt-space-7 lg:pt-space-8">
         <h1 className="mx-auto max-w-3xl font-serif text-3xl font-normal tracking-tight sm:text-4xl lg:text-5xl lg:leading-tight">
           Mortgage decisions, modeled precisely.
         </h1>
-        <p className="mx-auto mt-space-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:mt-space-7 sm:text-lg sm:leading-relaxed">
+        <p className="mx-auto mt-space-7 max-w-2xl text-base leading-relaxed text-muted-foreground sm:mt-space-7 sm:text-lg sm:leading-relaxed">
           A neutral framework for understanding mortgage outcomes.
         </p>
-        <div className="mt-space-7 flex flex-col items-center justify-center gap-space-4 sm:mt-space-8 sm:flex-row">
+        <div className="mt-space-8 flex flex-col items-center justify-center gap-space-5 sm:mt-space-8 sm:flex-row sm:gap-space-4">
           <Button asChild size="lg" className="min-w-40">
             <Link to="/auth">Start free</Link>
           </Button>
           <Link
             to="/pricing"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="mt-space-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:mt-0"
           >
             Pricing
           </Link>
