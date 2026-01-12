@@ -13,7 +13,7 @@ import { toast } from "sonner";
 export default function Account() {
   const { user } = useAuth();
   const { isPro, subscriptionEnd, refresh, isLoading } = useSubscription();
-  const { isAdmin, isLoading: capabilitiesLoading } = useCapabilities();
+  const { isAdmin, realIsAdmin, isSimulating, isLoading: capabilitiesLoading } = useCapabilities();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [billingError, setBillingError] = useState<"NO_STRIPE_CUSTOMER" | null>(null);
@@ -40,8 +40,8 @@ export default function Account() {
   };
 
   const handleManageBilling = async () => {
-    // Never attempt billing portal for admins
-    if (isAdmin) return;
+    // Never attempt billing portal for real admins (even when simulating)
+    if (realIsAdmin) return;
 
     setBillingError(null);
     setPortalLoading(true);
@@ -85,7 +85,7 @@ export default function Account() {
     }
   };
 
-  // Admin-specific view - no billing UI at all
+  // Admin view (not simulating) - no billing UI
   if (isAdmin && !capabilitiesLoading) {
     return (
       <div className="mx-auto max-w-2xl space-y-8">
@@ -133,7 +133,7 @@ export default function Account() {
     );
   }
 
-  // Standard user view with billing UI
+  // Standard user view (or admin simulating as user) - full billing UI
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div>
@@ -142,6 +142,13 @@ export default function Account() {
           Subscription and billing management
         </p>
       </div>
+
+      {/* Simulation indicator */}
+      {isSimulating && (
+        <div className="rounded-sm border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+          Viewing as standard user. Billing UI is simulated.
+        </div>
+      )}
 
       {/* Plan status */}
       <div className="border border-border rounded-sm p-6">
@@ -163,7 +170,7 @@ export default function Account() {
                   : "Core mortgage modeling. Upgrade for extended features."}
               </p>
 
-              {isPro && subscriptionEnd && (
+              {isPro && subscriptionEnd && !isSimulating && (
                 <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   Renews on {formatDate(subscriptionEnd)}
@@ -195,17 +202,18 @@ export default function Account() {
                 variant="outline" 
                 className="rounded-sm"
                 onClick={handleManageBilling}
-                disabled={portalLoading}
+                disabled={portalLoading || isSimulating}
               >
                 <ExternalLink className="mr-2 h-4 w-4" />
-                {portalLoading ? "Opening…" : "Manage billing"}
+                {isSimulating ? "Manage billing (simulated)" : portalLoading ? "Opening…" : "Manage billing"}
               </Button>
             ) : (
               <Button 
                 className="rounded-sm"
                 onClick={() => setShowUpgradeModal(true)}
+                disabled={isSimulating}
               >
-                Upgrade to Professional Access
+                {isSimulating ? "Upgrade (simulated)" : "Upgrade to Professional Access"}
               </Button>
             )}
           </div>
@@ -242,8 +250,9 @@ export default function Account() {
             variant="outline"
             className="mt-6 rounded-sm"
             onClick={() => setShowUpgradeModal(true)}
+            disabled={isSimulating}
           >
-            View upgrade options
+            {isSimulating ? "View options (simulated)" : "View upgrade options"}
           </Button>
         </div>
       )}
