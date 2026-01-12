@@ -115,7 +115,7 @@ export default function Auth() {
             SettleRate
           </Link>
           <h1 className="mt-8 font-serif text-2xl font-normal tracking-tight">
-            Sign in to continue
+            Sign in to SettleRate
           </h1>
         </div>
 
@@ -144,7 +144,7 @@ export default function Auth() {
             {isSending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              "Send magic link"
+              "Continue with email"
             )}
           </Button>
         </form>
@@ -226,7 +226,7 @@ export default function Auth() {
 
         {/* Legal */}
         <p className="text-center text-xs leading-relaxed text-muted-foreground">
-          By continuing you agree to our{" "}
+          By continuing, you agree to our{" "}
           <Link
             to="/terms"
             className="text-foreground underline underline-offset-2"
