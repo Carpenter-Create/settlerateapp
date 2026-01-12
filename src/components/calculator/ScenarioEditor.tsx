@@ -313,9 +313,10 @@ export function ScenarioEditor({
                   size="sm" 
                   className="gap-1.5"
                   disabled={!isDirty}
+                  title="Save current changes"
                 >
                   <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  Save Scenario
+                  Save scenario
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -359,11 +360,11 @@ export function ScenarioEditor({
               <>
                 <Button onClick={onSave} size="sm" className="gap-1.5">
                   <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  Save Scenario
+                  Save scenario
                 </Button>
                 <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1.5">
                   <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  Reset
+                  Reset inputs
                 </Button>
               </>
             )}

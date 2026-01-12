@@ -59,17 +59,17 @@ interface GuidedStartProps {
 type Step = 1 | 2 | 3 | 4;
 
 const STEP_LABELS: Record<Step, string> = {
-  1: "What are you doing?",
+  1: "Transaction type",
   2: "Property details",
   3: "Loan basics",
   4: "Taxes & insurance",
 };
 
 const STEP_HELPERS: Record<Step, string> = {
-  1: "This sets the defaults. You can change anything later.",
-  2: "Used for estimates like taxes and insurance (optional).",
+  1: "Sets default inputs. All values are editable.",
+  2: "Used for tax and insurance estimates.",
   3: "", // Set dynamically based on mode
-  4: "Adds realism to the monthly estimate. Edit any time.",
+  4: "Refines monthly payment projection.",
 };
 
 export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps) {
@@ -229,8 +229,8 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
   const getStepHelper = (s: Step) => {
     if (s === 3) {
       return mode === "purchase" 
-        ? "These inputs determine your principal + interest payment."
-        : "These inputs estimate your new payment.";
+        ? "Determines principal and interest payment."
+        : "Determines new payment amount.";
     }
     return STEP_HELPERS[s];
   };
@@ -250,7 +250,7 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
         <DialogHeader>
           <DialogTitle className="font-serif text-lg">Guided start</DialogTitle>
           <p className="text-sm text-muted-foreground pt-1">
-            Prefill your estimate. Adjust details any time.
+            Prefill scenario inputs. All values are editable.
           </p>
         </DialogHeader>
 
@@ -295,10 +295,10 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                 >
                   <div className="flex items-center gap-2">
                     <Home className="h-4 w-4" strokeWidth={1.5} />
-                    <span className="text-sm font-medium">Buying a home</span>
+                    <span className="text-sm font-medium">Purchase</span>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    Estimate payment and total costs for a purchase.
+                    New home acquisition financing
                   </span>
                 </button>
                 <button
@@ -313,10 +313,10 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                 >
                   <div className="flex items-center gap-2">
                     <RefreshCw className="h-4 w-4" strokeWidth={1.5} />
-                    <span className="text-sm font-medium">Refinancing</span>
+                    <span className="text-sm font-medium">Refinance</span>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    Estimate a new payment based on a new rate and term.
+                    Replace existing mortgage with new terms
                   </span>
                 </button>
               </div>
@@ -337,7 +337,7 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                   className="w-32"
                 />
                 <p className="text-xs text-muted-foreground">
-                  If provided, we can suggest typical tax and insurance ranges.
+                  Enables regional tax and insurance estimates.
                 </p>
               </div>
 
@@ -350,31 +350,31 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                     min={0}
                   />
                   <p className="text-xs text-muted-foreground">
-                    The total price of the home.
+                    Agreed sale price of property.
                   </p>
                 </div>
               ) : (
                 <>
                   <div className="space-y-2">
-                    <Label className="text-sm">Home value <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                    <Label className="text-sm">Estimated home value <span className="text-muted-foreground font-normal">(optional)</span></Label>
                     <CurrencyInput
                       value={estimatedHomeValue}
                       onChange={setEstimatedHomeValue}
                       min={0}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Used to estimate LTV. You can skip if unknown.
+                      Current market value for LTV calculation.
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm">Current balance</Label>
+                    <Label className="text-sm">Current loan balance</Label>
                     <CurrencyInput
                       value={currentLoanBalance}
                       onChange={setCurrentLoanBalance}
                       min={0}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Approximate is fine.
+                      Remaining principal on existing mortgage.
                     </p>
                   </div>
                 </>
@@ -398,11 +398,11 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                       }}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Higher down payment lowers the loan amount.
+                      Higher down payment reduces loan principal.
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm">Interest rate</Label>
+                    <Label className="text-sm">Interest rate (assumed)</Label>
                     <PercentInput
                       value={interestRate}
                       onChange={setInterestRate}
@@ -411,7 +411,7 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                       step={0.125}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Use your best estimate. You can compare multiple rates later.
+                      Best available rate estimate. Compare scenarios later.
                     </p>
                   </div>
                   <LoanTermInput
@@ -423,18 +423,18 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
               ) : (
                 <>
                   <div className="space-y-2">
-                    <Label className="text-sm">Current balance</Label>
+                    <Label className="text-sm">Current loan balance</Label>
                     <CurrencyInput
                       value={currentLoanBalance}
                       onChange={setCurrentLoanBalance}
                       min={0}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Approximate is fine.
+                      Remaining principal on existing mortgage.
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm">New interest rate</Label>
+                    <Label className="text-sm">New interest rate (assumed)</Label>
                     <PercentInput
                       value={interestRate}
                       onChange={setInterestRate}
@@ -456,7 +456,7 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                       min={0}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Amount added to the new loan and paid to you at closing.
+                      Equity withdrawn and added to new loan balance.
                     </p>
                   </div>
                 </>
@@ -480,12 +480,12 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                 <div className="space-y-4 animate-slide-up">
                   <div className="rounded-lg bg-muted/50 px-3 py-2">
                     <p className="text-xs text-muted-foreground">
-                      Based on regional averages. You can override.
+                      Based on regional averages. Values are editable.
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm">Property tax (annual)</Label>
+                    <Label className="text-sm">Property taxes (annual rate)</Label>
                     <PercentInput
                       value={propertyTaxRate}
                       onChange={setPropertyTaxRate}
@@ -494,19 +494,19 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                       step={0.01}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Percent of home value per year
+                      Percentage of assessed home value.
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm">Home insurance (annual)</Label>
+                    <Label className="text-sm">Homeowners insurance (annual)</Label>
                     <CurrencyInput
                       value={homeInsuranceMonthly * 12}
                       onChange={(v) => setHomeInsuranceMonthly(Math.round(v / 12))}
                       min={0}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Annual premium amount
+                      Annual premium amount.
                     </p>
                   </div>
                 </div>
@@ -539,7 +539,7 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
             ) : (
               <Button size="sm" onClick={handleFinish} className="gap-1.5">
                 <Check className="h-3.5 w-3.5" strokeWidth={1.5} />
-                Prefill calculator
+                Create scenario
               </Button>
             )}
           </div>
@@ -551,9 +551,9 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
     <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Discard guided start?</AlertDialogTitle>
+          <AlertDialogTitle>Discard inputs?</AlertDialogTitle>
           <AlertDialogDescription>
-            Your inputs won't be saved unless you finish.
+            Current inputs will not be saved.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

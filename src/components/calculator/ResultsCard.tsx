@@ -70,7 +70,7 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
           Total Monthly Payment
         </p>
         <p className="text-xs text-muted-foreground/70 mt-1">
-          {isRefinance ? "Your full estimated new housing cost" : "Your full estimated housing cost"}
+          {isRefinance ? "Full estimated new housing cost" : "Full estimated housing cost"}
         </p>
       </div>
 
@@ -79,7 +79,7 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
       {/* Payment breakdown - table-like */}
       <div>
         <p className="section-label mb-1">Payment Breakdown</p>
-        <p className="text-xs text-muted-foreground/70 mb-3">See details</p>
+        <p className="text-xs text-muted-foreground/70 mb-3">Monthly allocation</p>
         <div className="space-y-0">
           <ResultRow 
             label="Principal & Interest" 
@@ -114,7 +114,7 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
           </div>
         </div>
         <p className="text-xs text-muted-foreground/70 mt-3">
-          This includes loan payment, taxes, insurance, and HOA if applicable.
+          Includes principal, interest, taxes, insurance, and HOA if applicable.
         </p>
       </div>
 
@@ -142,7 +142,7 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
           <ResultRow label="Total cost (projected)" value={formatCurrency(totalCost)} primary />
         </div>
         <p className="text-xs text-muted-foreground/70 mt-3">
-          Changing any assumption will change the results.
+          Results update when assumptions change.
         </p>
       </div>
 

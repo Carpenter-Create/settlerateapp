@@ -46,7 +46,7 @@ export function DownPaymentInput({ value, type, purchasePrice, onChange }: DownP
       label="Down payment"
       description={
         type === "percent"
-          ? `${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(dollarAmount)} • Higher down payment lowers the loan amount.`
+          ? `${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(dollarAmount)} • Higher down payment reduces loan principal.`
           : `${percentAmount.toFixed(1)}% of purchase price`
       }
     >
