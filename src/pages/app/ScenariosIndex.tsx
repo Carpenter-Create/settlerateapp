@@ -62,10 +62,59 @@ function formatCurrency(value: number): string {
 }
 
 /**
- * Format percentage for display
+ * Format percentage for display (2 decimals, or 3 if stored with higher precision)
  */
 function formatPercent(value: number): string {
-  return `${value.toFixed(3)}%`;
+  const decimals = value % 0.01 !== 0 ? 3 : 2;
+  return `${value.toFixed(decimals)}%`;
+}
+
+/**
+ * Get monthly payment from scenario using deterministic priority:
+ * Priority A: Use stored computed value (monthlyTotal)
+ * Priority B: Compute from components if needed
+ * Priority C: Return null if required fields missing
+ */
+function getMonthlyPayment(scenario: ScenarioData): number | null {
+  // Priority A: Use stored computed value
+  if (scenario.results?.monthlyTotal != null && scenario.results.monthlyTotal > 0) {
+    return scenario.results.monthlyTotal;
+  }
+  
+  // Priority B: Compute from components
+  const results = scenario.results;
+  const inputs = scenario.inputs;
+  
+  if (!results || !inputs) return null;
+  
+  // Check for required fields
+  const loanAmount = results.loanAmount;
+  const interestRate = inputs.shared?.interestRate;
+  const loanTerm = inputs.shared?.loanTerm;
+  
+  if (loanAmount == null || interestRate == null || loanTerm == null) {
+    return null; // Priority C: fallback
+  }
+  
+  // Calculate P&I using standard amortization formula
+  const monthlyRate = interestRate / 100 / 12;
+  const totalPayments = loanTerm * 12;
+  
+  let monthlyPI = 0;
+  if (loanAmount > 0 && monthlyRate > 0) {
+    monthlyPI = (loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, totalPayments))) /
+      (Math.pow(1 + monthlyRate, totalPayments) - 1);
+  } else if (loanAmount > 0 && monthlyRate === 0) {
+    monthlyPI = loanAmount / totalPayments;
+  }
+  
+  // Add other components
+  const propertyTaxMonthly = results.monthlyPropertyTax ?? 0;
+  const homeInsuranceMonthly = results.monthlyHomeInsurance ?? 0;
+  const hoaMonthly = results.monthlyHOA ?? 0;
+  const pmiMonthly = results.monthlyPMI ?? 0;
+  
+  return monthlyPI + propertyTaxMonthly + homeInsuranceMonthly + hoaMonthly + pmiMonthly;
 }
 
 export default function ScenariosIndex() {
@@ -183,7 +232,7 @@ export default function ScenariosIndex() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[35%]">Name</TableHead>
-              <TableHead className="text-right">Monthly</TableHead>
+              <TableHead className="text-right">Monthly payment</TableHead>
               <TableHead className="hidden text-right sm:table-cell">Rate</TableHead>
               <TableHead className="hidden text-right md:table-cell">Loan</TableHead>
               <TableHead className="hidden text-right lg:table-cell">Updated</TableHead>
@@ -201,7 +250,10 @@ export default function ScenariosIndex() {
                   {scenario.name || "Untitled scenario"}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {formatCurrency(scenario.results.monthlyTotal)}
+                  {(() => {
+                    const monthlyPayment = getMonthlyPayment(scenario);
+                    return monthlyPayment != null ? formatCurrency(monthlyPayment) : "—";
+                  })()}
                 </TableCell>
                 <TableCell className="hidden text-right tabular-nums sm:table-cell">
                   {formatPercent(scenario.inputs.shared.interestRate)}
