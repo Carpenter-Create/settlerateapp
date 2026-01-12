@@ -109,7 +109,7 @@ export default function Auth() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-8">
+      <div className="w-full max-w-sm space-y-space-6">
         {/* Header */}
         <div className="text-center">
           <Link
@@ -118,19 +118,19 @@ export default function Auth() {
           >
             SettleRate
           </Link>
-          <h1 className="mt-8 font-serif text-2xl font-normal tracking-tight">
+          <h1 className="mt-space-6 font-serif text-2xl font-normal tracking-tight">
             Sign in to SettleRate
           </h1>
           {isAnonymous && (
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-space-2 text-sm text-muted-foreground">
               Your scenarios will be saved to your account.
             </p>
           )}
         </div>
 
         {/* Magic link form */}
-        <form onSubmit={handleMagicLink} className="space-y-4">
-          <div className="space-y-2">
+        <form onSubmit={handleMagicLink} className="space-y-space-4">
+          <div className="space-y-space-2">
             <Label htmlFor="email" className="text-sm font-normal">
               Email address
             </Label>
@@ -171,7 +171,7 @@ export default function Auth() {
         </div>
 
         {/* OAuth buttons */}
-        <div className="space-y-3">
+        <div className="space-y-space-3">
           <Button
             type="button"
             variant="outline"
