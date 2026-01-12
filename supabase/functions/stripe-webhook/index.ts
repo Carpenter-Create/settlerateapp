@@ -213,6 +213,7 @@ serve(async (req) => {
 
       // ============================================================
       // CRITICAL: Check if user is admin - NEVER modify admin access
+      // Database trigger also protects this, but we exit early for safety
       // ============================================================
       const { data: adminRole } = await supabase
         .from("user_roles")
@@ -228,7 +229,10 @@ serve(async (req) => {
           app_user_id: appUser.id,
           user_role: "admin",
           action_taken: "ignored",
-          details: { reason: "Admin user - billing changes do not affect access" },
+          details: { 
+            reason: "Admin user - billing changes do not affect access",
+            note: "Database trigger also prevents admin billing modifications"
+          },
         });
         return new Response(JSON.stringify({ received: true }), {
           status: 200,
