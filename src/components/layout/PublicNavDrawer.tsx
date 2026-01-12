@@ -107,7 +107,7 @@ export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
       {/* ========== ZONE 2: NAVIGATION ========== */}
       <div className="flex-1 overflow-y-auto">
         {/* Context Block */}
-        <div className="px-space-5 pb-space-4 pt-space-5">
+        <div className="px-space-5 pb-space-3 pt-space-5">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Explore SettleRate
           </p>
