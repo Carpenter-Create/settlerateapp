@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Calculator, User, Settings, LogOut } from "lucide-react";
+import { Calculator, User, Settings, LogOut, FolderOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,7 @@ interface AppLayoutProps {
 }
 
 const navigation = [
+  { name: "Scenarios", href: "/app/scenarios", icon: FolderOpen },
   { name: "Calculator", href: "/app/calculator", icon: Calculator },
   { name: "Account", href: "/app/account", icon: User },
   { name: "Settings", href: "/app/settings", icon: Settings },
@@ -39,7 +40,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-14 items-center border-b border-sidebar-border px-4">
-            <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-70">
+            <Link to="/app/scenarios" className="flex items-center gap-2 transition-opacity hover:opacity-70">
               <span className="font-serif text-lg tracking-tight">SettleRate</span>
             </Link>
           </div>
@@ -74,7 +75,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         {/* Header */}
         <header className="sticky top-0 z-50 flex h-14 w-full items-center justify-between border-b border-border bg-background px-4 sm:px-6">
           {/* Mobile logo */}
-          <Link to="/app" className="flex items-center gap-2 transition-opacity hover:opacity-70 md:hidden">
+          <Link to="/app/scenarios" className="flex items-center gap-2 transition-opacity hover:opacity-70 md:hidden">
             <span className="font-serif text-lg tracking-tight">SettleRate</span>
           </Link>
 

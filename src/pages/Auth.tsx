@@ -26,7 +26,7 @@ export default function Auth() {
   // Redirect if already authenticated (non-anonymous)
   useEffect(() => {
     if (!isLoading && user && !isAnonymous) {
-      const from = (location.state as any)?.from?.pathname || "/app/calculator";
+      const from = (location.state as any)?.from?.pathname || "/app/scenarios";
       navigate(from, { replace: true });
     }
   }, [user, isLoading, isAnonymous, navigate, location]);
@@ -46,7 +46,7 @@ export default function Auth() {
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          emailRedirectTo: `${window.location.origin}/app/calculator`,
+          emailRedirectTo: `${window.location.origin}/app/scenarios`,
         },
       });
 
@@ -68,7 +68,7 @@ export default function Auth() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/app/calculator`,
+          redirectTo: `${window.location.origin}/app/scenarios`,
         },
       });
 
