@@ -371,15 +371,22 @@ function MobileScenarioBlock({ scenario, label }: MobileScenarioBlockProps) {
 }
 
 // ============================================================================
-// LOAD STATUS ENUM
+// STABLE VIEW STATE MACHINE
 // ============================================================================
 
-type LoadStatus = 
+type ViewStatus =
   | "loading"
-  | "success"
+  | "ready"
   | "not_found"
   | "scenarios_unavailable"
-  | "error";
+  | "error"
+  | "unavailable";
+
+type ReadyPayload = {
+  comparison: SavedComparison;
+  scenarioA: ScenarioData;
+  scenarioB: ScenarioData;
+};
 
 // ============================================================================
 // MAIN COMPARISON DETAIL VIEW
@@ -391,86 +398,84 @@ export default function ComparisonDetail() {
   const isMobile = useIsMobile();
   const { scenarios, isLoaded: scenariosLoaded } = useScenarios();
   const { getComparison, isLoaded: comparisonsLoaded } = useComparisons();
-  
-  const [comparison, setComparison] = useState<SavedComparison | null>(null);
-  const [loadStatus, setLoadStatus] = useState<LoadStatus>("loading");
+
+  const [status, setStatus] = useState<ViewStatus>("loading");
+  const [ready, setReady] = useState<ReadyPayload | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
 
-  // Load comparison by ID
-  const loadData = useCallback(async () => {
+  // Prevent accidental repeat loads for the same id (fixes mobile flicker)
+  const [ranForId, setRanForId] = useState<string | null>(null);
+
+  // Reset state when the route id changes
+  useEffect(() => {
+    setStatus("loading");
+    setReady(null);
+    setRanForId(null);
+  }, [id]);
+
+  const loadOnce = useCallback(async () => {
     if (!id) {
-      setLoadStatus("not_found");
+      setStatus("unavailable");
       return;
     }
 
-    setLoadStatus("loading");
-    
     try {
-      const data = await getComparison(id);
-      
-      if (!data) {
-        setLoadStatus("not_found");
-        setComparison(null);
+      const comp = await getComparison(id);
+
+      if (!comp) {
+        setStatus("not_found");
         return;
       }
-      
-      setComparison(data);
-      setLoadStatus("success");
+
+      // Resolve scenarios from the loaded scenario store (stable, no extra network)
+      const scenarioA = scenarios.find((s) => s.id === comp.scenario_a_id) ?? null;
+      const scenarioB = scenarios.find((s) => s.id === comp.scenario_b_id) ?? null;
+
+      if (!scenarioA || !scenarioB) {
+        setStatus("scenarios_unavailable");
+        return;
+      }
+
+      setReady({ comparison: comp, scenarioA, scenarioB });
+      setStatus("ready");
     } catch (error) {
       console.error("Failed to load comparison:", error);
-      setLoadStatus("error");
+      setStatus("error");
     }
-  }, [id, getComparison]);
+  }, [id, getComparison, scenarios]);
 
-  // Initial load when dependencies are ready
+  // Initial load: once per id, after auth + scenario store are ready
   useEffect(() => {
-    if (!comparisonsLoaded) return;
-    loadData();
-  }, [comparisonsLoaded, loadData]);
+    if (!id) {
+      setStatus("unavailable");
+      return;
+    }
+    if (!comparisonsLoaded || !scenariosLoaded) return;
+    if (status === "ready") return;
+    if (ranForId === id) return;
 
-  // Retry handler
+    setRanForId(id);
+    void loadOnce();
+  }, [id, comparisonsLoaded, scenariosLoaded, status, ranForId, loadOnce]);
+
+  // Retry handler (explicit user action)
   const handleRetry = async () => {
     setIsRetrying(true);
-    await loadData();
+    setStatus("loading");
+    setRanForId(null);
+    await loadOnce();
     setIsRetrying(false);
   };
 
-  // Find scenarios once comparison is loaded
-  const scenarioA = comparison && scenariosLoaded
-    ? scenarios.find((s) => s.id === comparison.scenario_a_id) ?? null
-    : null;
-  const scenarioB = comparison && scenariosLoaded
-    ? scenarios.find((s) => s.id === comparison.scenario_b_id) ?? null
-    : null;
+  // ==========================================================================
+  // RENDER STATES (NO OSCILLATION)
+  // ==========================================================================
 
-  // Check if scenarios are missing (deleted after comparison was created)
-  const scenariosMissing = comparison && scenariosLoaded && (!scenarioA || !scenarioB);
-
-  // Determine final render state
-  const renderStatus: LoadStatus = (() => {
-    // Still loading initial data
-    if (!comparisonsLoaded || !scenariosLoaded) return "loading";
-    if (loadStatus === "loading") return "loading";
-    
-    // Error states
-    if (loadStatus === "error") return "error";
-    if (loadStatus === "not_found" || !comparison) return "not_found";
-    if (scenariosMissing) return "scenarios_unavailable";
-    
-    return "success";
-  })();
-
-  // ============================================================================
-  // RENDER STATES
-  // ============================================================================
-
-  // Loading
-  if (renderStatus === "loading") {
+  if (status === "loading") {
     return <LoadingState />;
   }
 
-  // API/Network error
-  if (renderStatus === "error") {
+  if (status === "error") {
     return (
       <ErrorState
         title="Unable to load comparison"
@@ -482,20 +487,30 @@ export default function ComparisonDetail() {
     );
   }
 
-  // Comparison not found
-  if (renderStatus === "not_found") {
+  if (status === "unavailable") {
+    return (
+      <ErrorState
+        title="Comparison unavailable"
+        message="This comparison link is invalid or incomplete."
+      />
+    );
+  }
+
+  if (status === "not_found") {
     return <ComparisonNotFoundState />;
   }
 
-  // Scenarios unavailable
-  if (renderStatus === "scenarios_unavailable") {
+  if (status === "scenarios_unavailable") {
     return <ScenariosUnavailableState />;
   }
 
-  // Success - we have all data (TypeScript narrowing doesn't work here, so assert)
-  const validComparison = comparison!;
-  const validScenarioA = scenarioA!;
-  const validScenarioB = scenarioB!;
+  if (!ready) {
+    return <LoadingState />;
+  }
+
+  const validComparison = ready.comparison;
+  const validScenarioA = ready.scenarioA;
+  const validScenarioB = ready.scenarioB;
 
   // Mobile layout
   if (isMobile) {
