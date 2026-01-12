@@ -96,7 +96,8 @@ export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
         <button
           ref={closeButtonRef}
           onClick={onClose}
-          className="flex h-11 w-11 items-center justify-center text-foreground/70 outline-none transition-colors hover:text-foreground focus-visible:text-foreground"
+          className="flex h-11 w-11 items-center justify-center text-foreground/70 outline-none border-none bg-transparent shadow-none ring-0 focus:outline-none focus:ring-0 focus:border-none focus:bg-transparent active:outline-none active:ring-0 active:bg-transparent"
+          style={{ outline: 'none', boxShadow: 'none' }}
           aria-label="Close menu"
         >
           <X className="h-[18px] w-[18px]" strokeWidth={1.5} />
