@@ -33,9 +33,7 @@ export default function Home() {
           Mortgage decisions, modeled precisely.
         </h1>
         <p className="mx-auto mt-8 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg sm:leading-relaxed">
-          Analyze purchase and refinance scenarios, understand long-term cost
-          implications, and generate lender-ready summaries—without sales
-          pressure or guesswork.
+          A neutral framework for understanding mortgage outcomes.
         </p>
         <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Button asChild size="lg" className="min-w-40">
