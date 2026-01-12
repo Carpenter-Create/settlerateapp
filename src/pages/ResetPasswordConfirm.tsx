@@ -48,8 +48,8 @@ export default function ResetPasswordConfirm() {
       return;
     }
 
-    if (password.length < 6) {
-      toast("Password must be at least 6 characters.");
+    if (password.length < 12) {
+      toast("Password must be at least 12 characters.");
       return;
     }
 
@@ -66,13 +66,13 @@ export default function ResetPasswordConfirm() {
       });
 
       if (error) {
-        toast("Something went wrong. Please try again.");
+        toast("Unable to update password. Please request a new reset link.");
       } else {
         toast("Password updated.");
         navigate("/app/scenarios", { replace: true });
       }
     } catch {
-      toast("Something went wrong. Please try again.");
+      toast("Unable to update password. Please request a new reset link.");
     } finally {
       setIsSubmitting(false);
     }
@@ -94,20 +94,18 @@ export default function ResetPasswordConfirm() {
         <div className="w-full max-w-sm space-y-space-6">
           <div className="text-center">
             <h1 className="font-serif text-2xl font-normal tracking-tight">
-              Invalid or expired link
+              This password reset link is invalid or has expired.
             </h1>
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              This password reset link is no longer valid. Please request a new
-              one.
+              Please request a new link to reset your password.
             </p>
           </div>
 
           <div className="text-center">
-            <Link
-              to="/reset-password"
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Request new link
+            <Link to="/reset-password">
+              <Button variant="outline" className="w-full">
+                Request a new link
+              </Button>
             </Link>
           </div>
 
@@ -133,10 +131,10 @@ export default function ResetPasswordConfirm() {
             SettleRate
           </Link>
           <h1 className="mt-space-6 font-serif text-2xl font-normal tracking-tight">
-            Set new password
+            Set a new password
           </h1>
           <p className="mt-space-2 text-sm text-muted-foreground">
-            Enter your new password below.
+            Choose a strong password with at least 12 characters.
           </p>
         </div>
 
@@ -151,7 +149,7 @@ export default function ResetPasswordConfirm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 6 characters"
+              placeholder="At least 12 characters"
               disabled={isSubmitting}
               autoComplete="new-password"
               autoFocus
