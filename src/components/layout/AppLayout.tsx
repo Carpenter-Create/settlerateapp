@@ -169,7 +169,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-10 w-10 text-foreground"
+                  className="mobile-menu-close h-11 w-11 text-foreground outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:bg-transparent"
                   onClick={() => setMobileMenuOpen(false)}
                   aria-label="Close menu"
                 >
