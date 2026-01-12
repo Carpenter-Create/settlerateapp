@@ -58,25 +58,38 @@ export function PublicLayout({ children }: PublicLayoutProps) {
 
       {/* Footer */}
       <footer className="border-t border-border/50">
-        <div className="mx-auto flex max-w-5xl items-center justify-center gap-8 px-4 py-8 sm:px-6">
-          <Link
-            to="/privacy"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Privacy
-          </Link>
-          <Link
-            to="/terms"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Terms
-          </Link>
-          <Link
-            to="/contact"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Contact
-          </Link>
+        <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+          {/* Links */}
+          <div className="flex items-center justify-center gap-8">
+            <Link
+              to="/privacy"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Privacy
+            </Link>
+            <Link
+              to="/terms"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Terms
+            </Link>
+            <Link
+              to="/contact"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Contact
+            </Link>
+          </div>
+
+          {/* Copyright */}
+          <p className="mt-8 text-center text-xs text-muted-foreground">
+            © {new Date().getFullYear()} SettleRate. All rights reserved.
+          </p>
+
+          {/* Disclaimer */}
+          <p className="mx-auto mt-6 max-w-3xl text-center text-[11px] leading-relaxed text-muted-foreground/60">
+            SettleRate provides analytical tools to model mortgage-related scenarios. We are not a lender, broker, or financial advisor and do not offer mortgage products or personalized financial advice. Calculations and projections are estimates based on user-provided inputs and third-party data sources and may not reflect actual loan terms. Users should independently verify all information and consult qualified professionals before making financial decisions.
+          </p>
         </div>
       </footer>
     </div>

@@ -46,10 +46,10 @@ export default function Pricing() {
       {/* Header */}
       <div className="text-center">
         <h1 className="font-serif text-3xl font-normal tracking-tight sm:text-4xl">
-          Simple, transparent pricing
+          Pricing
         </h1>
         <p className="mt-4 text-base text-muted-foreground">
-          No hidden fees. No lead selling. Just honest tools.
+          Transparent pricing. No hidden fees.
         </p>
       </div>
 
@@ -152,7 +152,7 @@ export default function Pricing() {
 
       {/* Footer note */}
       <p className="text-center text-xs text-muted-foreground/70">
-        We never sell your data. Your scenarios remain private.
+        Your data remains private. We never sell leads or personal information.
       </p>
     </div>
   );
