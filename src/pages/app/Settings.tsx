@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { User, Trash2, AlertTriangle, Loader2, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
-import { useSubscription } from "@/hooks/useSubscription";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AdminTestingPanel } from "@/components/admin/AdminTestingPanel";
 
 /**
  * Settings Page - Institutional, Factual
@@ -27,7 +28,7 @@ export default function AppSettings() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile();
-  const { isPro } = useSubscription();
+  const { hasPaid, realIsAdmin, isSimulating } = useCapabilities();
   const updateProfile = useUpdateProfile();
 
   const [fullName, setFullName] = useState(profile?.full_name || "");
@@ -36,11 +37,11 @@ export default function AppSettings() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Update local state when profile loads
-  useState(() => {
+  useEffect(() => {
     if (profile?.full_name) {
       setFullName(profile.full_name);
     }
-  });
+  }, [profile?.full_name]);
 
   const handleSaveProfile = () => {
     updateProfile.mutate({ full_name: fullName.trim() || null });
@@ -55,7 +56,6 @@ export default function AppSettings() {
     setIsDeleting(true);
 
     try {
-      // Sign out and notify user to contact support for account deletion
       await signOut();
       toast("Signed out. Contact support to complete account deletion.");
       navigate("/");
@@ -66,6 +66,10 @@ export default function AppSettings() {
     }
   };
 
+  // Show subscription warning only for paid non-admin users
+  // Admin users simulating as pro should not see this block user actions
+  const showSubscriptionWarning = hasPaid && !realIsAdmin;
+
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div>
@@ -75,10 +79,17 @@ export default function AppSettings() {
         </p>
       </div>
 
+      {/* Simulation indicator for admins */}
+      {isSimulating && (
+        <div className="rounded-sm border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+          Viewing as standard user. Feature access is simulated.
+        </div>
+      )}
+
       {/* Profile section */}
-      <div className="card-elevated p-6">
+      <div className="border border-border rounded-sm p-6">
         <div className="flex items-start gap-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-muted">
             <User className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="flex-1 space-y-4">
@@ -97,7 +108,7 @@ export default function AppSettings() {
                   type="email"
                   value={user?.email || ""}
                   disabled
-                  className="bg-muted"
+                  className="bg-muted rounded-sm"
                 />
               </div>
 
@@ -109,10 +120,12 @@ export default function AppSettings() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Enter name"
+                  className="rounded-sm"
                 />
               </div>
 
               <Button
+                className="rounded-sm"
                 onClick={handleSaveProfile}
                 disabled={updateProfile.isPending}
               >
@@ -131,51 +144,45 @@ export default function AppSettings() {
       </div>
 
       {/* Delete account section */}
-      <div className="card-elevated border-destructive/50 p-6">
+      <div className="border border-border rounded-sm p-6">
         <div className="flex items-start gap-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
-            <Trash2 className="h-5 w-5 text-destructive" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-muted">
+            <Trash2 className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="flex-1 space-y-4">
             <div>
-              <h3 className="font-medium text-destructive">Remove Account</h3>
+              <h3 className="font-medium">Remove Account</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Permanently remove account and all associated data. This action cannot be undone.
               </p>
             </div>
 
-            {isPro && (
-              <div className="flex items-start gap-2 rounded-md bg-warning/10 p-3 text-sm">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+            {showSubscriptionWarning && (
+              <div className="flex items-start gap-2 rounded-sm border border-border bg-muted/30 p-3 text-sm">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                 <div>
-                  <p className="font-medium text-warning-foreground">Active subscription</p>
+                  <p className="font-medium">Active subscription</p>
                   <p className="mt-0.5 text-muted-foreground">
                     Cancel subscription before removing account.
                   </p>
-                  <Button variant="link" asChild className="mt-1 h-auto p-0">
-                    <a
-                      href={`https://billing.stripe.com/p/login/test_xxx`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink className="mr-1 h-3 w-3" />
-                      Manage billing
-                    </a>
-                  </Button>
                 </div>
               </div>
             )}
 
             <Button
-              variant="destructive"
+              variant="outline"
+              className="rounded-sm"
               onClick={() => setShowDeleteDialog(true)}
-              disabled={isPro}
+              disabled={showSubscriptionWarning}
             >
               Remove account
             </Button>
           </div>
         </div>
       </div>
+
+      {/* Admin testing panel - only visible to real admins */}
+      {realIsAdmin && <AdminTestingPanel />}
 
       {/* Delete confirmation dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -199,19 +206,22 @@ export default function AppSettings() {
               onChange={(e) => setDeleteConfirmation(e.target.value)}
               placeholder="delete my account"
               disabled={isDeleting}
+              className="rounded-sm"
             />
           </div>
 
           <DialogFooter>
             <Button
               variant="outline"
+              className="rounded-sm"
               onClick={() => setShowDeleteDialog(false)}
               disabled={isDeleting}
             >
               Cancel
             </Button>
             <Button
-              variant="destructive"
+              variant="outline"
+              className="rounded-sm"
               onClick={handleDeleteAccount}
               disabled={isDeleting || deleteConfirmation !== "delete my account"}
             >
