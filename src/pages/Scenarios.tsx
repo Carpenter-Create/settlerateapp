@@ -22,7 +22,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 function formatRelativeTime(date: Date): string {
@@ -60,7 +59,6 @@ function ScenarioCard({ scenario, onOpen, onRename, onDuplicate, onDelete }: Sce
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't open if clicking on input or dropdown
     if ((e.target as HTMLElement).closest('input, button, [role="menu"]')) {
       return;
     }
@@ -140,7 +138,6 @@ function ScenarioCard({ scenario, onOpen, onRename, onDuplicate, onDelete }: Sce
         </DropdownMenu>
       </div>
 
-      {/* Primary number, then label */}
       <div className="mt-4">
         <p className="font-mono text-xl font-medium tabular-nums">
           {formatCurrency(scenario.results.monthlyTotal)}
@@ -148,7 +145,6 @@ function ScenarioCard({ scenario, onOpen, onRename, onDuplicate, onDelete }: Sce
         <p className="text-xs text-muted-foreground">monthly payment</p>
       </div>
 
-      {/* Secondary metrics */}
       <div className="mt-3 flex items-baseline gap-4 text-xs text-muted-foreground">
         <span className="font-mono tabular-nums">
           {formatCurrency(scenario.results.totalInterest)}
@@ -156,7 +152,6 @@ function ScenarioCard({ scenario, onOpen, onRename, onDuplicate, onDelete }: Sce
         <span>total interest</span>
       </div>
 
-      {/* Tags - minimal */}
       <div className="mt-3 flex flex-wrap gap-1.5 text-xs text-muted-foreground">
         {isPurchase ? (
           <span className="rounded border border-border px-1.5 py-0.5">
@@ -186,28 +181,38 @@ export default function Scenarios() {
     navigate(`/?scenario=${id}`);
   };
 
-  const handleRename = (id: string, name: string) => {
-    updateScenario(id, { name });
-    toast("Scenario renamed.", { duration: 2000 });
+  const handleRename = async (id: string, name: string) => {
+    try {
+      await updateScenario(id, { name });
+      toast("Scenario renamed.", { duration: 2000 });
+    } catch (error) {
+      toast.error("Failed to rename scenario");
+    }
   };
 
-  const handleDuplicate = (id: string) => {
-    const newScenario = duplicateScenario(id);
-    if (newScenario) {
-      // ROUTING CONTRACT: Navigate to duplicated scenario
-      navigate(`/?scenario=${newScenario.id}`);
-      toast("Scenario duplicated.", { duration: 2000 });
-    } else {
+  const handleDuplicate = async (id: string) => {
+    try {
+      const newScenario = await duplicateScenario(id);
+      if (newScenario) {
+        navigate(`/?scenario=${newScenario.id}`);
+        toast("Scenario duplicated.", { duration: 2000 });
+      } else {
+        toast.error("Could not duplicate scenario");
+      }
+    } catch (error) {
       toast.error("Could not duplicate scenario");
     }
   };
 
-  const handleDelete = (id: string) => {
-    deleteScenario(id);
-    toast("Scenario deleted.", { duration: 2000 });
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteScenario(id);
+      toast("Scenario deleted.", { duration: 2000 });
+    } catch (error) {
+      toast.error("Failed to delete scenario");
+    }
   };
 
-  // Sort by updated date, newest first
   const sortedScenarios = [...scenarios].sort(
     (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
   );

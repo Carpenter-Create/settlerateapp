@@ -8,12 +8,6 @@
  * - Wire up navigation after save/duplicate actions
  * - Delegate UI rendering to ScenarioEditor
  * - Manage GuidedStart modal for new users
- * 
- * ROUTING CONTRACT (HARD INVARIANTS):
- * 1. If scenario query param exists → NEVER initialize defaults
- * 2. Any action that creates a scenario → navigate to /?scenario=<newId>
- * 3. Reset is the ONLY action that intentionally returns to defaults
- * 4. Calculator has exactly two modes: new (no param) or existing (param)
  */
 
 import { useCallback, useState, useEffect } from "react";
@@ -26,14 +20,11 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
-// Local storage key for tracking first-time users
 const GUIDED_START_SHOWN_KEY = "settlerate_guided_start_shown";
 
 export function MortgageCalculator() {
-  // Route state - single source of truth for URL
   const { scenarioId, mode, navigateToScenario, navigateToNew } = useScenarioRoute();
   
-  // Scenario state - manages loading and draft editing
   const {
     inputs,
     results,
@@ -52,17 +43,15 @@ export function MortgageCalculator() {
 
   const { scenarios, deleteScenario, updateScenario, createScenario } = useScenarios();
 
-  // Guided Start modal state
   const [showGuidedStart, setShowGuidedStart] = useState(false);
   const [hasCheckedFirstTime, setHasCheckedFirstTime] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Check if user is first-time (zero scenarios, never seen guided start)
   useEffect(() => {
     if (!isLoaded || hasCheckedFirstTime) return;
     
     const hasShownBefore = localStorage.getItem(GUIDED_START_SHOWN_KEY) === "true";
     
-    // Auto-show for brand-new users with zero scenarios
     if (scenarios.length === 0 && !hasShownBefore && !scenarioId) {
       setShowGuidedStart(true);
       localStorage.setItem(GUIDED_START_SHOWN_KEY, "true");
@@ -71,111 +60,119 @@ export function MortgageCalculator() {
     setHasCheckedFirstTime(true);
   }, [isLoaded, scenarios.length, scenarioId, hasCheckedFirstTime]);
 
-  // Handle guided start completion
-  const handleGuidedStartComplete = useCallback((guidedInputs: MortgageInputs, name: string) => {
-    // Create new scenario with the guided inputs
-    const newScenario = createScenario(name, guidedInputs, null);
-    
-    // Navigate to the new scenario
-    navigateToScenario(newScenario.id);
-    
-    setShowGuidedStart(false);
-    toast.success("Draft created", { 
-      description: "Your estimate is ready. Adjust details any time.",
-      duration: 4000 
-    });
+  const handleGuidedStartComplete = useCallback(async (guidedInputs: MortgageInputs, name: string) => {
+    try {
+      const newScenario = await createScenario(name, guidedInputs, null);
+      navigateToScenario(newScenario.id);
+      setShowGuidedStart(false);
+      toast.success("Draft created", { 
+        description: "Your estimate is ready. Adjust details any time.",
+        duration: 4000 
+      });
+    } catch (error) {
+      toast.error("Failed to create scenario");
+    }
   }, [createScenario, navigateToScenario]);
 
-  // Manual trigger for guided start
   const handleOpenGuidedStart = useCallback(() => {
     setShowGuidedStart(true);
   }, []);
 
-  // ============================================================================
-  // ACTION HANDLERS - All navigation happens here, not in ScenarioEditor
-  // ============================================================================
-
   // Save: overwrite existing or create new
-  const handleSave = useCallback((): boolean => {
-    if (isEditing) {
-      // Existing scenario mode: save draft to same ID (no navigation)
-      const success = saveDraft();
-      if (success) {
-        toast("Scenario saved.", { duration: 2000 });
+  const handleSave = useCallback(async (): Promise<boolean> => {
+    if (isSaving) return false;
+    setIsSaving(true);
+    
+    try {
+      if (isEditing) {
+        const success = await saveDraft();
+        if (success) {
+          toast("Scenario saved.", { duration: 2000 });
+        } else {
+          toast.error("Failed to save scenario");
+        }
+        return success;
       } else {
-        toast.error("Failed to save scenario");
+        const typeLabel = inputs.mode === "purchase" ? "Purchase" : "Refinance";
+        const name = `${typeLabel} ${scenarios.length + 1}`;
+        const newScenario = await saveAsNew(name);
+        navigateToScenario(newScenario.id);
+        toast("Scenario saved.", { duration: 2000 });
+        return true;
       }
-      return success;
-    } else {
-      // New scenario mode: create and navigate to new ID
-      const typeLabel = inputs.mode === "purchase" ? "Purchase" : "Refinance";
-      const name = `${typeLabel} ${scenarios.length + 1}`;
-      const newScenario = saveAsNew(name);
-      
-      // ROUTING CONTRACT: Navigate to new scenario
-      navigateToScenario(newScenario.id);
-      toast("Scenario saved.", { duration: 2000 });
-      return true;
+    } catch (error) {
+      toast.error("Failed to save scenario");
+      return false;
+    } finally {
+      setIsSaving(false);
     }
-  }, [isEditing, saveDraft, inputs.mode, scenarios.length, saveAsNew, navigateToScenario]);
+  }, [isEditing, saveDraft, inputs.mode, scenarios.length, saveAsNew, navigateToScenario, isSaving]);
 
   // Save As New: create new scenario with custom name
-  const handleSaveAsNew = useCallback((name: string): string => {
-    const newScenario = saveAsNew(name);
-    
-    // ROUTING CONTRACT: Navigate to new scenario
-    navigateToScenario(newScenario.id);
-    toast("Scenario created.", { duration: 2000 });
-    
-    return newScenario.id;
+  const handleSaveAsNew = useCallback(async (name: string): Promise<string> => {
+    try {
+      const newScenario = await saveAsNew(name);
+      navigateToScenario(newScenario.id);
+      toast("Scenario created.", { duration: 2000 });
+      return newScenario.id;
+    } catch (error) {
+      toast.error("Failed to create scenario");
+      return "";
+    }
   }, [saveAsNew, navigateToScenario]);
 
   // Duplicate: deep clone and navigate to new ID
-  const handleDuplicate = useCallback((): string | null => {
-    const newScenario = duplicateCurrent();
-    
-    if (newScenario) {
-      // ROUTING CONTRACT: Navigate to duplicated scenario
-      navigateToScenario(newScenario.id);
-      toast("Scenario duplicated.", { duration: 2000 });
-      return newScenario.id;
-    } else {
+  const handleDuplicate = useCallback(async (): Promise<string | null> => {
+    try {
+      const newScenario = await duplicateCurrent();
+      
+      if (newScenario) {
+        navigateToScenario(newScenario.id);
+        toast("Scenario duplicated.", { duration: 2000 });
+        return newScenario.id;
+      } else {
+        toast.error("Could not duplicate scenario");
+        return null;
+      }
+    } catch (error) {
       toast.error("Could not duplicate scenario");
       return null;
     }
   }, [duplicateCurrent, navigateToScenario]);
 
   // Delete: remove and navigate to new calculator
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (activeScenario) {
-      deleteScenario(activeScenario.id);
-      navigateToNew();
-      toast("Scenario deleted.", { duration: 2000 });
+      try {
+        await deleteScenario(activeScenario.id);
+        navigateToNew();
+        toast("Scenario deleted.", { duration: 2000 });
+      } catch (error) {
+        toast.error("Failed to delete scenario");
+      }
     }
   }, [activeScenario, deleteScenario, navigateToNew]);
 
-  // Rename: update name in place (no navigation)
-  const handleRename = useCallback((name: string) => {
+  // Rename: update name in place
+  const handleRename = useCallback(async (name: string) => {
     if (activeScenario) {
-      updateScenario(activeScenario.id, { name });
-      toast("Scenario renamed.", { duration: 2000 });
+      try {
+        await updateScenario(activeScenario.id, { name });
+        toast("Scenario renamed.", { duration: 2000 });
+      } catch (error) {
+        toast.error("Failed to rename scenario");
+      }
     }
   }, [activeScenario, updateScenario]);
 
-  // Discard changes: reset to saved state (no navigation)
   const handleDiscardChanges = useCallback(() => {
     discardDraft();
     toast("Changes discarded.", { duration: 2000 });
   }, [discardDraft]);
 
-  // Reset: only action that intentionally clears to defaults
   const handleReset = useCallback(() => {
     batchUpdateInputs(structuredClone(DEFAULT_INPUTS));
   }, [batchUpdateInputs]);
-
-  // ============================================================================
-  // LOADING STATE
-  // ============================================================================
 
   if (!isLoaded) {
     return (
@@ -185,12 +182,6 @@ export function MortgageCalculator() {
       </div>
     );
   }
-
-  // ============================================================================
-  // GUARDRAIL: Scenario not found
-  // If scenario param exists but scenario is missing, show error state.
-  // This prevents silently falling back to defaults after duplicate/save.
-  // ============================================================================
 
   if (scenarioNotFound && scenarioId) {
     return (
@@ -214,10 +205,6 @@ export function MortgageCalculator() {
     );
   }
 
-  // ============================================================================
-  // RENDER: Delegate to ScenarioEditor
-  // ============================================================================
-
   return (
     <>
       <ScenarioEditor
@@ -239,7 +226,6 @@ export function MortgageCalculator() {
         onOpenGuidedStart={handleOpenGuidedStart}
       />
 
-      {/* Guided Start Modal */}
       <GuidedStart
         open={showGuidedStart}
         onOpenChange={setShowGuidedStart}
