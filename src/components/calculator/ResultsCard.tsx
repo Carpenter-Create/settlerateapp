@@ -67,7 +67,7 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
       <div className="py-4">
         <p className="currency-display mb-1">{formatCurrency(monthlyTotal)}</p>
         <p className="text-sm text-muted-foreground">
-          {isRefinance ? "new monthly payment" : "monthly payment"}
+          {isRefinance ? "estimated new monthly payment" : "estimated monthly payment"}
           {usedEstimates && " · includes estimates"}
         </p>
       </div>
@@ -76,7 +76,7 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
 
       {/* Payment breakdown - table-like */}
       <div>
-        <p className="section-label mb-3">Monthly breakdown</p>
+        <p className="section-label mb-3">Payment breakdown</p>
         <div className="space-y-0">
           <ResultRow 
             label="Principal & interest" 
@@ -84,27 +84,27 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
           />
           {monthlyPropertyTax > 0 && (
             <ResultRow 
-              label="Property tax" 
+              label="Estimated property tax" 
               value={formatCurrencyPrecise(monthlyPropertyTax)}
               isEstimate={usedEstimates}
             />
           )}
           {monthlyHomeInsurance > 0 && (
             <ResultRow 
-              label="Home insurance" 
+              label="Estimated home insurance" 
               value={formatCurrencyPrecise(monthlyHomeInsurance)}
               isEstimate={usedEstimates}
             />
           )}
           {requiresPMI && monthlyPMI > 0 && (
             <ResultRow 
-              label="PMI" 
+              label="Estimated PMI" 
               value={formatCurrencyPrecise(monthlyPMI)}
               isEstimate={usedEstimates}
             />
           )}
           {monthlyHOA > 0 && (
-            <ResultRow label="HOA" value={formatCurrencyPrecise(monthlyHOA)} />
+            <ResultRow label="HOA dues" value={formatCurrencyPrecise(monthlyHOA)} />
           )}
           <div className="pt-2 mt-2 border-t border-border">
             <ResultRow label="Total" value={formatCurrencyPrecise(monthlyTotal)} primary />
@@ -117,7 +117,7 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
       {/* Loan summary */}
       <div>
         <p className="section-label mb-3">
-          {isRefinance ? "New loan summary" : "Loan summary"}
+          {isRefinance ? "New loan parameters" : "Loan parameters"}
         </p>
         <div className="space-y-0">
           <ResultRow 
@@ -128,11 +128,11 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
             <ResultRow label="Cash out" value={formatCurrency(cashOutAmount)} />
           )}
           {isRefinance && closingCostsIncluded !== undefined && closingCostsIncluded > 0 && (
-            <ResultRow label="Closing costs financed" value={formatCurrency(closingCostsIncluded)} />
+            <ResultRow label="Financed closing costs" value={formatCurrency(closingCostsIncluded)} />
           )}
-          <ResultRow label="Loan-to-value" value={formatPercent(ltvRatio)} />
-          <ResultRow label="Total interest" value={formatCurrency(totalInterest)} />
-          <ResultRow label="Total cost" value={formatCurrency(totalCost)} primary />
+          <ResultRow label="Loan-to-value ratio" value={formatPercent(ltvRatio)} />
+          <ResultRow label="Total interest (projected)" value={formatCurrency(totalInterest)} />
+          <ResultRow label="Total cost (projected)" value={formatCurrency(totalCost)} primary />
         </div>
       </div>
 
@@ -140,14 +140,14 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
 
       {/* Timeline */}
       <div>
-        <p className="section-label mb-3">Timeline</p>
+        <p className="section-label mb-3">Projected timeline</p>
         <div className="space-y-0">
           <ResultRow 
-            label="Payoff date" 
+            label="Estimated payoff date" 
             value={formatDate(payoffDate)} 
           />
           <ResultRow 
-            label="Months to payoff" 
+            label="Term length (months)" 
             value={`${payoffMonths}`} 
           />
         </div>
@@ -157,10 +157,10 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
 
       {/* Annual perspective (Year 1) - secondary, contextual */}
       <div>
-        <p className="section-label mb-3">Annual perspective (Year 1)</p>
+        <p className="section-label mb-3">Year 1 allocation (projected)</p>
         <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-          In the first year, you'll pay approximately {formatCurrency(annualSnapshot.annualPayments)} toward this mortgage. 
-          Of that, {formatCurrency(annualSnapshot.annualInterest)} goes to interest and {formatCurrency(annualSnapshot.annualPrincipalReduction)} reduces your principal balance.
+          In the first year, approximately {formatCurrency(annualSnapshot.annualPayments)} is allocated to this obligation. 
+          Of that, {formatCurrency(annualSnapshot.annualInterest)} is interest and {formatCurrency(annualSnapshot.annualPrincipalReduction)} reduces principal.
         </p>
         <div className="space-y-0">
           <ResultRow label="Annual payments" value={formatCurrency(annualSnapshot.annualPayments)} />
@@ -176,14 +176,14 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
           <div className="space-y-2 text-xs text-muted-foreground">
             {requiresPMI && (
               <p>
-                PMI {isRefinance ? "may be " : ""}required. {isRefinance 
-                  ? "Loan-to-value ratio is above 80%."
-                  : "Down payment is less than 20%."}
+                PMI {isRefinance ? "may be " : "is "}applicable when {isRefinance 
+                  ? "loan-to-value ratio exceeds 80%."
+                  : "down payment is less than 20%."}
               </p>
             )}
             {usedEstimates && (
               <p>
-                Using ZIP-based estimates for taxes and insurance.
+                Estimates are based on ZIP-level averages for taxes and insurance.
               </p>
             )}
           </div>

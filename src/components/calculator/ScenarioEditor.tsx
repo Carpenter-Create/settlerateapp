@@ -145,8 +145,8 @@ export function ScenarioEditor({
 
   // Helper text based on scenario type
   const pageDescription = inputs.mode === "purchase"
-    ? "Calculate your monthly payment and total costs for a new home purchase"
-    : "Compare your new loan terms and see potential savings";
+    ? "Model monthly payments and long-term costs for a home purchase."
+    : "Analyze new loan terms and compare against your current obligation."
 
   return (
     <>
@@ -182,7 +182,7 @@ export function ScenarioEditor({
                   <SaveStatusIndicator status={saveStatus} isDirty={isDirty} isEditing={isEditing} />
                 </div>
               ) : (
-                <h1>Mortgage Calculator</h1>
+                <h1>Scenario Workspace</h1>
               )}
               <p className="text-muted-foreground">
                 {pageDescription}
@@ -230,7 +230,7 @@ export function ScenarioEditor({
               {/* Shared loan terms */}
               <div className="grid gap-5 md:grid-cols-2">
                 <InputField 
-                  label={inputs.mode === "purchase" ? "Interest rate" : "New interest rate"}
+                  label={inputs.mode === "purchase" ? "Interest rate (assumed)" : "New interest rate (assumed)"}
                 >
                   <PercentInput
                     value={inputs.shared.interestRate}
@@ -265,7 +265,7 @@ export function ScenarioEditor({
                 onClick={() => setShowAdvanced(!showAdvanced)}
                 className="flex w-full items-center justify-between py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
-                <span>Extra payments</span>
+                <span>Additional principal payments</span>
                 {showAdvanced ? (
                   <ChevronUp className="h-4 w-4" />
                 ) : (
@@ -277,8 +277,8 @@ export function ScenarioEditor({
               {showAdvanced && (
                 <div className="space-y-5 animate-slide-up">
                   <InputField
-                    label="Extra monthly payment"
-                    description="Additional principal payment each month"
+                    label="Recurring additional principal"
+                    description="Applied each month toward principal reduction."
                     optional
                   >
                     <CurrencyInput
@@ -290,7 +290,7 @@ export function ScenarioEditor({
 
                   <InputField
                     label="One-time principal payment"
-                    description="Lump sum payment toward principal"
+                    description="Lump sum applied at loan origination."
                     optional
                   >
                     <CurrencyInput
