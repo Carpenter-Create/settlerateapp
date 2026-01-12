@@ -85,7 +85,7 @@ export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
       )}
     >
       {/* ========== ZONE 1: HEADER ========== */}
-      <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-5">
+      <div className="flex shrink-0 items-center justify-between border-b border-border px-space-5 py-space-5">
         <Link
           to="/"
           onClick={onClose}
@@ -107,23 +107,23 @@ export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
       {/* ========== ZONE 2: NAVIGATION ========== */}
       <div className="flex-1 overflow-y-auto">
         {/* Context Block */}
-        <div className="px-6 pb-4 pt-6">
+        <div className="px-space-5 pb-space-4 pt-space-5">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Explore SettleRate
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-space-2 text-sm leading-relaxed text-muted-foreground">
             A neutral framework for understanding mortgage outcomes.
           </p>
         </div>
 
         {/* Nav Items */}
-        <nav className="flex flex-col pb-6">
+        <nav className="flex flex-col pb-space-5">
           {menuItems.map((item) => (
             <Link
               key={item.name}
               to={item.href}
               className={cn(
-                "flex h-14 items-center justify-between px-6 text-[15px] transition-colors",
+                "flex h-14 items-center justify-between px-space-5 text-[15px] transition-colors",
                 location.pathname === item.href
                   ? "font-medium text-foreground"
                   : "text-foreground/90 hover:bg-muted/60 hover:text-foreground"
@@ -137,8 +137,8 @@ export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
       </div>
 
       {/* ========== ZONE 3: ACTIONS ========== */}
-      <div className="shrink-0 bg-white px-6 pb-8 pt-10 dark:bg-background">
-        <div className="flex flex-col gap-3">
+      <div className="shrink-0 bg-white px-space-5 pb-space-6 pt-space-6 dark:bg-background">
+        <div className="flex flex-col gap-space-3">
           <Button asChild size="lg" className="w-full">
             <Link to="/auth">Start free</Link>
           </Button>

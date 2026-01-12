@@ -40,21 +40,21 @@ export default function Pricing() {
   const currentPricing = pricing[interval];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-16">
+    <div className="mx-auto max-w-3xl space-y-space-8">
       {/* Header */}
       <div className="text-center">
         <h1 className="font-serif text-3xl font-normal tracking-tight sm:text-4xl">
           Pricing
         </h1>
-        <p className="mt-4 text-base text-muted-foreground">
+        <p className="mt-space-4 text-base text-muted-foreground">
           Transparent pricing. No hidden fees.
         </p>
       </div>
 
       {/* Plans */}
-      <div className="grid gap-8 sm:grid-cols-2">
+      <div className="grid gap-space-6 sm:grid-cols-2">
         {/* Free Plan */}
-        <div className="flex flex-col rounded-sm border border-border bg-card p-8">
+        <div className="flex flex-col rounded-sm border border-border bg-card p-space-6">
           <div className="space-y-1">
             <h3 className="text-base font-medium">Free</h3>
             <p className="text-sm text-muted-foreground">
@@ -62,13 +62,13 @@ export default function Pricing() {
             </p>
           </div>
 
-          <div className="mt-6 flex items-baseline gap-1">
+          <div className="mt-space-5 flex items-baseline gap-1">
             <span className="font-serif text-4xl">$0</span>
           </div>
 
-          <ul className="mt-8 flex-1 space-y-3">
+          <ul className="mt-space-6 flex-1 space-y-space-3">
             {freeFeatures.map((feature) => (
-              <li key={feature} className="flex items-start gap-3 text-sm">
+              <li key={feature} className="flex items-start gap-space-3 text-sm">
                 <Check
                   className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
                   strokeWidth={1.5}
@@ -78,13 +78,13 @@ export default function Pricing() {
             ))}
           </ul>
 
-          <p className="mt-8 text-center text-sm text-muted-foreground">
+          <p className="mt-space-6 text-center text-sm text-muted-foreground">
             Available to all users
           </p>
         </div>
 
         {/* Pro Plan */}
-        <div className="flex flex-col rounded-sm border border-border bg-card p-8">
+        <div className="flex flex-col rounded-sm border border-border bg-card p-space-6">
           <div className="space-y-1">
             <h3 className="text-base font-medium">Pro</h3>
             <p className="text-sm text-muted-foreground">
@@ -93,7 +93,7 @@ export default function Pricing() {
           </div>
 
           {/* Billing Toggle */}
-          <div className="mt-6 flex gap-1 rounded-sm border border-border p-1">
+          <div className="mt-space-5 flex gap-1 rounded-sm border border-border p-1">
             <button
               onClick={() => setInterval("annual")}
               className={cn(
@@ -118,7 +118,7 @@ export default function Pricing() {
             </button>
           </div>
 
-          <div className="mt-4 space-y-1">
+          <div className="mt-space-4 space-y-1">
             <div className="flex items-baseline gap-1">
               <span className="font-serif text-4xl">{currentPricing.price}</span>
               <span className="text-sm text-muted-foreground">
@@ -130,9 +130,9 @@ export default function Pricing() {
             </p>
           </div>
 
-          <ul className="mt-8 flex-1 space-y-3">
+          <ul className="mt-space-6 flex-1 space-y-space-3">
             {proFeatures.map((feature) => (
-              <li key={feature} className="flex items-start gap-3 text-sm">
+              <li key={feature} className="flex items-start gap-space-3 text-sm">
                 <Check
                   className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
                   strokeWidth={1.5}
@@ -142,7 +142,7 @@ export default function Pricing() {
             ))}
           </ul>
 
-          <Button asChild className="mt-8 w-full" size="lg">
+          <Button asChild className="mt-space-6 w-full" size="lg">
             <Link to="/auth">Start free</Link>
           </Button>
         </div>

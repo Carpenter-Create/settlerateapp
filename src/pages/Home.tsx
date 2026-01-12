@@ -28,14 +28,14 @@ export default function Home() {
   return (
     <div className="space-y-32">
       {/* Hero */}
-      <section className="pt-8 text-center sm:pt-12 lg:pt-16">
+      <section className="pt-space-6 text-center sm:pt-space-7 lg:pt-space-8">
         <h1 className="mx-auto max-w-3xl font-serif text-3xl font-normal tracking-tight sm:text-4xl lg:text-5xl lg:leading-tight">
           Mortgage decisions, modeled precisely.
         </h1>
-        <p className="mx-auto mt-10 max-w-2xl text-base leading-relaxed text-muted-foreground sm:mt-12 sm:text-lg sm:leading-relaxed">
+        <p className="mx-auto mt-space-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:mt-space-7 sm:text-lg sm:leading-relaxed">
           A neutral framework for understanding mortgage outcomes.
         </p>
-        <div className="mt-14 flex flex-col items-center justify-center gap-4 sm:mt-16 sm:flex-row">
+        <div className="mt-space-7 flex flex-col items-center justify-center gap-space-4 sm:mt-space-8 sm:flex-row">
           <Button asChild size="lg" className="min-w-40">
             <Link to="/auth">Start free</Link>
           </Button>
@@ -50,9 +50,9 @@ export default function Home() {
 
       {/* Capabilities */}
       <section className="mx-auto max-w-4xl">
-        <div className="grid gap-12 sm:grid-cols-2 sm:gap-x-16 sm:gap-y-14">
+        <div className="grid gap-space-7 sm:grid-cols-2 sm:gap-x-space-8 sm:gap-y-space-7">
           {capabilities.map((capability) => (
-            <div key={capability.title} className="space-y-3">
+            <div key={capability.title} className="space-y-space-3">
               <h3 className="text-sm font-medium tracking-wide text-foreground">
                 {capability.title}
               </h3>
@@ -66,7 +66,7 @@ export default function Home() {
 
       {/* Philosophy */}
       <section className="mx-auto max-w-2xl text-center">
-        <blockquote className="space-y-6">
+        <blockquote className="space-y-space-5">
           <p className="font-serif text-lg leading-relaxed text-foreground sm:text-xl">
             SettleRate is built to reduce uncertainty—not sell loans.
           </p>
@@ -75,20 +75,20 @@ export default function Home() {
             decisions can be made independently and confidently.
           </p>
         </blockquote>
-        <p className="mt-10 text-xs text-muted-foreground/70">
+        <p className="mt-space-6 text-xs text-muted-foreground/70">
           SettleRate is not a lender and does not offer mortgage products.
         </p>
       </section>
 
       {/* Final CTA */}
-      <section className="pb-8 text-center">
+      <section className="pb-space-6 text-center">
         <h2 className="font-serif text-2xl font-normal tracking-tight sm:text-3xl">
           Begin with a single scenario.
         </h2>
-        <p className="mt-4 text-sm text-muted-foreground">
+        <p className="mt-space-4 text-sm text-muted-foreground">
           Free to start. No credit card required.
         </p>
-        <Button asChild size="lg" className="mt-10 min-w-40">
+        <Button asChild size="lg" className="mt-space-6 min-w-40">
           <Link to="/auth">Start free</Link>
         </Button>
       </section>
