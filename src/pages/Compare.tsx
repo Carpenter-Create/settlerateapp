@@ -436,14 +436,14 @@ export default function Compare() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h1>Scenario Comparison</h1>
+            <h1>Comparison</h1>
             {isSharedView && (
               <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted/50 rounded">
                 View-only
               </span>
             )}
           </div>
-          <p className="mt-1">Side-by-side view of payment, payoff timeline, and total cost.</p>
+          <p className="mt-1">Side-by-side view of your options</p>
         </div>
         {!isSharedView && (
           <Button asChild size="sm" variant="ghost" className="gap-1.5">

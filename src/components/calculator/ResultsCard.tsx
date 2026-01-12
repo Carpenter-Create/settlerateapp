@@ -67,8 +67,10 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
       <div className="py-4">
         <p className="currency-display mb-1">{formatCurrency(monthlyTotal)}</p>
         <p className="text-sm text-muted-foreground">
-          {isRefinance ? "estimated new monthly payment" : "estimated monthly payment"}
-          {usedEstimates && " · includes estimates"}
+          Total Monthly Payment
+        </p>
+        <p className="text-xs text-muted-foreground/70 mt-1">
+          {isRefinance ? "Your full estimated new housing cost" : "Your full estimated housing cost"}
         </p>
       </div>
 
@@ -76,49 +78,54 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
 
       {/* Payment breakdown - table-like */}
       <div>
-        <p className="section-label mb-3">Payment breakdown</p>
+        <p className="section-label mb-1">Payment Breakdown</p>
+        <p className="text-xs text-muted-foreground/70 mb-3">See details</p>
         <div className="space-y-0">
           <ResultRow 
-            label="Principal & interest" 
+            label="Principal & Interest" 
             value={formatCurrencyPrecise(monthlyPrincipalInterest)} 
           />
           {monthlyPropertyTax > 0 && (
             <ResultRow 
-              label="Estimated property tax" 
+              label="Property Tax" 
               value={formatCurrencyPrecise(monthlyPropertyTax)}
               isEstimate={usedEstimates}
             />
           )}
           {monthlyHomeInsurance > 0 && (
             <ResultRow 
-              label="Estimated home insurance" 
+              label="Home Insurance" 
               value={formatCurrencyPrecise(monthlyHomeInsurance)}
               isEstimate={usedEstimates}
             />
           )}
           {requiresPMI && monthlyPMI > 0 && (
             <ResultRow 
-              label="Estimated PMI" 
+              label="PMI" 
               value={formatCurrencyPrecise(monthlyPMI)}
               isEstimate={usedEstimates}
             />
           )}
           {monthlyHOA > 0 && (
-            <ResultRow label="HOA dues" value={formatCurrencyPrecise(monthlyHOA)} />
+            <ResultRow label="HOA" value={formatCurrencyPrecise(monthlyHOA)} />
           )}
           <div className="pt-2 mt-2 border-t border-border">
-            <ResultRow label="Total" value={formatCurrencyPrecise(monthlyTotal)} primary />
+            <ResultRow label="Total Monthly Payment" value={formatCurrencyPrecise(monthlyTotal)} primary />
           </div>
         </div>
+        <p className="text-xs text-muted-foreground/70 mt-3">
+          This includes loan payment, taxes, insurance, and HOA if applicable.
+        </p>
       </div>
 
       <div className="divider-subtle" />
 
       {/* Loan summary */}
       <div>
-        <p className="section-label mb-3">
-          {isRefinance ? "New loan parameters" : "Loan parameters"}
+        <p className="section-label mb-1">
+          Assumptions
         </p>
+        <p className="text-xs text-muted-foreground/70 mb-3">What this is based on</p>
         <div className="space-y-0">
           <ResultRow 
             label={isRefinance ? "New loan amount" : "Loan amount"} 
@@ -134,6 +141,9 @@ export function ResultsCard({ results, className }: ResultsCardProps) {
           <ResultRow label="Total interest (projected)" value={formatCurrency(totalInterest)} />
           <ResultRow label="Total cost (projected)" value={formatCurrency(totalCost)} primary />
         </div>
+        <p className="text-xs text-muted-foreground/70 mt-3">
+          Changing any assumption will change the results.
+        </p>
       </div>
 
       <div className="divider-subtle" />

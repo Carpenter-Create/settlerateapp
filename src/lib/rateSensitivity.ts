@@ -116,13 +116,13 @@ export function generateRateSensitivityNarrative(
   let narrative: string;
   
   if (orderingChanges) {
-    narrative = `If interest rates were ${rateAmount}% ${rateDirection} across all options, the relative ordering of these scenarios would change. This suggests the current recommendation is sensitive to rate assumptions.`;
+    narrative = `Rate Context: If rates were ${rateAmount}% ${rateDirection}, the relative ordering of these scenarios would change. This is an illustrative change, not a prediction.`;
   } else {
     const paymentChangeText = paymentChangeRange.min === paymentChangeRange.max
-      ? `approximately ${formatCurrency(paymentChangeRange.min)}`
-      : `approximately ${formatCurrency(paymentChangeRange.min)}–${formatCurrency(paymentChangeRange.max)}`;
+      ? `about ${formatCurrency(paymentChangeRange.min)}`
+      : `about ${formatCurrency(paymentChangeRange.min)}–${formatCurrency(paymentChangeRange.max)}`;
     
-    narrative = `If interest rates were ${rateAmount}% ${rateDirection} across all options, the relative ordering of these scenarios would remain the same. Monthly payments would ${rateAdjustment < 0 ? "decrease" : "increase"} by ${paymentChangeText}.`;
+    narrative = `Rate Context: If rates were ${rateAmount}% ${rateDirection}, your monthly payment would ${rateAdjustment < 0 ? "decrease" : "increase"} by ${paymentChangeText}. This example shows how small rate changes affect monthly payments.`;
   }
 
   return {
@@ -212,10 +212,10 @@ export function generateRefiRateSensitivity(
     const monthlySaving = Math.abs(halfPointDrop.monthlyChange);
     const interestSaving = Math.abs(halfPointDrop.interestChange);
     
-    narrative = `If rates drop by 0.50%, the monthly payment would decrease by approximately ${formatCurrency(monthlySaving)}, saving roughly ${formatCurrency(interestSaving)} in total interest over the loan term.`;
+    narrative = `Rate Context: If rates drop by 0.50%, your monthly payment would decrease by about ${formatCurrency(monthlySaving)}, saving about ${formatCurrency(interestSaving)} in total interest. This is an illustrative change, not a prediction.`;
     
     if (breakEvenMonths !== null) {
-      narrative += ` With ${formatCurrency(closingCosts)} in closing costs, the break-even point would be approximately ${breakEvenMonths} months.`;
+      narrative += ` With ${formatCurrency(closingCosts)} in closing costs, the break-even point would be about ${breakEvenMonths} months.`;
     }
   }
 
