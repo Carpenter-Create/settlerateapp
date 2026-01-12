@@ -14,8 +14,8 @@ This document defines the routing structure for the SettleRate application.
 | `/app` | Redirect | Protected | Redirects to `/app/scenarios` |
 | `/app/scenarios` | `ScenariosIndex` | Protected | Scenario list (ledger view) |
 | `/app/scenarios/:id` | `ScenarioDetail` | Protected | Scenario detail view |
-| `/app/comparisons` | `ComparisonsIndex` | Protected + Pro | Comparison workspace |
-| `/app/comparisons/:ids` | `ComparisonDetail` | Protected + Pro | Side-by-side scenario comparison |
+| `/app/comparisons` | `ComparisonsIndex` | Protected + Pro | Comparison workspace (list + create) |
+| `/app/comparisons/:id` | `ComparisonDetail` | Protected + Pro | Saved comparison view |
 | `/app/calculator` | `Calculator` | Protected | Mortgage calculator |
 | `/app/account` | `Account` | Protected | Subscription and billing |
 | `/app/settings` | `AppSettings` | Protected | User settings |

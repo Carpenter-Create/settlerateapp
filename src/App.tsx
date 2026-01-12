@@ -47,7 +47,7 @@ const App = () => (
             <Route path="/app/scenarios" element={<ProtectedRoute><AppLayout><ScenariosIndex /></AppLayout></ProtectedRoute>} />
             <Route path="/app/scenarios/:id" element={<ProtectedRoute><AppLayout><ScenarioDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/app/comparisons" element={<ProtectedRoute><AppLayout><ComparisonsIndex /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/comparisons/:ids" element={<ProtectedRoute><AppLayout><ComparisonDetail /></AppLayout></ProtectedRoute>} />
+            <Route path="/app/comparisons/:id" element={<ProtectedRoute><AppLayout><ComparisonDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/app/calculator" element={<ProtectedRoute><AppLayout><Calculator /></AppLayout></ProtectedRoute>} />
             <Route path="/app/account" element={<ProtectedRoute><AppLayout><Account /></AppLayout></ProtectedRoute>} />
             <Route path="/app/settings" element={<ProtectedRoute><AppLayout><AppSettings /></AppLayout></ProtectedRoute>} />

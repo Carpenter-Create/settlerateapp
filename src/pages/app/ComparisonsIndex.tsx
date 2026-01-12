@@ -7,7 +7,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { GitCompare, Lock } from "lucide-react";
+import { GitCompare, Lock, Trash2, Eye, MoreHorizontal, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -18,11 +18,39 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { useScenarios } from "@/hooks/useScenarios";
+import { useComparisons, SavedComparison } from "@/hooks/useComparisons";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
 
 // ============================================================================
 // FORMATTING UTILITIES
@@ -56,6 +84,14 @@ function formatRelativeTime(date: Date): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 function getMonthlyPayment(scenario: ScenarioData): number | null {
   if (scenario.results?.monthlyTotal != null && scenario.results.monthlyTotal > 0) {
     return scenario.results.monthlyTotal;
@@ -64,17 +100,18 @@ function getMonthlyPayment(scenario: ScenarioData): number | null {
 }
 
 // ============================================================================
-// SCENARIO SELECTOR DIALOG
+// SCENARIO SELECTOR (MODAL/SHEET)
 // ============================================================================
 
 interface ScenarioSelectorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   scenarios: ScenarioData[];
-  onConfirm: (ids: [string, string]) => void;
+  onConfirm: (scenarioA: ScenarioData, scenarioB: ScenarioData) => void;
+  isCreating?: boolean;
 }
 
-function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm }: ScenarioSelectorProps) {
+function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm, isCreating }: ScenarioSelectorProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const isMobile = useIsMobile();
 
@@ -85,22 +122,21 @@ function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm }: Scenario
         next.delete(id);
       } else if (next.size < 2) {
         next.add(id);
-      } else {
-        // Replace oldest selection
-        const [first] = next;
-        next.delete(first);
-        next.add(id);
       }
+      // Don't allow more than 2 selections
       return next;
     });
   };
 
   const handleConfirm = () => {
     if (selectedIds.size === 2) {
-      const [a, b] = Array.from(selectedIds);
-      onConfirm([a, b]);
-      setSelectedIds(new Set());
-      onOpenChange(false);
+      const [aId, bId] = Array.from(selectedIds);
+      const scenarioA = scenarios.find(s => s.id === aId);
+      const scenarioB = scenarios.find(s => s.id === bId);
+      if (scenarioA && scenarioB) {
+        onConfirm(scenarioA, scenarioB);
+        setSelectedIds(new Set());
+      }
     }
   };
 
@@ -111,66 +147,112 @@ function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm }: Scenario
     onOpenChange(newOpen);
   };
 
+  const isDisabled = (id: string) => {
+    // Disable if we have 2 selected and this one isn't one of them
+    return selectedIds.size >= 2 && !selectedIds.has(id);
+  };
+
+  const content = (
+    <>
+      <div className="text-xs text-muted-foreground mb-4">
+        Select exactly two scenarios. ({selectedIds.size}/2 selected)
+      </div>
+      
+      <div className={isMobile ? "flex-1 overflow-y-auto -mx-4 px-4" : "max-h-[50vh] overflow-y-auto -mx-6 px-6"}>
+        <div className="space-y-1">
+          {scenarios.map((scenario) => {
+            const isSelected = selectedIds.has(scenario.id);
+            const disabled = isDisabled(scenario.id);
+            const monthlyPayment = getMonthlyPayment(scenario);
+            
+            return (
+              <button
+                key={scenario.id}
+                onClick={() => !disabled && toggleSelection(scenario.id)}
+                disabled={disabled}
+                className={`w-full flex items-center gap-3 rounded-md px-3 py-3 text-left transition-colors ${
+                  isSelected 
+                    ? "bg-muted/60" 
+                    : disabled
+                      ? "opacity-40 cursor-not-allowed"
+                      : "hover:bg-muted/30"
+                }`}
+              >
+                <Checkbox 
+                  checked={isSelected}
+                  disabled={disabled}
+                  className="h-4 w-4 pointer-events-none"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">
+                    {scenario.name || "Untitled scenario"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {formatPercent(scenario.inputs.shared?.interestRate || 0)} · {scenario.inputs.shared?.loanTerm || 30}yr · {formatCurrency(scenario.results?.loanAmount || 0)}
+                  </div>
+                </div>
+                {monthlyPayment && (
+                  <div className="text-sm font-medium tabular-nums text-muted-foreground">
+                    {formatCurrency(monthlyPayment)}/mo
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+
+  const footer = (
+    <>
+      <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isCreating}>
+        Cancel
+      </Button>
+      <Button 
+        onClick={handleConfirm}
+        disabled={selectedIds.size !== 2 || isCreating}
+      >
+        {isCreating ? "Creating..." : "Compare selected scenarios"}
+      </Button>
+    </>
+  );
+
+  // Mobile: use Sheet
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={handleOpenChange}>
+        <SheetContent side="bottom" className="h-[85vh] flex flex-col">
+          <SheetHeader>
+            <SheetTitle>Select scenarios to compare</SheetTitle>
+            <SheetDescription>
+              Choose exactly two scenarios for side-by-side comparison.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-hidden flex flex-col py-4">
+            {content}
+          </div>
+          <SheetFooter className="flex-row gap-3 pt-4 border-t">
+            {footer}
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // Desktop: use Dialog
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className={isMobile ? "max-w-[calc(100vw-2rem)]" : "max-w-lg"}>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Select scenarios to compare</DialogTitle>
           <DialogDescription>
             Choose exactly two scenarios for side-by-side comparison.
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="max-h-[50vh] overflow-y-auto -mx-6 px-6">
-          <div className="space-y-1">
-            {scenarios.map((scenario) => {
-              const isSelected = selectedIds.has(scenario.id);
-              const monthlyPayment = getMonthlyPayment(scenario);
-              
-              return (
-                <button
-                  key={scenario.id}
-                  onClick={() => toggleSelection(scenario.id)}
-                  className={`w-full flex items-center gap-3 rounded-md px-3 py-3 text-left transition-colors ${
-                    isSelected 
-                      ? "bg-muted/60" 
-                      : "hover:bg-muted/30"
-                  }`}
-                >
-                  <Checkbox 
-                    checked={isSelected}
-                    className="h-4 w-4 pointer-events-none"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">
-                      {scenario.name || "Untitled scenario"}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatPercent(scenario.inputs.shared?.interestRate || 0)} · {formatRelativeTime(new Date(scenario.updatedAt))}
-                    </div>
-                  </div>
-                  {monthlyPayment && (
-                    <div className="text-sm font-medium tabular-nums">
-                      {formatCurrency(monthlyPayment)}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        
+        {content}
         <DialogFooter>
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleConfirm}
-            disabled={selectedIds.size !== 2}
-          >
-            <GitCompare className="mr-2 h-4 w-4" />
-            Compare
-          </Button>
+          {footer}
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -193,14 +275,14 @@ function LockedState() {
         Comparisons
       </h1>
       <p className="mt-3 max-w-md text-sm text-muted-foreground">
-        Side-by-side scenario comparison is available on the Professional Review tier.
+        Comparisons are available in Professional Review.
       </p>
       <Button 
         variant="outline" 
         className="mt-8"
         onClick={() => navigate("/app/account")}
       >
-        View plans
+        View pricing
       </Button>
     </div>
   );
@@ -213,22 +295,59 @@ function LockedState() {
 export default function ComparisonsIndex() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { scenarios, isLoaded } = useScenarios();
+  const { scenarios, isLoaded: scenariosLoaded } = useScenarios();
+  const { comparisons, isLoaded: comparisonsLoaded, createComparison, deleteComparison, isCreating, isDeleting } = useComparisons();
   const { isLoading: capsLoading, canUsePro, isAdmin } = useCapabilities();
   const [selectorOpen, setSelectorOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [comparisonToDelete, setComparisonToDelete] = useState<SavedComparison | null>(null);
+  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
 
   // Sort scenarios by updated_at desc
   const sortedScenarios = [...scenarios].sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   );
 
+  // Create scenario lookup map
+  const scenarioMap = new Map(scenarios.map(s => [s.id, s]));
+
   // Handle comparison creation
-  const handleCreateComparison = (ids: [string, string]) => {
-    navigate(`/app/comparisons/${ids[0]}...${ids[1]}`);
+  const handleCreateComparison = async (scenarioA: ScenarioData, scenarioB: ScenarioData) => {
+    try {
+      const name = `${scenarioA.name || "Untitled"} vs ${scenarioB.name || "Untitled"}`;
+      const comparison = await createComparison({
+        name,
+        scenario_a_id: scenarioA.id,
+        scenario_b_id: scenarioB.id,
+      });
+      setSelectorOpen(false);
+      navigate(`/app/comparisons/${comparison.id}`);
+    } catch (error) {
+      toast.error("Failed to create comparison");
+    }
+  };
+
+  // Handle delete
+  const handleDeleteClick = (comparison: SavedComparison) => {
+    setComparisonToDelete(comparison);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!comparisonToDelete) return;
+    try {
+      await deleteComparison(comparisonToDelete.id);
+      toast.success("Comparison deleted");
+    } catch (error) {
+      toast.error("Failed to delete comparison");
+    } finally {
+      setDeleteDialogOpen(false);
+      setComparisonToDelete(null);
+    }
   };
 
   // Loading state
-  if (!isLoaded || capsLoading) {
+  if (!scenariosLoaded || !comparisonsLoaded || capsLoading) {
     return (
       <div className="space-y-6">
         <div>
@@ -245,11 +364,10 @@ export default function ComparisonsIndex() {
     return <LockedState />;
   }
 
-  // Empty state (no scenarios to compare)
+  // Not enough scenarios to compare
   if (sortedScenarios.length < 2) {
     return (
       <div className="space-y-6 md:space-y-8">
-        {/* Header */}
         <div>
           <h1 className="text-2xl font-medium tracking-tight">
             Comparisons
@@ -259,7 +377,6 @@ export default function ComparisonsIndex() {
           </p>
         </div>
 
-        {/* Empty state */}
         <div className="flex min-h-[40vh] flex-col items-center justify-center text-center px-4 border border-border rounded-sm bg-card">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
             <GitCompare className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
@@ -284,7 +401,9 @@ export default function ComparisonsIndex() {
     );
   }
 
-  // Main view with scenarios available
+  // Has comparisons - show list
+  const hasComparisons = comparisons.length > 0;
+
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Header */}
@@ -305,33 +424,176 @@ export default function ComparisonsIndex() {
         )}
       </div>
 
-      {/* Instruction card */}
-      <div className="border border-border rounded-sm bg-card px-6 py-8 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mx-auto mb-4">
-          <GitCompare className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+      {/* Empty state */}
+      {!hasComparisons && (
+        <div className="border border-border rounded-sm bg-card px-6 py-8 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mx-auto mb-4">
+            <GitCompare className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+          </div>
+          <p className="text-sm font-medium">
+            No comparisons created.
+          </p>
+          <p className="mt-2 max-w-sm mx-auto text-sm text-muted-foreground">
+            Select two scenarios to compare.
+          </p>
+          <Button 
+            variant="outline" 
+            className="mt-6"
+            onClick={() => setSelectorOpen(true)}
+          >
+            Create comparison
+          </Button>
         </div>
-        <p className="text-sm font-medium">
-          No comparisons created.
-        </p>
-        <p className="mt-2 max-w-sm mx-auto text-sm text-muted-foreground">
-          Select two scenarios to compare.
-        </p>
-        <Button 
-          variant="outline" 
-          className="mt-6"
-          onClick={() => setSelectorOpen(true)}
-        >
-          Create comparison
-        </Button>
-      </div>
+      )}
 
-      {/* Scenario selector dialog */}
+      {/* Comparisons list */}
+      {hasComparisons && (
+        isMobile ? (
+          <div className="space-y-3 pb-20">
+            {comparisons.map((comparison) => {
+              const scenarioA = scenarioMap.get(comparison.scenario_a_id);
+              const scenarioB = scenarioMap.get(comparison.scenario_b_id);
+              
+              return (
+                <button
+                  key={comparison.id}
+                  onClick={() => navigate(`/app/comparisons/${comparison.id}`)}
+                  className="w-full text-left border border-border rounded-sm bg-card p-4 hover:bg-muted/30 transition-colors"
+                >
+                  <div className="font-medium truncate">{comparison.name}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {scenarioA?.name || "Unknown"} vs {scenarioB?.name || "Unknown"}
+                  </div>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    {formatDate(new Date(comparison.created_at))}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="border border-border rounded-sm overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/40 hover:bg-muted/40">
+                  <TableHead className="h-10 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Comparison
+                  </TableHead>
+                  <TableHead className="h-10 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Scenarios
+                  </TableHead>
+                  <TableHead className="h-10 text-right text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Created
+                  </TableHead>
+                  <TableHead className="w-[50px] h-10"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {comparisons.map((comparison) => {
+                  const scenarioA = scenarioMap.get(comparison.scenario_a_id);
+                  const scenarioB = scenarioMap.get(comparison.scenario_b_id);
+                  
+                  return (
+                    <TableRow
+                      key={comparison.id}
+                      className="cursor-pointer h-14 border-b border-border/50 last:border-b-0 hover:bg-muted/30"
+                      onClick={() => navigate(`/app/comparisons/${comparison.id}`)}
+                      onMouseEnter={() => setHoveredRowId(comparison.id)}
+                      onMouseLeave={() => setHoveredRowId(null)}
+                    >
+                      <TableCell className="font-medium text-foreground">
+                        {comparison.name}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        <span className="truncate">
+                          {scenarioA?.name || "Unknown"} vs {scenarioB?.name || "Unknown"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {formatRelativeTime(new Date(comparison.created_at))}
+                      </TableCell>
+                      <TableCell>
+                        <div 
+                          className="transition-opacity duration-150"
+                          style={{ opacity: hoveredRowId === comparison.id ? 1 : 0 }}
+                        >
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-3.5 w-3.5" />
+                                <span className="sr-only">Actions</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/app/comparisons/${comparison.id}`); }}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={(e) => { e.stopPropagation(); handleDeleteClick(comparison); }}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )
+      )}
+
+      {/* Mobile: Floating action button */}
+      {isMobile && (
+        <div className="fixed bottom-6 right-4 z-50">
+          <Button
+            onClick={() => setSelectorOpen(true)}
+            className="rounded-full shadow-lg px-5 py-3"
+          >
+            <GitCompare className="mr-2 h-4 w-4" strokeWidth={2} />
+            Create comparison
+          </Button>
+        </div>
+      )}
+
+      {/* Scenario selector */}
       <ScenarioSelector
         open={selectorOpen}
         onOpenChange={setSelectorOpen}
         scenarios={sortedScenarios}
         onConfirm={handleCreateComparison}
+        isCreating={isCreating}
       />
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete comparison?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{comparisonToDelete?.name}". 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

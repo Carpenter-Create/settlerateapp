@@ -3,13 +3,16 @@
  * 
  * Institutional, analytical comparison of two saved mortgage scenarios.
  * Designed for advisor and lender review - no recommendations or color-coding.
+ * Loads from saved comparison record by ID.
  */
 
+import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, GitCompare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useScenarios } from "@/hooks/useScenarios";
+import { useComparisons, SavedComparison } from "@/hooks/useComparisons";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
@@ -40,6 +43,14 @@ function formatDate(date: Date): string {
   });
 }
 
+function formatFullDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 /**
  * Calculate payoff date from scenario
  */
@@ -51,13 +62,9 @@ function getPayoffDate(scenario: ScenarioData): string {
 }
 
 /**
- * Get monthly payment
+ * Get monthly payment (P&I only)
  */
-function getMonthlyPayment(scenario: ScenarioData): number | null {
-  if (scenario.results?.monthlyTotal != null && scenario.results.monthlyTotal > 0) {
-    return scenario.results.monthlyTotal;
-  }
-  
+function getMonthlyPI(scenario: ScenarioData): number | null {
   const results = scenario.results;
   const inputs = scenario.inputs;
   
@@ -74,15 +81,14 @@ function getMonthlyPayment(scenario: ScenarioData): number | null {
   const monthlyRate = interestRate / 100 / 12;
   const totalPayments = loanTerm * 12;
   
-  let monthlyPI = 0;
   if (loanAmount > 0 && monthlyRate > 0) {
-    monthlyPI = (loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, totalPayments))) /
+    return (loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, totalPayments))) /
       (Math.pow(1 + monthlyRate, totalPayments) - 1);
   } else if (loanAmount > 0 && monthlyRate === 0) {
-    monthlyPI = loanAmount / totalPayments;
+    return loanAmount / totalPayments;
   }
   
-  return monthlyPI;
+  return null;
 }
 
 /**
@@ -96,7 +102,7 @@ function getPropertyValue(scenario: ScenarioData): number | null {
 }
 
 // ============================================================================
-// COMPARISON SECTION COMPONENT
+// COMPARISON COMPONENTS
 // ============================================================================
 
 interface ComparisonRowProps {
@@ -134,7 +140,7 @@ function ComparisonSection({ title, children }: ComparisonSectionProps) {
 }
 
 // ============================================================================
-// MOBILE COMPARISON LAYOUT
+// MOBILE LAYOUT
 // ============================================================================
 
 interface MobileScenarioBlockProps {
@@ -143,7 +149,7 @@ interface MobileScenarioBlockProps {
 }
 
 function MobileScenarioBlock({ scenario, label }: MobileScenarioBlockProps) {
-  const monthlyPayment = getMonthlyPayment(scenario);
+  const monthlyPI = getMonthlyPI(scenario);
   const propertyValue = getPropertyValue(scenario);
   
   return (
@@ -192,7 +198,7 @@ function MobileScenarioBlock({ scenario, label }: MobileScenarioBlockProps) {
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Principal & interest</span>
-            <span className="tabular-nums">{monthlyPayment ? formatCurrency(monthlyPayment) : "—"}</span>
+            <span className="tabular-nums">{monthlyPI ? formatCurrency(monthlyPI) : "—"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Total monthly</span>
@@ -256,19 +262,34 @@ function MobileScenarioBlock({ scenario, label }: MobileScenarioBlockProps) {
 
 export default function ComparisonDetail() {
   const navigate = useNavigate();
-  const { ids } = useParams<{ ids: string }>();
+  const { id } = useParams<{ id: string }>();
   const isMobile = useIsMobile();
-  const { scenarios, isLoaded } = useScenarios();
+  const { scenarios, isLoaded: scenariosLoaded } = useScenarios();
+  const { getComparison, isLoaded: comparisonsLoaded } = useComparisons();
+  
+  const [comparison, setComparison] = useState<SavedComparison | null>(null);
+  const [isLoadingComparison, setIsLoadingComparison] = useState(true);
 
-  // Parse scenario IDs from URL (format: id1...id2)
-  const [scenarioAId, scenarioBId] = (ids || "").split("...");
+  // Load comparison by ID
+  useEffect(() => {
+    if (!id || !comparisonsLoaded) return;
+    
+    const loadComparison = async () => {
+      setIsLoadingComparison(true);
+      const data = await getComparison(id);
+      setComparison(data);
+      setIsLoadingComparison(false);
+    };
+    
+    loadComparison();
+  }, [id, comparisonsLoaded, getComparison]);
 
   // Find scenarios
-  const scenarioA = scenarios.find((s) => s.id === scenarioAId);
-  const scenarioB = scenarios.find((s) => s.id === scenarioBId);
+  const scenarioA = comparison ? scenarios.find((s) => s.id === comparison.scenario_a_id) : null;
+  const scenarioB = comparison ? scenarios.find((s) => s.id === comparison.scenario_b_id) : null;
 
   // Loading state
-  if (!isLoaded) {
+  if (!scenariosLoaded || isLoadingComparison) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
@@ -280,15 +301,41 @@ export default function ComparisonDetail() {
     );
   }
 
-  // Invalid scenarios
+  // Comparison not found
+  if (!comparison) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center px-4">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
+          <GitCompare className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+        </div>
+        <h1 className="text-2xl font-medium tracking-tight">
+          Comparison not found
+        </h1>
+        <p className="mt-3 max-w-md text-sm text-muted-foreground">
+          This comparison may have been deleted or you don't have access to it.
+        </p>
+        <Button asChild className="mt-8" variant="outline">
+          <Link to="/app/comparisons">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Return to comparisons
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
+  // Scenarios not found (deleted after comparison was created)
   if (!scenarioA || !scenarioB) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center text-center px-4">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
+          <GitCompare className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+        </div>
         <h1 className="text-2xl font-medium tracking-tight">
-          Scenarios not found
+          Scenarios unavailable
         </h1>
         <p className="mt-3 max-w-md text-sm text-muted-foreground">
-          The scenarios for this comparison could not be located.
+          One or both scenarios in this comparison have been deleted.
         </p>
         <Button asChild className="mt-8" variant="outline">
           <Link to="/app/comparisons">
@@ -316,10 +363,10 @@ export default function ComparisonDetail() {
             Comparisons
           </Button>
           <h1 className="text-2xl font-medium tracking-tight">
-            Scenario comparison
+            {comparison.name}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Side-by-side analysis for review.
+            Created {formatFullDate(new Date(comparison.created_at))}
           </p>
         </div>
 
@@ -343,8 +390,8 @@ export default function ComparisonDetail() {
   }
 
   // Desktop layout
-  const monthlyPaymentA = getMonthlyPayment(scenarioA);
-  const monthlyPaymentB = getMonthlyPayment(scenarioB);
+  const monthlyPIA = getMonthlyPI(scenarioA);
+  const monthlyPIB = getMonthlyPI(scenarioB);
   const propertyValueA = getPropertyValue(scenarioA);
   const propertyValueB = getPropertyValue(scenarioB);
 
@@ -363,10 +410,10 @@ export default function ComparisonDetail() {
             Comparisons
           </Button>
           <h1 className="text-2xl font-medium tracking-tight">
-            Scenario comparison
+            {comparison.name}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Side-by-side analysis for review.
+            Created {formatFullDate(new Date(comparison.created_at))}
           </p>
         </div>
         
@@ -425,8 +472,8 @@ export default function ComparisonDetail() {
       <ComparisonSection title="Monthly payment">
         <ComparisonRow 
           label="Principal & interest" 
-          valueA={monthlyPaymentA ? formatCurrency(monthlyPaymentA) : null}
-          valueB={monthlyPaymentB ? formatCurrency(monthlyPaymentB) : null}
+          valueA={monthlyPIA ? formatCurrency(monthlyPIA) : null}
+          valueB={monthlyPIB ? formatCurrency(monthlyPIB) : null}
         />
         <ComparisonRow 
           label="Total monthly payment" 
