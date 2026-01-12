@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      advisor_access_requests: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          role_title: string | null
+          status: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          role_title?: string | null
+          status?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          role_title?: string | null
+          status?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       billing: {
         Row: {
           current_period_end: string | null
@@ -299,6 +344,10 @@ export type Database = {
       }
     }
     Functions: {
+      approve_advisor_request: {
+        Args: { approve: boolean; request_id: string }
+        Returns: Json
+      }
       duplicate_scenario: {
         Args: { new_name?: string; source_scenario_id: string }
         Returns: string
@@ -310,9 +359,34 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: { uid: string }; Returns: boolean }
+      is_advisor: { Args: { uid: string }; Returns: boolean }
+      list_pending_advisor_requests: {
+        Args: never
+        Returns: {
+          company: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          role_title: string | null
+          status: string
+          user_id: string
+          website: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "advisor_access_requests"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "advisor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -440,7 +514,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "advisor"],
     },
   },
 } as const
