@@ -1,13 +1,15 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { PublicLayout } from "@/components/layout/PublicLayout";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 
-// Pages
+// Public pages
+import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -29,12 +31,8 @@ const App = () => (
         <Toaster />
         <BrowserRouter>
           <Routes>
-            {/* Auth is the canonical root */}
+            {/* Public routes */}
             <Route path="/" element={<Auth />} />
-            
-            {/* Redirect /auth and /login to canonical root */}
-            <Route path="/auth" element={<Navigate to="/" replace />} />
-            <Route path="/login" element={<Navigate to="/" replace />} />
 
             {/* Protected app routes */}
             <Route path="/app" element={<ProtectedRoute><AppLayout><AppIndex /></AppLayout></ProtectedRoute>} />

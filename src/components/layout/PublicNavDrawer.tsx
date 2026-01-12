@@ -1,0 +1,153 @@
+import { useEffect, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { X, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+
+interface PublicNavDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const menuItems = [
+  { name: "Our Approach", href: "/approach" },
+  { name: "How It Works", href: "/how-it-works" },
+  { name: "Pricing", href: "/pricing" },
+  { name: "For Advisors", href: "/advisors" },
+  { name: "For Investors", href: "/investors" },
+  { name: "Documentation", href: "/documentation" },
+  { name: "Contact", href: "/contact" },
+];
+
+export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
+  const location = useLocation();
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Focus trap and keyboard handling
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      // Focus trap
+      if (e.key === "Tab" && drawerRef.current) {
+        const focusableElements = drawerRef.current.querySelectorAll(
+          'button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+        if (e.shiftKey && document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement?.focus();
+        } else if (!e.shiftKey && document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement?.focus();
+        }
+      }
+    };
+
+    // Focus close button when drawer opens
+    closeButtonRef.current?.focus();
+
+    // Prevent body scroll
+    document.body.style.overflow = "hidden";
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, onClose]);
+
+  // Close on route change
+  useEffect(() => {
+    onClose();
+  }, [location.pathname, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      ref={drawerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Navigation menu"
+      className={cn(
+        "fixed inset-0 z-50 flex flex-col bg-white",
+        "transition-opacity duration-200 ease-out",
+        "dark:bg-background",
+        isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+      )}
+    >
+      {/* ========== ZONE 1: HEADER ========== */}
+      <div className="flex shrink-0 items-center justify-between border-b border-border px-space-5 py-space-5">
+        <Link
+          to="/"
+          onClick={onClose}
+          className="font-serif text-lg tracking-tight transition-opacity hover:opacity-70"
+        >
+          SettleRate
+        </Link>
+        <button
+          ref={closeButtonRef}
+          onClick={onClose}
+          className="flex h-11 w-11 items-center justify-center text-foreground/70 outline-none border-none bg-transparent shadow-none ring-0 focus:outline-none focus:ring-0 focus:border-none focus:bg-transparent active:outline-none active:ring-0 active:bg-transparent"
+          style={{ outline: 'none', boxShadow: 'none' }}
+          aria-label="Close menu"
+        >
+          <X className="h-[18px] w-[18px]" strokeWidth={1.5} />
+        </button>
+      </div>
+
+      {/* ========== ZONE 2: NAVIGATION ========== */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Context Block */}
+        <div className="px-space-5 pb-space-3 pt-space-5">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Explore SettleRate
+          </p>
+          <p className="mt-space-2 text-sm leading-relaxed text-muted-foreground">
+            A neutral framework for understanding mortgage outcomes.
+          </p>
+        </div>
+
+        {/* Nav Items */}
+        <nav className="flex flex-col pb-space-5">
+          {menuItems.map((item) => (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={cn(
+                "flex h-14 items-center justify-between px-space-5 text-[15px] transition-colors",
+                location.pathname === item.href
+                  ? "font-medium text-foreground"
+                  : "text-foreground/90 hover:bg-muted/60 hover:text-foreground"
+              )}
+            >
+              <span>{item.name}</span>
+              <ChevronRight className="h-4 w-4 text-foreground/40" strokeWidth={1.75} />
+            </Link>
+          ))}
+        </nav>
+      </div>
+
+      {/* ========== ZONE 3: ACTIONS ========== */}
+      <div className="shrink-0 bg-white px-space-5 pb-space-6 pt-space-6 dark:bg-background">
+        <div className="flex flex-col gap-space-3">
+          <Button asChild size="lg" className="w-full">
+            <Link to="/auth">Start free</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="w-full">
+            <Link to="/auth">Sign in</Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
