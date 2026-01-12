@@ -309,7 +309,7 @@ export default function Auth() {
         <p className="auth-error-inline">{errors.general}</p>
       )}
 
-      {/* Form */}
+      {/* Form — Fixed height container, no layout shift on mode toggle */}
       <AuthForm onSubmit={mode === "create" ? handleCreateAccount : handleSignIn}>
         <div className="space-y-2">
           <Label htmlFor="email" className="text-sm font-normal">
@@ -336,15 +336,19 @@ export default function Auth() {
             <Label htmlFor="password" className="text-sm font-normal">
               Password
             </Label>
-            {mode === "signin" && !isSubmitting && (
-              <Link
-                to="/reset-password"
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                tabIndex={isSubmitting ? -1 : 0}
-              >
-                Forgot password?
-              </Link>
-            )}
+            {/* Forgot password link — hidden via visibility in create mode to preserve layout */}
+            <Link
+              to="/reset-password"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              style={{ 
+                visibility: mode === "signin" && !isSubmitting ? "visible" : "hidden",
+                pointerEvents: mode === "signin" && !isSubmitting ? "auto" : "none"
+              }}
+              tabIndex={mode === "signin" && !isSubmitting ? 0 : -1}
+              aria-hidden={mode !== "signin"}
+            >
+              Forgot password?
+            </Link>
           </div>
           <Input
             id="password"
@@ -359,48 +363,69 @@ export default function Auth() {
           {errors.password && (
             <p className="auth-error-inline">{errors.password}</p>
           )}
-          {mode === "create" && !errors.password && (
-            <p className="text-xs text-muted-foreground">At least 12 characters</p>
-          )}
+          {/* Password helper — always renders to preserve height, visibility toggles */}
+          <p 
+            className="text-xs text-muted-foreground"
+            style={{ visibility: mode === "create" && !errors.password ? "visible" : "hidden" }}
+            aria-hidden={mode !== "create" || !!errors.password}
+          >
+            At least 12 characters
+          </p>
         </div>
 
-        {/* Legal checkbox for create account */}
-        {mode === "create" && (
-          <div>
-            <AuthLegalCheckbox
-              checked={agreedToTerms}
-              onCheckedChange={(checked) => {
-                setAgreedToTerms(checked);
-                if (errors.terms) setErrors((prev) => ({ ...prev, terms: undefined }));
-              }}
-              disabled={isSubmitting}
-            />
-            {errors.terms && (
-              <p className="auth-error-inline mt-1">{errors.terms}</p>
-            )}
-          </div>
-        )}
+        {/* Legal checkbox — always in DOM to preserve layout, visibility toggles */}
+        <div
+          style={{ 
+            visibility: mode === "create" ? "visible" : "hidden",
+            pointerEvents: mode === "create" ? "auto" : "none"
+          }}
+          aria-hidden={mode !== "create"}
+        >
+          <AuthLegalCheckbox
+            checked={agreedToTerms}
+            onCheckedChange={(checked) => {
+              setAgreedToTerms(checked);
+              if (errors.terms) setErrors((prev) => ({ ...prev, terms: undefined }));
+            }}
+            disabled={isSubmitting || mode !== "create"}
+          />
+          {errors.terms && (
+            <p className="auth-error-inline mt-1">{errors.terms}</p>
+          )}
+        </div>
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {getButtonText()}
         </Button>
       </AuthForm>
 
-      {/* Secondary actions */}
-      {mode === "signin" && (
-        <AuthSecondaryAction>
-          <AuthSecondaryLink onClick={handleMagicLink} disabled={isSubmitting}>
+      {/* Secondary actions — both always in DOM, visibility toggles */}
+      <AuthSecondaryAction>
+        <div style={{ visibility: mode === "signin" ? "visible" : "hidden" }}>
+          <AuthSecondaryLink 
+            onClick={handleMagicLink} 
+            disabled={isSubmitting || mode !== "signin"}
+          >
             Email me a sign-in link
           </AuthSecondaryLink>
-        </AuthSecondaryAction>
-      )}
-      {mode === "create" && (
-        <AuthSecondaryAction>
-          <AuthSecondaryLink onClick={() => setMode("signin")} disabled={isSubmitting}>
+        </div>
+        <div 
+          style={{ 
+            visibility: mode === "create" ? "visible" : "hidden",
+            position: mode === "create" ? "relative" : "absolute",
+            top: mode === "create" ? "auto" : 0,
+            left: mode === "create" ? "auto" : 0,
+            right: mode === "create" ? "auto" : 0,
+          }}
+        >
+          <AuthSecondaryLink 
+            onClick={() => setMode("signin")} 
+            disabled={isSubmitting || mode !== "create"}
+          >
             Already have an account? Sign in
           </AuthSecondaryLink>
-        </AuthSecondaryAction>
-      )}
+        </div>
+      </AuthSecondaryAction>
 
       {/* Website escape link */}
       <AuthEscapeLink />
