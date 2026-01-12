@@ -47,9 +47,15 @@ export default function Investors() {
         </h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Mortgage decisions are frequently evaluated using inconsistent tools,
-          opaque assumptions, and sales-driven calculators. This creates
-          confusion and misalignment between consumers and the professionals
-          advising them.
+          opaque assumptions, and sales-driven calculators. SettleRate is a
+          neutral framework for understanding mortgage outcomes, positioned
+          upstream of marketplaces and transactional platforms.
+        </p>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Rather than competing as a lender or lead-generation marketplace,
+          SettleRate provides structured scenario modeling, clear assumptions,
+          and documented outputs that support better decision-making and
+          professional review.
         </p>
       </section>
 
@@ -58,10 +64,7 @@ export default function Investors() {
         <h2 className="font-serif text-xl font-normal tracking-tight">
           Approach
         </h2>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          SettleRate does not compete as a lender or marketplace. It provides:
-        </p>
-        <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted-foreground">
+        <ul className="space-y-2 text-sm leading-relaxed text-muted-foreground">
           {approach.map((item) => (
             <li key={item}>{item}</li>
           ))}
