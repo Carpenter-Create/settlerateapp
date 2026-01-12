@@ -85,27 +85,52 @@ export function formatSignedDelta(value: number | null): string {
 }
 
 /**
- * Format basis points
+ * Format basis points to percentage for user-facing copy
+ * Primary: percentage (e.g., "0.25%")
+ * 
+ * LANGUAGE GUARDRAIL:
+ * All user-facing financial deltas must be expressed in plain-language percentages.
+ * Industry terms may be included only if spelled out and numerically clarified.
  */
-export function formatBasisPoints(bps: number): string {
-  const absBps = Math.abs(bps);
-  if (absBps < 10) {
-    return `${absBps.toFixed(1)} basis point${absBps === 1 ? "" : "s"}`;
-  }
-  return `${Math.round(absBps)} basis points`;
+export function formatRateDeltaAsPercent(bps: number): string {
+  const absPercent = Math.abs(bps / 100);
+  // Use 2 decimal places for interest rate percentages (standard precision)
+  return `${absPercent.toFixed(2)}%`;
 }
 
 /**
- * Format signed basis points for display
+ * Format interest rate delta for prose copy with optional basis points explanation
+ * Example: "0.25% (25 basis points)"
+ */
+export function formatRateDeltaForCopy(bps: number, includeBasicPoints = false): string {
+  const absPercent = Math.abs(bps / 100);
+  const percentStr = `${absPercent.toFixed(2)}%`;
+  
+  if (!includeBasicPoints || Math.abs(bps) < 1) {
+    return percentStr;
+  }
+  
+  const absBps = Math.abs(bps);
+  const bpsStr = absBps < 10 
+    ? `${absBps.toFixed(1)} basis points`
+    : `${Math.round(absBps)} basis points`;
+  
+  return `${percentStr} (${bpsStr})`;
+}
+
+/**
+ * Format signed basis points for compact display (key metrics row)
+ * Uses percentage as primary with bps as secondary
  */
 export function formatSignedBasisPoints(bps: number | null): string {
   if (bps === null) return "—";
   const sign = bps > 0 ? "+" : bps < 0 ? "−" : "";
+  const absPercent = Math.abs(bps / 100);
+  // For compact display, show percentage with bps in parentheses
+  const percentStr = `${absPercent.toFixed(2)}%`;
   const absBps = Math.abs(bps);
-  if (absBps < 10) {
-    return `${sign}${absBps.toFixed(1)} bps`;
-  }
-  return `${sign}${Math.round(absBps)} bps`;
+  const bpsStr = absBps < 10 ? `${absBps.toFixed(1)}` : `${Math.round(absBps)}`;
+  return `${sign}${percentStr} (${bpsStr} bps)`;
 }
 
 /**
@@ -114,7 +139,7 @@ export function formatSignedBasisPoints(bps: number | null): string {
 export function formatLtvDelta(delta: number | null): string {
   if (delta === null) return "—";
   const sign = delta > 0 ? "+" : "";
-  return `${sign}${delta.toFixed(1)}%`;
+  return `${sign}${delta.toFixed(1)} pts`;
 }
 
 // ============================================================================
@@ -237,10 +262,12 @@ export function generateSummaryCopy(
   }
 
   // Add rate/LTV context if meaningful
+  // LANGUAGE GUARDRAIL: Use plain percentages, with optional spelled-out basis points
   const contextParts: string[] = [];
   if (interestRateDelta !== null && Math.abs(interestRateDelta) >= 5) {
     const rateDirection = interestRateDelta > 0 ? "higher" : "lower";
-    contextParts.push(`a ${formatBasisPoints(interestRateDelta)} ${rateDirection} interest rate`);
+    // Use percentage as primary, with basis points spelled out in parentheses
+    contextParts.push(`a ${formatRateDeltaForCopy(interestRateDelta, true)} ${rateDirection} interest rate`);
   }
   if (ltvDelta !== null && Math.abs(ltvDelta) >= 1) {
     const ltvDirection = ltvDelta > 0 ? "higher" : "lower";
