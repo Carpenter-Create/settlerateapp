@@ -30,6 +30,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useScenarios } from "@/hooks/useScenarios";
 import { ScenarioData } from "@/lib/scenarioContract";
+import { ScenarioCard } from "@/components/scenarios/ScenarioCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
 /**
@@ -119,6 +121,7 @@ function getMonthlyPayment(scenario: ScenarioData): number | null {
 
 export default function ScenariosIndex() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { scenarios, isLoaded, duplicateScenario, deleteScenario } = useScenarios();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [scenarioToDelete, setScenarioToDelete] = useState<ScenarioData | null>(null);
@@ -169,17 +172,17 @@ export default function ScenariosIndex() {
   // Loading state
   if (!isLoaded) {
     return (
-      <div className="space-y-space-section">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <Skeleton className="h-7 w-32" />
             <Skeleton className="mt-2 h-4 w-48" />
           </div>
-          <Skeleton className="h-9 w-32" />
+          {!isMobile && <Skeleton className="h-9 w-32" />}
         </div>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-16 w-full" />
+            <Skeleton key={i} className={isMobile ? "h-28 w-full rounded-[14px]" : "h-16 w-full"} />
           ))}
         </div>
       </div>
@@ -189,7 +192,7 @@ export default function ScenariosIndex() {
   // Empty state
   if (sortedScenarios.length === 0) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center px-4">
         <h1 className="font-serif text-2xl font-normal tracking-tight sm:text-3xl">
           No saved scenarios yet.
         </h1>
@@ -207,7 +210,7 @@ export default function ScenariosIndex() {
   }
 
   return (
-    <div className="space-y-space-section">
+    <div className="space-y-6 md:space-y-8">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -218,85 +221,114 @@ export default function ScenariosIndex() {
             Your saved mortgage scenarios.
           </p>
         </div>
-        <Button asChild size="sm" className="gap-1.5">
-          <Link to="/app/calculator">
-            <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
-            New scenario
-          </Link>
-        </Button>
+        {/* Desktop new scenario button */}
+        {!isMobile && (
+          <Button asChild size="sm" className="gap-1.5">
+            <Link to="/app/calculator">
+              <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
+              New scenario
+            </Link>
+          </Button>
+        )}
       </div>
 
-      {/* Scenarios table */}
-      <div className="rounded-md border border-border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[35%]">Name</TableHead>
-              <TableHead className="text-right">Monthly payment</TableHead>
-              <TableHead className="hidden text-right sm:table-cell">Rate</TableHead>
-              <TableHead className="hidden text-right md:table-cell">Loan</TableHead>
-              <TableHead className="hidden text-right lg:table-cell">Updated</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedScenarios.map((scenario) => (
-              <TableRow
-                key={scenario.id}
-                className="cursor-pointer"
-                onClick={() => handleOpen(scenario)}
-              >
-                <TableCell className="font-medium">
-                  {scenario.name || "Untitled scenario"}
-                </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {(() => {
-                    const monthlyPayment = getMonthlyPayment(scenario);
-                    return monthlyPayment != null ? formatCurrency(monthlyPayment) : "—";
-                  })()}
-                </TableCell>
-                <TableCell className="hidden text-right tabular-nums sm:table-cell">
-                  {formatPercent(scenario.inputs.shared.interestRate)}
-                </TableCell>
-                <TableCell className="hidden text-right tabular-nums md:table-cell">
-                  {formatCurrency(scenario.results.loanAmount)}
-                </TableCell>
-                <TableCell className="hidden text-right text-muted-foreground lg:table-cell">
-                  {formatRelativeTime(new Date(scenario.updatedAt))}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpen(scenario); }}>
-                        <FileEdit className="mr-2 h-4 w-4" />
-                        Open
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(scenario); }}>
-                        <Copy className="mr-2 h-4 w-4" />
-                        Duplicate
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(scenario); }}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+      {/* Mobile: Card-based layout */}
+      {isMobile ? (
+        <div className="space-y-3 pb-20">
+          {sortedScenarios.map((scenario) => (
+            <ScenarioCard
+              key={scenario.id}
+              scenario={scenario}
+              onOpen={handleOpen}
+              onDuplicate={handleDuplicate}
+              onDelete={handleDeleteClick}
+            />
+          ))}
+        </div>
+      ) : (
+        /* Desktop: Table layout */
+        <div className="rounded-md border border-border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[35%]">Name</TableHead>
+                <TableHead className="text-right">Monthly payment</TableHead>
+                <TableHead className="text-right">Rate</TableHead>
+                <TableHead className="hidden text-right md:table-cell">Loan</TableHead>
+                <TableHead className="hidden text-right lg:table-cell">Updated</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {sortedScenarios.map((scenario) => (
+                <TableRow
+                  key={scenario.id}
+                  className="cursor-pointer"
+                  onClick={() => handleOpen(scenario)}
+                >
+                  <TableCell className="font-medium">
+                    {scenario.name || "Untitled scenario"}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {(() => {
+                      const monthlyPayment = getMonthlyPayment(scenario);
+                      return monthlyPayment != null ? formatCurrency(monthlyPayment) : "—";
+                    })()}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatPercent(scenario.inputs.shared.interestRate)}
+                  </TableCell>
+                  <TableCell className="hidden text-right tabular-nums md:table-cell">
+                    {formatCurrency(scenario.results.loanAmount)}
+                  </TableCell>
+                  <TableCell className="hidden text-right text-muted-foreground lg:table-cell">
+                    {formatRelativeTime(new Date(scenario.updatedAt))}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpen(scenario); }}>
+                          <FileEdit className="mr-2 h-4 w-4" />
+                          Open
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(scenario); }}>
+                          <Copy className="mr-2 h-4 w-4" />
+                          Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={(e) => { e.stopPropagation(); handleDeleteClick(scenario); }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Mobile: Floating action button */}
+      {isMobile && (
+        <Link
+          to="/app/calculator"
+          className="fixed bottom-6 right-4 z-50 flex items-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background shadow-lg transition-transform active:scale-95"
+        >
+          <Plus className="h-4 w-4" strokeWidth={2} />
+          New scenario
+        </Link>
+      )}
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
