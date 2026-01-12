@@ -1,4 +1,4 @@
-import { ScenarioType } from "@/lib/mortgage";
+import { ScenarioType, TRANSACTION_TYPE_LABELS, TRANSACTION_TYPE_FIELD_LABEL } from "@/lib/mortgage";
 import { cn } from "@/lib/utils";
 import { Home, RefreshCw } from "lucide-react";
 
@@ -10,7 +10,7 @@ interface ScenarioTypeSelectorProps {
 export function ScenarioTypeSelector({ value, onChange }: ScenarioTypeSelectorProps) {
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium text-muted-foreground">Transaction type</p>
+      <p className="text-sm font-medium text-muted-foreground">{TRANSACTION_TYPE_FIELD_LABEL}</p>
       <div className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-background p-1">
         <button
           type="button"
@@ -23,7 +23,7 @@ export function ScenarioTypeSelector({ value, onChange }: ScenarioTypeSelectorPr
           )}
         >
           <Home className="h-4 w-4" />
-          <span>Purchase</span>
+          <span>{TRANSACTION_TYPE_LABELS.purchase}</span>
         </button>
         <button
           type="button"
@@ -36,7 +36,7 @@ export function ScenarioTypeSelector({ value, onChange }: ScenarioTypeSelectorPr
           )}
         >
           <RefreshCw className="h-4 w-4" />
-          <span>Refinance</span>
+          <span>{TRANSACTION_TYPE_LABELS.refinance}</span>
         </button>
       </div>
     </div>

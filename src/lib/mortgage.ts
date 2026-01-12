@@ -1,6 +1,24 @@
 export type ScenarioType = "purchase" | "refinance";
 
 // =============================================================================
+// TRANSACTION TYPE LABELS (LOCKED - Single source of truth)
+// =============================================================================
+
+/**
+ * Canonical labels for transaction types.
+ * All UI components must reference these constants.
+ */
+export const TRANSACTION_TYPE_LABELS: Record<ScenarioType, string> = {
+  purchase: "Purchase",
+  refinance: "Refinance",
+} as const;
+
+/**
+ * Canonical label for the transaction type selector field.
+ */
+export const TRANSACTION_TYPE_FIELD_LABEL = "Transaction type" as const;
+
+// =============================================================================
 // NAMESPACED INPUT TYPES (Mode-specific inputs)
 // =============================================================================
 

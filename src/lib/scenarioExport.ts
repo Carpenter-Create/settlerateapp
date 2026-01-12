@@ -13,7 +13,7 @@
  * - No CTAs, links, or upsells
  */
 
-import { formatCurrency, formatPercent, calculateDownPaymentAmount } from "@/lib/mortgage";
+import { formatCurrency, formatPercent, calculateDownPaymentAmount, TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
 import type { ScenarioData } from "@/lib/scenarioContract";
 
 /**
@@ -246,7 +246,7 @@ function generateScenarioHTML(scenario: ScenarioData): string {
       <table>
         <tr>
           <td>Loan type</td>
-          <td>${isPurchase ? "Purchase" : "Refinance"}</td>
+          <td>${TRANSACTION_TYPE_LABELS[inputs.mode]}</td>
         </tr>
         <tr>
           <td>Property value</td>

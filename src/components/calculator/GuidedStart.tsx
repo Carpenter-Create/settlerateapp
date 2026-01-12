@@ -45,6 +45,7 @@ import {
   DEFAULT_PURCHASE_INPUTS,
   DEFAULT_REFINANCE_INPUTS,
   DEFAULT_SHARED_INPUTS,
+  TRANSACTION_TYPE_LABELS,
 } from "@/lib/mortgage";
 import { getZipEstimate, isValidZipCode } from "@/lib/zipEstimates";
 import { cn } from "@/lib/utils";
@@ -194,10 +195,9 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
       },
     };
 
-    // Generate name
-    const name = mode === "purchase" 
-      ? `Purchase ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
-      : `Refinance ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+    // Generate name using shared label constants
+    const typeLabel = TRANSACTION_TYPE_LABELS[mode];
+    const name = `${typeLabel} ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 
     onComplete(inputs, name);
     resetForm();
@@ -295,7 +295,7 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                 >
                   <div className="flex items-center gap-2">
                     <Home className="h-4 w-4" strokeWidth={1.5} />
-                    <span className="text-sm font-medium">Purchase</span>
+                    <span className="text-sm font-medium">{TRANSACTION_TYPE_LABELS.purchase}</span>
                   </div>
                   <span className="text-xs text-muted-foreground">
                     New home acquisition financing
@@ -313,7 +313,7 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                 >
                   <div className="flex items-center gap-2">
                     <RefreshCw className="h-4 w-4" strokeWidth={1.5} />
-                    <span className="text-sm font-medium">Refinance</span>
+                    <span className="text-sm font-medium">{TRANSACTION_TYPE_LABELS.refinance}</span>
                   </div>
                   <span className="text-xs text-muted-foreground">
                     Replace existing mortgage with new terms

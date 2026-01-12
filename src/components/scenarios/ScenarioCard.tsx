@@ -7,6 +7,7 @@
 
 import { MoreHorizontal, Copy, Trash2 } from "lucide-react";
 import { ScenarioData } from "@/lib/scenarioContract";
+import { TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
 import {
   MobileCard,
   MobileCardLabel,
@@ -103,7 +104,7 @@ function getMonthlyPayment(scenario: ScenarioData): number | null {
  * Get scenario type label
  */
 function getScenarioTypeLabel(scenario: ScenarioData): string {
-  const type = scenario.inputs.mode === "refinance" ? "Refinance" : "Purchase";
+  const type = TRANSACTION_TYPE_LABELS[scenario.inputs.mode] || TRANSACTION_TYPE_LABELS.purchase;
   const term = scenario.inputs.shared?.loanTerm;
   const termLabel = term ? `${term}-yr fixed` : "";
   return termLabel ? `${type} • ${termLabel}` : type;

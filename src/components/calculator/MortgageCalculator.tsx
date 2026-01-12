@@ -11,7 +11,7 @@
  */
 
 import { useCallback, useState, useEffect } from "react";
-import { MortgageInputs, DEFAULT_INPUTS } from "@/lib/mortgage";
+import { MortgageInputs, DEFAULT_INPUTS, TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
 import { useActiveScenario, useScenarios } from "@/hooks/useScenarios";
 import { useScenarioRoute } from "@/hooks/useScenarioRoute";
 import { ScenarioEditor } from "./ScenarioEditor";
@@ -93,7 +93,7 @@ export function MortgageCalculator() {
         }
         return success;
       } else {
-        const typeLabel = inputs.mode === "purchase" ? "Purchase" : "Refinance";
+        const typeLabel = TRANSACTION_TYPE_LABELS[inputs.mode];
         const name = `${typeLabel} ${scenarios.length + 1}`;
         const newScenario = await saveAsNew(name);
         navigateToScenario(newScenario.id);
