@@ -27,13 +27,11 @@ const pricing = {
     price: "$79",
     period: "/year",
     subtext: "Billed annually",
-    label: "Best for planning across scenarios",
   },
   monthly: {
     price: "$9",
     period: "/month",
     subtext: "Billed monthly",
-    label: "For short-term decision support",
   },
 };
 
@@ -128,7 +126,7 @@ export default function Pricing() {
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              {currentPricing.label}
+              {currentPricing.subtext}
             </p>
           </div>
 
