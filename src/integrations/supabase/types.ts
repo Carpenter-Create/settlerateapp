@@ -403,6 +403,7 @@ export type Database = {
         Args: { new_name?: string; source_scenario_id: string }
         Returns: string
       }
+      get_effective_tier: { Args: { target_user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
