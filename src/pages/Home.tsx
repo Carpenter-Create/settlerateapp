@@ -6,14 +6,13 @@ import { AnalyticalSurface } from "@/components/marketing/AnalyticalSurface";
 /**
  * Homepage - Canonical Institutional Framing (Locked)
  * 
+ * Micro-Copy Rules:
+ * - Buttons administer access, not persuade
+ * - Captions frame analysis, not coach
+ * - Footers set boundaries, not reassure
+ * 
  * Color-Blocking System:
  * Structure without gloss. Authority without marketing theatrics.
- * Use background tone—not decoration—to establish authority and pacing.
- * 
- * Feature Language:
- * SettleRate evaluates, models, normalizes, and surfaces.
- * It does not "help users find" or "make it easy."
- * If a sentence sounds like onboarding copy, it's wrong.
  */
 
 // Canonical feature language - capability framing, not benefit framing
@@ -27,19 +26,19 @@ const structureCapabilities = [
 const frameworkPillars = [
   {
     title: "Scenario modeling",
-    body: "Mortgage structures are evaluated under consistent assumptions to enable meaningful comparison across term length, down payment strategy, and time horizon.",
+    body: "Mortgage structures are evaluated under consistent, documented assumptions to enable direct comparison across term length, down payment strategy, and time horizon.",
   },
   {
     title: "Normalized assumptions",
-    body: "Rates, taxes, insurance, and PMI are standardized across scenarios to prevent distortion and ensure analytical integrity.",
+    body: "Rates, taxes, insurance, and PMI are standardized across scenarios to prevent distortion and preserve analytical integrity.",
   },
   {
     title: "Cost visibility",
-    body: "Long-term interest, capital requirements, and total cost of capital are surfaced explicitly rather than inferred from monthly payment alone.",
+    body: "Long-term interest, capital requirements, and total cost of capital are surfaced explicitly rather than inferred from monthly payment figures.",
   },
   {
     title: "Professional outputs",
-    body: "Exportable summaries designed for advisor discussion, lender review, and documentation—without embedded recommendations or referral bias.",
+    body: "Structured summaries designed for advisor discussion, lender review, and documentation—without embedded recommendations, rankings, or referral bias.",
   },
 ];
 
@@ -98,7 +97,7 @@ export default function Home() {
             </p>
             <div className="mt-14 sm:mt-16">
               <Button asChild size="lg" className="min-w-44 h-12 text-base">
-                <Link to="/auth">Start free</Link>
+                <Link to="/auth">Begin analysis</Link>
               </Button>
             </div>
           </div>
@@ -112,10 +111,18 @@ export default function Home() {
           ═══════════════════════════════════════════════════════════════ */}
       <Section surface="secondary" className="py-16 lg:py-20">
         <div className="mx-auto max-w-4xl">
+          {/* Caption - Institutional framing */}
+          <p className="mb-4 text-center text-xs text-foreground/50">
+            Example of normalized scenario modeling using transparent assumptions.
+          </p>
           {/* Card inset using Surface Primary with thin border */}
           <div className="rounded-md border border-foreground/[0.08] bg-surface-primary">
             <AnalyticalSurface />
           </div>
+          {/* Secondary caption */}
+          <p className="mt-3 text-center text-[11px] text-foreground/40">
+            Illustrative outputs for comparative evaluation only.
+          </p>
         </div>
       </Section>
 
@@ -178,7 +185,10 @@ export default function Home() {
 
           {/* Constraints Subsection */}
           <div className="mt-12 border-t border-foreground/[0.08] pt-10">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground">
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/50">
+              Scope
+            </p>
+            <h3 className="mt-2 text-sm font-medium text-foreground">
               What SettleRate does not do
             </h3>
             <ul className="mt-6 space-y-4">
@@ -217,7 +227,7 @@ export default function Home() {
       <Section surface="primary" className="py-20 lg:py-28">
         <div className="mb-12 lg:mb-16">
           <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/50">
-            The SettleRate Framework
+            Framework
           </p>
           <h2 className="mt-4 font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-3xl lg:text-4xl">
             How mortgage decisions are evaluated
@@ -255,15 +265,16 @@ export default function Home() {
           <h2 className="font-serif text-xl font-medium tracking-[-0.01em] text-foreground sm:text-2xl">
             Begin with a single scenario.
           </h2>
-          <p className="mt-4 text-sm text-foreground/60">
-            Free to start. No credit card required.
-          </p>
           <Button asChild size="lg" className="mt-8 min-w-44 h-12 text-base">
-            <Link to="/auth">Start free</Link>
+            <Link to="/auth">Begin analysis</Link>
           </Button>
 
-          <p className="mx-auto mt-12 max-w-lg text-xs leading-relaxed text-foreground/40">
-            SettleRate is not a lender, broker, or financial advisor and does not offer mortgage products or personalized advice.
+          <p className="mt-6 text-xs text-foreground/50">
+            Analytical access. No product promotion.
+          </p>
+
+          <p className="mx-auto mt-12 max-w-lg text-[11px] leading-relaxed text-foreground/40">
+            SettleRate provides analytical modeling only and does not originate, broker, or recommend mortgage products.
           </p>
         </div>
       </Section>
