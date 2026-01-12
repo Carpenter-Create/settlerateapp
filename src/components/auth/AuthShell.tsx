@@ -54,6 +54,11 @@ interface AuthDisclaimerProps {
 interface AuthLegalCheckboxProps {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
+}
+
+interface AuthSessionBannerProps {
+  message: string;
 }
 
 // Main shell container — vertically centered
@@ -121,26 +126,46 @@ export function AuthForm({ children, onSubmit }: AuthFormProps) {
 }
 
 // Legal checkbox with Privacy Policy and Terms of Service
-export function AuthLegalCheckbox({ checked, onCheckedChange }: AuthLegalCheckboxProps) {
+export function AuthLegalCheckbox({ checked, onCheckedChange, disabled }: AuthLegalCheckboxProps) {
   return (
     <div className="auth-legal-checkbox">
       <Checkbox
         id="legal-agreement"
         checked={checked}
         onCheckedChange={(val) => onCheckedChange(val === true)}
+        disabled={disabled}
         className="mt-0.5"
       />
-      <label htmlFor="legal-agreement">
+      <label htmlFor="legal-agreement" className={disabled ? "opacity-50" : ""}>
         I agree to the{" "}
-        <a href="/privacy" target="_blank" rel="noopener noreferrer">
+        <a 
+          href="/privacy" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          tabIndex={disabled ? -1 : 0}
+        >
           Privacy Policy
         </a>{" "}
         and{" "}
-        <a href="/terms" target="_blank" rel="noopener noreferrer">
+        <a 
+          href="/terms" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          tabIndex={disabled ? -1 : 0}
+        >
           Terms of Service
         </a>
         .
       </label>
+    </div>
+  );
+}
+
+// Session expired banner — neutral, non-alarming
+export function AuthSessionBanner({ message }: AuthSessionBannerProps) {
+  return (
+    <div className="auth-session-banner">
+      {message}
     </div>
   );
 }
