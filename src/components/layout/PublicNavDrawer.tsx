@@ -11,11 +11,12 @@ interface PublicNavDrawerProps {
 
 const menuItems = [
   { name: "Our Approach", href: "/approach" },
+  { name: "How It Works", href: "/how-it-works" },
   { name: "Pricing", href: "/pricing" },
   { name: "For Advisors", href: "/advisors" },
+  { name: "For Investors", href: "/investors" },
+  { name: "Documentation", href: "/documentation" },
   { name: "Contact", href: "/contact" },
-  { name: "Privacy", href: "/privacy" },
-  { name: "Terms", href: "/terms" },
 ];
 
 export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
