@@ -2,58 +2,48 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 /**
- * How It Works Page - Unified Analytical Framework
+ * How It Works Page - StoryBrand "Plan" Structure
  * 
- * The intellectual spine of the product. Reads in three layers:
- * 1. Purpose — what this system exists to do
- * 2. Framework — how decisions are evaluated  
- * 3. Methodology — why the outputs are defensible
- * 
- * Copy is non-consumer, non-promotional, defensible.
- * Spacing is tokenized via CSS custom properties.
+ * Procedural clarity: what happens when a user uses SettleRate.
+ * No marketing, no philosophy—just process.
  */
 
-const frameworkPillars = [
+const steps = [
   {
-    title: "Scenario modeling",
-    body: "Mortgage structures are evaluated under consistent, documented assumptions to enable direct comparison across term length, down payment strategy, and time horizon.",
+    number: "01",
+    title: "Start with a single scenario",
+    body: "You begin by modeling one mortgage scenario using inputs such as purchase price, down payment, interest rate, and term. This establishes a baseline using clearly defined assumptions. No optimization or recommendations are introduced at this stage.",
   },
   {
-    title: "Normalized assumptions",
-    body: "Rates, taxes, insurance, and PMI are standardized across scenarios to prevent distortion and preserve analytical integrity.",
+    number: "02",
+    title: "Assumptions are standardized across comparisons",
+    body: "When comparing scenarios, SettleRate normalizes shared assumptions—such as property taxes, insurance, PMI, and time horizon—so differences reflect structure, not distortion.",
   },
   {
-    title: "Cost visibility",
-    body: "Long-term interest, capital requirements, and total cost of capital are surfaced explicitly rather than inferred from monthly payment figures.",
+    number: "03",
+    title: "Outcomes are surfaced explicitly",
+    body: "Rather than focusing solely on monthly payment, SettleRate surfaces outcomes that are often obscured, including total interest paid, capital required, time to principal dominance, and total cost of capital.",
   },
   {
-    title: "Professional outputs",
-    body: "Structured summaries designed for advisor discussion, lender review, and documentation—without embedded recommendations, rankings, or referral bias.",
+    number: "04",
+    title: "Results are designed for professional review",
+    body: "Each scenario produces a structured summary that can be reviewed independently or exported for discussion with advisors, lenders, or other professionals. Outputs are descriptive, not prescriptive.",
   },
 ];
 
-const methodologyPrinciples = [
-  {
-    title: "Time-horizon analysis",
-    body: "Scenarios are evaluated across the full life of the loan, including the point at which cumulative principal repayment exceeds cumulative interest.",
-  },
-  {
-    title: "Reproducibility",
-    body: "Scenarios can be exported, shared, and independently verified. All calculations are documented and traceable to stated assumptions.",
-  },
-  {
-    title: "Illustrative rate comparisons",
-    body: "All rate comparisons are illustrative and do not predict future market conditions. Rate context is provided to show how changes in assumptions affect scenario outcomes.",
-  },
+const constraints = [
+  "We do not originate, broker, or refer mortgage products.",
+  "We do not provide personalized financial, legal, or tax advice.",
+  "We do not sell user data or generate revenue from lender referrals.",
+  "We do not use incentive-driven defaults or promotional inputs.",
 ];
 
 export default function HowItWorks() {
   return (
     <div className="w-full">
       {/* ══════════════════════════════════════════════════════════════════
-          PAGE HERO
-          Uses --space-hero-top / --space-hero-bottom tokens.
-          Institutional breathing room. Authority, not marketing.
+          HERO
+          Clear procedural framing. No philosophy.
           ══════════════════════════════════════════════════════════════════ */}
       <section 
         className="w-full bg-surface-primary"
@@ -65,38 +55,21 @@ export default function HowItWorks() {
         <div className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16">
           <div className="mx-auto max-w-3xl">
             <h1 className="font-serif text-3xl font-medium tracking-[-0.02em] leading-[1.15] text-foreground sm:text-4xl lg:text-[2.75rem]">
-              How mortgage decisions are evaluated
+              How SettleRate works
             </h1>
             <p 
               className="max-w-2xl text-base leading-[1.7] text-foreground/60 sm:text-lg"
               style={{ marginTop: 'var(--space-text-stack)' }}
             >
-              A consistent analytical framework designed for clarity, comparability, and professional review.
+              A structured, neutral process for modeling mortgage outcomes using consistent assumptions.
             </p>
-            
-            {/* Global Framing - Canonical Definition */}
-            <div 
-              className="border-t border-border/30"
-              style={{ marginTop: 'var(--space-section-tight)', paddingTop: 'var(--space-text-stack)' }}
-            >
-              <p className="text-[15px] leading-[1.7] text-foreground/70">
-                SettleRate is a mortgage analysis and comparison tool designed to help users understand the financial implications of different loan scenarios.
-              </p>
-              <p 
-                className="text-sm leading-[1.7] text-foreground/50"
-                style={{ marginTop: 'var(--space-text-stack)' }}
-              >
-                It provides assumption-based modeling to support informed decision-making, without selling, recommending, or originating loans.
-              </p>
-            </div>
           </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 1 — THE FRAMEWORK (Primary Body)
-          Uses --space-section for vertical rhythm.
-          Matches homepage framework section exactly.
+          ANALYTICAL SEQUENCE (Steps)
+          Procedural steps with numbered progression.
           ══════════════════════════════════════════════════════════════════ */}
       <section 
         className="w-full bg-surface-secondary"
@@ -104,35 +77,39 @@ export default function HowItWorks() {
       >
         <div className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16">
           <div className="mx-auto max-w-3xl">
-            {/* Eyebrow + H2 */}
             <div className="mb-10 lg:mb-12">
               <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/50">
-                The SettleRate Framework
+                Process
               </p>
               <h2 
                 className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-3xl"
                 style={{ marginTop: 'var(--space-text-stack)' }}
               >
-                Scenario evaluation, standardized
+                A simple analytical sequence
               </h2>
             </div>
 
-            {/* Framework Cards - Card gap tokenized */}
+            {/* Step Cards */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-card-gap)' }}>
-              {frameworkPillars.map((pillar) => (
+              {steps.map((step) => (
                 <article
-                  key={pillar.title}
+                  key={step.number}
                   className="group relative border-l-2 border-foreground/10 bg-surface-primary transition-all hover:border-foreground/30"
                   style={{ padding: '32px' }}
                 >
-                  <h3 className="font-serif text-lg font-medium tracking-[-0.01em] text-foreground">
-                    {pillar.title}
-                  </h3>
+                  <div className="flex items-baseline gap-4">
+                    <span className="text-xs font-medium text-foreground/40">
+                      {step.number}
+                    </span>
+                    <h3 className="font-serif text-lg font-medium tracking-[-0.01em] text-foreground">
+                      {step.title}
+                    </h3>
+                  </div>
                   <p 
-                    className="text-[15px] leading-[1.7] text-foreground/60"
+                    className="text-[15px] leading-[1.7] text-foreground/60 ml-8"
                     style={{ marginTop: 'var(--space-text-stack)' }}
                   >
-                    {pillar.body}
+                    {step.body}
                   </p>
                 </article>
               ))}
@@ -142,90 +119,78 @@ export default function HowItWorks() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 2 — CORE METHODOLOGY (Supporting Layer)
-          Uses --space-section-tight for top margin from prior section.
-          Single stacked container. Quiet, serious, secondary.
+          WHAT THIS ENABLES
+          Single transition statement.
           ══════════════════════════════════════════════════════════════════ */}
       <section 
-        id="core-methodology" 
-        className="w-full bg-surface-secondary scroll-mt-20"
-        style={{ paddingTop: 'var(--space-section-tight)', paddingBottom: 'var(--space-section)' }}
+        className="w-full bg-surface-tertiary"
+        style={{ paddingTop: 'var(--space-section-tight)', paddingBottom: 'var(--space-section-tight)' }}
       >
         <div className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16">
           <div className="mx-auto max-w-3xl">
-            {/* Eyebrow + H2 */}
-            <div className="mb-8">
-              <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/50">
-                Core Methodology
-              </p>
-              <h2 
-                className="font-serif text-xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-2xl"
-                style={{ marginTop: 'var(--space-text-stack)' }}
-              >
-                Built for verification, not persuasion
-              </h2>
-            </div>
-
-            {/* Single Stacked Container */}
-            <div 
-              className="border-l-2 border-foreground/10 bg-surface-primary"
-              style={{ padding: '32px' }}
+            <h2 className="font-serif text-xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-2xl">
+              What this approach enables
+            </h2>
+            <p 
+              className="text-[15px] leading-[1.7] text-foreground/65 sm:text-base sm:leading-[1.8]"
+              style={{ marginTop: 'var(--space-text-stack)' }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-card-gap)' }}>
-                {methodologyPrinciples.map((principle, index) => (
-                  <div
-                    key={principle.title}
-                    className={index !== methodologyPrinciples.length - 1 ? "pb-6 border-b border-border/50" : ""}
-                  >
-                    <h3 className="text-sm font-medium text-foreground">
-                      {principle.title}
-                    </h3>
-                    <p 
-                      className="text-[15px] leading-[1.7] text-foreground/60"
-                      style={{ marginTop: 'var(--space-text-stack)' }}
-                    >
-                      {principle.body}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════════════
-          SECTION 3 — BOUNDARY STATEMENT (Regulatory Anchor)
-          Closing footnote, not disclaimer dump.
-          ══════════════════════════════════════════════════════════════════ */}
-      <section className="w-full bg-surface-primary">
-        <div 
-          className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16"
-          style={{ paddingTop: 'var(--space-section-tight)', paddingBottom: 'var(--space-section-tight)' }}
-        >
-          <div className="mx-auto max-w-xl text-center">
-            <p className="text-sm leading-[1.8] text-foreground/50">
-              SettleRate does not originate, broker, or recommend mortgage products. 
-              Outputs are analytical in nature and intended to support independent evaluation by users and their professional advisors.
+              By using consistent assumptions and outcome-focused metrics, SettleRate helps conversations start from clarity rather than confusion.
             </p>
           </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          CLOSING CTA
-          Minimal. Decision moment.
+          SCOPE — What SettleRate does not do
+          Single appearance. No duplication.
           ══════════════════════════════════════════════════════════════════ */}
-      <section className="w-full bg-surface-primary border-t border-border/30">
+      <section 
+        className="w-full bg-surface-primary"
+        style={{ paddingTop: 'var(--space-section)', paddingBottom: 'var(--space-section)' }}
+      >
+        <div className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16">
+          <div className="mx-auto max-w-3xl">
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/50">
+              Scope
+            </p>
+            <h2 
+              className="font-serif text-xl font-medium tracking-[-0.01em] text-foreground sm:text-2xl"
+              style={{ marginTop: 'var(--space-text-stack)' }}
+            >
+              What SettleRate does not do
+            </h2>
+            <ul className="mt-8 space-y-4">
+              {constraints.map((constraint, index) => (
+                <li
+                  key={index}
+                  className="flex items-start gap-4 text-[15px] leading-relaxed text-foreground/65"
+                >
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/25" />
+                  <span>{constraint}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          CLOSING CTA
+          ══════════════════════════════════════════════════════════════════ */}
+      <section className="w-full bg-surface-secondary">
         <div 
           className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16"
-          style={{ paddingTop: 'var(--space-section-tight)', paddingBottom: 'var(--space-section-tight)' }}
+          style={{ paddingTop: 'var(--space-section)', paddingBottom: 'var(--space-section)' }}
         >
           <div className="mx-auto max-w-xl text-center">
-            <Button asChild size="lg" className="min-w-44 h-12 text-base">
+            <p className="font-serif text-xl font-medium tracking-[-0.01em] text-foreground sm:text-2xl">
+              Begin with a single scenario.
+            </p>
+            <Button asChild size="lg" className="mt-8 min-w-44 h-12 text-base">
               <Link to="/auth">Begin analysis</Link>
             </Button>
-            <p className="mt-4 text-xs text-foreground/50">
+            <p className="mt-6 text-xs text-foreground/50">
               Analytical access. No product promotion.
             </p>
           </div>
