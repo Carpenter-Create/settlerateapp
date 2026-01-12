@@ -29,7 +29,7 @@ import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "./CurrencyInput";
 import { Input } from "@/components/ui/input";
-import { Save, RotateCcw, ChevronDown, ChevronUp, Copy, MoreHorizontal, Pencil, FilePlus, Wand2 } from "lucide-react";
+import { Save, RotateCcw, ChevronDown, ChevronUp, Copy, MoreHorizontal, Pencil, FilePlus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -143,10 +143,6 @@ export function ScenarioEditor({
     return homeValue > 0 ? (loanAmount / homeValue) * 100 : 0;
   }, [inputs]);
 
-  // Helper text based on scenario type
-  const pageDescription = inputs.mode === "purchase"
-    ? "Model monthly payments and long-term costs for a home purchase."
-    : "Analyze new loan terms and compare against your current obligation."
 
   return (
     <>
@@ -154,54 +150,49 @@ export function ScenarioEditor({
         {/* Inputs */}
         <div className="min-w-0 space-y-6">
           {/* Header - serif, understated */}
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1 min-w-0">
-              {isEditing && activeScenario ? (
-                <div className="flex items-center gap-3">
-                  {isRenamingScenario ? (
-                    <Input
-                      value={scenarioName}
-                      onChange={(e) => setScenarioName(e.target.value)}
-                      onBlur={handleSaveRename}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleSaveRename();
-                        if (e.key === "Escape") setIsRenamingScenario(false);
-                      }}
-                      className="h-9 max-w-xs font-serif text-xl"
-                      autoFocus
-                    />
-                  ) : (
-                    <h1 
-                      className="cursor-pointer hover:text-muted-foreground transition-colors"
-                      onClick={handleStartRename}
-                      title="Click to rename"
-                    >
-                      {activeScenario.name}
-                    </h1>
-                  )}
-                  <SaveStatusIndicator status={saveStatus} isDirty={isDirty} isEditing={isEditing} />
-                </div>
-              ) : (
-                <h1>Scenario Workspace</h1>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between gap-4">
+              <h1>Calculator</h1>
+              {!isEditing && onOpenGuidedStart && (
+                <button 
+                  type="button"
+                  onClick={onOpenGuidedStart}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  title="Answer a few questions to prefill the calculator."
+                >
+                  Guided start
+                </button>
               )}
-              <p className="text-muted-foreground">
-                {pageDescription}
-              </p>
             </div>
-            
-            {/* Guided Start button - right side of header */}
-            {!isEditing && onOpenGuidedStart && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={onOpenGuidedStart}
-                className="gap-1.5 shrink-0"
-                title="Answer a few questions to prefill the calculator."
-              >
-                <Wand2 className="h-3.5 w-3.5" strokeWidth={1.5} />
-                Guided start
-              </Button>
+            {isEditing && activeScenario && (
+              <div className="flex items-center gap-3">
+                {isRenamingScenario ? (
+                  <Input
+                    value={scenarioName}
+                    onChange={(e) => setScenarioName(e.target.value)}
+                    onBlur={handleSaveRename}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveRename();
+                      if (e.key === "Escape") setIsRenamingScenario(false);
+                    }}
+                    className="h-7 max-w-xs text-sm"
+                    autoFocus
+                  />
+                ) : (
+                  <span 
+                    className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                    onClick={handleStartRename}
+                    title="Click to rename"
+                  >
+                    {activeScenario.name}
+                  </span>
+                )}
+                <SaveStatusIndicator status={saveStatus} isDirty={isDirty} isEditing={isEditing} />
+              </div>
             )}
+            <p className="text-sm text-muted-foreground">
+              Model payments and long-term cost.
+            </p>
           </div>
 
           <div className="card-elevated w-full p-5 sm:p-6">
