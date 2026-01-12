@@ -149,10 +149,10 @@ export function ScenarioEditor({
       <div className="grid w-full max-w-full gap-8 lg:grid-cols-[1fr,360px] lg:gap-12">
         {/* Inputs */}
         <div className="min-w-0 space-y-6">
-          {/* Header - serif, understated */}
+          {/* Header - institutional, understated */}
           <div className="space-y-1">
             <div className="flex items-center justify-between gap-4">
-              <h1>Calculator</h1>
+              <h1 className="text-2xl font-medium tracking-tight">Calculator</h1>
               {!isEditing && onOpenGuidedStart && (
                 <button 
                   type="button"
@@ -190,7 +190,7 @@ export function ScenarioEditor({
                 <SaveStatusIndicator status={saveStatus} isDirty={isDirty} isEditing={isEditing} />
               </div>
             )}
-            <p className="text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               Model payments and long-term cost.
             </p>
           </div>
