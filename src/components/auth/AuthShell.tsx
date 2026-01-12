@@ -42,6 +42,10 @@ interface AuthFormProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
+interface AuthBodyRegionProps {
+  children: React.ReactNode;
+}
+
 interface AuthSecondaryActionProps {
   children: React.ReactNode;
   className?: string;
@@ -61,10 +65,11 @@ interface AuthSessionBannerProps {
   message: string;
 }
 
-// Main shell container — vertically centered
+// Main shell container — fixed frame architecture for layout stability
+// Uses flex with align-start and fixed top padding for pinned position
 export function AuthShell({ children, className }: AuthShellProps) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
+    <div className="auth-shell-frame">
       <div className={cn("auth-container", className)}>
         {children}
       </div>
@@ -122,6 +127,16 @@ export function AuthForm({ children, onSubmit }: AuthFormProps) {
     <form onSubmit={onSubmit} className="auth-form">
       {children}
     </form>
+  );
+}
+
+// Body region — fixed min-height container for form + actions
+// Prevents layout collapse when switching between modes
+export function AuthBodyRegion({ children }: AuthBodyRegionProps) {
+  return (
+    <div className="auth-body-region">
+      {children}
+    </div>
   );
 }
 
