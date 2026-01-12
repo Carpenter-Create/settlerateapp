@@ -105,10 +105,10 @@ export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
           <button
             ref={closeButtonRef}
             onClick={onClose}
-            className="flex h-11 w-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-11 w-11 items-center justify-center text-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1"
             aria-label="Close menu"
           >
-            <X className="h-5 w-5" strokeWidth={1.75} />
+            <X className="h-[18px] w-[18px]" strokeWidth={1.5} />
           </button>
         </div>
 
@@ -145,7 +145,7 @@ export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
         </div>
 
         {/* ========== ZONE 3: ACTIONS ========== */}
-        <div className="shrink-0 bg-white px-6 pb-8 pt-6 dark:bg-background">
+        <div className="shrink-0 bg-white px-6 pb-8 pt-10 dark:bg-background">
           <div className="flex flex-col gap-3">
             <Button asChild size="lg" className="w-full">
               <Link to="/auth">Start free</Link>
