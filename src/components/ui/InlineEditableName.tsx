@@ -141,6 +141,7 @@ export function InlineEditableName({
   return (
     <span
       onClick={handleClick}
+      data-inline-edit
       className={cn(
         // Text cursor on hover
         "cursor-text",
