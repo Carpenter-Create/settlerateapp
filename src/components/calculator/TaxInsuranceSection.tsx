@@ -84,7 +84,7 @@ export function TaxInsuranceSection({
       : "Using national averages.";
     
     toast.success("Estimates applied", {
-      description: `${stateMsg} You can adjust these anytime.`,
+      description: `${stateMsg} Values are editable.`,
     });
   }, [zipInput, shared, requiresPMI]);
 
@@ -120,7 +120,7 @@ export function TaxInsuranceSection({
             )}
           </button>
           <p className="text-xs text-muted-foreground">
-            Include estimates for a more complete monthly projection.
+            Adds taxes, insurance, and other costs to monthly projection.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -143,7 +143,7 @@ export function TaxInsuranceSection({
             <div className="flex items-start gap-2">
               <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
               <p className="text-xs text-muted-foreground">
-                Enter a ZIP code to prefill regional estimates. Values can be adjusted.
+                ZIP code enables regional estimates. Values are editable.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -177,7 +177,7 @@ export function TaxInsuranceSection({
                   Estimate
                 </Badge>
                 <span className="text-xs text-accent-foreground">
-                  Based on regional averages. Update when actual values are available.
+                  Based on regional averages. Replace with actual values when known.
                 </span>
               </div>
               <button

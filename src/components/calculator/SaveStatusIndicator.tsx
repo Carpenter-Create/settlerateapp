@@ -51,11 +51,11 @@ export function SaveStatusIndicator({
       )}
       {/* Saved scenario with no changes */}
       {status !== "saving" && status !== "error" && isEditing && !isDirty && (
-        <span>Saved scenario</span>
+        <span>Saved</span>
       )}
       {/* Saved scenario with unsaved changes */}
       {status !== "saving" && status !== "error" && isEditing && isDirty && (
-        <span>Unsaved changes</span>
+        <span>Changes not saved</span>
       )}
     </div>
   );

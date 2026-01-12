@@ -10,7 +10,7 @@ interface ScenarioTypeSelectorProps {
 export function ScenarioTypeSelector({ value, onChange }: ScenarioTypeSelectorProps) {
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium text-muted-foreground">What are you doing?</p>
+      <p className="text-sm font-medium text-muted-foreground">Transaction type</p>
       <div className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-background p-1">
         <button
           type="button"
@@ -23,7 +23,7 @@ export function ScenarioTypeSelector({ value, onChange }: ScenarioTypeSelectorPr
           )}
         >
           <Home className="h-4 w-4" />
-          <span>Buying a home</span>
+          <span>Purchase</span>
         </button>
         <button
           type="button"
@@ -36,7 +36,7 @@ export function ScenarioTypeSelector({ value, onChange }: ScenarioTypeSelectorPr
           )}
         >
           <RefreshCw className="h-4 w-4" />
-          <span>Refinancing</span>
+          <span>Refinance</span>
         </button>
       </div>
     </div>
