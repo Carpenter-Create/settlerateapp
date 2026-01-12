@@ -100,6 +100,15 @@ export default function Home() {
                 <Link to="/auth">Begin analysis</Link>
               </Button>
             </div>
+
+            {/* Primary Definition */}
+            <p className="mx-auto mt-10 max-w-xl text-[15px] leading-relaxed text-foreground/65">
+              SettleRate is a mortgage analysis and comparison tool designed to help users understand the financial implications of different loan scenarios.
+            </p>
+            {/* Supporting Clarifier */}
+            <p className="mx-auto mt-3 max-w-md text-xs text-foreground/50">
+              It is designed to support informed decisions—not to sell or recommend loans.
+            </p>
           </div>
         </div>
       </section>
