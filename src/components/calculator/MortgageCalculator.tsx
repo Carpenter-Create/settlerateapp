@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
-const GUIDED_START_SHOWN_KEY = "settlerate_guided_start_shown";
+const GUIDED_START_DISMISSED_KEY = "settlerate_guided_start_dismissed_session";
 
 export function MortgageCalculator() {
   const { scenarioId, mode, navigateToScenario, navigateToNew } = useScenarioRoute();
@@ -44,24 +44,37 @@ export function MortgageCalculator() {
   const { scenarios, deleteScenario, updateScenario, createScenario } = useScenarios();
 
   const [showGuidedStart, setShowGuidedStart] = useState(false);
-  const [hasCheckedFirstTime, setHasCheckedFirstTime] = useState(false);
+  const [hasCheckedAutoOpen, setHasCheckedAutoOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Auto-open Guided Start for new scenarios (no scenarioId and not dismissed this session)
   useEffect(() => {
-    if (!isLoaded || hasCheckedFirstTime) return;
+    if (!isLoaded || hasCheckedAutoOpen) return;
     
-    const hasShownBefore = localStorage.getItem(GUIDED_START_SHOWN_KEY) === "true";
+    // Only auto-open when creating new scenario (no scenarioId)
+    // and not already dismissed in this session
+    const wasDismissedThisSession = sessionStorage.getItem(GUIDED_START_DISMISSED_KEY) === "true";
     
-    if (scenarios.length === 0 && !hasShownBefore && !scenarioId) {
+    if (!scenarioId && !wasDismissedThisSession) {
       setShowGuidedStart(true);
-      localStorage.setItem(GUIDED_START_SHOWN_KEY, "true");
     }
     
-    setHasCheckedFirstTime(true);
-  }, [isLoaded, scenarios.length, scenarioId, hasCheckedFirstTime]);
+    setHasCheckedAutoOpen(true);
+  }, [isLoaded, scenarioId, hasCheckedAutoOpen]);
+
+  // Handle Guided Start close - mark as dismissed for this session
+  const handleGuidedStartOpenChange = useCallback((open: boolean) => {
+    if (!open) {
+      // Mark as dismissed for this session so it doesn't reopen
+      sessionStorage.setItem(GUIDED_START_DISMISSED_KEY, "true");
+    }
+    setShowGuidedStart(open);
+  }, []);
 
   const handleGuidedStartComplete = useCallback(async (guidedInputs: MortgageInputs, name: string) => {
     try {
+      // Mark as dismissed so it doesn't reopen
+      sessionStorage.setItem(GUIDED_START_DISMISSED_KEY, "true");
       const newScenario = await createScenario(name, guidedInputs, null);
       navigateToScenario(newScenario.id);
       setShowGuidedStart(false);
@@ -228,7 +241,7 @@ export function MortgageCalculator() {
 
       <GuidedStart
         open={showGuidedStart}
-        onOpenChange={setShowGuidedStart}
+        onOpenChange={handleGuidedStartOpenChange}
         onComplete={handleGuidedStartComplete}
       />
     </>

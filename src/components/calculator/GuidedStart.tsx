@@ -246,27 +246,30 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
   return (
     <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent 
+        className="sm:max-w-md border-border/60 shadow-lg"
+        overlayClassName="bg-black/30"
+      >
         <DialogHeader>
-          <DialogTitle className="font-serif text-lg">Guided start</DialogTitle>
+          <DialogTitle className="font-serif text-lg font-medium">Guided start</DialogTitle>
           <p className="text-sm text-muted-foreground pt-1">
             Prefill scenario inputs. All values are editable.
           </p>
         </DialogHeader>
 
         {/* Progress indicator */}
-        <div className="flex items-center gap-1 mb-2">
+        <div className="flex items-center gap-1 mb-1">
           {([1, 2, 3, 4] as Step[]).map((s) => (
             <div
               key={s}
               className={cn(
-                "h-1 flex-1 rounded-full transition-colors",
-                s <= step ? "bg-primary" : "bg-muted"
+                "h-0.5 flex-1 rounded-full transition-colors",
+                s <= step ? "bg-foreground/70" : "bg-muted"
               )}
             />
           ))}
         </div>
-        <p className="text-xs text-muted-foreground mb-4">
+        <p className="text-[11px] text-muted-foreground/70 mb-4">
           Step {step} of 4
         </p>
 
@@ -281,20 +284,20 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
           </div>
 
           {step === 1 && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-2.5">
                 <button
                   type="button"
                   onClick={() => setMode("purchase")}
                   className={cn(
-                    "flex flex-col items-start gap-1 rounded-lg border-2 p-4 transition-all text-left",
+                    "flex flex-col items-start gap-1 rounded-md border p-3.5 transition-all text-left",
                     mode === "purchase"
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-muted-foreground/50"
+                      ? "border-foreground/40 bg-muted/40"
+                      : "border-border hover:border-muted-foreground/40"
                   )}
                 >
                   <div className="flex items-center gap-2">
-                    <Home className="h-4 w-4" strokeWidth={1.5} />
+                    <Home className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
                     <span className="text-sm font-medium">{TRANSACTION_TYPE_LABELS.purchase}</span>
                   </div>
                   <span className="text-xs text-muted-foreground">
@@ -305,14 +308,14 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
                   type="button"
                   onClick={() => setMode("refinance")}
                   className={cn(
-                    "flex flex-col items-start gap-1 rounded-lg border-2 p-4 transition-all text-left",
+                    "flex flex-col items-start gap-1 rounded-md border p-3.5 transition-all text-left",
                     mode === "refinance"
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-muted-foreground/50"
+                      ? "border-foreground/40 bg-muted/40"
+                      : "border-border hover:border-muted-foreground/40"
                   )}
                 >
                   <div className="flex items-center gap-2">
-                    <RefreshCw className="h-4 w-4" strokeWidth={1.5} />
+                    <RefreshCw className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
                     <span className="text-sm font-medium">{TRANSACTION_TYPE_LABELS.refinance}</span>
                   </div>
                   <span className="text-xs text-muted-foreground">
