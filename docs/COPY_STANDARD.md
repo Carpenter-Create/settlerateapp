@@ -1,4 +1,10 @@
-# COPY_STANDARD.md — SettleRate
+# COPY_STANDARD.md — SettleRate Application
+
+## Purpose
+
+This document governs language and tone for in-app UI copy, exports, and legal/compliance language within the SettleRate application.
+
+---
 
 ## Product Identity (Canonical)
 
@@ -6,19 +12,13 @@
 
 This sentence is authoritative and must be used verbatim wherever SettleRate is defined.
 
-### One-Sentence Positioning (Homepage)
-
-> A neutral decision-support tool that helps buyers understand mortgage outcomes clearly—before engaging with listings, agents, or lenders.
-
 ### Regulatory-Safe Version (Footer/Terms/About)
 
 > SettleRate is an independent decision-support platform designed to help users model and understand potential mortgage outcomes. SettleRate does not provide lending services, brokerage services, financial, legal, or tax advice, does not originate, broker, recommend, or refer mortgage products, and does not act as an agent, lender, or marketplace. All calculations and outputs are illustrative, based on user-provided or standardized assumptions, and are intended for informational and comparative purposes only.
 
 ---
 
-## Global Copy Rules
-
-### Voice
+## Voice
 
 - Neutral
 - Institutional
@@ -102,78 +102,6 @@ Never use these terms:
 
 ---
 
-## CTA Standards
-
-### Rules
-
-- One verb only
-- No urgency language
-- No emotional reward framing
-- No exclamation points
-
-### Approved CTAs
-
-- "Begin analysis"
-- "Explore the platform"
-- "Learn more"
-- "Upgrade access"
-
-### Forbidden CTAs
-
-- "Get started"
-- "Try now"
-- "See how"
-- "Start free" (except pricing page)
-- "Sign up"
-- "Join"
-
----
-
-## Supporting Lines (Under CTAs)
-
-Use only approved supporting lines:
-
-- "Analytical access. No product promotion."
-- "Neutral modeling. No recommendations."
-- "Designed for clarity and comparison."
-
-Do not invent new supporting lines.
-
----
-
-## Section Transitions
-
-### Approved Patterns
-
-- "Below is an example…"
-- "This approach enables…"
-- "In practice, this means…"
-
-### Forbidden Patterns
-
-- "Why this matters"
-- "How we help"
-- "The power of"
-- "Discover"
-- "Unlock"
-
----
-
-## Disclaimer Placement
-
-Regulatory and scope disclaimers may appear ONLY in:
-
-- Footer
-- Explicit "Scope" sections
-
-### Rules
-
-- Never place disclaimers directly under CTAs
-- Never repeat the same disclaimer across multiple sections
-- Consolidate regulatory language into single appearances
-
----
-
 ## UI State Copy
 
 All UI states use neutral, factual language only.
@@ -220,7 +148,6 @@ All UI states use neutral, factual language only.
 
 > **UI explains.**
 > **Exports document.**
-> **Marketing invites.**
 
 If copy violates this, it does not ship.
 
@@ -257,4 +184,4 @@ If copy violates this, it does not ship.
 
 ## Enforcement
 
-These guardrails apply silently across all existing pages and must be enforced for all future copy changes. Any copy that violates these standards does not ship.
+These guardrails apply to all in-app copy and must be enforced for all future copy changes. Any copy that violates these standards does not ship.
