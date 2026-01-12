@@ -22,16 +22,26 @@ interface AnalyticalSurfaceProps {
   className?: string;
 }
 
-// Canonical scenario data - normalized inputs, surfaced outputs
+// Canonical scenario data - structural inputs + modeled outcomes
 const scenarios = {
   a: {
     name: "30-Year Fixed",
+    // Structural Inputs
+    downPayment: "10%",
+    pmi: "Yes",
+    loanAmount: "$405,000",
+    // Modeled Outcomes
     monthlyPayment: "$2,418",
     totalInterest: "$381,204",
     principalMajority: "Year 19",
   },
   b: {
     name: "15-Year Fixed",
+    // Structural Inputs
+    downPayment: "20%",
+    pmi: "No",
+    loanAmount: "$360,000",
+    // Modeled Outcomes
     monthlyPayment: "$3,212",
     totalInterest: "$192,110",
     principalMajority: "Year 8",
@@ -40,9 +50,9 @@ const scenarios = {
 
 // Caption variants by audience
 const captions: Record<Variant, string> = {
-  consumer: "Example of normalized scenario modeling using transparent assumptions.",
-  advisor: "Sample scenario comparison suitable for professional review.",
-  investor: "Core analytical surface powering all scenario evaluation.",
+  consumer: "Example of normalized scenario modeling using transparent assumptions. Down payment, PMI, and loan structure materially change outcomes.",
+  advisor: "Sample scenario comparison suitable for professional review. Structural inputs normalized for direct comparison.",
+  investor: "Core analytical surface powering all scenario evaluation. Inputs and outcomes surfaced with full transparency.",
 };
 
 export function AnalyticalSurface({ 
@@ -81,37 +91,96 @@ export function AnalyticalSurface({
                 </th>
               </tr>
             </thead>
-            <tbody className="font-mono text-sm tabular-nums">
-              <tr className="border-t border-foreground/[0.06]">
+            <tbody>
+              {/* Structural Inputs Tier - Visually Secondary */}
+              <tr>
+                <td 
+                  colSpan={3} 
+                  className="pb-2 pt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-foreground/30"
+                >
+                  Structural Inputs
+                </td>
+              </tr>
+              <tr className="text-xs">
+                <td className="py-2 pr-4 text-left text-foreground/40">
+                  Down Payment
+                </td>
+                <td className="py-2 text-right font-mono tabular-nums text-foreground/50">
+                  {scenarios.a.downPayment}
+                </td>
+                <td className="py-2 text-right font-mono tabular-nums text-foreground/50">
+                  {scenarios.b.downPayment}
+                </td>
+              </tr>
+              <tr className="text-xs">
+                <td className="py-2 pr-4 text-left text-foreground/40">
+                  PMI Required
+                </td>
+                <td className="py-2 text-right font-mono tabular-nums text-foreground/50">
+                  {scenarios.a.pmi}
+                </td>
+                <td className="py-2 text-right font-mono tabular-nums text-foreground/50">
+                  {scenarios.b.pmi}
+                </td>
+              </tr>
+              <tr className="text-xs">
+                <td className="py-2 pr-4 text-left text-foreground/40">
+                  Loan Amount
+                </td>
+                <td className="py-2 text-right font-mono tabular-nums text-foreground/50">
+                  {scenarios.a.loanAmount}
+                </td>
+                <td className="py-2 text-right font-mono tabular-nums text-foreground/50">
+                  {scenarios.b.loanAmount}
+                </td>
+              </tr>
+
+              {/* Divider between inputs and outcomes */}
+              <tr>
+                <td colSpan={3} className="py-3">
+                  <div className="h-px bg-foreground/[0.08]" />
+                </td>
+              </tr>
+
+              {/* Modeled Outcomes Tier - Visual Focus */}
+              <tr>
+                <td 
+                  colSpan={3} 
+                  className="pb-2 pt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-foreground/30"
+                >
+                  Modeled Outcomes
+                </td>
+              </tr>
+              <tr className="text-sm">
                 <td className="py-3 pr-4 text-left text-foreground/50">
                   Monthly Payment
                 </td>
-                <td className="py-3 text-right text-foreground/70">
+                <td className="py-3 text-right font-mono tabular-nums text-foreground/70">
                   {scenarios.a.monthlyPayment}
                 </td>
-                <td className="py-3 text-right text-foreground/70">
+                <td className="py-3 text-right font-mono tabular-nums text-foreground/70">
                   {scenarios.b.monthlyPayment}
                 </td>
               </tr>
-              <tr className="border-t border-foreground/[0.06]">
+              <tr className="border-t border-foreground/[0.04] text-sm">
                 <td className="py-3 pr-4 text-left text-foreground/50">
                   Total Interest
                 </td>
-                <td className="py-3 text-right text-foreground/70">
+                <td className="py-3 text-right font-mono tabular-nums text-foreground/70">
                   {scenarios.a.totalInterest}
                 </td>
-                <td className="py-3 text-right text-foreground/70">
+                <td className="py-3 text-right font-mono tabular-nums text-foreground/70">
                   {scenarios.b.totalInterest}
                 </td>
               </tr>
-              <tr className="border-t border-foreground/[0.06]">
+              <tr className="border-t border-foreground/[0.04] text-sm">
                 <td className="py-3 pr-4 text-left text-foreground/50">
                   Time to Principal Majority
                 </td>
-                <td className="py-3 text-right text-foreground/70">
+                <td className="py-3 text-right font-mono tabular-nums text-foreground/70">
                   {scenarios.a.principalMajority}
                 </td>
-                <td className="py-3 text-right text-foreground/70">
+                <td className="py-3 text-right font-mono tabular-nums text-foreground/70">
                   {scenarios.b.principalMajority}
                 </td>
               </tr>
