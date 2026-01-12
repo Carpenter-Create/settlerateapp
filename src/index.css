@@ -145,16 +145,29 @@
     --mobile-fab-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.12);
 
     /* ═══════════════════════════════════════════════════════════════
-       AUTH PAGE TOKENS (Locked)
+       AUTH PAGE TOKENS (LOCKED — NON-DRIFTING STANDARD)
+       ───────────────────────────────────────────────────────────────
        Single source of truth for unified access page layout.
        All auth pages MUST use these tokens via AuthShell component.
+       
+       RULES:
+       - UI/system font ONLY (no Source Serif 4)
+       - Password-first, magic link secondary
+       - Legal checkbox required for account creation
+       - Website escape link always visible
+       - No marketing tone or reassurance language
+       
+       DO NOT modify without explicit auth standard review.
        ═══════════════════════════════════════════════════════════════ */
     --auth-container-max-width: 384px;
-    --auth-section-gap: 24px;
+    --auth-section-gap: 20px;
+    --auth-header-title-gap: 20px;
+    --auth-header-subtitle-gap: 6px;
     --auth-field-gap: 16px;
     --auth-cta-gap: 20px;
-    --auth-secondary-gap: 16px;
-    --auth-fineprint-gap: 32px;
+    --auth-secondary-gap: 12px;
+    --auth-escape-gap: 8px;
+    --auth-fineprint-gap: 24px;
     --auth-h1-size: 1.5rem;
     --auth-subtitle-size: 0.875rem;
     --auth-fineprint-size: 0.75rem;
@@ -373,20 +386,26 @@
      AUTH SHELL CLASSES (Locked)
      Brand-standard auth page styling. Used only by AuthShell.
      Do not override or duplicate these styles elsewhere.
+     
+     TYPOGRAPHY LOCK: UI/system font ONLY. No Source Serif 4.
+     METHOD HIERARCHY: Password primary, magic link secondary.
+     LEGAL: Checkbox required for account creation.
      ═══════════════════════════════════════════════════════════════ */
 
-  /* Container */
+  /* Container — vertically centered with balanced padding */
   .auth-container {
     width: 100%;
     max-width: var(--auth-container-max-width);
     display: flex;
     flex-direction: column;
     gap: var(--auth-section-gap);
+    padding-top: 2rem;
+    padding-bottom: 2rem;
   }
 
-  /* Typography — UI font only on auth pages (no serif) */
+  /* Typography — UI font only on auth pages (no serif, no exceptions) */
   .auth-h1 {
-    margin-top: var(--auth-section-gap);
+    margin-top: var(--auth-header-title-gap);
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: var(--auth-h1-size);
     font-weight: 500;
@@ -395,13 +414,14 @@
   }
 
   .auth-subtitle {
-    margin-top: 8px;
+    margin-top: var(--auth-header-subtitle-gap);
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: var(--auth-subtitle-size);
+    line-height: 1.5;
     color: hsl(var(--muted-foreground));
   }
 
-  /* Segmented control */
+  /* Segmented control — mode toggle */
   .auth-segmented-control {
     display: flex;
     padding: 4px;
@@ -414,6 +434,7 @@
     flex: 1;
     padding: 8px 12px;
     border-radius: calc(var(--auth-radius) - 2px);
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 0.875rem;
     font-weight: 500;
     color: hsl(var(--muted-foreground));
@@ -430,7 +451,7 @@
     box-shadow: var(--shadow-sm);
   }
 
-  /* Form */
+  /* Form — consistent field spacing */
   .auth-form {
     display: flex;
     flex-direction: column;
@@ -441,7 +462,7 @@
     margin-top: calc(var(--auth-cta-gap) - var(--auth-field-gap));
   }
 
-  /* Legal checkbox */
+  /* Legal checkbox — required for account creation */
   .auth-legal-checkbox {
     display: flex;
     align-items: flex-start;
@@ -450,6 +471,7 @@
   }
 
   .auth-legal-checkbox label {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 0.8125rem;
     line-height: 1.5;
     color: hsl(var(--muted-foreground));
@@ -466,13 +488,14 @@
     color: hsl(var(--foreground));
   }
 
-  /* Secondary action (magic link, switch mode) */
+  /* Secondary action — magic link is secondary to password */
   .auth-secondary-action {
     text-align: center;
     margin-top: calc(var(--auth-secondary-gap) - var(--auth-section-gap));
   }
 
   .auth-secondary-link {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 0.8125rem;
     color: hsl(var(--muted-foreground));
     transition: color 0.15s ease;
@@ -489,12 +512,14 @@
     cursor: not-allowed;
   }
 
-  /* Website escape link */
+  /* Website escape link — permanent, quiet */
   .auth-escape-link {
     display: block;
     text-align: center;
+    margin-top: calc(var(--auth-escape-gap) - var(--auth-section-gap));
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 0.75rem;
-    color: hsl(var(--muted-foreground) / 0.6);
+    color: hsl(var(--muted-foreground) / 0.55);
     transition: color 0.15s ease;
   }
 
@@ -502,16 +527,17 @@
     color: hsl(var(--muted-foreground));
   }
 
-  /* Disclaimer */
+  /* Disclaimer — visually secondary */
   .auth-disclaimer {
     text-align: center;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: var(--auth-fineprint-size);
     line-height: 1.5;
-    color: hsl(var(--muted-foreground) / 0.7);
+    color: hsl(var(--muted-foreground) / 0.6);
     margin-top: calc(var(--auth-fineprint-gap) - var(--auth-section-gap));
   }
 
-  /* Confirmation states */
+  /* Confirmation states — email sent, confirm email */
   .auth-confirmation-body {
     margin-top: 16px;
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -523,6 +549,7 @@
   .auth-back-link {
     display: inline-block;
     margin-top: 24px;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: var(--auth-subtitle-size);
     color: hsl(var(--muted-foreground));
     transition: color 0.15s ease;
