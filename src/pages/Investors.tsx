@@ -53,22 +53,26 @@ export default function Investors() {
       {/* Content Section */}
       <section className="w-full bg-white">
         <div className="mx-auto max-w-3xl px-6 py-16 lg:px-12 lg:py-24">
+          {/* Canonical Category Definition - DO NOT SHORTEN */}
+          <div className="space-y-5">
+            <p className="text-base leading-[1.8] text-foreground/70">
+              SettleRate is an independent mortgage analysis platform designed to evaluate loan structures under normalized assumptions.
+            </p>
+            <p className="text-base leading-[1.8] text-foreground/70">
+              Unlike marketplaces or rate aggregators, SettleRate does not originate, broker, or promote mortgage products. It exists to surface the long-term financial implications of mortgage decisions—total interest, structural tradeoffs, and cash-flow consequences—using transparent, repeatable modeling suitable for professional review.
+            </p>
+          </div>
+
           {/* Problem */}
-          <div className="space-y-4">
+          <div className="mt-14 space-y-4">
             <h2 className="font-serif text-xl font-medium tracking-[-0.01em]">
               Problem
             </h2>
             <p className="text-[15px] leading-relaxed text-foreground/60">
               Mortgage decisions are frequently evaluated using inconsistent tools,
-              opaque assumptions, and sales-driven calculators. SettleRate is a
-              neutral framework for understanding mortgage outcomes, positioned
-              upstream of marketplaces and transactional platforms.
-            </p>
-            <p className="text-[15px] leading-relaxed text-foreground/60">
-              Rather than competing as a lender or lead-generation marketplace,
-              SettleRate provides structured scenario modeling, clear assumptions,
-              and documented outputs that support better decision-making and
-              professional review.
+              opaque assumptions, and sales-driven calculators. SettleRate is positioned
+              upstream of marketplaces and transactional platforms—providing the analytical
+              layer that precedes rate shopping and lender selection.
             </p>
           </div>
 

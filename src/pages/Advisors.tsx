@@ -46,13 +46,13 @@ export default function Advisors() {
       {/* Content Section */}
       <section className="w-full bg-white">
         <div className="mx-auto max-w-3xl px-6 py-16 lg:px-12 lg:py-24">
-          {/* Opening Context */}
-          <div className="space-y-4">
-            <p className="text-base leading-relaxed text-foreground/65">
-              SettleRate provides a neutral framework for modeling mortgage outcomes under consistent assumptions, designed to support professional review, comparison, and documentation.
+          {/* Canonical Category Definition - DO NOT SHORTEN */}
+          <div className="space-y-5">
+            <p className="text-base leading-[1.8] text-foreground/70">
+              SettleRate is an independent mortgage analysis platform designed to evaluate loan structures under normalized assumptions.
             </p>
-            <p className="text-base leading-relaxed text-foreground/65">
-              It is intended to complement—not replace—lenders, advisors, and underwriting processes by improving clarity and expectation alignment early in the decision process.
+            <p className="text-base leading-[1.8] text-foreground/70">
+              Unlike marketplaces or rate aggregators, SettleRate does not originate, broker, or promote mortgage products. It exists to surface the long-term financial implications of mortgage decisions—total interest, structural tradeoffs, and cash-flow consequences—using transparent, repeatable modeling suitable for professional review.
             </p>
           </div>
 

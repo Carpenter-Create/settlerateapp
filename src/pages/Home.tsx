@@ -3,27 +3,12 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AnalyticalSurface } from "@/components/marketing/AnalyticalSurface";
 
-const capabilities = [
-  {
-    title: "Precision-based calculations",
-    description:
-      "Model payments, taxes, insurance, and PMI using transparent, documented assumptions.",
-  },
-  {
-    title: "Scenario comparison, normalized",
-    description:
-      "Evaluate multiple loan structures side by side with consistent inputs and methodology.",
-  },
-  {
-    title: "Professional outputs",
-    description:
-      "Export clean, structured summaries designed for underwriting conversations and documentation.",
-  },
-  {
-    title: "Cost visibility",
-    description:
-      "See amortization, long-term interest, and total cost surfaced explicitly—not obscured.",
-  },
+// What the calculator enables - structural depth
+const structureCapabilities = [
+  "Multiple down-payment scenarios",
+  "PMI vs no-PMI structures",
+  "Time-horizon tradeoffs",
+  "Refinance break-even modeling",
 ];
 
 const frameworkPillars = [
@@ -42,24 +27,6 @@ const frameworkPillars = [
   {
     title: "Professional outputs",
     body: "Clear, exportable summaries designed for lender review, advisor discussion, and documentation—not persuasion.",
-  },
-];
-
-const useCases = [
-  {
-    title: "Homebuyers",
-    description: "Model scenarios before speaking with lenders. Understand tradeoffs between down payment, term, and monthly obligation.",
-    href: "/how-it-works",
-  },
-  {
-    title: "Advisors",
-    description: "Generate client-ready documentation. Support pre-qualification discussions with structured, reproducible analysis.",
-    href: "/advisors",
-  },
-  {
-    title: "Investors",
-    description: "Evaluate financing structures for rental properties. Compare cash flow under different leverage assumptions.",
-    href: "/investors",
   },
 ];
 
@@ -98,7 +65,10 @@ function Section({
 export default function Home() {
   return (
     <div className="w-full">
-      {/* Hero Section - 75-80vh on desktop, professional report opening */}
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 1 — HERO (Context + Gravity)
+          Purpose: Establish category and seriousness.
+          ═══════════════════════════════════════════════════════════════ */}
       <section className="flex w-full min-h-[70vh] lg:min-h-[78vh] bg-[hsl(40_20%_97%)]">
         <div className="mx-auto flex w-full max-w-[1280px] flex-col justify-center px-6 py-16 lg:px-12 lg:py-20 xl:px-16">
           <div className="mx-auto max-w-3xl text-center">
@@ -110,61 +80,60 @@ export default function Home() {
             <p className="mx-auto mt-10 max-w-xl text-lg leading-relaxed text-foreground/70 sm:mt-12 sm:text-xl">
               A neutral framework for understanding mortgage outcomes.
             </p>
-            <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:mt-14 sm:flex-row sm:gap-6">
+            <div className="mt-12 sm:mt-14">
               <Button asChild size="lg" className="min-w-44 h-12 text-base">
                 <Link to="/auth">Start free</Link>
               </Button>
-              <Link
-                to="/pricing"
-                className="text-sm text-foreground/60 transition-colors hover:text-foreground"
-              >
-                Pricing
-              </Link>
             </div>
           </div>
 
-          {/* Analytical Surface - Canonical Hero Visual */}
+          {/* Analytical Surface - Decision-Grade Document Fragment */}
           <div className="mx-auto mt-16 w-full max-w-4xl sm:mt-20 lg:mt-24">
             <AnalyticalSurface variant="consumer" />
           </div>
         </div>
       </section>
 
-      {/* Core Value Grid - White background */}
-      <Section variant="white" className="py-20 lg:py-28">
-        <div className="grid gap-12 sm:grid-cols-2 lg:gap-x-16 lg:gap-y-14">
-          {capabilities.map((capability) => (
-            <div key={capability.title} className="space-y-3">
-              <h3 className="text-base font-medium tracking-[-0.01em] text-foreground">
-                {capability.title}
-              </h3>
-              <p className="text-[15px] leading-relaxed text-foreground/60">
-                {capability.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* Positioning Statement - Neutral background */}
-      <Section variant="neutral" className="py-20 lg:py-28">
-        <div className="mx-auto max-w-3xl text-center">
-          <blockquote className="space-y-6">
-            <p className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.25] text-foreground sm:text-3xl lg:text-4xl">
-              SettleRate is built to reduce uncertainty—not sell loans.
-            </p>
-            <p className="text-base leading-relaxed text-foreground/60 sm:text-lg">
-              We provide structured analysis using transparent assumptions so
-              decisions can be made independently and confidently.
-            </p>
-          </blockquote>
-          <p className="mt-8 text-sm text-foreground/50">
-            SettleRate is not a lender and does not offer mortgage products.
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 2 — THE REFRAME (Category Kill Shot)
+          Purpose: Explicitly separate from marketplaces.
+          ═══════════════════════════════════════════════════════════════ */}
+      <Section variant="white" className="py-16 lg:py-20">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-center text-base leading-relaxed text-foreground/70 sm:text-lg sm:leading-relaxed">
+            SettleRate is an analytical tool for evaluating mortgage structures—not a marketplace for browsing rates or providers.
           </p>
         </div>
       </Section>
 
-      {/* Problem Statement - White background */}
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 3 — WHAT THE CALCULATOR ENABLES
+          Purpose: Expand capability without selling.
+          ═══════════════════════════════════════════════════════════════ */}
+      <Section variant="neutral" className="py-20 lg:py-28">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-center font-serif text-xl font-medium tracking-[-0.01em] text-foreground sm:text-2xl">
+            Most borrowers compare rates. SettleRate compares structures.
+          </p>
+          
+          <ul className="mt-12 grid gap-4 sm:grid-cols-2 sm:gap-6">
+            {structureCapabilities.map((item) => (
+              <li
+                key={item}
+                className="flex items-center gap-4 text-[15px] text-foreground/65"
+              >
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/25" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 4 — THE PROBLEM WITH MORTGAGE CALCULATORS
+          Purpose: Justify existence intellectually.
+          ═══════════════════════════════════════════════════════════════ */}
       <Section variant="white" className="py-20 lg:py-28">
         <div className="mx-auto max-w-3xl">
           <h2 className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-3xl lg:text-4xl">
@@ -212,7 +181,10 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* Framework Section - Neutral background */}
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 5 — THE SETTLERATE FRAMEWORK
+          Purpose: Institutionalize the product.
+          ═══════════════════════════════════════════════════════════════ */}
       <Section variant="neutral" className="py-20 lg:py-28">
         <div className="mb-12 lg:mb-16">
           <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/50">
@@ -226,7 +198,7 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Horizontal Cards */}
+        {/* Horizontal Cards - Methodology, not features */}
         <div className="space-y-4">
           {frameworkPillars.map((pillar) => (
             <article
@@ -244,51 +216,33 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* Use Cases Section - White background */}
-      <Section variant="white" className="py-20 lg:py-28">
-        <div className="mb-12 lg:mb-16">
-          <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/50">
-            Use Cases
-          </p>
-          <h2 className="mt-4 font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-3xl">
-            Explore how SettleRate is used
-          </h2>
-        </div>
-
-        {/* Horizontal Use Case Cards */}
-        <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
-          {useCases.map((useCase) => (
-            <Link
-              key={useCase.title}
-              to={useCase.href}
-              className="group block border border-border/60 bg-white p-6 transition-all hover:border-foreground/20 hover:shadow-sm lg:p-8"
-            >
-              <h3 className="text-base font-medium text-foreground group-hover:text-foreground">
-                {useCase.title}
-              </h3>
-              <p className="mt-3 text-sm leading-relaxed text-foreground/60">
-                {useCase.description}
-              </p>
-              <span className="mt-4 inline-block text-sm text-foreground/40 transition-colors group-hover:text-foreground/60">
-                Learn more →
-              </span>
-            </Link>
-          ))}
-        </div>
-      </Section>
-
-      {/* Final CTA Section - Neutral background */}
-      <Section variant="neutral" className="py-24 lg:py-32">
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 6 — TRUST WITHOUT MARKETING
+          Purpose: Close with confidence, not persuasion.
+          ═══════════════════════════════════════════════════════════════ */}
+      <Section variant="white" className="py-24 lg:py-32">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-3xl lg:text-4xl">
-            Begin with a single scenario.
-          </h2>
-          <p className="mt-5 text-base text-foreground/60">
-            Free to start. No credit card required.
+          <blockquote className="space-y-6">
+            <p className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.25] text-foreground sm:text-3xl">
+              Built to reduce uncertainty—not sell loans.
+            </p>
+          </blockquote>
+
+          <p className="mx-auto mt-8 max-w-lg text-sm leading-relaxed text-foreground/50">
+            SettleRate is not a lender, broker, or financial advisor and does not offer mortgage products or personalized advice.
           </p>
-          <Button asChild size="lg" className="mt-8 min-w-44 h-12 text-base">
-            <Link to="/auth">Start free</Link>
-          </Button>
+
+          <div className="mt-12">
+            <h2 className="font-serif text-xl font-medium tracking-[-0.01em] text-foreground sm:text-2xl">
+              Begin with a single scenario.
+            </h2>
+            <p className="mt-4 text-sm text-foreground/60">
+              Free to start. No credit card required.
+            </p>
+            <Button asChild size="lg" className="mt-8 min-w-44 h-12 text-base">
+              <Link to="/auth">Start free</Link>
+            </Button>
+          </div>
         </div>
       </Section>
     </div>
