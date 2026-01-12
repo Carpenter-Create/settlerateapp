@@ -146,27 +146,31 @@ export default function Auth() {
   if (mode === "magic-link-sent") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="w-full max-w-sm text-center">
-          <h1 className="font-serif text-2xl font-normal tracking-tight">
-            Check your email
-          </h1>
-          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-            A sign-in link has been sent to{" "}
-            <span className="text-foreground">{email}</span>
+        <div className="w-full max-w-sm space-y-space-6">
+          <div className="text-center">
+            <h1 className="font-serif text-2xl font-normal tracking-tight">
+              Check your email for a sign-in link.
+            </h1>
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              A link has been sent to{" "}
+              <span className="text-foreground">{email}</span>
+            </p>
+            <button
+              onClick={() => {
+                setMode("signin");
+                setEmail("");
+                setPassword("");
+              }}
+              className="mt-8 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Back to sign in
+            </button>
+          </div>
+          
+          {/* Disclaimer */}
+          <p className="text-center text-xs leading-relaxed text-muted-foreground/70">
+            SettleRate provides analytical tools only and does not provide lending, brokerage, legal, tax, or investment advice.
           </p>
-          <p className="mt-2 text-xs text-muted-foreground/70">
-            Links expire for security.
-          </p>
-          <button
-            onClick={() => {
-              setMode("signin");
-              setEmail("");
-              setPassword("");
-            }}
-            className="mt-8 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Back to sign in
-          </button>
         </div>
       </div>
     );
@@ -185,7 +189,7 @@ export default function Auth() {
               SettleRate
             </Link>
             <h1 className="mt-space-6 font-serif text-2xl font-normal tracking-tight">
-              Sign in with email link
+              Sign in
             </h1>
             <p className="mt-space-2 text-sm text-muted-foreground">
               Receive a secure sign-in link via email.
@@ -225,6 +229,11 @@ export default function Auth() {
               Back to sign in
             </button>
           </div>
+          
+          {/* Disclaimer */}
+          <p className="text-center text-xs leading-relaxed text-muted-foreground/70">
+            SettleRate provides analytical tools only and does not provide lending, brokerage, legal, tax, or investment advice.
+          </p>
         </div>
       </div>
     );
@@ -247,11 +256,11 @@ export default function Auth() {
           <h1 className="mt-space-6 font-serif text-2xl font-normal tracking-tight">
             {isSignUp ? "Create account" : "Sign in"}
           </h1>
-          {isAnonymous && !isSignUp && (
-            <p className="mt-space-2 text-xs text-muted-foreground/70">
-              Scenarios will be saved to your account.
-            </p>
-          )}
+          <p className="mt-space-2 text-sm text-muted-foreground">
+            {isSignUp
+              ? "Create an account to save your scenarios."
+              : "Access your saved scenarios and continue your analysis."}
+          </p>
         </div>
 
         {/* Form */}
@@ -317,14 +326,16 @@ export default function Auth() {
               }}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              {isSignUp ? "Already have an account? Sign in" : "Create account"}
+              {isSignUp
+                ? "Already have an account? Sign in"
+                : "New to SettleRate? Create an account"}
             </button>
           </div>
         </div>
 
-        {/* Legal */}
-        <p className="text-center text-xs leading-relaxed text-muted-foreground">
-          By continuing, you agree to our terms of service and privacy policy.
+        {/* Disclaimer */}
+        <p className="text-center text-xs leading-relaxed text-muted-foreground/70">
+          SettleRate provides analytical tools only and does not provide lending, brokerage, legal, tax, or investment advice.
         </p>
       </div>
     </div>
