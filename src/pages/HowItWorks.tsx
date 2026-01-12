@@ -4,8 +4,13 @@ import { Button } from "@/components/ui/button";
 /**
  * How It Works Page - Canonical Institutional Framing
  * 
- * Feature language uses capability framing, not benefit framing.
- * If a sentence sounds like onboarding copy, it's wrong.
+ * Rebuilt to align with Canon v1.1 design system:
+ * - Full-width section containers with color-blocking
+ * - Consistent max-width and spacing tokens
+ * - Clear vertical hierarchy matching homepage and /methodology
+ * 
+ * This page should feel like a systems explanation written for
+ * regulators, advisors, and serious users—not onboarding fluff.
  */
 
 const steps = [
@@ -55,71 +60,134 @@ const principles = [
 
 export default function HowItWorks() {
   return (
-    <div className="space-y-16 sm:space-y-24">
-      {/* Header */}
-      <section className="max-w-3xl">
-        <h1 className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.2] sm:text-3xl lg:text-4xl">
-          How SettleRate works
-        </h1>
-        <p className="mt-space-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
-          A structured approach to mortgage scenario evaluation.
-        </p>
+    <div className="w-full">
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 1: Hero / Intro
+          Background: Surface Primary
+          ══════════════════════════════════════════════════════════════════ */}
+      <section className="w-full bg-surface-primary">
+        <div className="mx-auto max-w-[1280px] px-6 py-20 lg:px-12 lg:py-28 xl:px-16">
+          <div className="mx-auto max-w-3xl">
+            <h1 className="font-serif text-3xl font-medium tracking-[-0.02em] leading-[1.15] text-foreground sm:text-4xl lg:text-5xl">
+              How SettleRate works
+            </h1>
+            <p className="mt-6 text-base leading-[1.7] text-foreground/70 sm:text-lg">
+              A structured approach to mortgage scenario evaluation.
+            </p>
+            <p className="mt-4 max-w-2xl text-[15px] leading-[1.85] text-foreground/60">
+              SettleRate provides a consistent framework for evaluating mortgage structures 
+              under standardized assumptions. The platform surfaces long-term cost implications, 
+              capital requirements, and structural tradeoffs—producing outputs suitable for 
+              professional review without embedded recommendations.
+            </p>
+          </div>
+        </div>
       </section>
 
-      {/* Steps */}
-      <section className="max-w-3xl">
-        <div className="space-y-space-8">
-          {steps.map((step) => (
-            <div
-              key={step.number}
-              className="grid gap-space-4 sm:grid-cols-[auto_1fr] sm:gap-space-6"
-            >
-              <span className="font-serif text-2xl font-medium tracking-tight text-muted-foreground/50">
-                {step.number}
-              </span>
-              <div className="space-y-space-2">
-                <h2 className="text-base font-medium text-foreground">
-                  {step.title}
-                </h2>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {step.description}
-                </p>
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 2: Four-Step Framework
+          Background: Surface Secondary
+          ══════════════════════════════════════════════════════════════════ */}
+      <section className="w-full bg-surface-secondary">
+        <div className="mx-auto max-w-[1280px] px-6 py-16 lg:px-12 lg:py-24 xl:px-16">
+          <div className="mx-auto max-w-3xl">
+            {/* Section Label */}
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/40">
+              The Framework
+            </p>
+            
+            {/* Steps Grid - Left-rail number system */}
+            <div className="mt-10 space-y-10">
+              {steps.map((step) => (
+                <div
+                  key={step.number}
+                  className="grid grid-cols-[48px_1fr] gap-6 sm:grid-cols-[64px_1fr]"
+                >
+                  {/* Number - Fixed left rail */}
+                  <span className="font-serif text-2xl font-medium tracking-tight text-foreground/20 sm:text-3xl">
+                    {step.number}
+                  </span>
+                  
+                  {/* Content */}
+                  <div className="space-y-2">
+                    <h2 className="font-serif text-lg font-medium tracking-[-0.01em] text-foreground">
+                      {step.title}
+                    </h2>
+                    <p className="text-[15px] leading-[1.75] text-foreground/60">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 3: Core Methodology
+          Background: Surface Primary (inset card on tertiary)
+          ══════════════════════════════════════════════════════════════════ */}
+      <section className="w-full bg-surface-primary">
+        <div className="mx-auto max-w-[1280px] px-6 py-16 lg:px-12 lg:py-24 xl:px-16">
+          <div className="mx-auto max-w-3xl">
+            {/* Section Label */}
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/40">
+              Core Methodology
+            </p>
+            
+            {/* Inset Container */}
+            <div className="mt-8 rounded-md border border-border-subtle bg-surface-tertiary p-6 sm:p-8">
+              <div className="space-y-6">
+                {principles.map((principle, index) => (
+                  <div 
+                    key={principle.title}
+                    className={index !== principles.length - 1 ? "pb-6 border-b border-border-subtle" : ""}
+                  >
+                    <h3 className="text-sm font-medium text-foreground">
+                      {principle.title}
+                    </h3>
+                    <p className="mt-2 text-[15px] leading-[1.75] text-foreground/60">
+                      {principle.description}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
-      {/* Principles */}
-      <section className="max-w-3xl border-t border-border/50 pt-space-8">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-foreground">
-          Core methodology
-        </h2>
-        <div className="mt-space-6 space-y-space-4 text-sm leading-relaxed text-muted-foreground">
-          {principles.map((principle) => (
-            <p key={principle.title}>
-              <strong className="font-medium text-foreground">{principle.title}.</strong>{" "}
-              {principle.description}
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 4: Regulatory Positioning Strip
+          Background: Surface Tertiary
+          ══════════════════════════════════════════════════════════════════ */}
+      <section className="w-full bg-surface-tertiary">
+        <div className="mx-auto max-w-[1280px] px-6 py-12 lg:px-12 lg:py-16 xl:px-16">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-[15px] leading-[1.8] text-foreground/60">
+              SettleRate does not originate, broker, or recommend mortgage products. 
+              Outputs are analytical in nature and intended to support independent decision-making.
             </p>
-          ))}
+          </div>
         </div>
       </section>
 
-      {/* Independence Statement */}
-      <section className="max-w-3xl border-t border-border/50 pt-space-8">
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          SettleRate does not originate, broker, or recommend mortgage products. Outputs are analytical in nature and intended to support independent decision-making.
-        </p>
-      </section>
-
-      {/* CTA */}
-      <section className="text-center">
-        <Button asChild size="lg" className="min-w-40">
-          <Link to="/auth">Start free</Link>
-        </Button>
-        <p className="mt-space-4 text-xs text-muted-foreground">
-          No credit card required.
-        </p>
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 5: Closing CTA
+          Background: Surface Secondary
+          ══════════════════════════════════════════════════════════════════ */}
+      <section className="w-full bg-surface-secondary">
+        <div className="mx-auto max-w-[1280px] px-6 py-16 lg:px-12 lg:py-20 xl:px-16">
+          <div className="mx-auto max-w-xl text-center">
+            <Button asChild size="lg" className="min-w-44">
+              <Link to="/auth">Start free</Link>
+            </Button>
+            <p className="mt-4 text-xs text-foreground/50">
+              No credit card required.
+            </p>
+          </div>
+        </div>
       </section>
     </div>
   );
