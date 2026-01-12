@@ -22,6 +22,13 @@
 
 import { formatCurrency, formatPercent, calculateDownPaymentAmount, TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
 import type { ScenarioData } from "@/lib/scenarioContract";
+import { 
+  calculateDeltas, 
+  generateSummaryText, 
+  formatSignedDelta, 
+  formatSignedBasisPoints, 
+  formatLtvDelta 
+} from "@/lib/comparisonSummary";
 
 // ============================================================================
 // FILE NAMING
@@ -529,6 +536,38 @@ export function generateComparisonHTML(scenarioA: ScenarioData, scenarioB: Scena
       </p>
       <p class="header-meta">Generated: ${dateStr}</p>
     </header>
+    
+    <!-- Comparison Summary -->
+    <section class="section" style="page-break-inside: avoid;">
+      <h2 class="section-title">Comparison Summary</h2>
+      <p style="font-size: 9pt; line-height: 1.6; color: #333; margin-bottom: 16px;">
+        ${generateSummaryText(scenarioA, scenarioB)}
+      </p>
+      <table style="font-size: 8pt; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 6px 16px 6px 0; border-bottom: 1px solid #e8e8e8;">
+            <span style="color: #666; display: block; font-size: 7pt; margin-bottom: 2px;">Monthly payment</span>
+            <span style="font-family: 'SF Mono', Monaco, monospace;">${formatSignedDelta(calculateDeltas(scenarioA, scenarioB).monthlyPaymentDelta)}</span>
+          </td>
+          <td style="padding: 6px 16px 6px 0; border-bottom: 1px solid #e8e8e8;">
+            <span style="color: #666; display: block; font-size: 7pt; margin-bottom: 2px;">Total cost</span>
+            <span style="font-family: 'SF Mono', Monaco, monospace;">${formatSignedDelta(calculateDeltas(scenarioA, scenarioB).totalCostDelta)}</span>
+          </td>
+          <td style="padding: 6px 16px 6px 0; border-bottom: 1px solid #e8e8e8;">
+            <span style="color: #666; display: block; font-size: 7pt; margin-bottom: 2px;">Total interest</span>
+            <span style="font-family: 'SF Mono', Monaco, monospace;">${formatSignedDelta(calculateDeltas(scenarioA, scenarioB).totalInterestDelta)}</span>
+          </td>
+          <td style="padding: 6px 16px 6px 0; border-bottom: 1px solid #e8e8e8;">
+            <span style="color: #666; display: block; font-size: 7pt; margin-bottom: 2px;">Interest rate</span>
+            <span style="font-family: 'SF Mono', Monaco, monospace;">${formatSignedBasisPoints(calculateDeltas(scenarioA, scenarioB).interestRateDelta)}</span>
+          </td>
+          <td style="padding: 6px 0; border-bottom: 1px solid #e8e8e8;">
+            <span style="color: #666; display: block; font-size: 7pt; margin-bottom: 2px;">LTV</span>
+            <span style="font-family: 'SF Mono', Monaco, monospace;">${formatLtvDelta(calculateDeltas(scenarioA, scenarioB).ltvDelta)}</span>
+          </td>
+        </tr>
+      </table>
+    </section>
     
     <!-- Section 1: Scenario Overview -->
     <section class="section">
