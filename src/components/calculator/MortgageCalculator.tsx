@@ -7,20 +7,19 @@
  * - Handle loading and error states
  * - Wire up navigation after save/duplicate actions
  * - Delegate UI rendering to ScenarioEditor
- * - Manage GuidedStart modal for new users
+ * - Manage GuidedStart modal using first-run experience standard
  */
 
 import { useCallback, useState, useEffect } from "react";
 import { MortgageInputs, DEFAULT_INPUTS, TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
 import { useActiveScenario, useScenarios } from "@/hooks/useScenarios";
 import { useScenarioRoute } from "@/hooks/useScenarioRoute";
+import { shouldShowFirstRun, dismissFirstRun } from "@/lib/firstRunExperience";
 import { ScenarioEditor } from "./ScenarioEditor";
 import { GuidedStart } from "./GuidedStart";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-
-const GUIDED_START_DISMISSED_KEY = "settlerate_guided_start_dismissed_session";
 
 export function MortgageCalculator() {
   const { scenarioId, mode, navigateToScenario, navigateToNew } = useScenarioRoute();
@@ -47,15 +46,13 @@ export function MortgageCalculator() {
   const [hasCheckedAutoOpen, setHasCheckedAutoOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Auto-open Guided Start for new scenarios (no scenarioId and not dismissed this session)
+  // Auto-open Guided Start for new scenarios using centralized first-run logic
   useEffect(() => {
     if (!isLoaded || hasCheckedAutoOpen) return;
     
-    // Only auto-open when creating new scenario (no scenarioId)
-    // and not already dismissed in this session
-    const wasDismissedThisSession = sessionStorage.getItem(GUIDED_START_DISMISSED_KEY) === "true";
-    
-    if (!scenarioId && !wasDismissedThisSession) {
+    // Use centralized first-run experience standard
+    const hasExistingData = !!scenarioId;
+    if (shouldShowFirstRun("calculator", hasExistingData)) {
       setShowGuidedStart(true);
     }
     
@@ -65,16 +62,14 @@ export function MortgageCalculator() {
   // Handle Guided Start close - mark as dismissed for this session
   const handleGuidedStartOpenChange = useCallback((open: boolean) => {
     if (!open) {
-      // Mark as dismissed for this session so it doesn't reopen
-      sessionStorage.setItem(GUIDED_START_DISMISSED_KEY, "true");
+      dismissFirstRun("calculator");
     }
     setShowGuidedStart(open);
   }, []);
 
   const handleGuidedStartComplete = useCallback(async (guidedInputs: MortgageInputs, name: string) => {
     try {
-      // Mark as dismissed so it doesn't reopen
-      sessionStorage.setItem(GUIDED_START_DISMISSED_KEY, "true");
+      dismissFirstRun("calculator");
       const newScenario = await createScenario(name, guidedInputs, null);
       navigateToScenario(newScenario.id);
       setShowGuidedStart(false);
