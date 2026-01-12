@@ -35,11 +35,15 @@ const frameworkPillars = [
 const methodologyPrinciples = [
   {
     title: "Time-horizon analysis",
-    body: "Outcomes are evaluated across the full life of the loan, including the point at which cumulative principal repayment exceeds cumulative interest.",
+    body: "Scenarios are evaluated across the full life of the loan, including the point at which cumulative principal repayment exceeds cumulative interest.",
   },
   {
     title: "Reproducibility",
-    body: "Scenarios can be exported, shared, and independently verified. All calculations are documented and traceable to stated inputs.",
+    body: "Scenarios can be exported, shared, and independently verified. All calculations are documented and traceable to stated assumptions.",
+  },
+  {
+    title: "Illustrative rate comparisons",
+    body: "All rate comparisons are illustrative and do not predict future market conditions. Rate context is provided to show how changes in assumptions affect scenario outcomes.",
   },
 ];
 
@@ -69,6 +73,22 @@ export default function HowItWorks() {
             >
               A consistent analytical framework designed for clarity, comparability, and professional review.
             </p>
+            
+            {/* Global Framing - Canonical Definition */}
+            <div 
+              className="border-t border-border/30"
+              style={{ marginTop: 'var(--space-section-tight)', paddingTop: 'var(--space-text-stack)' }}
+            >
+              <p className="text-[15px] leading-[1.7] text-foreground/70">
+                SettleRate is a mortgage analysis and comparison tool designed to help users understand the financial implications of different loan scenarios.
+              </p>
+              <p 
+                className="text-sm leading-[1.7] text-foreground/50"
+                style={{ marginTop: 'var(--space-text-stack)' }}
+              >
+                It provides assumption-based modeling to support informed decision-making, without selling, recommending, or originating loans.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -203,10 +223,10 @@ export default function HowItWorks() {
         >
           <div className="mx-auto max-w-xl text-center">
             <Button asChild size="lg" className="min-w-44 h-12 text-base">
-              <Link to="/auth">Start free</Link>
+              <Link to="/auth">Begin analysis</Link>
             </Button>
             <p className="mt-4 text-xs text-foreground/50">
-              No credit card required.
+              Analytical access. No product promotion.
             </p>
           </div>
         </div>
