@@ -24,6 +24,25 @@ const capabilities = [
   },
 ];
 
+const frameworkPillars = [
+  {
+    title: "Standardized assumptions",
+    body: "All scenarios are modeled using consistent, transparent inputs—rates, taxes, insurance, and PMI—so comparisons reflect structure, not guesswork.",
+  },
+  {
+    title: "Scenario integrity",
+    body: "Loan options are evaluated side by side using normalized inputs, preventing distortion and enabling meaningful comparison across structures and time horizons.",
+  },
+  {
+    title: "Cost visibility",
+    body: "Amortization, long-term interest, and total cost are surfaced explicitly, allowing tradeoffs to be understood without interpretation or sales framing.",
+  },
+  {
+    title: "Professional outputs",
+    body: "Clear, exportable summaries designed for lender review, advisor discussion, and documentation—not persuasion.",
+  },
+];
+
 const constraints = [
   "We do not originate, broker, or refer mortgage products.",
   "We do not provide personalized financial, legal, or tax advice.",
@@ -67,6 +86,39 @@ export default function Home() {
                 {capability.description}
               </p>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Framework Section */}
+      <section className="mx-auto max-w-4xl">
+        {/* Header */}
+        <div className="mb-space-8">
+          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            The SettleRate Framework
+          </p>
+          <h2 className="mt-space-3 font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.2] sm:text-3xl">
+            How mortgage decisions are evaluated
+          </h2>
+          <p className="mt-space-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            A consistent analytical structure designed for clarity, comparability, and professional review.
+          </p>
+        </div>
+
+        {/* Horizontal Cards */}
+        <div className="space-y-space-4">
+          {frameworkPillars.map((pillar, index) => (
+            <article
+              key={pillar.title}
+              className="group relative border-l-2 border-border/60 bg-muted/20 py-space-6 pl-space-6 pr-space-5 transition-colors hover:border-foreground/30 hover:bg-muted/40 sm:py-space-5 sm:pl-space-7 sm:pr-space-6"
+            >
+              <h3 className="font-serif text-base font-medium tracking-[-0.01em] text-foreground sm:text-lg">
+                {pillar.title}
+              </h3>
+              <p className="mt-space-2 text-sm leading-relaxed text-muted-foreground sm:text-[15px] sm:leading-[1.7]">
+                {pillar.body}
+              </p>
+            </article>
           ))}
         </div>
       </section>
