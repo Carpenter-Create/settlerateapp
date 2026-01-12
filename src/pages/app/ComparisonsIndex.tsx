@@ -57,7 +57,7 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SwipeToDelete } from "@/components/mobile/SwipeToDelete";
-import { MobileCard, MobileCardLabel, MobileCardMetric, MobileCardMetadata, MobileCardDot } from "@/components/mobile/MobileCard";
+import { MobileCard, MobileCardLabel, MobileCardMetric, MobileCardMetadata } from "@/components/mobile/MobileCard";
 import { toast } from "sonner";
 
 // ============================================================================
@@ -115,15 +115,18 @@ interface ScenarioSelectorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   scenarios: ScenarioData[];
-  onConfirm: (scenarioA: ScenarioData, scenarioB: ScenarioData) => void;
+  onConfirm: (scenarioA: ScenarioData, scenarioB: ScenarioData) => Promise<void>;
   isCreating?: boolean;
 }
 
 function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm, isCreating }: ScenarioSelectorProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isMobile = useIsMobile();
 
   const toggleSelection = (id: string) => {
+    setSubmitError(null);
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -136,21 +139,39 @@ function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm, isCreating
     });
   };
 
-  const handleConfirm = () => {
-    if (selectedIds.size === 2) {
-      const [aId, bId] = Array.from(selectedIds);
-      const scenarioA = scenarios.find(s => s.id === aId);
-      const scenarioB = scenarios.find(s => s.id === bId);
-      if (scenarioA && scenarioB) {
-        onConfirm(scenarioA, scenarioB);
-        setSelectedIds(new Set());
-      }
+  const handleConfirm = async () => {
+    if (isSubmitting || isCreating) return;
+
+    if (selectedIds.size !== 2) {
+      setSubmitError("Select exactly two scenarios.");
+      return;
+    }
+
+    const [aId, bId] = Array.from(selectedIds);
+    const scenarioA = scenarios.find((s) => s.id === aId);
+    const scenarioB = scenarios.find((s) => s.id === bId);
+
+    if (!scenarioA || !scenarioB) {
+      setSubmitError("Unable to create comparison. Try again.");
+      return;
+    }
+
+    setSubmitError(null);
+    setIsSubmitting(true);
+    try {
+      await onConfirm(scenarioA, scenarioB);
+      // parent will close + navigate on success
+    } catch (e) {
+      setSubmitError("Unable to create comparison. Try again.");
+      setIsSubmitting(false);
     }
   };
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       setSelectedIds(new Set());
+      setSubmitError(null);
+      setIsSubmitting(false);
     }
     onOpenChange(newOpen);
   };
@@ -165,30 +186,30 @@ function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm, isCreating
       <div className="text-xs text-muted-foreground mb-4">
         Select exactly two scenarios. ({selectedIds.size}/2 selected)
       </div>
-      
+
       <div className={isMobile ? "flex-1 overflow-y-auto -mx-4 px-4" : "max-h-[50vh] overflow-y-auto -mx-6 px-6"}>
         <div className="space-y-1">
           {scenarios.map((scenario) => {
             const isSelected = selectedIds.has(scenario.id);
             const disabled = isDisabled(scenario.id);
             const monthlyPayment = getMonthlyPayment(scenario);
-            
+
             return (
               <button
                 key={scenario.id}
                 onClick={() => !disabled && toggleSelection(scenario.id)}
-                disabled={disabled}
+                disabled={disabled || isSubmitting || isCreating}
                 className={`w-full flex items-center gap-3 rounded-md px-3 py-3 text-left transition-colors ${
-                  isSelected 
-                    ? "bg-muted/60" 
+                  isSelected
+                    ? "bg-muted/60"
                     : disabled
                       ? "opacity-40 cursor-not-allowed"
                       : "hover:bg-muted/30"
                 }`}
               >
-                <Checkbox 
+                <Checkbox
                   checked={isSelected}
-                  disabled={disabled}
+                  disabled={disabled || isSubmitting || isCreating}
                   className="h-4 w-4 pointer-events-none"
                 />
                 <div className="flex-1 min-w-0">
@@ -214,17 +235,23 @@ function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm, isCreating
 
   const footer = (
     <>
-      <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isCreating}>
+      <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting || isCreating}>
         Cancel
       </Button>
-      <Button 
+      <Button
         onClick={handleConfirm}
-        disabled={selectedIds.size !== 2 || isCreating}
+        disabled={selectedIds.size !== 2 || isSubmitting || isCreating}
       >
-        {isCreating ? "Creating..." : "Compare selected scenarios"}
+        {isSubmitting || isCreating ? "Creating comparison..." : "Compare selected scenarios"}
       </Button>
     </>
   );
+
+  const errorBlock = submitError ? (
+    <div className="mt-3 text-sm text-destructive">
+      {submitError}
+    </div>
+  ) : null;
 
   // Mobile: use Sheet
   if (isMobile) {
@@ -239,6 +266,7 @@ function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm, isCreating
           </SheetHeader>
           <div className="flex-1 overflow-hidden flex flex-col py-4">
             {content}
+            {errorBlock}
           </div>
           <SheetFooter className="flex-row gap-3 pt-4 border-t">
             {footer}
@@ -259,6 +287,7 @@ function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm, isCreating
           </DialogDescription>
         </DialogHeader>
         {content}
+        {errorBlock}
         <DialogFooter>
           {footer}
         </DialogFooter>
@@ -387,20 +416,17 @@ export default function ComparisonsIndex() {
   // Create scenario lookup map
   const scenarioMap = new Map(scenarios.map(s => [s.id, s]));
 
-  // Handle comparison creation
+  // Handle comparison creation (atomic: create → navigate once)
   const handleCreateComparison = async (scenarioA: ScenarioData, scenarioB: ScenarioData) => {
-    try {
-      const name = `${scenarioA.name || "Untitled"} vs ${scenarioB.name || "Untitled"}`;
-      const comparison = await createComparison({
-        name,
-        scenario_a_id: scenarioA.id,
-        scenario_b_id: scenarioB.id,
-      });
-      setSelectorOpen(false);
-      navigate(`/app/comparisons/${comparison.id}`);
-    } catch (error) {
-      toast.error("Failed to create comparison");
-    }
+    const name = `${scenarioA.name || "Untitled"} vs ${scenarioB.name || "Untitled"}`;
+    const comparison = await createComparison({
+      name,
+      scenario_a_id: scenarioA.id,
+      scenario_b_id: scenarioB.id,
+    });
+
+    setSelectorOpen(false);
+    navigate(`/app/comparisons/${comparison.id}`);
   };
 
   // Handle delete - opens confirmation dialog

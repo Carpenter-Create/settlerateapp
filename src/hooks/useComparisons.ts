@@ -4,6 +4,7 @@
  * Provides CRUD operations for user comparisons stored in the database.
  */
 
+import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,17 +27,18 @@ interface CreateComparisonParams {
 export function useComparisons() {
   const { user, isAnonymous } = useAuth();
   const queryClient = useQueryClient();
+  const userId = user?.id ?? null;
 
   // Fetch all user comparisons
   const comparisonsQuery = useQuery({
-    queryKey: ["comparisons", user?.id],
+    queryKey: ["comparisons", userId],
     queryFn: async (): Promise<SavedComparison[]> => {
-      if (!user?.id || isAnonymous) return [];
+      if (!userId || isAnonymous) return [];
 
       const { data, error } = await supabase
         .from("user_comparisons")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -46,29 +48,33 @@ export function useComparisons() {
 
       return data || [];
     },
-    enabled: !!user?.id && !isAnonymous,
+    enabled: !!userId && !isAnonymous,
     staleTime: 30 * 1000, // 30 seconds
+    refetchOnWindowFocus: false,
   });
 
-  // Fetch a single comparison by ID (with error propagation for retry logic)
-  const getComparison = async (id: string): Promise<SavedComparison | null> => {
-    if (!user?.id || isAnonymous) return null;
+  // Fetch a single comparison by ID (memoized to avoid effect loops)
+  const getComparison = useCallback(
+    async (id: string): Promise<SavedComparison | null> => {
+      if (!userId || isAnonymous) return null;
 
-    const { data, error } = await supabase
-      .from("user_comparisons")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .maybeSingle();
+      const { data, error } = await supabase
+        .from("user_comparisons")
+        .select("*")
+        .eq("id", id)
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    if (error) {
-      console.error("Error fetching comparison:", error);
-      // Propagate error for retry handling in UI
-      throw error;
-    }
+      if (error) {
+        console.error("Error fetching comparison:", error);
+        // Propagate error for retry handling in UI
+        throw error;
+      }
 
-    return data;
-  };
+      return data;
+    },
+    [userId, isAnonymous]
+  );
 
   // Create a new comparison
   const createMutation = useMutation({
