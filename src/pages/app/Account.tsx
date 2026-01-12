@@ -10,15 +10,13 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type BillingErrorCode = "NO_STRIPE_CUSTOMER" | "ADMIN_USER" | null;
-
 export default function Account() {
   const { user } = useAuth();
   const { isPro, subscriptionEnd, refresh, isLoading } = useSubscription();
   const { isAdmin, isLoading: capabilitiesLoading } = useCapabilities();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [billingError, setBillingError] = useState<BillingErrorCode>(null);
+  const [billingError, setBillingError] = useState<"NO_STRIPE_CUSTOMER" | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Handle subscription success redirect
@@ -42,6 +40,9 @@ export default function Account() {
   };
 
   const handleManageBilling = async () => {
+    // Never attempt billing portal for admins
+    if (isAdmin) return;
+
     setBillingError(null);
     setPortalLoading(true);
     
@@ -64,15 +65,8 @@ export default function Account() {
 
       const data = await response.json();
 
-      // Handle typed error codes
       if (data.code === "NO_STRIPE_CUSTOMER") {
         setBillingError("NO_STRIPE_CUSTOMER");
-        setPortalLoading(false);
-        return;
-      }
-
-      if (data.code === "ADMIN_USER") {
-        setBillingError("ADMIN_USER");
         setPortalLoading(false);
         return;
       }
@@ -91,10 +85,55 @@ export default function Account() {
     }
   };
 
-  // Determine display state
-  const showAdminBadge = isAdmin && !capabilitiesLoading;
-  const effectivelyPro = isPro || isAdmin;
+  // Admin-specific view - no billing UI at all
+  if (isAdmin && !capabilitiesLoading) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-8">
+        <div>
+          <h1 className="text-2xl font-medium tracking-tight">Account</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Account information
+          </p>
+        </div>
 
+        {/* Access level - informational only */}
+        <div className="border border-border rounded-sm p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-muted">
+              <Shield className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Access Level</p>
+              <p className="mt-0.5 font-medium">Professional (Administrator)</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Billing not required for administrator accounts.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Your data */}
+        <div className="border border-border rounded-sm p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-muted">
+              <User className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div>
+              <h3 className="font-medium">Your Data</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Signed in as <strong>{user?.email}</strong>
+              </p>
+              <Button variant="link" asChild className="mt-2 h-auto p-0">
+                <Link to="/app/settings">Manage profile and data →</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Standard user view with billing UI
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div>
@@ -109,32 +148,22 @@ export default function Account() {
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-muted">
-              {showAdminBadge ? (
-                <Shield className="h-5 w-5 text-muted-foreground" />
-              ) : (
-                <CreditCard className="h-5 w-5 text-muted-foreground" />
-              )}
+              <CreditCard className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-medium">Current Plan</h3>
-                {showAdminBadge ? (
-                  <Badge variant="outline">Administrator</Badge>
-                ) : (
-                  <Badge variant={isPro ? "default" : "secondary"}>
-                    {isPro ? "Professional" : "Analytical"}
-                  </Badge>
-                )}
+                <Badge variant={isPro ? "default" : "secondary"}>
+                  {isPro ? "Professional" : "Analytical"}
+                </Badge>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                {showAdminBadge
-                  ? "Full platform access. Billing not required for administrator accounts."
-                  : isPro
+                {isPro
                   ? "Full access including exports, saved scenarios, and income-context views."
                   : "Core mortgage modeling. Upgrade for extended features."}
               </p>
 
-              {!showAdminBadge && isPro && subscriptionEnd && (
+              {isPro && subscriptionEnd && (
                 <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   Renews on {formatDate(subscriptionEnd)}
@@ -144,50 +173,47 @@ export default function Account() {
           </div>
         </div>
 
-        {/* Billing actions - only for non-admin users */}
-        {!showAdminBadge && (
-          <div className="mt-6 space-y-3">
-            {/* Inline error messages */}
-            {billingError === "NO_STRIPE_CUSTOMER" && (
-              <div className="rounded-sm border border-border bg-muted/30 p-3 text-sm">
-                <p className="text-muted-foreground">
-                  No billing profile found.{" "}
-                  <button
-                    onClick={() => setShowUpgradeModal(true)}
-                    className="font-medium text-foreground underline underline-offset-2 hover:no-underline"
-                  >
-                    Subscribe to manage access.
-                  </button>
-                </p>
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-3">
-              {isPro ? (
-                <Button 
-                  variant="outline" 
-                  className="rounded-sm"
-                  onClick={handleManageBilling}
-                  disabled={portalLoading}
-                >
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  {portalLoading ? "Opening…" : "Manage billing"}
-                </Button>
-              ) : (
-                <Button 
-                  className="rounded-sm"
+        <div className="mt-6 space-y-3">
+          {/* Inline error messages */}
+          {billingError === "NO_STRIPE_CUSTOMER" && (
+            <div className="rounded-sm border border-border bg-muted/30 p-3 text-sm">
+              <p className="text-muted-foreground">
+                No billing profile found.{" "}
+                <button
                   onClick={() => setShowUpgradeModal(true)}
+                  className="font-medium text-foreground underline underline-offset-2 hover:no-underline"
                 >
-                  Upgrade to Professional Access
-                </Button>
-              )}
+                  Subscribe to manage access.
+                </button>
+              </p>
             </div>
+          )}
+
+          <div className="flex flex-wrap gap-3">
+            {isPro ? (
+              <Button 
+                variant="outline" 
+                className="rounded-sm"
+                onClick={handleManageBilling}
+                disabled={portalLoading}
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                {portalLoading ? "Opening…" : "Manage billing"}
+              </Button>
+            ) : (
+              <Button 
+                className="rounded-sm"
+                onClick={() => setShowUpgradeModal(true)}
+              >
+                Upgrade to Professional Access
+              </Button>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Pro feature preview - only for non-pro, non-admin users */}
-      {!effectivelyPro && (
+      {/* Pro feature preview - only for non-pro users */}
+      {!isPro && (
         <div className="border border-dashed border-border rounded-sm p-6">
           <h3 className="font-medium">Professional Access includes</h3>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
