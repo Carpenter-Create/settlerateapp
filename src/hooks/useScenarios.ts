@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from "
 import { MortgageInputs, calculateMortgage, DEFAULT_INPUTS } from "@/lib/mortgage";
 import {
   ScenarioData,
-  validateDuplicateIndependence,
 } from "@/lib/scenarioContract";
 import { scenarioStore, StoreSnapshot } from "@/lib/scenarioStore";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,51 +12,51 @@ export type Scenario = ScenarioData;
 export type SaveStatus = "idle" | "draft" | "saving" | "saved" | "error";
 
 /**
- * Hook for managing scenarios with unified localStorage/Supabase persistence
+ * Hook for managing scenarios with Supabase persistence (anonymous or authenticated)
  */
 export function useScenarios() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, signInAnonymously } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
   const initRef = useRef(false);
+  const userIdRef = useRef<string | null>(null);
 
   // Initialize store when auth state changes
   useEffect(() => {
     if (authLoading) return;
 
-    // Prevent double initialization
-    if (initRef.current) return;
+    const userId = user?.id ?? null;
+    
+    // Skip if already initialized with same user
+    if (initRef.current && userIdRef.current === userId) return;
+
     initRef.current = true;
+    userIdRef.current = userId;
+    setIsInitialized(false);
 
     scenarioStore.initialize(user).then(() => {
       setIsInitialized(true);
     });
   }, [user, authLoading]);
 
-  // Re-initialize when user changes (login/logout)
-  useEffect(() => {
-    if (authLoading || !isInitialized) return;
-
-    // Check if user changed
-    const currentSnapshot = scenarioStore.getSnapshot();
-    const shouldReinit = user 
-      ? !currentSnapshot.isAuthenticatedMode 
-      : currentSnapshot.isAuthenticatedMode;
-
-    if (shouldReinit) {
-      initRef.current = false;
-      setIsInitialized(false);
-      scenarioStore.initialize(user).then(() => {
-        initRef.current = true;
-        setIsInitialized(true);
-      });
-    }
-  }, [user, authLoading, isInitialized]);
-
-  const { scenarios, isLoaded, isAuthenticatedMode } = useSyncExternalStore(
+  const { scenarios, isLoaded, isOnline } = useSyncExternalStore(
     scenarioStore.subscribe,
     scenarioStore.getSnapshot,
     scenarioStore.getSnapshot
   );
+
+  // Ensure anonymous session exists when needed for scenario operations
+  const ensureSession = useCallback(async (): Promise<boolean> => {
+    if (user) return true;
+    if (authLoading) return false;
+    
+    try {
+      await signInAnonymously();
+      return true;
+    } catch (e) {
+      console.error("Failed to create anonymous session:", e);
+      return false;
+    }
+  }, [user, authLoading, signInAnonymously]);
 
   const getScenario = useCallback((id: string): ScenarioData | undefined => {
     return scenarioStore.getScenario(id);
@@ -68,8 +67,13 @@ export function useScenarios() {
     inputs: MortgageInputs, 
     sourceScenarioId?: string | null
   ): Promise<ScenarioData> => {
+    // Ensure we have a session (anonymous or real)
+    const hasSession = await ensureSession();
+    if (!hasSession) {
+      throw new Error("Unable to create session for scenario storage");
+    }
     return scenarioStore.createScenario(name, inputs, sourceScenarioId);
-  }, []);
+  }, [ensureSession]);
 
   const updateScenario = useCallback(async (
     id: string, 
@@ -90,38 +94,22 @@ export function useScenarios() {
     return scenarioStore.reload();
   }, []);
 
-  // Migration helpers
-  const hasPendingMigration = useCallback((): boolean => {
-    return scenarioStore.hasPendingMigration();
-  }, []);
-
-  const getPendingMigrationCount = useCallback((): number => {
-    return scenarioStore.getPendingMigrationCount();
-  }, []);
-
-  const migrateToAccount = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
-    return scenarioStore.migrateLocalStorageToSupabase();
-  }, []);
-
-  const dismissMigration = useCallback((): void => {
-    scenarioStore.dismissMigration();
+  const hasScenarios = useCallback((): boolean => {
+    return scenarioStore.hasScenarios();
   }, []);
 
   return {
     scenarios,
     isLoaded: isLoaded && isInitialized && !authLoading,
-    isAuthenticatedMode,
+    isOnline,
     createScenario,
     updateScenario,
     duplicateScenario,
     deleteScenario,
     getScenario,
     reload,
-    // Migration
-    hasPendingMigration,
-    getPendingMigrationCount,
-    migrateToAccount,
-    dismissMigration,
+    hasScenarios,
+    ensureSession,
   };
 }
 
