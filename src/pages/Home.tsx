@@ -3,6 +3,22 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AnalyticalSurface } from "@/components/marketing/AnalyticalSurface";
 
+/**
+ * Homepage Color-Blocking System (Locked)
+ * 
+ * Structure without gloss. Authority without marketing theatrics.
+ * Use background tone—not decoration—to establish authority and pacing.
+ * Institutional products rely on contrast for comprehension, not excitement.
+ * 
+ * Section mapping:
+ * 1. Hero: Surface Primary (warm white) - calm authority
+ * 2. Scenario Demo: Surface Secondary - "here is proof"
+ * 3. Framework: Surface Primary - intellectual positioning
+ * 4. Authority Break: Surface Tertiary - gravitas + pacing reset
+ * 5. Use Cases: Alternating
+ * 6. Final CTA: Surface Secondary
+ */
+
 // What the calculator enables - structural depth
 const structureCapabilities = [
   "Multiple down-payment scenarios",
@@ -37,25 +53,27 @@ const constraints = [
   "We do not use incentive-driven defaults or promotional inputs.",
 ];
 
-// Section wrapper for consistent full-width treatment
+// Section wrapper using color-blocking system
 function Section({ 
   children, 
   className,
-  variant = "white"
+  surface = "primary"
 }: { 
   children: React.ReactNode; 
   className?: string;
-  variant?: "white" | "neutral";
+  surface?: "primary" | "secondary" | "tertiary";
 }) {
   return (
     <section 
       className={cn(
         "w-full",
-        variant === "neutral" ? "bg-[hsl(40_20%_97%)]" : "bg-white",
+        surface === "primary" && "bg-surface-primary",
+        surface === "secondary" && "bg-surface-secondary",
+        surface === "tertiary" && "bg-surface-tertiary",
         className
       )}
     >
-      <div className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16">
+      <div className="mx-auto max-w-[1320px] px-6 lg:px-12 xl:px-16">
         {children}
       </div>
     </section>
@@ -67,10 +85,10 @@ export default function Home() {
     <div className="w-full">
       {/* ═══════════════════════════════════════════════════════════════
           SECTION 1 — HERO (Context + Gravity)
-          Purpose: Establish category and seriousness.
-          Height: ~75-80% viewport for spatial authority
+          Surface: Primary (warm white)
+          Purpose: Calm authority. No interruption.
           ═══════════════════════════════════════════════════════════════ */}
-      <section className="flex w-full min-h-[72vh] lg:min-h-[80vh] bg-[hsl(40_18%_96%)]">
+      <section className="flex w-full min-h-[72vh] lg:min-h-[80vh] bg-surface-primary">
         <div className="mx-auto flex w-full max-w-[1320px] flex-col justify-center px-6 py-20 lg:px-12 lg:py-24 xl:px-16">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="font-serif text-4xl font-medium tracking-[-0.02em] leading-[1.1] text-foreground sm:text-5xl lg:text-6xl">
@@ -87,31 +105,29 @@ export default function Home() {
               </Button>
             </div>
           </div>
-
-          {/* Analytical Surface - Decision-Grade Document Fragment */}
-          <div className="mx-auto mt-20 w-full max-w-4xl sm:mt-24 lg:mt-28">
-            <AnalyticalSurface />
-          </div>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════
-          SECTION 2 — THE REFRAME (Category Kill Shot)
-          Purpose: Explicitly separate from marketplaces.
+          SECTION 2 — SCENARIO DEMONSTRATION BLOCK
+          Surface: Secondary
+          Purpose: "Here is proof." Visual transition into analysis.
           ═══════════════════════════════════════════════════════════════ */}
-      <Section variant="white" className="py-16 lg:py-20">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-center text-base leading-relaxed text-foreground/70 sm:text-lg sm:leading-relaxed">
-            SettleRate is an analytical tool for evaluating mortgage structures—not a marketplace for browsing rates or providers.
-          </p>
+      <Section surface="secondary" className="py-16 lg:py-20">
+        <div className="mx-auto max-w-4xl">
+          {/* Card inset using Surface Primary with thin border */}
+          <div className="rounded-md border border-foreground/[0.08] bg-surface-primary">
+            <AnalyticalSurface />
+          </div>
         </div>
       </Section>
 
       {/* ═══════════════════════════════════════════════════════════════
-          SECTION 3 — WHAT THE CALCULATOR ENABLES
-          Purpose: Expand capability without selling.
+          SECTION 3 — FRAMEWORK / PRINCIPLES
+          Surface: Primary (white)
+          Purpose: Intellectual positioning. Reads like a memo.
           ═══════════════════════════════════════════════════════════════ */}
-      <Section variant="neutral" className="py-20 lg:py-28">
+      <Section surface="primary" className="py-20 lg:py-28">
         <div className="mx-auto max-w-3xl">
           <p className="text-center font-serif text-xl font-medium tracking-[-0.01em] text-foreground sm:text-2xl">
             Most borrowers compare rates. SettleRate compares structures.
@@ -133,9 +149,10 @@ export default function Home() {
 
       {/* ═══════════════════════════════════════════════════════════════
           SECTION 4 — THE PROBLEM WITH MORTGAGE CALCULATORS
+          Surface: Secondary
           Purpose: Justify existence intellectually.
           ═══════════════════════════════════════════════════════════════ */}
-      <Section variant="white" className="py-20 lg:py-28">
+      <Section surface="secondary" className="py-20 lg:py-28">
         <div className="mx-auto max-w-3xl">
           <h2 className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-3xl lg:text-4xl">
             The problem with mortgage calculators
@@ -163,7 +180,7 @@ export default function Home() {
           </div>
 
           {/* Constraints Subsection */}
-          <div className="mt-12 border-t border-border/50 pt-10">
+          <div className="mt-12 border-t border-foreground/[0.08] pt-10">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground">
               What SettleRate does not do
             </h3>
@@ -183,10 +200,24 @@ export default function Home() {
       </Section>
 
       {/* ═══════════════════════════════════════════════════════════════
-          SECTION 5 — THE SETTLERATE FRAMEWORK
-          Purpose: Institutionalize the product.
+          SECTION 5 — AUTHORITY BREAK (Mid-Page Anchor)
+          Surface: Tertiary
+          Purpose: Gravitas + pacing reset. Statement, not pitch.
           ═══════════════════════════════════════════════════════════════ */}
-      <Section variant="neutral" className="py-20 lg:py-28">
+      <Section surface="tertiary" className="py-20 lg:py-28">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.25] text-foreground sm:text-3xl">
+            Built to reduce uncertainty—not sell loans.
+          </p>
+        </div>
+      </Section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          SECTION 6 — THE SETTLERATE FRAMEWORK
+          Surface: Primary
+          Purpose: Institutionalize the product. Reads like methodology.
+          ═══════════════════════════════════════════════════════════════ */}
+      <Section surface="primary" className="py-20 lg:py-28">
         <div className="mb-12 lg:mb-16">
           <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/50">
             The SettleRate Framework
@@ -204,7 +235,7 @@ export default function Home() {
           {frameworkPillars.map((pillar) => (
             <article
               key={pillar.title}
-              className="group relative border-l-2 border-foreground/10 bg-white py-7 pl-7 pr-6 transition-all hover:border-foreground/30 sm:py-6 sm:pl-8 sm:pr-8"
+              className="group relative border-l-2 border-foreground/10 bg-surface-secondary py-7 pl-7 pr-6 transition-all hover:border-foreground/30 sm:py-6 sm:pl-8 sm:pr-8"
             >
               <h3 className="font-serif text-lg font-medium tracking-[-0.01em] text-foreground">
                 {pillar.title}
@@ -218,32 +249,25 @@ export default function Home() {
       </Section>
 
       {/* ═══════════════════════════════════════════════════════════════
-          SECTION 6 — TRUST WITHOUT MARKETING
-          Purpose: Close with confidence, not persuasion.
+          SECTION 7 — FINAL CTA
+          Surface: Secondary
+          Purpose: Decision moment. Minimal copy. One CTA.
           ═══════════════════════════════════════════════════════════════ */}
-      <Section variant="white" className="py-24 lg:py-32">
+      <Section surface="secondary" className="py-24 lg:py-32">
         <div className="mx-auto max-w-2xl text-center">
-          <blockquote className="space-y-6">
-            <p className="font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.25] text-foreground sm:text-3xl">
-              Built to reduce uncertainty—not sell loans.
-            </p>
-          </blockquote>
+          <h2 className="font-serif text-xl font-medium tracking-[-0.01em] text-foreground sm:text-2xl">
+            Begin with a single scenario.
+          </h2>
+          <p className="mt-4 text-sm text-foreground/60">
+            Free to start. No credit card required.
+          </p>
+          <Button asChild size="lg" className="mt-8 min-w-44 h-12 text-base">
+            <Link to="/auth">Start free</Link>
+          </Button>
 
-          <p className="mx-auto mt-8 max-w-lg text-sm leading-relaxed text-foreground/50">
+          <p className="mx-auto mt-12 max-w-lg text-xs leading-relaxed text-foreground/40">
             SettleRate is not a lender, broker, or financial advisor and does not offer mortgage products or personalized advice.
           </p>
-
-          <div className="mt-12">
-            <h2 className="font-serif text-xl font-medium tracking-[-0.01em] text-foreground sm:text-2xl">
-              Begin with a single scenario.
-            </h2>
-            <p className="mt-4 text-sm text-foreground/60">
-              Free to start. No credit card required.
-            </p>
-            <Button asChild size="lg" className="mt-8 min-w-44 h-12 text-base">
-              <Link to="/auth">Start free</Link>
-            </Button>
-          </div>
         </div>
       </Section>
     </div>

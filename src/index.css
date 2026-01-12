@@ -60,11 +60,33 @@
     --sidebar-border: 220 8% 90%;
     --sidebar-ring: 220 12% 30%;
 
-    /* Custom tokens for SettleRate */
+    /* ═══════════════════════════════════════════════════════════════
+       COLOR-BLOCKING SYSTEM (Locked)
+       Structure without gloss. Authority without marketing theatrics.
+       Use background tone—not decoration—to establish authority and pacing.
+       ═══════════════════════════════════════════════════════════════ */
+    
+    /* Surface / Primary - Core reading background (#FAFAF8 warm white) */
+    --surface-primary: 50 20% 98%;
+    
+    /* Surface / Secondary - Structural section breaks (#F3F3EF) */
+    --surface-secondary: 50 10% 95%;
+    
+    /* Surface / Tertiary - Emphasis panels / comparisons (#ECECE6) */
+    --surface-tertiary: 50 12% 91%;
+    
+    /* Border / Subtle - Dividers, cards (rgba(0,0,0,0.08)) */
+    --border-subtle: 0 0% 0%;
+    
+    /* Text / Primary - Headlines (#1C1C1E) */
+    --text-primary: 240 4% 12%;
+    
+    /* Text / Secondary - Body (#5A5A5F) */
+    --text-secondary: 240 2% 36%;
+
+    /* Legacy tokens (kept for compatibility) */
     --surface-elevated: 0 0% 100%;
     --surface-sunken: 220 6% 96%;
-    --text-primary: 220 15% 15%;
-    --text-secondary: 220 8% 38%;
     --text-tertiary: 220 6% 52%;
     --success: 160 35% 40%;
     --success-foreground: 0 0% 100%;
@@ -201,6 +223,32 @@
 }
 
 @layer components {
+  /* ═══════════════════════════════════════════════════════════════
+     COLOR-BLOCKING SURFACE UTILITIES (Locked)
+     Use these for homepage section backgrounds.
+     No gradients. No drop shadows unless functionally necessary.
+     ═══════════════════════════════════════════════════════════════ */
+  
+  /* Surface / Primary - Core reading background (warm white) */
+  .surface-primary {
+    background-color: hsl(var(--surface-primary));
+  }
+  
+  /* Surface / Secondary - Structural section breaks */
+  .surface-secondary {
+    background-color: hsl(var(--surface-secondary));
+  }
+  
+  /* Surface / Tertiary - Emphasis panels / authority breaks */
+  .surface-tertiary {
+    background-color: hsl(var(--surface-tertiary));
+  }
+  
+  /* Border / Subtle - For dividers and cards */
+  .border-subtle {
+    border-color: hsl(var(--border-subtle) / 0.08);
+  }
+
   /* Card variants - minimal, institutional */
   .card-elevated {
     @apply bg-card rounded border border-border;
@@ -214,7 +262,7 @@
     @apply border-foreground/20;
   }
 
-  /* Surface utilities */
+  /* Legacy surface utilities (kept for compatibility) */
   .surface-elevated {
     background-color: hsl(var(--surface-elevated));
   }

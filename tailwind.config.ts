@@ -96,6 +96,12 @@ export default {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
         },
+        /* Color-blocking system (locked) */
+        surface: {
+          primary: "hsl(var(--surface-primary))",
+          secondary: "hsl(var(--surface-secondary))",
+          tertiary: "hsl(var(--surface-tertiary))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

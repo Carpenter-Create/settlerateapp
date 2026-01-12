@@ -53,8 +53,8 @@ export function AnalyticalSurface({ className }: AnalyticalSurfaceProps) {
   return (
     <div 
       className={cn(
-        // Container: off-white/parchment, subtle border, minimal radius
-        "w-full rounded-md border border-foreground/[0.10] bg-[hsl(40_18%_96%)]",
+        // Container styling handled by parent when wrapped
+        // Standalone: off-white/parchment, subtle border, minimal radius
         className
       )}
     >
