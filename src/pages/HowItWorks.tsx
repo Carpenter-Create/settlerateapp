@@ -2,15 +2,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 /**
- * How It Works Page - Canonical Institutional Framing
+ * How It Works Page - Consolidated Analytical System
  * 
- * Rebuilt to align with Canon v1.1 design system:
- * - Full-width section containers with color-blocking
- * - Consistent max-width and spacing tokens
- * - Clear vertical hierarchy matching homepage and /methodology
- * 
- * This page should feel like a systems explanation written for
- * regulators, advisors, and serious users—not onboarding fluff.
+ * This page presents SettleRate as a single, coherent analytical system
+ * combining procedural explanation with methodological foundation.
+ * Structured for regulators, advisors, and serious users.
  */
 
 const steps = [
@@ -40,21 +36,40 @@ const steps = [
   },
 ];
 
-const principles = [
+const methodologySections = [
   {
-    title: "Normalized assumptions",
+    number: "01",
+    title: "Standardized assumptions",
     description:
-      "Rates, taxes, insurance, and PMI are standardized across scenarios to prevent distortion and ensure analytical integrity.",
+      "All scenarios are evaluated using normalized assumptions to prevent distortion across comparisons. Property taxes, insurance, and PMI treatment are applied consistently. Rate environments are normalized to isolate structural differences.",
+    rationale: "Standardization ensures differences in outcomes reflect structure, not presentation.",
   },
   {
-    title: "Time-horizon analysis",
+    number: "02",
+    title: "Scenario construction",
     description:
-      "Outcomes are evaluated across the full life of the loan, including the point at which principal accumulation overtakes interest.",
+      "Scenarios represent discrete mortgage structures rather than provider-specific offers. Term length, down payment, and PMI exposure are treated as structural variables. No lender-specific incentives or adjustments are applied.",
+    rationale: "Structural comparison prevents bias introduced by sales-driven inputs.",
   },
   {
-    title: "Reproducibility",
+    number: "03",
+    title: "Modeled outputs",
     description:
-      "Scenarios can be exported, shared, and independently verified by professionals. Every calculation is documented.",
+      "SettleRate surfaces decision-grade outcomes: monthly obligations, total interest over the loan life, cash required at close, time horizon at which principal accumulation exceeds interest, and total cost of capital.",
+    rationale: "Long-term cost and capital requirements are central to mortgage decisions and are often underrepresented.",
+  },
+  {
+    number: "04",
+    title: "Interpretation boundaries",
+    description:
+      "Outputs reflect modeled outcomes under stated assumptions. Results do not predict future rates, approval, or loan terms. Users retain full responsibility for decisions and outcomes.",
+  },
+  {
+    number: "05",
+    title: "Independence",
+    description:
+      "SettleRate operates independently of lenders and originators. No referral fees, no lender compensation, no ranking or promotion of providers.",
+    rationale: "Independence preserves analytical integrity.",
   },
 ];
 
@@ -75,17 +90,17 @@ export default function HowItWorks() {
               A structured approach to mortgage scenario evaluation.
             </p>
             <p className="mt-4 max-w-2xl text-[15px] leading-[1.85] text-foreground/60">
-              SettleRate provides a consistent framework for evaluating mortgage structures 
-              under standardized assumptions. The platform surfaces long-term cost implications, 
-              capital requirements, and structural tradeoffs—producing outputs suitable for 
-              professional review without embedded recommendations.
+              SettleRate evaluates mortgage scenarios using standardized assumptions and 
+              consistent modeling to enable meaningful comparison across loan structures. 
+              The methodology prioritizes transparency, repeatability, and clarity over 
+              optimization or recommendation.
             </p>
           </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 2: Four-Step Framework
+          SECTION 2: The SettleRate Framework
           Background: Surface Secondary
           ══════════════════════════════════════════════════════════════════ */}
       <section className="w-full bg-surface-secondary">
@@ -126,9 +141,10 @@ export default function HowItWorks() {
 
       {/* ══════════════════════════════════════════════════════════════════
           SECTION 3: Core Methodology
-          Background: Surface Primary (inset card on tertiary)
+          Background: Surface Primary
+          Same layout system as The Framework section
           ══════════════════════════════════════════════════════════════════ */}
-      <section className="w-full bg-surface-primary">
+      <section id="core-methodology" className="w-full bg-surface-primary scroll-mt-20">
         <div className="mx-auto max-w-[1280px] px-6 py-16 lg:px-12 lg:py-24 xl:px-16">
           <div className="mx-auto max-w-3xl">
             {/* Section Label */}
@@ -136,23 +152,34 @@ export default function HowItWorks() {
               Core Methodology
             </p>
             
-            {/* Inset Container */}
-            <div className="mt-8 rounded-md border border-border-subtle bg-surface-tertiary p-6 sm:p-8">
-              <div className="space-y-6">
-                {principles.map((principle, index) => (
-                  <div 
-                    key={principle.title}
-                    className={index !== principles.length - 1 ? "pb-6 border-b border-border-subtle" : ""}
-                  >
-                    <h3 className="text-sm font-medium text-foreground">
-                      {principle.title}
-                    </h3>
-                    <p className="mt-2 text-[15px] leading-[1.75] text-foreground/60">
-                      {principle.description}
+            {/* Methodology Grid - Same left-rail number system */}
+            <div className="mt-10 space-y-10">
+              {methodologySections.map((section) => (
+                <div
+                  key={section.number}
+                  className="grid grid-cols-[48px_1fr] gap-6 sm:grid-cols-[64px_1fr]"
+                >
+                  {/* Number - Fixed left rail */}
+                  <span className="font-serif text-2xl font-medium tracking-tight text-foreground/20 sm:text-3xl">
+                    {section.number}
+                  </span>
+                  
+                  {/* Content */}
+                  <div className="space-y-2">
+                    <h2 className="font-serif text-lg font-medium tracking-[-0.01em] text-foreground">
+                      {section.title}
+                    </h2>
+                    <p className="text-[15px] leading-[1.75] text-foreground/60">
+                      {section.description}
                     </p>
+                    {section.rationale && (
+                      <p className="text-sm italic text-foreground/40 pt-1">
+                        {section.rationale}
+                      </p>
+                    )}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -166,8 +193,8 @@ export default function HowItWorks() {
         <div className="mx-auto max-w-[1280px] px-6 py-12 lg:px-12 lg:py-16 xl:px-16">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-[15px] leading-[1.8] text-foreground/60">
-              SettleRate does not originate, broker, or recommend mortgage products. 
-              Outputs are analytical in nature and intended to support independent decision-making.
+              SettleRate provides analytical modeling only and does not originate, broker, 
+              or recommend mortgage products, nor provide financial, legal, or tax advice.
             </p>
           </div>
         </div>
