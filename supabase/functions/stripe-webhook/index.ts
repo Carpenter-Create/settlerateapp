@@ -234,6 +234,14 @@ serve(async (req) => {
             note: "Database trigger also prevents admin billing modifications"
           },
         });
+        
+        // Log to audit table for observability
+        await supabase.rpc("log_webhook_admin_ignored", {
+          p_user_id: appUser.id,
+          p_email: customerEmail,
+          p_event_type: eventType,
+        });
+        
         return new Response(JSON.stringify({ received: true }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

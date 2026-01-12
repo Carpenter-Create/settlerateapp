@@ -23,6 +23,7 @@ import AdvisorRequest from "./pages/app/AdvisorRequest";
 
 // Admin pages
 import AdvisorRequestsAdmin from "./pages/admin/AdvisorRequestsNew";
+import AdminAccess from "./pages/admin/AdminAccess";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
             {/* Admin routes */}
             <Route path="/admin/advisor-requests" element={<AdminRoute><AdvisorRequestsAdmin /></AdminRoute>} />
             <Route path="/app/admin/advisors" element={<AdminRoute><AdvisorRequestsAdmin /></AdminRoute>} />
+            <Route path="/app/admin/access" element={<AdminRoute><AdminAccess /></AdminRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
