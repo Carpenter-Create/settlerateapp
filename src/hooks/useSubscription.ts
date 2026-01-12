@@ -14,6 +14,7 @@ interface CheckSubscriptionResponse {
   subscribed: boolean;
   product_id: string | null;
   subscription_end: string | null;
+  is_admin?: boolean;
   error?: string;
 }
 
@@ -35,6 +36,16 @@ async function checkSubscription(accessToken: string): Promise<SubscriptionState
   }
 
   const data: CheckSubscriptionResponse = await response.json();
+  
+  // Admin users get full access regardless of Stripe status
+  if (data.is_admin) {
+    return {
+      tier: "advisor" as SubscriptionTier, // Highest tier for admin
+      isSubscribed: true,
+      productId: "admin_access",
+      subscriptionEnd: null,
+    };
+  }
   
   return {
     tier: data.subscribed ? getTierFromProductId(data.product_id) : "free",

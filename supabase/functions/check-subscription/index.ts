@@ -47,7 +47,28 @@ serve(async (req) => {
     if (user.is_anonymous) {
       logStep("Anonymous user, returning free tier");
       return new Response(
-        JSON.stringify({ subscribed: false, product_id: null, subscription_end: null }),
+        JSON.stringify({ subscribed: false, product_id: null, subscription_end: null, is_admin: false }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
+    // Check if user has admin role - admins bypass all billing checks
+    const { data: adminRole } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (adminRole) {
+      logStep("Admin user detected, granting full access", { userId: user.id });
+      return new Response(
+        JSON.stringify({ 
+          subscribed: true, 
+          product_id: "admin_access", 
+          subscription_end: null,
+          is_admin: true 
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
     }
@@ -58,7 +79,7 @@ serve(async (req) => {
     if (customers.data.length === 0) {
       logStep("No Stripe customer found, returning unsubscribed state");
       return new Response(
-        JSON.stringify({ subscribed: false, product_id: null, subscription_end: null }),
+        JSON.stringify({ subscribed: false, product_id: null, subscription_end: null, is_admin: false }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
     }
@@ -94,6 +115,7 @@ serve(async (req) => {
         subscribed: hasActiveSub,
         product_id: productId,
         subscription_end: subscriptionEnd,
+        is_admin: false,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
