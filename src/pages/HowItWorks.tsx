@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { HeroStandard } from "@/components/layout/HeroStandard";
 
 /**
  * How It Works Page - StoryBrand "Plan" Structure
@@ -42,30 +43,12 @@ export default function HowItWorks() {
   return (
     <div className="w-full">
       {/* ══════════════════════════════════════════════════════════════════
-          HERO
-          Clear procedural framing. No philosophy.
+          HERO — Uses HeroStandard (canonical source)
           ══════════════════════════════════════════════════════════════════ */}
-      <section 
-        className="w-full bg-surface-primary"
-        style={{ 
-          paddingTop: 'var(--space-hero-top)', 
-          paddingBottom: 'var(--space-hero-bottom)' 
-        }}
-      >
-        <div className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16">
-          <div className="mx-auto max-w-3xl">
-            <h1 className="font-serif text-3xl font-medium tracking-[-0.02em] leading-[1.15] text-foreground sm:text-4xl lg:text-[2.75rem]">
-              How SettleRate works
-            </h1>
-            <p 
-              className="max-w-2xl text-base leading-[1.7] text-foreground/60 sm:text-lg"
-              style={{ marginTop: 'var(--space-text-stack)' }}
-            >
-              A structured, neutral process for modeling mortgage outcomes using consistent assumptions.
-            </p>
-          </div>
-        </div>
-      </section>
+      <HeroStandard
+        headline="How SettleRate works"
+        subtitle="A structured, neutral process for modeling mortgage outcomes using consistent assumptions."
+      />
 
       {/* ══════════════════════════════════════════════════════════════════
           ANALYTICAL SEQUENCE (Steps)

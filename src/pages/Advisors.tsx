@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AdvisorRequestModal } from "@/components/advisors/AdvisorRequestModal";
+import { HeroStandard } from "@/components/layout/HeroStandard";
 
 /**
  * Advisors Page - Eligibility-Based Access
@@ -28,34 +29,21 @@ export default function Advisors() {
   return (
     <div className="w-full">
       {/* ══════════════════════════════════════════════════════════════════
-          HERO
+          HERO — Uses HeroStandard
           ══════════════════════════════════════════════════════════════════ */}
-      <section 
-        className="w-full bg-surface-primary"
-        style={{ 
-          paddingTop: 'var(--space-hero-top)', 
-          paddingBottom: 'var(--space-hero-bottom)' 
-        }}
-      >
-        <div className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16">
-          <div className="mx-auto max-w-3xl">
-            <h1 className="font-serif text-3xl font-medium tracking-[-0.02em] leading-[1.15] text-foreground sm:text-4xl lg:text-[2.75rem]">
-              Professional access for advisors operating without sales pressure
-            </h1>
-            <div 
-              className="max-w-2xl space-y-4 text-base leading-[1.7] text-foreground/60 sm:text-lg"
-              style={{ marginTop: 'var(--space-text-stack)' }}
-            >
-              <p>
-                SettleRate Advisor is designed for professionals who prioritize client clarity, documented assumptions, and neutral analysis—without lead generation, referral incentives, or product placement.
-              </p>
-              <p>
-                Advisor access is granted to professionals whose use aligns with these standards.
-              </p>
-            </div>
+      <HeroStandard
+        headline="Professional access for advisors operating without sales pressure"
+        subtitle={
+          <div className="space-y-4">
+            <p>
+              SettleRate Advisor is designed for professionals who prioritize client clarity, documented assumptions, and neutral analysis—without lead generation, referral incentives, or product placement.
+            </p>
+            <p>
+              Advisor access is granted to professionals whose use aligns with these standards.
+            </p>
           </div>
-        </div>
-      </section>
+        }
+      />
 
       {/* ══════════════════════════════════════════════════════════════════
           WHO ADVISOR ACCESS IS FOR

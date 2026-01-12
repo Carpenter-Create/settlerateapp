@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { HeroStandard } from "@/components/layout/HeroStandard";
 
 const capabilities = [
   "Mortgage scenario modeling for purchase and refinance",
@@ -65,16 +66,10 @@ const positioningGrid = [
 export default function Approach() {
   return (
     <div className="w-full">
-      {/* Hero Section */}
-      <section className="w-full bg-[hsl(40_20%_97%)]">
-        <div className="mx-auto max-w-[1280px] px-6 py-20 lg:px-12 lg:py-28 xl:px-16">
-          <div className="mx-auto max-w-3xl">
-            <h1 className="font-serif text-3xl font-medium tracking-[-0.02em] leading-[1.15] text-foreground sm:text-4xl lg:text-5xl">
-              Our Approach
-            </h1>
-          </div>
-        </div>
-      </section>
+      {/* ══════════════════════════════════════════════════════════════════
+          HERO — Uses HeroStandard
+          ══════════════════════════════════════════════════════════════════ */}
+      <HeroStandard headline="Our Approach" />
 
       {/* Content Section */}
       <section className="w-full bg-white">

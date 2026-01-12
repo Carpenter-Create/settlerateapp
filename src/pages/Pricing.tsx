@@ -9,6 +9,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PRICING } from "@/lib/stripe";
+import { HeroStandard } from "@/components/layout/HeroStandard";
 
 /**
  * Pricing Page - Subscription Access
@@ -86,29 +87,12 @@ export default function Pricing() {
   return (
     <div className="w-full">
       {/* ══════════════════════════════════════════════════════════════════
-          HERO
+          HERO — Uses HeroStandard
           ══════════════════════════════════════════════════════════════════ */}
-      <section 
-        className="w-full bg-surface-primary"
-        style={{ 
-          paddingTop: 'var(--space-hero-top)', 
-          paddingBottom: 'var(--space-hero-bottom)' 
-        }}
-      >
-        <div className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16">
-          <div className="mx-auto max-w-3xl">
-            <h1 className="font-serif text-3xl font-medium tracking-[-0.02em] leading-[1.15] text-foreground sm:text-4xl lg:text-[2.75rem]">
-              Subscription access
-            </h1>
-            <p 
-              className="max-w-2xl text-base leading-[1.7] text-foreground/60 sm:text-lg"
-              style={{ marginTop: 'var(--space-text-stack)' }}
-            >
-              SettleRate is offered on a subscription basis to maintain independence from lending, brokerage, and referral incentives. Fees are not contingent on loan outcomes, selections, or transactions.
-            </p>
-          </div>
-        </div>
-      </section>
+      <HeroStandard
+        headline="Subscription access"
+        subtitle="SettleRate is offered on a subscription basis to maintain independence from lending, brokerage, and referral incentives. Fees are not contingent on loan outcomes, selections, or transactions."
+      />
 
       {/* ══════════════════════════════════════════════════════════════════
           PRICING TIERS
