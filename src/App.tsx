@@ -15,6 +15,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Advisors from "./pages/Advisors";
 import Investors from "./pages/Investors";
+import Approach from "./pages/Approach";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
             <Route path="/privacy" element={<PublicLayout><Privacy /></PublicLayout>} />
             <Route path="/terms" element={<PublicLayout><Terms /></PublicLayout>} />
+            <Route path="/approach" element={<PublicLayout><Approach /></PublicLayout>} />
             <Route path="/advisors" element={<PublicLayout><Advisors /></PublicLayout>} />
             <Route path="/investors" element={<PublicLayout><Investors /></PublicLayout>} />
             <Route path="/auth" element={<Auth />} />
