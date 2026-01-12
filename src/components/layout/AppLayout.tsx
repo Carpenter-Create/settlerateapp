@@ -166,15 +166,14 @@ export function AppLayout({ children }: AppLayoutProps) {
               {/* Header with close button */}
               <div className="flex h-14 items-center justify-between px-4">
                 <span className="font-serif text-lg tracking-tight">SettleRate</span>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="mobile-menu-close h-11 w-11 text-foreground outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:bg-transparent"
+                <button 
+                  type="button"
+                  className="mobile-menu-close flex h-11 w-11 items-center justify-center bg-transparent border-none shadow-none outline-none ring-0 focus:outline-none focus:ring-0 focus:bg-transparent focus-visible:outline-none focus-visible:ring-0 focus-visible:bg-transparent active:outline-none active:ring-0 active:bg-transparent hover:bg-transparent text-foreground"
                   onClick={() => setMobileMenuOpen(false)}
                   aria-label="Close menu"
                 >
                   <X className="h-5 w-5" strokeWidth={1.5} />
-                </Button>
+                </button>
               </div>
 
               {/* Identity Block */}
