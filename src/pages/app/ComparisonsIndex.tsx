@@ -11,7 +11,7 @@
  * - Never blank, always recoverable
  */
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { GitCompare, Lock, Trash2, Eye, MoreHorizontal, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
+import { InlineEditableName } from "@/components/ui/InlineEditableName";
 import { useScenarios } from "@/hooks/useScenarios";
 import { useComparisons, SavedComparison } from "@/hooks/useComparisons";
 import { useCapabilities } from "@/hooks/useCapabilities";
@@ -356,6 +357,7 @@ interface MobileComparisonCardProps {
   scenarioB: ScenarioData | undefined;
   onView: () => void;
   onDelete: () => void;
+  onRename: (newName: string) => Promise<void>;
   isDeleting: boolean;
 }
 
@@ -365,6 +367,7 @@ function MobileComparisonCard({
   scenarioB,
   onView,
   onDelete,
+  onRename,
   isDeleting,
 }: MobileComparisonCardProps) {
   const hasInvalidScenarios = !scenarioA || !scenarioB;
@@ -373,7 +376,11 @@ function MobileComparisonCard({
     <SwipeToDelete onDelete={onDelete} disabled={isDeleting}>
       <MobileCard onClick={onView} showChevron>
         <MobileCardLabel>
-          {comparison.name}
+          <InlineEditableName
+            value={comparison.name}
+            onSave={onRename}
+            className="font-medium"
+          />
         </MobileCardLabel>
         <MobileCardMetric>
           {hasInvalidScenarios ? (
@@ -401,12 +408,23 @@ export default function ComparisonsIndex() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { scenarios, isLoaded: scenariosLoaded } = useScenarios();
-  const { comparisons, isLoaded: comparisonsLoaded, createComparison, deleteComparison, isCreating, isDeleting } = useComparisons();
+  const { comparisons, isLoaded: comparisonsLoaded, createComparison, renameComparison, deleteComparison, isCreating, isDeleting } = useComparisons();
   const { isLoading: capsLoading, canUsePro, isAdmin } = useCapabilities();
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [comparisonToDelete, setComparisonToDelete] = useState<SavedComparison | null>(null);
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
+
+  // Rename handler (shared between list and detail)
+  const handleRename = useCallback(async (comparisonId: string, newName: string) => {
+    try {
+      await renameComparison({ id: comparisonId, name: newName });
+      // Silent save - no success toast per spec
+    } catch (error) {
+      toast.error("Unable to save name");
+      throw error; // Re-throw so InlineEditableName knows to revert
+    }
+  }, [renameComparison]);
 
   // Sort scenarios by updated_at desc
   const sortedScenarios = [...scenarios].sort(
@@ -562,6 +580,7 @@ export default function ComparisonsIndex() {
                   scenarioB={scenarioB}
                   onView={() => navigate(`/app/comparisons/${comparison.id}`)}
                   onDelete={() => handleDeleteClick(comparison)}
+                  onRename={(newName) => handleRename(comparison.id, newName)}
                   isDeleting={isDeleting}
                 />
               );
@@ -599,8 +618,14 @@ export default function ComparisonsIndex() {
                       onMouseEnter={() => setHoveredRowId(comparison.id)}
                       onMouseLeave={() => setHoveredRowId(null)}
                     >
-                      <TableCell className="font-medium text-foreground">
-                        {comparison.name}
+                      <TableCell 
+                        className="font-medium text-foreground"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <InlineEditableName
+                          value={comparison.name}
+                          onSave={(newName) => handleRename(comparison.id, newName)}
+                        />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {hasInvalidScenarios ? (

@@ -16,12 +16,14 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, GitCompare, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InlineEditableName } from "@/components/ui/InlineEditableName";
 import { useScenarios } from "@/hooks/useScenarios";
 import { useComparisons, SavedComparison } from "@/hooks/useComparisons";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
 import { ComparisonExportButton } from "@/components/export/ExportButtons";
+import { toast } from "sonner";
 
 // ============================================================================
 // FORMATTING UTILITIES
@@ -397,7 +399,10 @@ export default function ComparisonDetail() {
   const { id } = useParams<{ id: string }>();
   const isMobile = useIsMobile();
   const { scenarios, isLoaded: scenariosLoaded } = useScenarios();
-  const { getComparison, isLoaded: comparisonsLoaded } = useComparisons();
+  const { getComparison, renameComparison, isLoaded: comparisonsLoaded } = useComparisons();
+
+  // Local state for the comparison name (for optimistic updates)
+  const [localName, setLocalName] = useState<string | null>(null);
 
   const [status, setStatus] = useState<ViewStatus>("loading");
   const [ready, setReady] = useState<ReadyPayload | null>(null);
@@ -411,6 +416,7 @@ export default function ComparisonDetail() {
     setStatus("loading");
     setReady(null);
     setRanForId(null);
+    setLocalName(null);
   }, [id]);
 
   const loadOnce = useCallback(async () => {
@@ -437,6 +443,7 @@ export default function ComparisonDetail() {
       }
 
       setReady({ comparison: comp, scenarioA, scenarioB });
+      setLocalName(comp.name);
       setStatus("ready");
     } catch (error) {
       console.error("Failed to load comparison:", error);
@@ -466,6 +473,19 @@ export default function ComparisonDetail() {
     await loadOnce();
     setIsRetrying(false);
   };
+
+  // Rename handler
+  const handleRename = useCallback(async (newName: string) => {
+    if (!id) return;
+    try {
+      await renameComparison({ id, name: newName });
+      setLocalName(newName);
+      // Silent save - no success toast per spec
+    } catch (error) {
+      toast.error("Unable to save name");
+      throw error; // Re-throw so InlineEditableName knows to revert
+    }
+  }, [id, renameComparison]);
 
   // ==========================================================================
   // RENDER STATES (NO OSCILLATION)
@@ -528,7 +548,10 @@ export default function ComparisonDetail() {
             Comparisons
           </Button>
           <h1 className="text-2xl font-medium tracking-tight">
-            {validComparison.name}
+            <InlineEditableName
+              value={localName || validComparison.name}
+              onSave={handleRename}
+            />
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Created {formatFullDate(new Date(validComparison.created_at))}
@@ -575,7 +598,10 @@ export default function ComparisonDetail() {
             Comparisons
           </Button>
           <h1 className="text-2xl font-medium tracking-tight">
-            {validComparison.name}
+            <InlineEditableName
+              value={localName || validComparison.name}
+              onSave={handleRename}
+            />
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Created {formatFullDate(new Date(validComparison.created_at))}

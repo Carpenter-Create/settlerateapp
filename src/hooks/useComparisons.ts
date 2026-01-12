@@ -106,6 +106,33 @@ export function useComparisons() {
     },
   });
 
+  // Rename a comparison
+  const renameMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }): Promise<SavedComparison> => {
+      if (!user?.id || isAnonymous) {
+        throw new Error("Must be authenticated to rename comparisons");
+      }
+
+      const { data, error } = await supabase
+        .from("user_comparisons")
+        .update({ name, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error renaming comparison:", error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comparisons", user?.id] });
+    },
+  });
+
   // Delete a comparison
   const deleteMutation = useMutation({
     mutationFn: async (id: string): Promise<void> => {
@@ -135,8 +162,10 @@ export function useComparisons() {
     isLoaded: !comparisonsQuery.isLoading,
     getComparison,
     createComparison: createMutation.mutateAsync,
+    renameComparison: renameMutation.mutateAsync,
     deleteComparison: deleteMutation.mutateAsync,
     isCreating: createMutation.isPending,
+    isRenaming: renameMutation.isPending,
     isDeleting: deleteMutation.isPending,
   };
 }
