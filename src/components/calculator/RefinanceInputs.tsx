@@ -30,7 +30,7 @@ export function RefinanceInputs({ inputs, onBatchUpdate }: RefinanceInputsProps)
       <div className="grid gap-5 md:grid-cols-2">
         <InputField 
           label="Current loan balance" 
-          description="The remaining balance on your existing mortgage"
+          description="Remaining principal on existing mortgage"
         >
           <CurrencyInput
             value={refinance.currentLoanBalance}
@@ -41,7 +41,7 @@ export function RefinanceInputs({ inputs, onBatchUpdate }: RefinanceInputsProps)
 
         <InputField 
           label="Estimated home value" 
-          description="Current market value of your home"
+          description="Current market value (used for LTV calculation)"
           optional
         >
           <CurrencyInput
@@ -71,7 +71,7 @@ export function RefinanceInputs({ inputs, onBatchUpdate }: RefinanceInputsProps)
           <div className="grid gap-5 md:grid-cols-2">
             <InputField 
               label="Cash-out amount" 
-              description="Additional funds you'd like to receive"
+              description="Funds to receive at closing (added to loan)"
               optional
             >
               <CurrencyInput
@@ -83,7 +83,7 @@ export function RefinanceInputs({ inputs, onBatchUpdate }: RefinanceInputsProps)
 
             <InputField 
               label="Estimated closing costs" 
-              description="Fees for the new loan"
+              description="Lender and third-party fees"
               optional
             >
               <CurrencyInput
@@ -102,7 +102,7 @@ export function RefinanceInputs({ inputs, onBatchUpdate }: RefinanceInputsProps)
                 onCheckedChange={(checked) => updateRefinance({ financeClosingCosts: checked })}
               />
               <Label htmlFor="finance-closing" className="text-sm cursor-pointer">
-                Roll closing costs into the new loan
+                Finance closing costs into the new loan
               </Label>
             </div>
           )}

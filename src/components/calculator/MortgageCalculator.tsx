@@ -65,12 +65,12 @@ export function MortgageCalculator() {
       const newScenario = await createScenario(name, guidedInputs, null);
       navigateToScenario(newScenario.id);
       setShowGuidedStart(false);
-      toast.success("Draft created", { 
-        description: "Your estimate is ready. Adjust details any time.",
-        duration: 4000 
+      toast("Scenario created.", { 
+        description: "Adjust parameters as needed.",
+        duration: 3000 
       });
     } catch (error) {
-      toast.error("Failed to create scenario");
+      toast.error("Unable to create scenario. Review inputs and try again.");
     }
   }, [createScenario, navigateToScenario]);
 
@@ -89,7 +89,7 @@ export function MortgageCalculator() {
         if (success) {
           toast("Scenario saved.", { duration: 2000 });
         } else {
-          toast.error("Failed to save scenario");
+          toast.error("Unable to save scenario.");
         }
         return success;
       } else {
@@ -101,7 +101,7 @@ export function MortgageCalculator() {
         return true;
       }
     } catch (error) {
-      toast.error("Failed to save scenario");
+      toast.error("Unable to save scenario.");
       return false;
     } finally {
       setIsSaving(false);
@@ -116,7 +116,7 @@ export function MortgageCalculator() {
       toast("Scenario created.", { duration: 2000 });
       return newScenario.id;
     } catch (error) {
-      toast.error("Failed to create scenario");
+      toast.error("Unable to create scenario.");
       return "";
     }
   }, [saveAsNew, navigateToScenario]);
@@ -131,11 +131,11 @@ export function MortgageCalculator() {
         toast("Scenario duplicated.", { duration: 2000 });
         return newScenario.id;
       } else {
-        toast.error("Could not duplicate scenario");
+        toast.error("Unable to duplicate scenario.");
         return null;
       }
     } catch (error) {
-      toast.error("Could not duplicate scenario");
+      toast.error("Unable to duplicate scenario.");
       return null;
     }
   }, [duplicateCurrent, navigateToScenario]);
@@ -148,7 +148,7 @@ export function MortgageCalculator() {
         navigateToNew();
         toast("Scenario deleted.", { duration: 2000 });
       } catch (error) {
-        toast.error("Failed to delete scenario");
+        toast.error("Unable to delete scenario.");
       }
     }
   }, [activeScenario, deleteScenario, navigateToNew]);
@@ -160,7 +160,7 @@ export function MortgageCalculator() {
         await updateScenario(activeScenario.id, { name });
         toast("Scenario renamed.", { duration: 2000 });
       } catch (error) {
-        toast.error("Failed to rename scenario");
+        toast.error("Unable to rename scenario.");
       }
     }
   }, [activeScenario, updateScenario]);
@@ -199,7 +199,7 @@ export function MortgageCalculator() {
           className="mt-6 gap-1.5"
         >
           <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.5} />
-          Start new scenario
+          Create new scenario
         </Button>
       </div>
     );

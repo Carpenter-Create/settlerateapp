@@ -19,7 +19,7 @@ export function PurchaseInputs({ inputs, onBatchUpdate }: PurchaseInputsProps) {
 
   return (
     <div className="grid gap-5 md:grid-cols-2">
-      <InputField label="Purchase price" description="The total price of the home">
+      <InputField label="Purchase price" description="Agreed sale price of the property">
         <CurrencyInput
           value={purchase.purchasePrice}
           onChange={(v) => updatePurchase({ purchasePrice: v })}

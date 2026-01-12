@@ -111,7 +111,7 @@ export function TaxInsuranceSection({
             onClick={() => setIsExpanded(!isExpanded)}
             className="flex items-center gap-2 text-sm font-medium text-foreground transition-colors hover:text-primary"
           >
-            <span>Taxes & insurance</span>
+            <span>Estimated taxes & insurance</span>
             <span className="text-muted-foreground font-normal">(optional)</span>
             {isExpanded ? (
               <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -120,7 +120,7 @@ export function TaxInsuranceSection({
             )}
           </button>
           <p className="text-xs text-muted-foreground">
-            Add estimates to see a more realistic monthly total.
+            Include estimates for a more complete monthly projection.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -143,7 +143,7 @@ export function TaxInsuranceSection({
             <div className="flex items-start gap-2">
               <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
               <p className="text-xs text-muted-foreground">
-                We'll prefill a starting estimate. You can edit anytime.
+                Enter a ZIP code to prefill regional estimates. Values can be adjusted.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -164,7 +164,7 @@ export function TaxInsuranceSection({
                 className="gap-2 w-full sm:w-auto"
               >
                 <Sparkles className="h-3.5 w-3.5" />
-                Use ZIP estimate
+                Apply ZIP estimate
               </Button>
             </div>
           </div>
@@ -177,7 +177,7 @@ export function TaxInsuranceSection({
                   Estimate
                 </Badge>
                 <span className="text-xs text-accent-foreground">
-                  Using ZIP-level averages. Update when you have exact numbers.
+                  Based on regional averages. Update when actual values are available.
                 </span>
               </div>
               <button
@@ -194,7 +194,7 @@ export function TaxInsuranceSection({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium flex items-center gap-2">
-                Property tax
+                Estimated property tax
                 {shared.usedZipEstimate && (
                   <Badge variant="outline" className="text-[10px] font-normal">
                     Est
@@ -249,7 +249,7 @@ export function TaxInsuranceSection({
           <InputField
             label={
               <span className="flex items-center gap-2">
-                Home insurance
+                Estimated home insurance
                 {shared.usedZipEstimate && (
                   <Badge variant="outline" className="text-[10px] font-normal">
                     Est
@@ -257,7 +257,7 @@ export function TaxInsuranceSection({
                 )}
               </span>
             }
-            description="Monthly amount"
+            description="Monthly premium"
           >
             <CurrencyInput
               value={shared.homeInsuranceMonthly ?? 0}
@@ -267,7 +267,7 @@ export function TaxInsuranceSection({
           </InputField>
 
           {/* HOA */}
-          <InputField label="HOA" description="Monthly amount" optional>
+          <InputField label="HOA dues" description="Monthly assessment" optional>
             <CurrencyInput
               value={shared.hoaMonthly ?? 0}
               onChange={(v) => updateShared({ hoaMonthly: v })}
@@ -280,7 +280,7 @@ export function TaxInsuranceSection({
             <InputField
               label={
                 <span className="flex items-center gap-2">
-                  PMI
+                  Estimated PMI
                   {shared.usedZipEstimate && (
                     <Badge variant="outline" className="text-[10px] font-normal">
                       Est
@@ -288,7 +288,7 @@ export function TaxInsuranceSection({
                   )}
                 </span>
               }
-              description="Monthly private mortgage insurance"
+              description="Monthly mortgage insurance premium"
             >
               <CurrencyInput
                 value={shared.pmiMonthly ?? 0}
