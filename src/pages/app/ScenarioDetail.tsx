@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Pencil, Download, Copy, Trash2 } from "lucide-react";
+import { ArrowLeft, Pencil, Copy, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -15,10 +15,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useScenarios } from "@/hooks/useScenarios";
-import { useCapabilities } from "@/hooks/useCapabilities";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
-import { exportScenarioPDF } from "@/lib/scenarioExport";
+import { ScenarioExportButton } from "@/components/export/ExportButtons";
 import { toast } from "sonner";
 
 /**
@@ -128,7 +127,6 @@ export default function ScenarioDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { scenarios, isLoaded, duplicateScenario, deleteScenario } = useScenarios();
-  const { canExport, isLoading: capabilitiesLoading } = useCapabilities();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -255,15 +253,7 @@ export default function ScenarioDetail() {
               Edit scenario
             </Link>
           </Button>
-          <Button 
-            variant="outline" 
-            className="rounded-md" 
-            disabled={capabilitiesLoading || !canExport}
-            onClick={() => exportScenarioPDF(scenario)}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export PDF
-          </Button>
+          <ScenarioExportButton scenario={scenario} />
         </div>
       </div>
 

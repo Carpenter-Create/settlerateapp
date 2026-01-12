@@ -10,11 +10,10 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useScenarios } from "@/hooks/useScenarios";
-import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
-import { PDFExportButton } from "@/components/export/PDFExportButton";
+import { ComparisonExportButton } from "@/components/export/ExportButtons";
 
 // ============================================================================
 // FORMATTING UTILITIES
@@ -260,7 +259,6 @@ export default function Compare() {
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const { scenarios, isLoaded } = useScenarios();
-  const { canUsePro, isAdmin } = useCapabilities();
 
   // Get scenario IDs from URL params
   const scenarioAId = searchParams.get("a");
@@ -303,61 +301,6 @@ export default function Compare() {
     );
   }
 
-  // Prepare export data
-  const exportScenarioA = {
-    id: scenarioA.id,
-    name: scenarioA.name,
-    type: scenarioA.inputs.mode,
-    inputs: {
-      downPaymentPercent: scenarioA.inputs.purchase?.downPaymentType === "percent" 
-        ? scenarioA.inputs.purchase.downPayment 
-        : undefined,
-      hasPMI: (scenarioA.inputs.shared?.pmiMonthly ?? 0) > 0,
-      loanAmount: scenarioA.results.loanAmount,
-      interestRate: scenarioA.inputs.shared?.interestRate || 0,
-      loanTermYears: scenarioA.inputs.shared?.loanTerm || 30,
-      propertyTaxRate: scenarioA.inputs.shared?.propertyTaxRate ?? undefined,
-      insuranceAnnual: scenarioA.inputs.shared?.homeInsuranceMonthly 
-        ? scenarioA.inputs.shared.homeInsuranceMonthly * 12 
-        : undefined,
-    },
-    derived: {
-      monthlyPayment: scenarioA.results.monthlyTotal || getMonthlyPayment(scenarioA) || 0,
-      totalInterest: scenarioA.results.totalInterest,
-      cashAtClose: 0,
-      principalMajorityYear: 0,
-      totalCostOfCapital: scenarioA.results.totalCost || 0,
-    },
-  };
-
-  const exportScenarioB = {
-    id: scenarioB.id,
-    name: scenarioB.name,
-    type: scenarioB.inputs.mode,
-    inputs: {
-      downPaymentPercent: scenarioB.inputs.purchase?.downPaymentType === "percent" 
-        ? scenarioB.inputs.purchase.downPayment 
-        : undefined,
-      hasPMI: (scenarioB.inputs.shared?.pmiMonthly ?? 0) > 0,
-      loanAmount: scenarioB.results.loanAmount,
-      interestRate: scenarioB.inputs.shared?.interestRate || 0,
-      loanTermYears: scenarioB.inputs.shared?.loanTerm || 30,
-      propertyTaxRate: scenarioB.inputs.shared?.propertyTaxRate ?? undefined,
-      insuranceAnnual: scenarioB.inputs.shared?.homeInsuranceMonthly 
-        ? scenarioB.inputs.shared.homeInsuranceMonthly * 12 
-        : undefined,
-    },
-    derived: {
-      monthlyPayment: scenarioB.results.monthlyTotal || getMonthlyPayment(scenarioB) || 0,
-      totalInterest: scenarioB.results.totalInterest,
-      cashAtClose: 0,
-      principalMajorityYear: 0,
-      totalCostOfCapital: scenarioB.results.totalCost || 0,
-    },
-  };
-
-  const canExport = canUsePro || isAdmin;
-
   // Mobile layout
   if (isMobile) {
     return (
@@ -382,16 +325,14 @@ export default function Compare() {
         </div>
 
         {/* Export action */}
-        {canExport && (
-          <div className="flex justify-end">
-            <PDFExportButton
-              scenarioA={exportScenarioA}
-              scenarioB={exportScenarioB}
-              variant="outline"
-              size="sm"
-            />
-          </div>
-        )}
+        <div className="flex justify-end">
+          <ComparisonExportButton
+            scenarioA={scenarioA}
+            scenarioB={scenarioB}
+            variant="outline"
+            size="sm"
+          />
+        </div>
 
         {/* Mobile stacked layout */}
         <div className="space-y-6">
@@ -430,13 +371,11 @@ export default function Compare() {
           </p>
         </div>
         
-        {canExport && (
-          <PDFExportButton
-            scenarioA={exportScenarioA}
-            scenarioB={exportScenarioB}
-            variant="outline"
-          />
-        )}
+        <ComparisonExportButton
+          scenarioA={scenarioA}
+          scenarioB={scenarioB}
+          variant="outline"
+        />
       </div>
 
       {/* Scenario headers */}
