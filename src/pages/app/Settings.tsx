@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { User, Trash2, AlertTriangle, Loader2, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
-import { useBilling, isPro } from "@/hooks/useBilling";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -27,9 +27,8 @@ export default function AppSettings() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile();
-  const { data: billing } = useBilling();
+  const { isPro } = useSubscription();
   const updateProfile = useUpdateProfile();
-  const userIsPro = isPro(billing);
 
   const [fullName, setFullName] = useState(profile?.full_name || "");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -145,7 +144,7 @@ export default function AppSettings() {
               </p>
             </div>
 
-            {userIsPro && (
+            {isPro && (
               <div className="flex items-start gap-2 rounded-md bg-warning/10 p-3 text-sm">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
                 <div>
@@ -170,7 +169,7 @@ export default function AppSettings() {
             <Button
               variant="destructive"
               onClick={() => setShowDeleteDialog(true)}
-              disabled={userIsPro}
+              disabled={isPro}
             >
               Remove account
             </Button>
