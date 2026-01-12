@@ -33,16 +33,10 @@ export default function Advisors() {
           ══════════════════════════════════════════════════════════════════ */}
       <HeroStandard
         headline="Professional access for advisors operating without sales pressure"
-        subtitle={
-          <div className="space-y-4">
-            <p>
-              SettleRate Advisor is designed for professionals who prioritize client clarity, documented assumptions, and neutral analysis—without lead generation, referral incentives, or product placement.
-            </p>
-            <p>
-              Advisor access is granted to professionals whose use aligns with these standards.
-            </p>
-          </div>
-        }
+        subtitle={[
+          "SettleRate Advisor is designed for professionals who prioritize client clarity, documented assumptions, and neutral analysis—without lead generation, referral incentives, or product placement.",
+          "Advisor access is granted to professionals whose use aligns with these standards.",
+        ]}
       />
 
       {/* ══════════════════════════════════════════════════════════════════
