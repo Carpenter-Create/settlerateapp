@@ -93,7 +93,7 @@ export default function Home() {
               modeled precisely.
             </h1>
             <p className="mx-auto mt-10 max-w-xl text-lg leading-relaxed text-foreground/70 sm:mt-12 sm:text-xl">
-              A neutral framework for understanding mortgage outcomes.
+              A neutral decision-support tool that helps buyers understand mortgage outcomes clearly—before engaging with listings, agents, or lenders.
             </p>
             <div className="mt-14 sm:mt-16">
               <Button asChild size="lg" className="min-w-44 h-12 text-base">

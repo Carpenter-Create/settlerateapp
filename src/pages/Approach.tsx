@@ -29,6 +29,39 @@ const outputs = [
   "Planning and comparison orientation",
 ];
 
+// Comparative positioning grid data
+const positioningGrid = [
+  {
+    platform: "Zillow",
+    role: "Marketplace",
+    timing: "After intent to transact",
+    incentives: "Advertising, lead generation",
+    outcome: "Connects buyers with listings, agents, and lenders",
+  },
+  {
+    platform: "Lenders",
+    role: "Capital provider",
+    timing: "During transaction",
+    incentives: "Loan origination",
+    outcome: "Issues loan terms and financing",
+  },
+  {
+    platform: "Agents",
+    role: "Transaction facilitator",
+    timing: "During transaction",
+    incentives: "Commission-based",
+    outcome: "Executes purchase or sale",
+  },
+  {
+    platform: "SettleRate",
+    role: "Decision-support",
+    timing: "Before transaction",
+    incentives: "None",
+    outcome: "Establishes clarity on affordability and mortgage outcomes",
+    highlight: true,
+  },
+];
+
 export default function Approach() {
   return (
     <div className="w-full">
@@ -126,6 +159,42 @@ export default function Approach() {
                 </li>
               ))}
             </ul>
+          </div>
+
+          {/* Comparative Positioning Grid */}
+          <div className="mt-16 border-t border-border/50 pt-12">
+            <h2 className="font-serif text-xl font-medium tracking-[-0.01em] mb-6">
+              Where SettleRate fits
+            </h2>
+            <div className="overflow-x-auto -mx-6 px-6">
+              <table className="w-full min-w-[640px] text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="py-3 pr-4 text-left font-medium text-foreground/50">Platform</th>
+                    <th className="py-3 pr-4 text-left font-medium text-foreground/50">Primary Role</th>
+                    <th className="py-3 pr-4 text-left font-medium text-foreground/50">When It Appears</th>
+                    <th className="py-3 pr-4 text-left font-medium text-foreground/50">Incentives</th>
+                    <th className="py-3 text-left font-medium text-foreground/50">Core Outcome</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {positioningGrid.map((row) => (
+                    <tr 
+                      key={row.platform} 
+                      className={`border-b border-border/50 ${row.highlight ? 'bg-surface-secondary' : ''}`}
+                    >
+                      <td className={`py-4 pr-4 ${row.highlight ? 'font-medium text-foreground' : 'text-foreground/70'}`}>
+                        {row.platform}
+                      </td>
+                      <td className="py-4 pr-4 text-foreground/60">{row.role}</td>
+                      <td className="py-4 pr-4 text-foreground/60">{row.timing}</td>
+                      <td className="py-4 pr-4 text-foreground/60">{row.incentives}</td>
+                      <td className="py-4 text-foreground/60">{row.outcome}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Closing Statement */}
