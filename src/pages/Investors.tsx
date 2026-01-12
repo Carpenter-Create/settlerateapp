@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { HeroStandard } from "@/components/layout/HeroStandard";
 
 /**
  * Investors Page - Analytical Infrastructure Positioning
@@ -12,29 +13,12 @@ export default function Investors() {
   return (
     <div className="w-full">
       {/* ══════════════════════════════════════════════════════════════════
-          HERO
+          HERO — Uses HeroStandard
           ══════════════════════════════════════════════════════════════════ */}
-      <section 
-        className="w-full bg-surface-primary"
-        style={{ 
-          paddingTop: 'var(--space-hero-top)', 
-          paddingBottom: 'var(--space-hero-bottom)' 
-        }}
-      >
-        <div className="mx-auto max-w-[1280px] px-6 lg:px-12 xl:px-16">
-          <div className="mx-auto max-w-3xl">
-            <h1 className="font-serif text-3xl font-medium tracking-[-0.02em] leading-[1.15] text-foreground sm:text-4xl lg:text-[2.75rem]">
-              Built as analytical infrastructure
-            </h1>
-            <p 
-              className="max-w-2xl text-base leading-[1.7] text-foreground/60 sm:text-lg"
-              style={{ marginTop: 'var(--space-text-stack)' }}
-            >
-              SettleRate is a neutral decision-support platform designed to improve clarity in mortgage decision-making without participating in transactions.
-            </p>
-          </div>
-        </div>
-      </section>
+      <HeroStandard
+        headline="Built as analytical infrastructure"
+        subtitle="SettleRate is a neutral decision-support platform designed to improve clarity in mortgage decision-making without participating in transactions."
+      />
 
       {/* ══════════════════════════════════════════════════════════════════
           THE PROBLEM IS STRUCTURAL
