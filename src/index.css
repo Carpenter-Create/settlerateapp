@@ -115,6 +115,36 @@
     --space-text-stack: 12px;
 
     /* ═══════════════════════════════════════════════════════════════
+       MOBILE TOKENS (LOCKED — docs/MOBILE_STANDARD.md)
+       Card-first, institutional, no spreadsheet metaphors.
+       These tokens apply to ALL mobile views (≤ 768px).
+       ═══════════════════════════════════════════════════════════════ */
+    
+    /* Mobile page layout */
+    --mobile-page-padding: 16px;
+    --mobile-section-spacing: 24px;
+    --mobile-element-spacing: 12px;
+    
+    /* Mobile card system (primary interaction unit) */
+    --mobile-card-padding: 16px;
+    --mobile-card-padding-lg: 20px;
+    --mobile-card-radius: 14px;
+    --mobile-card-gap: 12px;
+    --mobile-card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+    --mobile-card-shadow-hover: 0 2px 4px 0 rgb(0 0 0 / 0.05);
+    
+    /* Mobile typography scale */
+    --mobile-metric-size: 1.5rem;
+    --mobile-label-size: 0.875rem;
+    --mobile-metadata-size: 0.75rem;
+    
+    /* Mobile FAB (floating action button) */
+    --mobile-fab-radius: 9999px;
+    --mobile-fab-padding-x: 20px;
+    --mobile-fab-padding-y: 12px;
+    --mobile-fab-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.12);
+
+    /* ═══════════════════════════════════════════════════════════════
        AUTH PAGE TOKENS (Locked)
        Single source of truth for unified access page layout.
        All auth pages MUST use these tokens via AuthShell component.

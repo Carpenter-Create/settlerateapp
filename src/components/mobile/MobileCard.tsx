@@ -1,11 +1,17 @@
 /**
  * MobileCard — Standard mobile interaction primitive (LOCKED)
  * 
- * Design Standard:
+ * Design Standard (docs/MOBILE_STANDARD.md):
  * - Full-width, tappable card with subtle elevation
  * - Hierarchy: label (secondary) → metric (primary) → metadata (tertiary)
  * - No right-aligned values on mobile
  * - Chevron affordance for navigation
+ * 
+ * CSS Tokens (src/index.css):
+ * - --mobile-card-padding / --mobile-card-padding-lg
+ * - --mobile-card-radius
+ * - --mobile-card-shadow / --mobile-card-shadow-hover
+ * - --mobile-metric-size / --mobile-label-size / --mobile-metadata-size
  * 
  * Usage:
  * - Scenarios, Comparisons, Exports, Saved calculations
@@ -48,6 +54,7 @@ interface MobileCardMetadataProps {
 
 /**
  * Card container - tappable with subtle elevation
+ * Uses CSS tokens from index.css for consistency
  */
 export function MobileCard({ 
   onClick, 
@@ -62,22 +69,25 @@ export function MobileCard({
       className={cn(
         "group relative w-full",
         onClick && "cursor-pointer",
-        // Container styling (LOCKED)
-        "rounded-[14px] bg-card",
-        "border border-border/50",
-        "shadow-[0_1px_3px_0_rgb(0_0_0/0.04),0_1px_2px_-1px_rgb(0_0_0/0.04)]",
-        // Transitions
-        "transition-all duration-150 ease-out",
-        // Pressed/hover states (subtle, no ripple)
-        onClick && "active:bg-muted/50 active:shadow-none",
-        onClick && "hover:border-border hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05)]",
-        // Padding (LOCKED: 16-20px)
-        "p-4 sm:p-5",
-        // Margin bottom handled by parent spacing
         className
       )}
+      style={{
+        borderRadius: "var(--mobile-card-radius)",
+        padding: "var(--mobile-card-padding)",
+        boxShadow: "var(--mobile-card-shadow)",
+      }}
     >
-      <div className="flex items-start justify-between gap-3">
+      {/* Apply bg/border via Tailwind for theme support */}
+      <div 
+        className={cn(
+          "absolute inset-0 bg-card border border-border/50 transition-all duration-150 ease-out",
+          onClick && "group-active:bg-muted/50",
+          onClick && "group-hover:border-border"
+        )}
+        style={{ borderRadius: "var(--mobile-card-radius)" }}
+      />
+      
+      <div className="relative flex items-start justify-between gap-3">
         {/* Content area */}
         <div className="min-w-0 flex-1">
           {children}
@@ -97,14 +107,14 @@ export function MobileCard({
 
 /**
  * Card label - secondary emphasis (scenario name, title)
- * Font: small-medium, regular weight, neutral gray
+ * Font: --mobile-label-size, regular weight, neutral gray
  */
 export function MobileCardLabel({ children, className }: MobileCardLabelProps) {
   return (
-    <p className={cn(
-      "truncate text-sm text-muted-foreground",
-      className
-    )}>
+    <p 
+      className={cn("truncate text-muted-foreground", className)}
+      style={{ fontSize: "var(--mobile-label-size)" }}
+    >
       {children}
     </p>
   );
@@ -112,18 +122,26 @@ export function MobileCardLabel({ children, className }: MobileCardLabelProps) {
 
 /**
  * Card primary metric - dominant element (monthly payment, total, etc.)
- * Font: largest on card, medium weight, near-black
- * Always left-aligned
+ * Font: --mobile-metric-size, medium weight, near-black
+ * Always left-aligned (right-alignment forbidden on mobile)
  */
 export function MobileCardMetric({ children, suffix, className }: MobileCardMetricProps) {
   return (
-    <p className={cn(
-      "mt-1.5 font-serif text-2xl font-normal tracking-tight text-foreground",
-      className
-    )}>
+    <p 
+      className={cn(
+        "mt-1.5 font-serif font-normal tracking-tight text-foreground",
+        className
+      )}
+      style={{ fontSize: "var(--mobile-metric-size)" }}
+    >
       {children}
       {suffix && (
-        <span className="text-base text-muted-foreground"> {suffix}</span>
+        <span 
+          className="text-muted-foreground" 
+          style={{ fontSize: "var(--mobile-label-size)", marginLeft: "0.25rem" }}
+        >
+          {suffix}
+        </span>
       )}
     </p>
   );
@@ -131,14 +149,14 @@ export function MobileCardMetric({ children, suffix, className }: MobileCardMetr
 
 /**
  * Card metadata - tertiary emphasis (type, term, last updated)
- * Font: small, muted gray, never competes with metric
+ * Font: --mobile-metadata-size, muted gray, never competes with metric
  */
 export function MobileCardMetadata({ children, className }: MobileCardMetadataProps) {
   return (
-    <div className={cn(
-      "mt-2 flex items-center gap-2 text-xs text-muted-foreground/80",
-      className
-    )}>
+    <div 
+      className={cn("mt-2 flex items-center gap-2 text-muted-foreground/80", className)}
+      style={{ fontSize: "var(--mobile-metadata-size)" }}
+    >
       {children}
     </div>
   );

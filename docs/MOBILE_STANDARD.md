@@ -1,161 +1,216 @@
 # MOBILE_STANDARD.md — SettleRate Application (LOCKED)
 
-## Purpose
-
-This document defines the **permanent, non-negotiable** mobile design standards for SettleRate. These standards match the quality bar of Rocket Mortgage, Fundrise, and Mercury.
-
-**Mobile UI must never regress to table-based, admin-style, or spreadsheet metaphors.**
+**Status:** Permanent  
+**Applies to:** All mobile views (≤ 768px)  
+**Authority level:** Non-negotiable
 
 ---
 
-## Section 1 — Global Mobile Design Principles
+## Section 1 — Mobile Philosophy
 
-Applies to all mobile views (≤ 768px).
+SettleRate mobile is a **decision-support instrument**, not a calculator app.
 
-### 1.1 Mobile Is Card-First, Not Table-First
+### Mobile UI must feel:
+- Institutional
+- Durable
+- Calm
+- Asset-oriented
 
-- Tables are **explicitly forbidden** on mobile
-- Any list of saved, computed, or user-generated objects must render as cards
-- Desktop table layouts may remain unchanged
+### Out of bounds:
+- Spreadsheet-like
+- Admin-panel-like
+- Utility-first
+- Visually dense
 
-### 1.2 Cards Are the Core Interaction Primitive
+---
 
-Cards represent:
+## Section 2 — Core Mobile Rule: Card-First
+
+### Tables Are Forbidden on Mobile
+
+| Forbidden | Required |
+|-----------|----------|
+| Column headers | Card layout |
+| Rows | Stacked cards |
+| Right-aligned numeric columns | Left-aligned metrics |
+| Spreadsheet metaphors | Object-based UI |
+
+**If data is listed → it is rendered as cards.**
+
+Desktop tables may exist. Mobile tables may not.
+
+---
+
+## Section 3 — Cards Are the Primary Interaction Unit
+
+### Cards represent:
 - Scenarios
 - Comparisons
 - Saved calculations
 - Exports
-- Advisor-ready handoffs
-- Any "saved work"
+- Advisor handoffs
+- Any saved or meaningful user work
 
-Cards must convey **weight, permanence, and trust**.
+### Cards must convey:
+- Weight
+- Permanence
+- Trust
 
-### 1.3 Visual Tone (Global)
-
-| Attribute | Requirement |
-|-----------|-------------|
-| Palette | Calm, neutral |
-| Colors | No playful colors, no loud accents |
-| Gamification | Forbidden |
-| Dividers | Prefer spacing over lines |
-| Shadows | Minimal elevation, never aggressive |
-
-**Everything should feel: Institutional, Durable, Long-term trustworthy**
+**If something matters, it deserves a card.**
 
 ---
 
-## Section 2 — Standard Card Component
+## Section 4 — Interaction Discipline
 
-Use `src/components/mobile/MobileCard.tsx` everywhere.
+| Rule | Requirement |
+|------|-------------|
+| Tap target | Entire card is tappable |
+| Affordance | One clear tap affordance only (chevron) |
+| Actions | No inline edit/delete buttons on card surface |
+| Flow | Actions occur on next screen, not inline |
 
-### Card Container (LOCKED)
+**Cards are objects, not toolbars.**
+
+---
+
+## Section 5 — Visual Discipline
+
+### Allowed
+- Neutral palette
+- White surfaces
+- Subtle elevation
+- Generous spacing
+- Calm typography
+
+### Not Allowed
+- Loud accent colors
+- Gamification
+- Dense dividers
+- Overuse of borders
+- "App store" UI tropes
+
+**When in doubt: reduce.**
+
+---
+
+## Section 6 — Navigation Rules (Mobile)
+
+| Rule | Requirement |
+|------|-------------|
+| Visible items | Maximum 3 primary nav items |
+| Default landing | Scenarios |
+| Settings location | Behind Account (overflow menu) |
+| Density | Avoid "everything visible" navigation |
+
+**Navigation should feel intentional, not comprehensive.**
+
+---
+
+## Section 7 — CSS Tokens (LOCKED)
+
+All mobile tokens are defined in `src/index.css` under the `MOBILE TOKENS` section.
+
+### Page Layout Tokens
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--mobile-page-padding` | 16px | Page edge padding |
+| `--mobile-section-spacing` | 24px | Between sections |
+| `--mobile-element-spacing` | 12px | Between related elements |
+
+**No edge-to-edge text. Ever.**
+
+### Card Tokens
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--mobile-card-padding` | 16px | Card internal padding |
+| `--mobile-card-padding-lg` | 20px | Larger card padding |
+| `--mobile-card-radius` | 14px | Card border radius |
+| `--mobile-card-gap` | 12px | Space between cards |
+| `--mobile-card-shadow` | subtle | Card elevation |
+| `--mobile-card-shadow-hover` | subtle+ | Hover/press state |
+
+**No heavy shadows. No dramatic elevation.**
+
+### Typography Tokens
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--mobile-metric-size` | 1.5rem | Primary metric (monthly payment) |
+| `--mobile-label-size` | 0.875rem | Labels/titles |
+| `--mobile-metadata-size` | 0.75rem | Metadata (type, date) |
+
+### FAB Tokens
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--mobile-fab-radius` | 9999px | Pill-shaped button |
+| `--mobile-fab-padding-x` | 20px | Horizontal padding |
+| `--mobile-fab-padding-y` | 12px | Vertical padding |
+| `--mobile-fab-shadow` | elevated | Floating effect |
+
+---
+
+## Section 8 — Typography Hierarchy (Mobile)
+
+### Primary Metric (Most Important)
+
+Used for: Monthly payment, total cost, key financial outputs
 
 | Property | Value |
 |----------|-------|
-| Width | 100% |
-| Border radius | 14–16px |
-| Background | white (bg-card) |
-| Shadow | subtle (1–2dp equivalent) |
-| Padding | 16–20px |
-| Margin bottom | 12–16px (via parent spacing) |
-| Interaction | Entire card is tappable |
+| Font size | Largest on card (`--mobile-metric-size`) |
+| Font weight | Medium (not bold-heavy) |
+| Color | Near-black (`text-foreground`) |
+| Alignment | Left only |
 
-### Pressed State
+**Never bold-heavy. Never right-aligned.**
 
-- Slight background darkening OR slight elevation reduction
-- **No ripple effects**
+### Title / Label
 
-### Card Typography Hierarchy (LOCKED)
-
-```
-┌─────────────────────────────────────────────────┐
-│ Label (secondary)                           [>] │
-│ $3,375 / month (PRIMARY METRIC)                 │
-│ Refinance • 30-yr fixed • Updated Jan 9         │
-└─────────────────────────────────────────────────┘
-```
-
-| Line | Example | Size | Weight | Color |
-|------|---------|------|--------|-------|
-| Label | "440 Talbot Refi 1" | small-medium | regular | neutral gray |
-| Metric | "$3,375 / month" | largest | medium | near-black |
-| Metadata | "Refinance • 30-yr" | small | regular | muted gray |
-
-**Right-aligned values are NOT ALLOWED on mobile.**
-
-### Tap Affordance
-
-Each card must signal interactivity via:
-- Chevron icon (default)
-- Subtle pressed state
-- Entire card acting as a button
-
-**No inline "Edit" or "Delete" buttons on the card surface.**
-
----
-
-## Section 3 — Scenarios Page (Mobile)
-
-### Replace Table with Cards
-
-On mobile:
-- Remove column headers
-- Remove row-based layout
-- Render saved scenarios using `MobileCard`
-
-Desktop behavior remains unchanged.
-
-### Primary Action: New Scenario
+Used for: Scenario names, section identifiers
 
 | Property | Value |
 |----------|-------|
-| Type | Floating action button |
-| Position | bottom-right |
-| Label | "+ New scenario" |
-| Behavior | Persistent while scrolling |
-| Style | Minimal, neutral |
+| Font size | Small-medium (`--mobile-label-size`) |
+| Font weight | Regular |
+| Color | Neutral gray (`text-muted-foreground`) |
+
+**This is not the hero.**
+
+### Metadata
+
+Used for: Loan type, term, update timestamps
+
+| Property | Value |
+|----------|-------|
+| Font size | Small (`--mobile-metadata-size`) |
+| Font weight | Regular |
+| Color | Muted gray (`text-muted-foreground/80`) |
+| Wrapping | May wrap to second line |
+
+**Never competes with the primary metric.**
 
 ---
 
-## Section 4 — Mobile Navigation Standards
+## Section 9 — Alignment Rules
 
-### Top Navigation Simplification
+| Rule | Enforcement |
+|------|-------------|
+| Default alignment | Left |
+| Right alignment on mobile | **Disallowed** |
+| Number display | Read, not scanned |
 
-- No more than **3 primary nav items** visible
-- Scenarios is default landing
-- Settings lives behind Account (overflow menu)
-- Avoid admin-panel density
-
-**Navigation must feel intentional, not exhaustive.**
-
----
-
-## Section 5 — Future Features (Forward-Compatibility)
-
-These standards apply automatically to:
-
-- Comparison views
-- Calculator results summaries
-- Saved exports
-- Advisor-ready handoffs
-- Any future "saved object"
-
-**If a feature introduces a list → it uses cards. No exceptions.**
+**Finance ≠ spreadsheet.**
 
 ---
 
-## Section 6 — Enforcement
-
-- Treat these standards as **global UI law**
-- Do not introduce alternate mobile patterns
-- Do not experiment visually without explicit instruction
-- If unsure, default to the card system
-
----
-
-## Component Reference
+## Section 10 — Component Reference
 
 ### MobileCard Components
+
+Located at `src/components/mobile/MobileCard.tsx`
 
 ```tsx
 import {
@@ -166,7 +221,7 @@ import {
   MobileCardDot,
 } from "@/components/mobile/MobileCard";
 
-// Usage
+// Standard usage
 <MobileCard onClick={() => navigate(...)}>
   <MobileCardLabel>Scenario Name</MobileCardLabel>
   <MobileCardMetric suffix="/ month">$3,375</MobileCardMetric>
@@ -178,16 +233,46 @@ import {
 </MobileCard>
 ```
 
+### Applies to all features:
+- Scenarios
+- Comparisons
+- Calculator summaries
+- Exports
+- Advisor handoffs
+- Any future saved objects
+
+**No one-off styling.**
+
 ---
 
-## Outcome Expectation
+## Section 11 — Regression Prevention
 
-After implementation, SettleRate mobile should feel:
+| Directive | Status |
+|-----------|--------|
+| New mobile patterns | Do not introduce casually |
+| Experiments on financial flows | Forbidden |
+| List rendering | Use standard card |
+| When unsure | Default to card system |
 
-- Comparable to Rocket Mortgage loan summaries
-- Comparable to Fundrise saved investments
-- Calm, premium, and deliberate
-- Like a **financial instrument**, not a calculator
+**Mobile consistency > novelty.**
+
+---
+
+## Section 12 — Enforcement
+
+These guardrails and tokens:
+- Are **global**
+- Are **permanent**
+- **Override** local preferences
+- **Must be followed** unless explicitly superseded
+
+---
+
+## Bottom Line
+
+> If Rocket Mortgage wouldn't ship it, neither do we.
+
+SettleRate mobile should feel like a **quiet financial instrument**, not an app.
 
 ---
 
@@ -196,3 +281,4 @@ After implementation, SettleRate mobile should feel:
 | Date | Change |
 |------|--------|
 | 2026-01-12 | Initial locked standard |
+| 2026-01-12 | Added CSS tokens and guardrails |
