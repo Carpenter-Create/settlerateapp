@@ -2,74 +2,41 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 /**
- * How It Works Page - Consolidated Analytical System
+ * How It Works Page - Unified Analytical Framework
  * 
- * This page presents SettleRate as a single, coherent analytical system
- * combining procedural explanation with methodological foundation.
- * Structured for regulators, advisors, and serious users.
+ * The intellectual spine of the product. Reads in three layers:
+ * 1. Purpose — what this system exists to do
+ * 2. Framework — how decisions are evaluated  
+ * 3. Methodology — why the outputs are defensible
  */
 
-const steps = [
+const frameworkPillars = [
   {
-    number: "01",
     title: "Scenario modeling",
-    description:
-      "Mortgage structures are evaluated under consistent assumptions. Loan parameters, property details, and financing inputs are explicit and documented.",
+    body: "Mortgage structures are evaluated under consistent assumptions to enable meaningful comparison across term length, down payment strategy, and time horizon.",
   },
   {
-    number: "02",
+    title: "Normalized assumptions",
+    body: "Rates, taxes, insurance, and PMI are standardized across scenarios to prevent distortion and ensure analytical integrity.",
+  },
+  {
     title: "Cost visibility",
-    description:
-      "Long-term interest, capital requirements, and total cost of capital are surfaced explicitly—rather than inferred from monthly payment alone.",
+    body: "Long-term interest, capital requirements, and total cost of capital are surfaced explicitly—rather than inferred from monthly payment alone.",
   },
   {
-    number: "03",
-    title: "Structural tradeoff analysis",
-    description:
-      "Down payment strategy, PMI exposure, and term selection are evaluated as interdependent variables under normalized assumptions.",
-  },
-  {
-    number: "04",
     title: "Professional outputs",
-    description:
-      "Exportable summaries designed for advisor discussion, lender review, and documentation—without embedded recommendations or referral bias.",
+    body: "Exportable summaries designed for advisor discussion, lender review, and documentation—without embedded recommendations or referral bias.",
   },
 ];
 
-const methodologySections = [
+const methodologyPrinciples = [
   {
-    number: "01",
-    title: "Standardized assumptions",
-    description:
-      "All scenarios are evaluated using normalized assumptions to prevent distortion across comparisons. Property taxes, insurance, and PMI treatment are applied consistently. Rate environments are normalized to isolate structural differences.",
-    rationale: "Standardization ensures differences in outcomes reflect structure, not presentation.",
+    title: "Time-horizon analysis",
+    body: "Outcomes are evaluated across the full life of the loan, including the point at which principal accumulation overtakes interest.",
   },
   {
-    number: "02",
-    title: "Scenario construction",
-    description:
-      "Scenarios represent discrete mortgage structures rather than provider-specific offers. Term length, down payment, and PMI exposure are treated as structural variables. No lender-specific incentives or adjustments are applied.",
-    rationale: "Structural comparison prevents bias introduced by sales-driven inputs.",
-  },
-  {
-    number: "03",
-    title: "Modeled outputs",
-    description:
-      "SettleRate surfaces decision-grade outcomes: monthly obligations, total interest over the loan life, cash required at close, time horizon at which principal accumulation exceeds interest, and total cost of capital.",
-    rationale: "Long-term cost and capital requirements are central to mortgage decisions and are often underrepresented.",
-  },
-  {
-    number: "04",
-    title: "Interpretation boundaries",
-    description:
-      "Outputs reflect modeled outcomes under stated assumptions. Results do not predict future rates, approval, or loan terms. Users retain full responsibility for decisions and outcomes.",
-  },
-  {
-    number: "05",
-    title: "Independence",
-    description:
-      "SettleRate operates independently of lenders and originators. No referral fees, no lender compensation, no ranking or promotion of providers.",
-    rationale: "Independence preserves analytical integrity.",
+    title: "Reproducibility",
+    body: "Scenarios can be exported, shared, and independently verified by professionals. Every calculation is documented.",
   },
 ];
 
@@ -77,62 +44,53 @@ export default function HowItWorks() {
   return (
     <div className="w-full">
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 1: Hero / Intro
-          Background: Surface Primary
+          PAGE HERO
+          Institutional breathing room. Authority, not marketing.
           ══════════════════════════════════════════════════════════════════ */}
       <section className="w-full bg-surface-primary">
-        <div className="mx-auto max-w-[1280px] px-6 py-20 lg:px-12 lg:py-28 xl:px-16">
+        <div className="mx-auto max-w-[1280px] px-6 py-24 lg:px-12 lg:py-36 xl:px-16">
           <div className="mx-auto max-w-3xl">
-            <h1 className="font-serif text-3xl font-medium tracking-[-0.02em] leading-[1.15] text-foreground sm:text-4xl lg:text-5xl">
-              How SettleRate works
+            <h1 className="font-serif text-3xl font-medium tracking-[-0.02em] leading-[1.15] text-foreground sm:text-4xl lg:text-[2.75rem]">
+              How mortgage decisions are evaluated
             </h1>
-            <p className="mt-6 text-base leading-[1.7] text-foreground/70 sm:text-lg">
-              A structured approach to mortgage scenario evaluation.
-            </p>
-            <p className="mt-4 max-w-2xl text-[15px] leading-[1.85] text-foreground/60">
-              SettleRate evaluates mortgage scenarios using standardized assumptions and 
-              consistent modeling to enable meaningful comparison across loan structures. 
-              The methodology prioritizes transparency, repeatability, and clarity over 
-              optimization or recommendation.
+            <p className="mt-6 max-w-2xl text-base leading-[1.7] text-foreground/60 sm:text-lg">
+              A consistent analytical framework designed for clarity, comparability, and professional review.
             </p>
           </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 2: The SettleRate Framework
-          Background: Surface Secondary
+          SECTION 1 — THE FRAMEWORK (Primary Body)
+          Matches homepage framework section exactly.
           ══════════════════════════════════════════════════════════════════ */}
       <section className="w-full bg-surface-secondary">
         <div className="mx-auto max-w-[1280px] px-6 py-16 lg:px-12 lg:py-24 xl:px-16">
           <div className="mx-auto max-w-3xl">
-            {/* Section Label */}
-            <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/40">
-              The Framework
-            </p>
-            
-            {/* Steps Grid - Left-rail number system */}
-            <div className="mt-10 space-y-10">
-              {steps.map((step) => (
-                <div
-                  key={step.number}
-                  className="grid grid-cols-[48px_1fr] gap-6 sm:grid-cols-[64px_1fr]"
+            {/* Eyebrow + H2 */}
+            <div className="mb-10 lg:mb-12">
+              <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/50">
+                The SettleRate Framework
+              </p>
+              <h2 className="mt-4 font-serif text-2xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-3xl">
+                Scenario evaluation, standardized
+              </h2>
+            </div>
+
+            {/* Framework Cards - Matching homepage exactly */}
+            <div className="space-y-4">
+              {frameworkPillars.map((pillar) => (
+                <article
+                  key={pillar.title}
+                  className="group relative border-l-2 border-foreground/10 bg-surface-primary py-7 pl-7 pr-6 transition-all hover:border-foreground/30 sm:py-6 sm:pl-8 sm:pr-8"
                 >
-                  {/* Number - Fixed left rail */}
-                  <span className="font-serif text-2xl font-medium tracking-tight text-foreground/20 sm:text-3xl">
-                    {step.number}
-                  </span>
-                  
-                  {/* Content */}
-                  <div className="space-y-2">
-                    <h2 className="font-serif text-lg font-medium tracking-[-0.01em] text-foreground">
-                      {step.title}
-                    </h2>
-                    <p className="text-[15px] leading-[1.75] text-foreground/60">
-                      {step.description}
-                    </p>
-                  </div>
-                </div>
+                  <h3 className="font-serif text-lg font-medium tracking-[-0.01em] text-foreground">
+                    {pillar.title}
+                  </h3>
+                  <p className="mt-3 text-[15px] leading-[1.7] text-foreground/60">
+                    {pillar.body}
+                  </p>
+                </article>
               ))}
             </div>
           </div>
@@ -140,44 +98,35 @@ export default function HowItWorks() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 3: Core Methodology
-          Background: Surface Primary
-          Same layout system as The Framework section
+          SECTION 2 — CORE METHODOLOGY (Supporting Layer)
+          Single stacked container. Quiet, serious, secondary.
           ══════════════════════════════════════════════════════════════════ */}
-      <section id="core-methodology" className="w-full bg-surface-primary scroll-mt-20">
-        <div className="mx-auto max-w-[1280px] px-6 py-16 lg:px-12 lg:py-24 xl:px-16">
+      <section id="core-methodology" className="w-full bg-surface-secondary scroll-mt-20">
+        <div className="mx-auto max-w-[1280px] px-6 pb-16 lg:px-12 lg:pb-24 xl:px-16">
           <div className="mx-auto max-w-3xl">
-            {/* Section Label */}
-            <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/40">
-              Core Methodology
-            </p>
-            
-            {/* Methodology Grid - Same left-rail number system */}
-            <div className="mt-10 space-y-10">
-              {methodologySections.map((section) => (
+            {/* Eyebrow + H2 */}
+            <div className="mb-8">
+              <p className="text-xs font-medium uppercase tracking-[0.15em] text-foreground/50">
+                Core Methodology
+              </p>
+              <h2 className="mt-4 font-serif text-xl font-medium tracking-[-0.02em] leading-[1.2] text-foreground sm:text-2xl">
+                Built for verification, not persuasion
+              </h2>
+            </div>
+
+            {/* Single Stacked Container */}
+            <div className="border-l-2 border-foreground/10 bg-surface-primary py-6 pl-7 pr-6 sm:pl-8 sm:pr-8">
+              {methodologyPrinciples.map((principle, index) => (
                 <div
-                  key={section.number}
-                  className="grid grid-cols-[48px_1fr] gap-6 sm:grid-cols-[64px_1fr]"
+                  key={principle.title}
+                  className={index !== methodologyPrinciples.length - 1 ? "pb-6 mb-6 border-b border-border/50" : ""}
                 >
-                  {/* Number - Fixed left rail */}
-                  <span className="font-serif text-2xl font-medium tracking-tight text-foreground/20 sm:text-3xl">
-                    {section.number}
-                  </span>
-                  
-                  {/* Content */}
-                  <div className="space-y-2">
-                    <h2 className="font-serif text-lg font-medium tracking-[-0.01em] text-foreground">
-                      {section.title}
-                    </h2>
-                    <p className="text-[15px] leading-[1.75] text-foreground/60">
-                      {section.description}
-                    </p>
-                    {section.rationale && (
-                      <p className="text-sm italic text-foreground/40 pt-1">
-                        {section.rationale}
-                      </p>
-                    )}
-                  </div>
+                  <h3 className="text-sm font-medium text-foreground">
+                    {principle.title}
+                  </h3>
+                  <p className="mt-2 text-[15px] leading-[1.7] text-foreground/60">
+                    {principle.body}
+                  </p>
                 </div>
               ))}
             </div>
@@ -186,28 +135,28 @@ export default function HowItWorks() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 4: Regulatory Positioning Strip
-          Background: Surface Tertiary
+          SECTION 3 — BOUNDARY STATEMENT (Regulatory Anchor)
+          Closing footnote, not disclaimer dump.
           ══════════════════════════════════════════════════════════════════ */}
-      <section className="w-full bg-surface-tertiary">
+      <section className="w-full bg-surface-primary">
         <div className="mx-auto max-w-[1280px] px-6 py-12 lg:px-12 lg:py-16 xl:px-16">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-[15px] leading-[1.8] text-foreground/60">
-              SettleRate provides analytical modeling only and does not originate, broker, 
-              or recommend mortgage products, nor provide financial, legal, or tax advice.
+          <div className="mx-auto max-w-xl text-center">
+            <p className="text-sm leading-[1.8] text-foreground/50">
+              SettleRate does not originate, broker, or recommend mortgage products. 
+              Outputs are analytical in nature and intended to support independent decision-making.
             </p>
           </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 5: Closing CTA
-          Background: Surface Secondary
+          CLOSING CTA
+          Minimal. Decision moment.
           ══════════════════════════════════════════════════════════════════ */}
-      <section className="w-full bg-surface-secondary">
+      <section className="w-full bg-surface-primary border-t border-border/30">
         <div className="mx-auto max-w-[1280px] px-6 py-16 lg:px-12 lg:py-20 xl:px-16">
           <div className="mx-auto max-w-xl text-center">
-            <Button asChild size="lg" className="min-w-44">
+            <Button asChild size="lg" className="min-w-44 h-12 text-base">
               <Link to="/auth">Start free</Link>
             </Button>
             <p className="mt-4 text-xs text-foreground/50">
