@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { PRICING } from "@/lib/stripe";
 
 /**
  * Upgrade Modal - Institutional, Administrative
@@ -28,20 +29,17 @@ const features = [
   "Unlimited scenario modeling",
   "Saved scenarios and revisions",
   "Exportable PDF summaries",
-  "Side-by-side comparisons",
-  "Advisor-ready outputs",
+  "Advisor- and lender-ready outputs",
+  "Income-context framing (percent-of-income views)",
 ];
 
 export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
   const { user, isAnonymous } = useAuth();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [isAnnual, setIsAnnual] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  const monthlyPrice = 9;
-  const annualPrice = 79;
-  const displayPrice = isAnnual ? annualPrice : monthlyPrice;
+  const displayPrice = isAnnual ? PRICING.pro.annual.display : PRICING.pro.monthly.display;
   const period = isAnnual ? "year" : "month";
 
   const handleSubscribe = async () => {
@@ -58,14 +56,18 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
     setIsLoading(true);
 
     try {
-      // Call the create-subscription edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("No active session");
+      }
+
       const response = await fetch(
-        `https://vpcxzbaxhpucvevnkalo.supabase.co/functions/v1/create-subscription`,
+        `https://vpcxzbaxhpucvevnkalo.supabase.co/functions/v1/create-checkout`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${(await (await import("@/integrations/supabase/client")).supabase.auth.getSession()).data.session?.access_token}`,
+            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             priceType: isAnnual ? "annual" : "monthly",
@@ -83,7 +85,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
       // Redirect to Stripe Checkout
       window.location.href = url;
     } catch (error: any) {
-      toast("Payment unsuccessful.", { description: "Use a different payment method or try again." });
+      toast("Unable to process request.", { description: "Please try again." });
       setIsLoading(false);
     }
   };
@@ -134,7 +136,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
             </div>
             {isAnnual && (
               <p className="mt-1 text-sm text-muted-foreground">
-                Billed annually (${Math.round(annualPrice / 12)}/mo)
+                Billed annually
               </p>
             )}
           </div>
@@ -169,7 +171,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
-            Secure payment via Stripe.
+            Secure payment via Stripe. No lender affiliation.
           </p>
         </div>
       </DialogContent>

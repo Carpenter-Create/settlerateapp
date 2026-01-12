@@ -1,17 +1,32 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useBilling, isPro } from "@/hooks/useBilling";
+import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Calendar, ExternalLink, User } from "lucide-react";
+import { CreditCard, Calendar, ExternalLink, User, CheckCircle } from "lucide-react";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function Account() {
   const { user } = useAuth();
-  const { data: billing, isLoading } = useBilling();
+  const { isPro, subscriptionEnd, refresh, isLoading } = useSubscription();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const userIsPro = isPro(billing);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle subscription success redirect
+  useEffect(() => {
+    if (searchParams.get("subscription") === "success") {
+      toast("Subscription activated.", {
+        description: "Professional Access is now enabled.",
+      });
+      refresh();
+      // Clear the query param
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, refresh, setSearchParams]);
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null;
@@ -20,6 +35,38 @@ export default function Account() {
       month: "long",
       day: "numeric",
     });
+  };
+
+  const handleManageBilling = async () => {
+    setPortalLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("No active session");
+      }
+
+      const response = await fetch(
+        `https://vpcxzbaxhpucvevnkalo.supabase.co/functions/v1/customer-portal`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to open billing portal");
+      }
+
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error: any) {
+      toast("Unable to open billing portal.", { description: "Please try again." });
+      setPortalLoading(false);
+    }
   };
 
   return (
@@ -41,20 +88,20 @@ export default function Account() {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-medium">Current Plan</h3>
-                <Badge variant={userIsPro ? "default" : "secondary"}>
-                  {userIsPro ? "Pro" : "Free"}
+                <Badge variant={isPro ? "default" : "secondary"}>
+                  {isPro ? "Professional" : "Analytical"}
                 </Badge>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                {userIsPro
-                  ? "Full access to all features including exports and unlimited scenarios."
-                  : "Basic access. Upgrade to unlock all features."}
+                {isPro
+                  ? "Full access including exports, saved scenarios, and income-context views."
+                  : "Core mortgage modeling. Upgrade for extended features."}
               </p>
 
-              {userIsPro && billing?.current_period_end && (
+              {isPro && subscriptionEnd && (
                 <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  Renews on {formatDate(billing.current_period_end)}
+                  Renews on {formatDate(subscriptionEnd)}
                 </div>
               )}
             </div>
@@ -62,53 +109,55 @@ export default function Account() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {userIsPro ? (
-            <Button variant="outline" asChild>
-              <a
-                href={`https://billing.stripe.com/p/login/test_xxx`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Manage billing
-              </a>
+          {isPro ? (
+            <Button 
+              variant="outline" 
+              onClick={handleManageBilling}
+              disabled={portalLoading}
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              {portalLoading ? "Opening…" : "Manage billing"}
             </Button>
           ) : (
             <Button onClick={() => setShowUpgradeModal(true)}>
-              Upgrade to Pro
+              Upgrade to Professional Access
             </Button>
           )}
         </div>
       </div>
 
       {/* Pro feature preview */}
-      {!userIsPro && (
+      {!isPro && (
         <div className="card-elevated border-dashed p-6">
-          <h3 className="font-medium">Pro Features</h3>
+          <h3 className="font-medium">Professional Access includes</h3>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Unlimited mortgage scenarios
+              Unlimited scenario modeling
             </li>
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Cloud sync across devices
+              Saved scenarios and revisions
             </li>
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Lender-ready PDF exports
+              Exportable PDF summaries
             </li>
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Side-by-side comparison tools
+              Advisor- and lender-ready outputs
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              Income-context framing
             </li>
           </ul>
           <Button
             variant="outline"
             className="mt-6"
-            onClick={() => setShowUpgradeModal(true)}
+            asChild
           >
-            View pricing
+            <Link to="/pricing">View pricing</Link>
           </Button>
         </div>
       )}
@@ -130,18 +179,6 @@ export default function Account() {
           </div>
         </div>
       </div>
-
-      {/* Debug panel (dev only) */}
-      {import.meta.env.DEV && billing && (
-        <details className="text-xs">
-          <summary className="cursor-pointer text-muted-foreground">
-            Debug: Billing row
-          </summary>
-          <pre className="mt-2 overflow-auto rounded bg-muted p-3">
-            {JSON.stringify(billing, null, 2)}
-          </pre>
-        </details>
-      )}
 
       <UpgradeModal open={showUpgradeModal} onOpenChange={setShowUpgradeModal} />
     </div>
