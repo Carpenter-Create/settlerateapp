@@ -9,11 +9,14 @@ export function Toaster() {
       {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
           <Toast key={id} {...props}>
-            <div className="grid gap-1">
+            {/* Content area: flex-1 to take available space */}
+            <div className="flex-1 grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && <ToastDescription>{description}</ToastDescription>}
             </div>
+            {/* Action sits between content and close */}
             {action}
+            {/* Close button is part of flex flow, not absolute */}
             <ToastClose />
           </Toast>
         );
