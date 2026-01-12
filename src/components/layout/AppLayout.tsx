@@ -185,7 +185,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
               {/* Primary Navigation */}
               <nav className="flex-1 px-3 py-4">
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {mobilePrimaryNav.map((item) => {
                     const isActive = location.pathname === item.href;
                     return (
@@ -193,12 +193,15 @@ export function AppLayout({ children }: AppLayoutProps) {
                         key={item.name}
                         onClick={() => handleMobileNavClick(item.href)}
                         className={cn(
-                          "flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm transition-colors",
+                          "relative flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm transition-colors outline-none focus:outline-none focus-visible:outline-none",
                           isActive
-                            ? "bg-muted text-foreground"
-                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                            ? "bg-muted/40 text-foreground"
+                            : "text-muted-foreground active:bg-muted/30"
                         )}
                       >
+                        {isActive && (
+                          <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-foreground/70" />
+                        )}
                         <item.icon className="h-4 w-4" strokeWidth={1.5} />
                         {item.name}
                       </button>
@@ -208,7 +211,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
                 {/* Secondary Navigation */}
                 <div className="mt-6 border-t border-border pt-4">
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     {mobileSecondaryNav.map((item) => {
                       const isActive = location.pathname === item.href;
                       return (
@@ -216,12 +219,15 @@ export function AppLayout({ children }: AppLayoutProps) {
                           key={item.name}
                           onClick={() => handleMobileNavClick(item.href)}
                           className={cn(
-                            "flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm transition-colors",
+                            "relative flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm transition-colors outline-none focus:outline-none focus-visible:outline-none",
                             isActive
-                              ? "bg-muted text-foreground"
-                              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                              ? "bg-muted/40 text-foreground"
+                              : "text-muted-foreground active:bg-muted/30"
                           )}
                         >
+                          {isActive && (
+                            <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-foreground/70" />
+                          )}
                           <item.icon className="h-4 w-4" strokeWidth={1.5} />
                           {item.name}
                         </button>
@@ -235,7 +241,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               <div className="border-t border-border p-4">
                 <button
                   onClick={handleSignOut}
-                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm text-muted-foreground transition-colors outline-none focus:outline-none focus-visible:outline-none active:bg-muted/30"
                 >
                   <LogOut className="h-4 w-4" strokeWidth={1.5} />
                   Sign out
