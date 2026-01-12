@@ -23,12 +23,13 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+  // Institutional toast: generous padding, soft shadow, calm presence
+  "group pointer-events-auto relative flex w-full items-center justify-between overflow-hidden rounded-lg border p-5 pr-12 shadow-sm transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
   {
     variants: {
       variant: {
-        default: "border bg-background text-foreground",
-        destructive: "destructive group border-destructive bg-destructive text-destructive-foreground",
+        default: "border-border/60 bg-background text-foreground",
+        destructive: "destructive group border-destructive/60 bg-destructive text-destructive-foreground",
       },
     },
     defaultVariants: {
@@ -69,7 +70,7 @@ ToastAction.displayName = ToastPrimitives.Action.displayName;
  * - Fully transparent background - no hover background
  * - Light neutral icon color (secondary text tone)
  * - Smaller visual weight than success icon and title
- * - Hover: subtle opacity reduction only
+ * - Hover: subtle opacity increase only
  * - Feels optional and quiet, not prominent or decorative
  */
 const ToastClose = React.forwardRef<
@@ -79,25 +80,25 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      // Positioning: inset 12-16px from edge for breathing room
-      "absolute right-3 top-3",
+      // Positioning: 16px inset from edge, vertically centered with content
+      "absolute right-4 top-1/2 -translate-y-1/2",
       // Hit target: 32x32px minimum, centered content
       "flex h-8 w-8 items-center justify-center",
-      // Visual: fully transparent bg, light icon color
-      "bg-transparent text-muted-foreground/40",
-      // Interaction: subtle opacity reduction on hover (NO background)
-      "transition-opacity duration-150",
-      "hover:text-muted-foreground/60 hover:bg-transparent",
-      // Focus: accessible but quiet
-      "focus:outline-none focus:text-muted-foreground/60 focus:bg-transparent",
+      // Visual: fully transparent bg, subtle muted icon
+      "bg-transparent text-muted-foreground/30",
+      // Interaction: cursor change + subtle opacity increase on hover (NO background)
+      "cursor-pointer transition-colors duration-100",
+      "hover:text-muted-foreground/50 hover:bg-transparent",
+      // Focus: accessible but invisible
+      "focus:outline-none focus:text-muted-foreground/50 focus:bg-transparent",
       // Destructive variant
-      "group-[.destructive]:text-destructive-foreground/40 group-[.destructive]:hover:text-destructive-foreground/60",
+      "group-[.destructive]:text-destructive-foreground/30 group-[.destructive]:hover:text-destructive-foreground/50",
       className,
     )}
     toast-close=""
     {...props}
   >
-    <X className="h-3 w-3" strokeWidth={1.5} />
+    <X className="h-3.5 w-3.5" strokeWidth={1.25} />
   </ToastPrimitives.Close>
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;
