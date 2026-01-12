@@ -357,8 +357,8 @@ export default function Auth() {
         </form>
 
         {/* Secondary actions */}
-        <div className="space-y-space-3 text-center">
-          {mode === "signin" && (
+        {mode === "signin" && (
+          <div className="text-center">
             <button
               type="button"
               onClick={handleMagicLink}
@@ -367,27 +367,19 @@ export default function Auth() {
             >
               Email me a sign-in link
             </button>
-          )}
-          <div>
-            {mode === "signin" ? (
-              <button
-                type="button"
-                onClick={() => setMode("create")}
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                New to SettleRate? Create an account
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setMode("signin")}
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Already have an account? Sign in
-              </button>
-            )}
           </div>
-        </div>
+        )}
+        {mode === "create" && (
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setMode("signin")}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Already have an account? Sign in
+            </button>
+          </div>
+        )}
 
         {/* Disclaimer */}
         <p className="text-center text-xs leading-relaxed text-muted-foreground/70">
