@@ -89,7 +89,7 @@ export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
         <Link
           to="/"
           onClick={onClose}
-          className="font-serif text-xl tracking-tight text-foreground transition-opacity hover:opacity-70"
+          className="font-serif text-lg tracking-tight transition-opacity hover:opacity-70"
         >
           SettleRate
         </Link>
