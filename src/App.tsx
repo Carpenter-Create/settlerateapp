@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ScenarioMigrationProvider } from "@/components/scenarios/ScenarioMigrationProvider";
 
 // Public pages
 import Home from "./pages/Home";
@@ -29,25 +30,27 @@ const App = () => (
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
-            <Route path="/pricing" element={<PublicLayout><Pricing /></PublicLayout>} />
-            <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
-            <Route path="/privacy" element={<PublicLayout><Privacy /></PublicLayout>} />
-            <Route path="/terms" element={<PublicLayout><Terms /></PublicLayout>} />
-            <Route path="/auth" element={<Auth />} />
+        <ScenarioMigrationProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
+              <Route path="/pricing" element={<PublicLayout><Pricing /></PublicLayout>} />
+              <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
+              <Route path="/privacy" element={<PublicLayout><Privacy /></PublicLayout>} />
+              <Route path="/terms" element={<PublicLayout><Terms /></PublicLayout>} />
+              <Route path="/auth" element={<Auth />} />
 
-            {/* Protected app routes */}
-            <Route path="/app" element={<ProtectedRoute><AppLayout><AppIndex /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/calculator" element={<ProtectedRoute><AppLayout><Calculator /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/account" element={<ProtectedRoute><AppLayout><Account /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/settings" element={<ProtectedRoute><AppLayout><AppSettings /></AppLayout></ProtectedRoute>} />
+              {/* Protected app routes */}
+              <Route path="/app" element={<ProtectedRoute><AppLayout><AppIndex /></AppLayout></ProtectedRoute>} />
+              <Route path="/app/calculator" element={<ProtectedRoute><AppLayout><Calculator /></AppLayout></ProtectedRoute>} />
+              <Route path="/app/account" element={<ProtectedRoute><AppLayout><Account /></AppLayout></ProtectedRoute>} />
+              <Route path="/app/settings" element={<ProtectedRoute><AppLayout><AppSettings /></AppLayout></ProtectedRoute>} />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </ScenarioMigrationProvider>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>

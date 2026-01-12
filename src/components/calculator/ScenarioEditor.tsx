@@ -60,11 +60,11 @@ export interface ScenarioEditorProps {
   onBatchUpdate: (updates: Partial<MortgageInputs>) => void;
   
   // Scenario actions - return new scenario ID for navigation
-  onSave: () => boolean;
-  onSaveAsNew: (name: string) => string; // Returns new scenario ID
-  onDuplicate: () => string | null; // Returns new scenario ID or null
-  onDelete: () => void;
-  onRename: (name: string) => void;
+  onSave: () => boolean | Promise<boolean>;
+  onSaveAsNew: (name: string) => string | Promise<string>;
+  onDuplicate: () => string | null | Promise<string | null>;
+  onDelete: () => void | Promise<void>;
+  onRename: (name: string) => void | Promise<void>;
   onDiscardChanges: () => void;
   onReset: () => void;
   onOpenGuidedStart?: () => void;
