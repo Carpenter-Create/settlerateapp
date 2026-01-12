@@ -174,6 +174,13 @@
     --auth-radius: 0.5rem;
     --auth-input-height: 2.5rem;
     --auth-button-height: 2.5rem;
+    
+    /* Fixed frame: top padding for pinned position */
+    --auth-frame-top: 80px;
+    --auth-frame-top-mobile: 48px;
+    
+    /* Body region height: locks form area to prevent collapse */
+    --auth-body-min-height: 340px;
   }
 
   .dark {
@@ -390,17 +397,48 @@
      TYPOGRAPHY LOCK: UI/system font ONLY. No Source Serif 4.
      METHOD HIERARCHY: Password primary, magic link secondary.
      LEGAL: Checkbox required for account creation.
+     
+     LAYOUT STABILITY: Fixed frame architecture.
+     - Top padding pins the card at a fixed Y position
+     - Body region has min-height to prevent collapse
+     - All mode elements stay in DOM with visibility toggle
      ═══════════════════════════════════════════════════════════════ */
 
-  /* Container — vertically centered with balanced padding */
+  /* Fixed frame — pins card at consistent Y position, no vertical centering */
+  .auth-shell-frame {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: var(--auth-frame-top);
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: 2rem;
+    background: hsl(var(--background));
+  }
+
+  @media (max-width: 640px) {
+    .auth-shell-frame {
+      padding-top: var(--auth-frame-top-mobile);
+    }
+  }
+
+  /* Container — fixed width, consistent gap structure */
   .auth-container {
     width: 100%;
     max-width: var(--auth-container-max-width);
     display: flex;
     flex-direction: column;
     gap: var(--auth-section-gap);
-    padding-top: 2rem;
-    padding-bottom: 2rem;
+  }
+
+  /* Body region — form content with fixed min-height */
+  .auth-body-region {
+    min-height: var(--auth-body-min-height);
+    display: flex;
+    flex-direction: column;
+    gap: var(--auth-section-gap);
   }
 
   /* Typography — UI font only on auth pages (no serif, no exceptions) */
@@ -498,12 +536,17 @@
   /* Secondary action — magic link is secondary to password
    * LAYOUT STABILITY: Uses relative positioning so both actions
    * occupy space but only one is visible at a time.
+   * When inside body region, no extra margin needed.
    */
   .auth-secondary-action {
     position: relative;
     text-align: center;
-    margin-top: calc(var(--auth-secondary-gap) - var(--auth-section-gap));
     min-height: 1.5rem; /* Ensures consistent height */
+  }
+  
+  /* Only apply margin when outside body region (legacy support) */
+  .auth-container > .auth-secondary-action {
+    margin-top: calc(var(--auth-secondary-gap) - var(--auth-section-gap));
   }
 
   .auth-secondary-link {
