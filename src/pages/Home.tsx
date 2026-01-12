@@ -4,45 +4,42 @@ import { cn } from "@/lib/utils";
 import { AnalyticalSurface } from "@/components/marketing/AnalyticalSurface";
 
 /**
- * Homepage Color-Blocking System (Locked)
+ * Homepage - Canonical Institutional Framing (Locked)
  * 
+ * Color-Blocking System:
  * Structure without gloss. Authority without marketing theatrics.
  * Use background tone—not decoration—to establish authority and pacing.
- * Institutional products rely on contrast for comprehension, not excitement.
  * 
- * Section mapping:
- * 1. Hero: Surface Primary (warm white) - calm authority
- * 2. Scenario Demo: Surface Secondary - "here is proof"
- * 3. Framework: Surface Primary - intellectual positioning
- * 4. Authority Break: Surface Tertiary - gravitas + pacing reset
- * 5. Use Cases: Alternating
- * 6. Final CTA: Surface Secondary
+ * Feature Language:
+ * SettleRate evaluates, models, normalizes, and surfaces.
+ * It does not "help users find" or "make it easy."
+ * If a sentence sounds like onboarding copy, it's wrong.
  */
 
-// What the calculator enables - structural depth
+// Canonical feature language - capability framing, not benefit framing
 const structureCapabilities = [
-  "Multiple down-payment scenarios",
-  "PMI vs no-PMI structures",
-  "Time-horizon tradeoffs",
-  "Refinance break-even modeling",
+  "Time-horizon analysis",
+  "Structural tradeoff evaluation",
+  "PMI exposure modeling",
+  "Refinance break-even analysis",
 ];
 
 const frameworkPillars = [
   {
-    title: "Standardized assumptions",
-    body: "All scenarios are modeled using consistent, transparent inputs—rates, taxes, insurance, and PMI—so comparisons reflect structure, not guesswork.",
+    title: "Scenario modeling",
+    body: "Mortgage structures are evaluated under consistent assumptions to enable meaningful comparison across term length, down payment strategy, and time horizon.",
   },
   {
-    title: "Scenario integrity",
-    body: "Loan options are evaluated side by side using normalized inputs, preventing distortion and enabling meaningful comparison across structures and time horizons.",
+    title: "Normalized assumptions",
+    body: "Rates, taxes, insurance, and PMI are standardized across scenarios to prevent distortion and ensure analytical integrity.",
   },
   {
     title: "Cost visibility",
-    body: "Amortization, long-term interest, and total cost are surfaced explicitly, allowing tradeoffs to be understood without interpretation or sales framing.",
+    body: "Long-term interest, capital requirements, and total cost of capital are surfaced explicitly rather than inferred from monthly payment alone.",
   },
   {
     title: "Professional outputs",
-    body: "Clear, exportable summaries designed for lender review, advisor discussion, and documentation—not persuasion.",
+    body: "Exportable summaries designed for advisor discussion, lender review, and documentation—without embedded recommendations or referral bias.",
   },
 ];
 

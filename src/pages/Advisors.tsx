@@ -1,5 +1,12 @@
 import { Link } from "react-router-dom";
 
+/**
+ * Advisors Page - Canonical Institutional Framing
+ * 
+ * Locked advisor-facing explainer copy.
+ * This is the page advisors forward to clients.
+ */
+
 const boundaries = [
   "SettleRate does not provide recommendations.",
   "It does not replace underwriting, advisory, or fiduciary responsibility.",
@@ -10,7 +17,7 @@ export default function Advisors() {
   return (
     <div className="w-full">
       {/* Hero Section */}
-      <section className="w-full bg-[hsl(40_20%_97%)]">
+      <section className="w-full bg-surface-primary">
         <div className="mx-auto max-w-[1280px] px-6 py-20 lg:px-12 lg:py-28 xl:px-16">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="font-serif text-3xl font-medium tracking-[-0.02em] leading-[1.15] text-foreground sm:text-4xl lg:text-5xl">
@@ -21,7 +28,7 @@ export default function Advisors() {
       </section>
 
       {/* Content Section - Locked Advisor Copy */}
-      <section className="w-full bg-white">
+      <section className="w-full bg-surface-secondary">
         <div className="mx-auto max-w-3xl px-6 py-16 lg:px-12 lg:py-24">
           {/* Locked Body Copy - DO NOT SHORTEN */}
           <div className="space-y-6 text-base leading-[1.85] text-foreground/70">
@@ -63,8 +70,15 @@ export default function Advisors() {
             </ul>
           </div>
 
+          {/* Independence Statement (appears once per page) */}
+          <div className="mt-14 space-y-4">
+            <p className="text-[15px] leading-relaxed text-foreground/60">
+              SettleRate does not originate, broker, or recommend mortgage products. Outputs are analytical in nature and intended to support independent decision-making.
+            </p>
+          </div>
+
           {/* Closing Line - Locked */}
-          <div className="mt-16 border-t border-border/50 pt-12 text-center">
+          <div className="mt-16 border-t border-foreground/[0.08] pt-12 text-center">
             <p className="font-serif text-lg leading-relaxed text-foreground">
               SettleRate is analysis—not advice, not advocacy, and not a marketplace.
             </p>

@@ -1,10 +1,17 @@
 import { Link } from "react-router-dom";
 
+/**
+ * Investors Page - Canonical Institutional Framing
+ * 
+ * Locked ~300 word category narrative.
+ * Suitable for memo, deck, or data room.
+ */
+
 export default function Investors() {
   return (
     <div className="w-full">
       {/* Hero Section */}
-      <section className="w-full bg-[hsl(40_20%_97%)]">
+      <section className="w-full bg-surface-primary">
         <div className="mx-auto max-w-[1280px] px-6 py-20 lg:px-12 lg:py-28 xl:px-16">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="font-serif text-3xl font-medium tracking-[-0.02em] leading-[1.15] text-foreground sm:text-4xl lg:text-5xl">
@@ -15,7 +22,7 @@ export default function Investors() {
       </section>
 
       {/* Content Section - Locked Investor Narrative (~300 words) */}
-      <section className="w-full bg-white">
+      <section className="w-full bg-surface-secondary">
         <div className="mx-auto max-w-3xl px-6 py-16 lg:px-12 lg:py-24">
           {/* Locked Investor Narrative - DO NOT SHORTEN */}
           <div className="space-y-6 text-base leading-[1.85] text-foreground/70">
@@ -51,7 +58,7 @@ export default function Investors() {
           </div>
 
           {/* Closing */}
-          <div className="mt-16 border-t border-border/50 pt-12 text-center">
+          <div className="mt-16 border-t border-foreground/[0.08] pt-12 text-center">
             <p className="font-serif text-lg leading-relaxed text-foreground">
               The neutral analytical layer mortgage decisions have been missing.
             </p>

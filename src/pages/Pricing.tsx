@@ -4,19 +4,27 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+/**
+ * Pricing Page - Canonical Institutional Framing
+ * 
+ * Feature language uses capability framing, not benefit framing.
+ * SettleRate evaluates, models, normalizes, and surfaces—
+ * it does not "help users find" or "make it easy."
+ */
+
 const freeFeatures = [
-  "Create one scenario",
-  "Basic payment breakdown",
-  "No exports",
+  "Single scenario modeling",
+  "Basic payment structure analysis",
+  "Standard assumptions applied",
 ];
 
 const proFeatures = [
-  "Unlimited scenarios",
-  "Side-by-side comparison",
-  "ZIP-based tax and insurance estimates",
-  "Lender-ready PDF exports",
-  "Rate-change narratives",
-  "Income context framing",
+  "Unlimited scenario modeling",
+  "Normalized scenario comparison",
+  "ZIP-based tax and insurance normalization",
+  "Professional PDF outputs",
+  "Rate sensitivity analysis",
+  "Income-to-payment context",
   "Priority support",
 ];
 
@@ -47,7 +55,7 @@ export default function Pricing() {
           Pricing
         </h1>
         <p className="mt-space-4 text-base text-muted-foreground">
-          Transparent pricing. No hidden fees.
+          Transparent pricing. No referral revenue. No hidden fees.
         </p>
       </div>
 
@@ -58,7 +66,7 @@ export default function Pricing() {
           <div className="space-y-1">
             <h3 className="text-base font-medium">Free</h3>
             <p className="text-sm text-muted-foreground">
-              Core mortgage analysis
+              Core scenario modeling
             </p>
           </div>
 
@@ -88,7 +96,7 @@ export default function Pricing() {
           <div className="space-y-1">
             <h3 className="text-base font-medium">Pro</h3>
             <p className="text-sm text-muted-foreground">
-              Complete decision workspace
+              Complete analytical workspace
             </p>
           </div>
 
@@ -148,9 +156,9 @@ export default function Pricing() {
         </div>
       </div>
 
-      {/* Footer note */}
+      {/* Independence Statement (appears once per page) */}
       <p className="text-center text-xs text-muted-foreground/70">
-        Your data remains private. We never sell leads or personal information.
+        SettleRate does not originate, broker, or recommend mortgage products. We do not sell user data or generate referral revenue.
       </p>
     </div>
   );
