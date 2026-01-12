@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { X, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface PublicNavDrawerProps {
   isOpen: boolean;
@@ -86,14 +87,14 @@ export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
         aria-modal="true"
         aria-label="Navigation menu"
         className={cn(
-          "absolute left-0 top-0 h-full w-full max-w-sm bg-white shadow-2xl",
+          "absolute left-0 top-0 flex h-full w-full max-w-sm flex-col bg-white shadow-2xl",
           "transform transition-transform duration-300 ease-out",
           "dark:bg-background",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Header - Modal title bar treatment */}
-        <div className="flex h-16 items-center justify-between border-b border-border px-5">
+        {/* ========== ZONE 1: HEADER ========== */}
+        <div className="flex h-18 shrink-0 items-center justify-between border-b border-border px-6 py-5">
           <Link
             to="/"
             onClick={onClose}
@@ -111,34 +112,48 @@ export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
           </button>
         </div>
 
-        {/* Menu Items - Deliberate row height and spacing */}
-        <nav className="flex flex-col py-4">
-          {menuItems.map((item) => (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={cn(
-                "flex h-14 items-center justify-between px-5 text-base transition-colors",
-                location.pathname === item.href
-                  ? "font-medium text-foreground"
-                  : "text-foreground/90 hover:bg-muted/60 hover:text-foreground"
-              )}
-            >
-              <span>{item.name}</span>
-              <ChevronRight className="h-5 w-5 text-foreground/50" strokeWidth={2} />
-            </Link>
-          ))}
-        </nav>
+        {/* ========== ZONE 2: NAVIGATION ========== */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Context Block */}
+          <div className="px-6 pb-4 pt-6">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Explore SettleRate
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              A neutral framework for understanding mortgage outcomes.
+            </p>
+          </div>
 
-        {/* Sign In - Anchored at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-white p-5 dark:bg-background">
-          <Link
-            to="/auth"
-            className="flex h-14 items-center justify-between text-base font-medium text-foreground transition-colors hover:text-foreground/80"
-          >
-            <span>Sign in</span>
-            <ChevronRight className="h-5 w-5 text-foreground/50" strokeWidth={2} />
-          </Link>
+          {/* Nav Items */}
+          <nav className="flex flex-col pb-6">
+            {menuItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={cn(
+                  "flex h-14 items-center justify-between px-6 text-base transition-colors",
+                  location.pathname === item.href
+                    ? "font-medium text-foreground"
+                    : "text-foreground/90 hover:bg-muted/60 hover:text-foreground"
+                )}
+              >
+                <span>{item.name}</span>
+                <ChevronRight className="h-5 w-5 text-foreground/40" strokeWidth={2} />
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        {/* ========== ZONE 3: ACTIONS ========== */}
+        <div className="shrink-0 bg-white px-6 pb-8 pt-6 dark:bg-background">
+          <div className="flex flex-col gap-3">
+            <Button asChild size="lg" className="w-full">
+              <Link to="/auth">Start free</Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="w-full">
+              <Link to="/auth">Sign in</Link>
+            </Button>
+          </div>
         </div>
       </div>
     </div>
