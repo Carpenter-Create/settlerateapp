@@ -46,7 +46,7 @@ export default function Auth() {
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          emailRedirectTo: `${window.location.origin}/app/scenarios`,
+          emailRedirectTo: "https://app.settlerate.com/app/scenarios",
         },
       });
 
@@ -68,7 +68,7 @@ export default function Auth() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/app/scenarios`,
+          redirectTo: "https://app.settlerate.com/app/scenarios",
         },
       });
 
