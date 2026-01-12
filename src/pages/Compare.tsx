@@ -312,7 +312,7 @@ export default function Compare() {
     if (activeComparisonId) {
       // If updating, just update directly (name already set)
       updateComparison(activeComparisonId, { scenarioIds: selectedIds }, selectedScenarios);
-      toast.success("Comparison updated");
+      toast("Comparison updated.");
     } else {
       // For new comparison, show naming dialog
       const defaultName = `Comparison – ${new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}`;
@@ -329,7 +329,7 @@ export default function Compare() {
     setActiveComparisonId(comparison.id);
     hasMarkedViewedRef.current = comparison.id;
     setShowSaveDialog(false);
-    toast.success("Comparison saved");
+    toast("Comparison saved.");
   };
 
   const getExportData = () => {
@@ -347,19 +347,17 @@ export default function Compare() {
   const handleExportSummary = () => {
     if (selectedScenarios.length < 2) return;
     exportComparisonSummaryPDF(getExportData());
-    toast.success("Opening print dialog...");
   };
+
 
   const handleExportAssumptions = () => {
     if (selectedScenarios.length < 2) return;
     exportAssumptionsSheetPDF(getExportData());
-    toast.success("Opening print dialog...");
   };
 
   const handleExportBoth = () => {
     if (selectedScenarios.length < 2) return;
     exportBothPDFs(getExportData());
-    toast.success("Opening print dialogs...");
   };
 
   const handleShare = () => {
@@ -378,9 +376,9 @@ export default function Compare() {
   const handleCopyShareUrl = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      toast.success("Link copied to clipboard");
+      toast("Link copied.");
     } catch {
-      toast.error("Failed to copy link");
+      toast("Unable to copy link.");
     }
   };
 
@@ -399,8 +397,8 @@ export default function Compare() {
     return (
       <div className="space-y-8">
         <div>
-          <h1>Compare Scenarios</h1>
-          <p className="mt-1">Review mortgage options side-by-side</p>
+          <h1>Scenario Comparison</h1>
+          <p className="mt-1">Side-by-side analysis of mortgage scenarios.</p>
         </div>
 
         <div className="card-elevated flex flex-col items-center justify-center px-6 py-16 text-center">
@@ -437,7 +435,7 @@ export default function Compare() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h1>Compare scenarios</h1>
+            <h1>Scenario Comparison</h1>
             {isSharedView && (
               <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted/50 rounded">
                 View-only
