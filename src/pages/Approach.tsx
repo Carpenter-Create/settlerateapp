@@ -40,11 +40,15 @@ export default function Approach() {
       </section>
 
       {/* Opening Statement */}
-      <section>
+      <section className="space-y-4">
         <p className="text-base leading-relaxed text-muted-foreground">
-          SettleRate is a decision-support platform designed to model
-          mortgage-related scenarios using transparent assumptions and
-          structured analysis.
+          SettleRate is a neutral framework for understanding mortgage outcomes.
+        </p>
+        <p className="text-base leading-relaxed text-muted-foreground">
+          It provides structured, assumption-based analysis designed to support planning, comparison, and professional review.
+        </p>
+        <p className="text-base leading-relaxed text-muted-foreground">
+          By focusing on clarity and consistency, SettleRate helps users evaluate mortgage scenarios without sales pressure, embedded incentives, or cognitive overload.
         </p>
       </section>
 
