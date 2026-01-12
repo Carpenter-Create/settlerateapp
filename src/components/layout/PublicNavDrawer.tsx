@@ -74,69 +74,70 @@ export function PublicNavDrawer({ isOpen, onClose }: PublicNavDrawerProps) {
     <div className="fixed inset-0 z-50">
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-foreground/20 backdrop-blur-[2px] transition-opacity"
+        className="absolute inset-0 bg-foreground/30"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Drawer */}
+      {/* Drawer - Full height solid surface */}
       <div
         ref={drawerRef}
         role="dialog"
         aria-modal="true"
         aria-label="Navigation menu"
         className={cn(
-          "absolute left-0 top-0 h-full w-full max-w-xs bg-background shadow-lg",
+          "absolute left-0 top-0 h-full w-full max-w-sm bg-white shadow-2xl",
           "transform transition-transform duration-300 ease-out",
+          "dark:bg-background",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Header */}
-        <div className="flex h-14 items-center justify-between border-b border-border/50 px-4">
+        {/* Header - Modal title bar treatment */}
+        <div className="flex h-16 items-center justify-between border-b border-border px-5">
           <Link
             to="/"
             onClick={onClose}
-            className="font-serif text-lg tracking-tight transition-opacity hover:opacity-70"
+            className="font-serif text-xl tracking-tight text-foreground transition-opacity hover:opacity-70"
           >
             SettleRate
           </Link>
           <button
             ref={closeButtonRef}
             onClick={onClose}
-            className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-11 w-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Close menu"
           >
-            <X className="h-5 w-5" strokeWidth={1.5} />
+            <X className="h-6 w-6" strokeWidth={2} />
           </button>
         </div>
 
-        {/* Menu Items */}
-        <nav className="flex flex-col py-2">
+        {/* Menu Items - Deliberate row height and spacing */}
+        <nav className="flex flex-col py-4">
           {menuItems.map((item) => (
             <Link
               key={item.name}
               to={item.href}
               className={cn(
-                "flex items-center justify-between px-4 py-4 text-base transition-colors",
+                "flex h-14 items-center justify-between px-5 text-base transition-colors",
                 location.pathname === item.href
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  ? "font-medium text-foreground"
+                  : "text-foreground/90 hover:bg-muted/60 hover:text-foreground"
               )}
             >
               <span>{item.name}</span>
-              <ChevronRight className="h-4 w-4 text-muted-foreground/60" strokeWidth={1.5} />
+              <ChevronRight className="h-5 w-5 text-foreground/50" strokeWidth={2} />
             </Link>
           ))}
         </nav>
 
-        {/* Sign In at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 border-t border-border/50 p-4">
+        {/* Sign In - Anchored at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-white p-5 dark:bg-background">
           <Link
             to="/auth"
-            className="flex items-center justify-between py-3 text-base text-foreground transition-colors hover:text-foreground/80"
+            className="flex h-14 items-center justify-between text-base font-medium text-foreground transition-colors hover:text-foreground/80"
           >
-            <span className="font-medium">Sign in</span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground/60" strokeWidth={1.5} />
+            <span>Sign in</span>
+            <ChevronRight className="h-5 w-5 text-foreground/50" strokeWidth={2} />
           </Link>
         </div>
       </div>
