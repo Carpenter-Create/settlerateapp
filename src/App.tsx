@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 
 // App pages
 import ScenariosIndex from "./pages/app/ScenariosIndex";
+import ScenarioDetail from "./pages/app/ScenarioDetail";
 import Calculator from "./pages/app/Calculator";
 import Account from "./pages/app/Account";
 import AppSettings from "./pages/app/Settings";
@@ -41,6 +42,7 @@ const App = () => (
             {/* Protected app routes */}
             <Route path="/app" element={<Navigate to="/app/scenarios" replace />} />
             <Route path="/app/scenarios" element={<ProtectedRoute><AppLayout><ScenariosIndex /></AppLayout></ProtectedRoute>} />
+            <Route path="/app/scenarios/:id" element={<ProtectedRoute><AppLayout><ScenarioDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/app/calculator" element={<ProtectedRoute><AppLayout><Calculator /></AppLayout></ProtectedRoute>} />
             <Route path="/app/account" element={<ProtectedRoute><AppLayout><Account /></AppLayout></ProtectedRoute>} />
             <Route path="/app/settings" element={<ProtectedRoute><AppLayout><AppSettings /></AppLayout></ProtectedRoute>} />
