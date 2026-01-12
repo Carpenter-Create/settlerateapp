@@ -46,13 +46,13 @@ export default function Approach() {
       {/* Content Section */}
       <section className="w-full bg-white">
         <div className="mx-auto max-w-3xl px-6 py-16 lg:px-12 lg:py-24">
-          {/* Canonical Category Definition - DO NOT SHORTEN */}
+          {/* ═══════════════════════════════════════════════════════════════
+              LOCKED ABOUT STATEMENT (Regulator-Safe, Investor-Safe, Advisor-Safe)
+              DO NOT DILUTE OR SHORTEN
+              ═══════════════════════════════════════════════════════════════ */}
           <div className="space-y-5">
-            <p className="text-base leading-[1.8] text-foreground/70">
-              SettleRate is an independent mortgage analysis platform designed to evaluate loan structures under normalized assumptions.
-            </p>
-            <p className="text-base leading-[1.8] text-foreground/70">
-              Unlike marketplaces or rate aggregators, SettleRate does not originate, broker, or promote mortgage products. It exists to surface the long-term financial implications of mortgage decisions—total interest, structural tradeoffs, and cash-flow consequences—using transparent, repeatable modeling suitable for professional review.
+            <p className="text-base leading-[1.85] text-foreground/70">
+              SettleRate is an independent mortgage analysis platform designed to provide a neutral framework for evaluating mortgage decisions. The platform models loan scenarios using standardized, transparent assumptions and surfaces long-term cost, capital requirements, and structural tradeoffs that are often obscured by sales-driven tools. SettleRate does not originate, broker, recommend, or refer mortgage products, nor does it provide personalized financial, legal, or tax advice. It does not monetize through lender referrals or user data. Instead, SettleRate exists to support informed decision-making by producing consistent, reproducible analyses suitable for professional review by borrowers, advisors, lenders, and institutional stakeholders.
             </p>
           </div>
 
