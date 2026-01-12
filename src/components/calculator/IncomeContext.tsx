@@ -67,7 +67,7 @@ export function IncomeContext({ monthlyHousingPayment, onIncomeChange }: IncomeC
         onClick={() => setShowInput(true)}
         className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
       >
-        Add income for context
+        Add Income Context (How this fits your income)
       </button>
     );
   }
@@ -126,14 +126,20 @@ export function IncomeContext({ monthlyHousingPayment, onIncomeChange }: IncomeC
   // Show the income context display
   return (
     <div className="space-y-2">
+      <p className="text-xs font-medium text-muted-foreground mb-1">
+        Percent of Income (Share of your monthly income)
+      </p>
       <p className="text-sm text-muted-foreground leading-relaxed">
-        At this payment level, housing costs represent approximately{" "}
+        This payment uses about{" "}
         <span className="font-mono font-medium text-foreground">{percentOfIncome}%</span>{" "}
-        of gross monthly income, based on the income you provided.
+        of your monthly income.
+      </p>
+      <p className="text-xs text-muted-foreground/70">
+        This helps show how the payment fits into your monthly budget.
       </p>
       <button
         onClick={handleClear}
-        className="text-xs text-muted-foreground/70 hover:text-muted-foreground transition-colors underline-offset-2 hover:underline"
+        className="text-xs text-muted-foreground/70 hover:text-muted-foreground transition-colors underline-offset-2 hover:underline mt-1"
       >
         Clear income
       </button>

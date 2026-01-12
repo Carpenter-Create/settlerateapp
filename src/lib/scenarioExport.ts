@@ -279,38 +279,38 @@ function generateScenarioHTML(scenario: ScenarioData): string {
     
     <!-- Section 2: Monthly Payment Breakdown -->
     <div class="section">
-      <h2 class="section-title">Estimated Monthly Payment</h2>
+      <h2 class="section-title">Monthly Payment</h2>
       <table>
         <tr>
-          <td>Principal & interest</td>
+          <td>Principal & Interest</td>
           <td>${formatCurrency(results.monthlyPrincipalInterest)}</td>
         </tr>
         ${results.monthlyPropertyTax > 0 ? `
         <tr>
-          <td>Property tax (estimated)</td>
+          <td>Property Tax</td>
           <td>${formatCurrency(results.monthlyPropertyTax)}</td>
         </tr>
         ` : ""}
         ${results.monthlyHomeInsurance > 0 ? `
         <tr>
-          <td>Home insurance (estimated)</td>
+          <td>Home Insurance</td>
           <td>${formatCurrency(results.monthlyHomeInsurance)}</td>
         </tr>
         ` : ""}
         ${results.monthlyPMI > 0 ? `
         <tr>
-          <td>PMI (estimated)</td>
+          <td>PMI</td>
           <td>${formatCurrency(results.monthlyPMI)}</td>
         </tr>
         ` : ""}
         ${results.monthlyHOA > 0 ? `
         <tr>
-          <td>HOA dues</td>
+          <td>HOA</td>
           <td>${formatCurrency(results.monthlyHOA)}</td>
         </tr>
         ` : ""}
         <tr class="total-row">
-          <td>Total estimated monthly payment</td>
+          <td>Total Monthly Payment</td>
           <td>${formatCurrency(results.monthlyTotal)}</td>
         </tr>
       </table>
@@ -341,16 +341,16 @@ function generateScenarioHTML(scenario: ScenarioData): string {
       </table>
     </div>
     
-    <!-- Section 4: Assumptions & Notes -->
+    <!-- Section 4: Assumptions -->
     <div class="section">
-      <h2 class="section-title">Assumptions & Notes</h2>
+      <h2 class="section-title">Assumptions</h2>
       <ul class="notes-list">
-        <li>All estimates are based on user-provided inputs and standard amortization formulas.</li>
-        <li>Interest rate shown is an assumed rate and not a lender quote.</li>
-        ${inputs.shared.usedZipEstimate ? `<li>Property tax and insurance figures are ZIP-based estimates and may vary by property.</li>` : ""}
-        ${results.monthlyPMI > 0 ? `<li>PMI estimate assumes standard rates; actual PMI will depend on lender and loan program.</li>` : ""}
-        <li>Final loan terms are subject to lender approval, credit evaluation, and property appraisal.</li>
-        <li>This document is for comparison and planning purposes only.</li>
+        <li>Estimates based on user-provided inputs and standard amortization formulas.</li>
+        <li>Interest rate shown is an assumed rate, not a lender quote.</li>
+        ${inputs.shared.usedZipEstimate ? `<li>Property tax and insurance figures are ZIP-based estimates.</li>` : ""}
+        ${results.monthlyPMI > 0 ? `<li>PMI estimate assumes standard rates; actual PMI determined by lender.</li>` : ""}
+        <li>Final loan terms subject to lender approval, credit evaluation, and property appraisal.</li>
+        <li>Document provided for comparison and planning purposes only.</li>
       </ul>
     </div>
     
