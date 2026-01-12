@@ -246,21 +246,7 @@ export default function Auth() {
 
         {/* Legal */}
         <p className="text-center text-xs leading-relaxed text-muted-foreground">
-          By continuing, you agree to our{" "}
-          <Link
-            to="/terms"
-            className="text-foreground underline underline-offset-2"
-          >
-            Terms
-          </Link>{" "}
-          and{" "}
-          <Link
-            to="/privacy"
-            className="text-foreground underline underline-offset-2"
-          >
-            Privacy Policy
-          </Link>
-          .
+          By continuing, you agree to our terms of service and privacy policy.
         </p>
       </div>
     </div>
