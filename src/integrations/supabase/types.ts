@@ -210,18 +210,30 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          current_period_end: string | null
           full_name: string | null
           id: string
+          plan_key: string
+          plan_status: string
+          stripe_customer_id: string | null
         }
         Insert: {
           created_at?: string
+          current_period_end?: string | null
           full_name?: string | null
           id: string
+          plan_key?: string
+          plan_status?: string
+          stripe_customer_id?: string | null
         }
         Update: {
           created_at?: string
+          current_period_end?: string | null
           full_name?: string | null
           id?: string
+          plan_key?: string
+          plan_status?: string
+          stripe_customer_id?: string | null
         }
         Relationships: []
       }
@@ -292,6 +304,45 @@ export type Database = {
           name?: string
           scenario_type?: string
           schema_version?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string
+          current_period_end: string | null
+          id: string
+          plan_key: string
+          status: string
+          stripe_customer_id: string
+          stripe_subscription_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan_key: string
+          status: string
+          stripe_customer_id: string
+          stripe_subscription_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan_key?: string
+          status?: string
+          stripe_customer_id?: string
+          stripe_subscription_id?: string
           updated_at?: string
           user_id?: string
         }
