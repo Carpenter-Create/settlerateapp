@@ -24,6 +24,7 @@ import { PurchaseInputs } from "./PurchaseInputs";
 import { RefinanceInputs } from "./RefinanceInputs";
 import { TaxInsuranceSection } from "./TaxInsuranceSection";
 import { ResultsCard } from "./ResultsCard";
+import { MethodologyPanel } from "./MethodologyPanel";
 import { AmortizationTable } from "./AmortizationTable";
 import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import { Button } from "@/components/ui/button";
@@ -368,9 +369,17 @@ export function ScenarioEditor({
         </div>
 
         {/* Results - sticky sidebar */}
-        <div className="min-w-0 lg:sticky lg:top-16 lg:h-fit">
+        <div className="min-w-0 lg:sticky lg:top-16 lg:h-fit space-y-4">
           <div className="card-elevated w-full p-5 sm:p-6">
             <ResultsCard results={results} />
+          </div>
+          
+          {/* Methodology panel - desktop visible, mobile collapsed by default */}
+          <div className="hidden lg:block">
+            <MethodologyPanel />
+          </div>
+          <div className="lg:hidden">
+            <MethodologyPanel defaultCollapsed />
           </div>
         </div>
       </div>
