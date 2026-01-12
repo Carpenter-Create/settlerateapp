@@ -283,110 +283,140 @@ interface MobileScenarioBlockProps {
   label: "A" | "B";
 }
 
+/**
+ * Mobile metric row - clean left-right layout with proper height
+ */
+function MobileMetricRow({ 
+  label, 
+  value, 
+  isBold = false 
+}: { 
+  label: string; 
+  value: string; 
+  isBold?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between min-h-[44px] py-2.5">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className={`text-[15px] tabular-nums ${isBold ? 'font-medium' : ''}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Mobile section wrapper with proper padding and no edge-touching
+ */
+function MobileSection({ 
+  title, 
+  children 
+}: { 
+  title: string; 
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-[14px] border border-border/60 bg-card overflow-hidden">
+      <div className="px-4 py-3 bg-muted/30 border-b border-border/40">
+        <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          {title}
+        </div>
+      </div>
+      <div className="px-4 divide-y divide-border/30">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function MobileScenarioBlock({ scenario, label }: MobileScenarioBlockProps) {
   const monthlyPI = getMonthlyPI(scenario);
   const propertyValue = getPropertyValue(scenario);
   
   return (
-    <div className="border border-border rounded-sm overflow-hidden bg-card">
-      <div className="bg-muted/40 px-4 py-3 border-b border-border/50">
-        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
+    <div className="space-y-4">
+      {/* Scenario header */}
+      <div className="px-1">
+        <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">
           Scenario {label}
         </div>
-        <div className="font-medium">{scenario.name || "Untitled scenario"}</div>
+        <div className="text-lg font-medium leading-snug break-words">
+          {scenario.name || "Untitled scenario"}
+        </div>
       </div>
       
-      {/* Scenario Overview */}
-      <div className="px-4 py-3 border-b border-border/30">
-        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
-          Overview
-        </div>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Loan type</span>
-            <span>{TRANSACTION_TYPE_LABELS[scenario.inputs.mode]}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Loan amount</span>
-            <span className="tabular-nums">{formatCurrency(scenario.results.loanAmount)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Term</span>
-            <span>{scenario.inputs.shared?.loanTerm || 30} years</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Interest rate</span>
-            <span className="tabular-nums">{formatPercent(scenario.inputs.shared?.interestRate || 0)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">LTV</span>
-            <span className="tabular-nums">{formatPercent(scenario.results.ltvRatio || 0)}</span>
-          </div>
-        </div>
-      </div>
+      {/* Overview */}
+      <MobileSection title="Overview">
+        <MobileMetricRow 
+          label="Loan type" 
+          value={TRANSACTION_TYPE_LABELS[scenario.inputs.mode]} 
+        />
+        <MobileMetricRow 
+          label="Loan amount" 
+          value={formatCurrency(scenario.results.loanAmount)} 
+        />
+        <MobileMetricRow 
+          label="Term" 
+          value={`${scenario.inputs.shared?.loanTerm || 30} years`} 
+        />
+        <MobileMetricRow 
+          label="Interest rate" 
+          value={formatPercent(scenario.inputs.shared?.interestRate || 0)} 
+        />
+        <MobileMetricRow 
+          label="LTV" 
+          value={formatPercent(scenario.results.ltvRatio || 0)} 
+        />
+      </MobileSection>
       
       {/* Monthly Payment */}
-      <div className="px-4 py-3 border-b border-border/30">
-        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
-          Monthly Payment
-        </div>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Principal & interest</span>
-            <span className="tabular-nums">{monthlyPI ? formatCurrency(monthlyPI) : "—"}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Total monthly</span>
-            <span className="tabular-nums font-medium">{scenario.results.monthlyTotal ? formatCurrency(scenario.results.monthlyTotal) : "—"}</span>
-          </div>
-        </div>
-      </div>
+      <MobileSection title="Monthly payment">
+        <MobileMetricRow 
+          label="Principal & interest" 
+          value={monthlyPI ? formatCurrency(monthlyPI) : "—"} 
+        />
+        <MobileMetricRow 
+          label="Total monthly" 
+          value={scenario.results.monthlyTotal ? formatCurrency(scenario.results.monthlyTotal) : "—"}
+          isBold
+        />
+      </MobileSection>
       
       {/* Long-term Cost */}
-      <div className="px-4 py-3 border-b border-border/30">
-        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
-          Long-term Cost
-        </div>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Total payments</span>
-            <span className="tabular-nums">{scenario.results.totalCost ? formatCurrency(scenario.results.totalCost) : "—"}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Total interest</span>
-            <span className="tabular-nums">{formatCurrency(scenario.results.totalInterest)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Payoff date</span>
-            <span>{getPayoffDate(scenario)}</span>
-          </div>
-        </div>
-      </div>
+      <MobileSection title="Long-term cost">
+        <MobileMetricRow 
+          label="Total payments" 
+          value={scenario.results.totalCost ? formatCurrency(scenario.results.totalCost) : "—"} 
+        />
+        <MobileMetricRow 
+          label="Total interest" 
+          value={formatCurrency(scenario.results.totalInterest)} 
+        />
+        <MobileMetricRow 
+          label="Payoff date" 
+          value={getPayoffDate(scenario)} 
+        />
+      </MobileSection>
       
       {/* Assumptions */}
-      <div className="px-4 py-3">
-        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
-          Assumptions
-        </div>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Property value</span>
-            <span className="tabular-nums">{propertyValue ? formatCurrency(propertyValue) : "—"}</span>
-          </div>
-          {scenario.inputs.shared?.propertyTaxAnnual != null && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Property taxes</span>
-              <span className="tabular-nums">{formatCurrency(scenario.inputs.shared.propertyTaxAnnual)}/yr</span>
-            </div>
-          )}
-          {scenario.inputs.shared?.homeInsuranceMonthly != null && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Insurance</span>
-              <span className="tabular-nums">{formatCurrency(scenario.inputs.shared.homeInsuranceMonthly * 12)}/yr</span>
-            </div>
-          )}
-        </div>
-      </div>
+      <MobileSection title="Assumptions">
+        <MobileMetricRow 
+          label="Property value" 
+          value={propertyValue ? formatCurrency(propertyValue) : "—"} 
+        />
+        {scenario.inputs.shared?.propertyTaxAnnual != null && (
+          <MobileMetricRow 
+            label="Property taxes" 
+            value={`${formatCurrency(scenario.inputs.shared.propertyTaxAnnual)}/yr`} 
+          />
+        )}
+        {scenario.inputs.shared?.homeInsuranceMonthly != null && (
+          <MobileMetricRow 
+            label="Insurance" 
+            value={`${formatCurrency(scenario.inputs.shared.homeInsuranceMonthly * 12)}/yr`} 
+          />
+        )}
+      </MobileSection>
     </div>
   );
 }
@@ -551,47 +581,68 @@ export default function ComparisonDetail() {
   const validScenarioA = ready.scenarioA;
   const validScenarioB = ready.scenarioB;
 
-  // Mobile layout
+  // Mobile layout - Institutional-grade with safe areas and clean hierarchy
   if (isMobile) {
     return (
-      <div className="space-y-6 pb-8">
-        {/* Header */}
-        <div>
+      <div 
+        className="space-y-5"
+        style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}
+      >
+        {/* Header area */}
+        <div className="space-y-3">
+          {/* Back navigation */}
           <Button
             variant="ghost"
             size="sm"
-            className="-ml-2 mb-2"
+            className="-ml-2"
             onClick={() => navigate("/app/comparisons")}
           >
             <ArrowLeft className="mr-1 h-4 w-4" />
             Comparisons
           </Button>
-          <h1 className="text-2xl font-medium tracking-tight pb-5">
+          
+          {/* Title - proper wrapping, no clipping */}
+          <h1 
+            className="text-xl font-medium tracking-tight leading-snug"
+            style={{ 
+              wordBreak: 'break-word',
+              textWrap: 'balance' as any,
+            }}
+          >
             <InlineEditableName
               value={localName || validComparison.name}
               onSave={handleRename}
               maxLength={80}
             />
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          
+          {/* Meta row */}
+          <p className="text-[13px] text-muted-foreground">
             Created {formatFullDate(new Date(validComparison.created_at))}
           </p>
-        </div>
-
-        {/* Export action */}
-        <div className="flex justify-end">
-          <ComparisonExportButton
-            scenarioA={validScenarioA}
-            scenarioB={validScenarioB}
-            variant="outline"
-            size="sm"
-          />
+          
+          {/* Actions row - full width button for clarity */}
+          <div className="pt-1">
+            <ComparisonExportButton
+              scenarioA={validScenarioA}
+              scenarioB={validScenarioB}
+              variant="outline"
+              size="default"
+              className="w-full h-11"
+            />
+          </div>
         </div>
 
         {/* Quantified Decision Summary */}
         <ComparisonSummary scenarioA={validScenarioA} scenarioB={validScenarioB} />
-        <div className="space-y-6">
+        
+        {/* Scenario blocks with visual separation */}
+        <div className="space-y-8 pt-2">
           <MobileScenarioBlock scenario={validScenarioA} label="A" />
+          
+          {/* Visual separator between scenarios */}
+          <div className="border-t border-border/40" />
+          
           <MobileScenarioBlock scenario={validScenarioB} label="B" />
         </div>
       </div>
