@@ -1,10 +1,37 @@
 import { Link } from "react-router-dom";
 
+const approach = [
+  "Structured scenario modeling",
+  "Clear, labeled assumptions",
+  "Documented, exportable outputs",
+  "Neutral positioning without sales incentives",
+];
+
+const category = [
+  "Not a lead-generation tool",
+  "Not a marketplace",
+  "Not advice software",
+];
+
+const strategicValue = [
+  "Complements lenders, advisors, and platforms",
+  "Low regulatory exposure relative to lending products",
+  "High trust surface",
+  "Natural integration layer for adjacent workflows",
+];
+
+const optionality = [
+  "Advisor tooling",
+  "Enterprise licensing",
+  "Platform partnerships",
+  "White-label scenarios",
+];
+
 export default function Investors() {
   return (
     <div className="mx-auto max-w-2xl space-y-16">
       {/* Header */}
-      <section className="text-center">
+      <section>
         <h1 className="font-serif text-3xl font-normal tracking-tight sm:text-4xl">
           Investor Overview
         </h1>
@@ -13,63 +40,49 @@ export default function Investors() {
         </p>
       </section>
 
-      {/* The Problem */}
+      {/* Problem */}
       <section className="space-y-4">
         <h2 className="font-serif text-xl font-normal tracking-tight">
-          The problem
+          Problem
         </h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          Mortgage decisions are often made using inconsistent assumptions,
-          opaque calculators, and sales-driven tools. This creates confusion
-          and misalignment between consumers and the professionals advising
-          them.
+          Mortgage decisions are frequently evaluated using inconsistent tools,
+          opaque assumptions, and sales-driven calculators. This creates
+          confusion and misalignment between consumers and the professionals
+          advising them.
         </p>
       </section>
 
-      {/* The Approach */}
+      {/* Approach */}
       <section className="space-y-4">
         <h2 className="font-serif text-xl font-normal tracking-tight">
-          The approach
+          Approach
         </h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
           SettleRate does not compete as a lender or marketplace. It provides:
         </p>
         <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted-foreground">
-          <li>Structured scenario modeling</li>
-          <li>Clear, labeled assumptions</li>
-          <li>Documented, exportable outputs</li>
-          <li>Neutral positioning without sales incentives</li>
+          {approach.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
         </ul>
       </section>
 
-      {/* Why This Matters */}
+      {/* Category Positioning */}
       <section className="space-y-4">
         <h2 className="font-serif text-xl font-normal tracking-tight">
-          Why this matters
-        </h2>
-        <ul className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-          <li>Reduces friction in decision-making</li>
-          <li>Improves documentation quality</li>
-          <li>Supports professional review workflows</li>
-          <li>Aligns consumer and advisor understanding</li>
-        </ul>
-      </section>
-
-      {/* Positioning */}
-      <section className="space-y-4">
-        <h2 className="font-serif text-xl font-normal tracking-tight">
-          Positioning
+          Category positioning
         </h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          SettleRate occupies a distinct category:
+          SettleRate is:
         </p>
         <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted-foreground">
-          <li>Not a marketplace</li>
-          <li>Not a lead-generation engine</li>
-          <li>Not advice software</li>
+          {category.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
         </ul>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-          It is infrastructure for decision clarity.
+          It is infrastructure for mortgage decision clarity.
         </p>
       </section>
 
@@ -79,23 +92,21 @@ export default function Investors() {
           Strategic value
         </h2>
         <ul className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-          <li>Complements lenders, advisors, and platforms</li>
-          <li>Low regulatory exposure relative to lending products</li>
-          <li>High trust surface</li>
-          <li>Natural integration point for adjacent financial workflows</li>
+          {strategicValue.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
         </ul>
       </section>
 
-      {/* Long-Term Optionality */}
+      {/* Optionality */}
       <section className="space-y-4">
         <h2 className="font-serif text-xl font-normal tracking-tight">
-          Long-term optionality
+          Optionality
         </h2>
         <ul className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-          <li>Advisor tooling</li>
-          <li>White-label distribution</li>
-          <li>Platform partnerships</li>
-          <li>Enterprise licensing</li>
+          {optionality.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
         </ul>
       </section>
 
