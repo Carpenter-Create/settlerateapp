@@ -498,7 +498,7 @@ export default function ComparisonDetail() {
     try {
       await renameComparison({ id, name: newName });
       setLocalName(newName);
-      // Silent save - no success toast per spec
+      toast.success("Comparison renamed.");
     } catch (error) {
       toast.error("Unable to save name");
       throw error; // Re-throw so InlineEditableName knows to revert
@@ -565,10 +565,11 @@ export default function ComparisonDetail() {
             <ArrowLeft className="mr-1 h-4 w-4" />
             Comparisons
           </Button>
-          <h1 className="text-2xl font-medium tracking-tight">
+          <h1 className="text-2xl font-medium tracking-tight pb-5">
             <InlineEditableName
               value={localName || validComparison.name}
               onSave={handleRename}
+              maxLength={80}
             />
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -615,10 +616,11 @@ export default function ComparisonDetail() {
             <ArrowLeft className="mr-1 h-4 w-4" />
             Comparisons
           </Button>
-          <h1 className="text-2xl font-medium tracking-tight">
+          <h1 className="text-2xl font-medium tracking-tight pb-5">
             <InlineEditableName
               value={localName || validComparison.name}
               onSave={handleRename}
+              maxLength={80}
             />
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
