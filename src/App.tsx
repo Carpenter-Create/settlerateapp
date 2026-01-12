@@ -32,8 +32,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
-            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<Auth />} />
 
             {/* Protected app routes */}
             <Route path="/app" element={<ProtectedRoute><AppLayout><AppIndex /></AppLayout></ProtectedRoute>} />
