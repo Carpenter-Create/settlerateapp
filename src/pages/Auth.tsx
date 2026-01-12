@@ -9,10 +9,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 /**
- * Auth Page - Email+Password primary, Magic Link secondary
+ * Sign In Page - Existing users only
+ * Single responsibility: user authentication only
  */
 
-type AuthMode = "signin" | "signup" | "magic-link" | "magic-link-sent";
+type AuthMode = "signin" | "magic-link" | "magic-link-sent";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -54,48 +55,6 @@ export default function Auth() {
         } else {
           toast("Something went wrong. Please try again.");
         }
-      }
-    } catch {
-      toast("Something went wrong. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim() || !password) {
-      toast("Email and password required.");
-      return;
-    }
-
-    if (password.length < 6) {
-      toast("Password must be at least 6 characters.");
-      return;
-    }
-
-    prepareForSignIn();
-    setIsSubmitting(true);
-
-    try {
-      const { error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          emailRedirectTo: "https://app.settlerate.com/app/scenarios",
-        },
-      });
-
-      if (error) {
-        if (error.message.includes("already registered")) {
-          toast("This email is already registered. Try signing in.");
-        } else {
-          toast("Something went wrong. Please try again.");
-        }
-      } else {
-        toast("Check your email to confirm your account.");
-        setMode("signin");
-        setPassword("");
       }
     } catch {
       toast("Something went wrong. Please try again.");
@@ -166,10 +125,11 @@ export default function Auth() {
               Back to sign in
             </button>
           </div>
-          
+
           {/* Disclaimer */}
           <p className="text-center text-xs leading-relaxed text-muted-foreground/70">
-            SettleRate provides analytical tools only and does not provide lending, brokerage, legal, tax, or investment advice.
+            SettleRate provides analytical tools only and does not provide
+            lending, brokerage, legal, tax, or investment advice.
           </p>
         </div>
       </div>
@@ -229,19 +189,18 @@ export default function Auth() {
               Back to sign in
             </button>
           </div>
-          
+
           {/* Disclaimer */}
           <p className="text-center text-xs leading-relaxed text-muted-foreground/70">
-            SettleRate provides analytical tools only and does not provide lending, brokerage, legal, tax, or investment advice.
+            SettleRate provides analytical tools only and does not provide
+            lending, brokerage, legal, tax, or investment advice.
           </p>
         </div>
       </div>
     );
   }
 
-  // Sign in / Sign up form
-  const isSignUp = mode === "signup";
-
+  // Sign in form (primary)
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-space-6">
@@ -254,20 +213,15 @@ export default function Auth() {
             SettleRate
           </Link>
           <h1 className="mt-space-6 font-serif text-2xl font-normal tracking-tight">
-            {isSignUp ? "Create account" : "Sign in"}
+            Sign in
           </h1>
           <p className="mt-space-2 text-sm text-muted-foreground">
-            {isSignUp
-              ? "Create an account to save your scenarios."
-              : "Access your saved scenarios and continue your analysis."}
+            Access your saved scenarios and continue your analysis.
           </p>
         </div>
 
         {/* Form */}
-        <form
-          onSubmit={isSignUp ? handleSignUp : handleSignIn}
-          className="space-y-space-4"
-        >
+        <form onSubmit={handleSignIn} className="space-y-space-4">
           <div className="space-y-space-2">
             <Label htmlFor="email" className="text-sm font-normal">
               Email address
@@ -288,30 +242,25 @@ export default function Auth() {
               <Label htmlFor="password" className="text-sm font-normal">
                 Password
               </Label>
-              {!isSignUp && (
-                <Link
-                  to="/reset-password"
-                  className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Forgot password?
-                </Link>
-              )}
+              <Link
+                to="/reset-password"
+                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Forgot password?
+              </Link>
             </div>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={isSignUp ? "At least 6 characters" : ""}
               disabled={isSubmitting}
-              autoComplete={isSignUp ? "new-password" : "current-password"}
+              autoComplete="current-password"
             />
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
-            ) : isSignUp ? (
-              "Create account"
             ) : (
               "Sign in"
             )}
@@ -320,32 +269,26 @@ export default function Auth() {
 
         {/* Secondary actions */}
         <div className="space-y-space-3 text-center">
-          {!isSignUp && (
-            <button
-              onClick={() => setMode("magic-link")}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Email me a sign-in link
-            </button>
-          )}
+          <button
+            onClick={() => setMode("magic-link")}
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Email me a sign-in link
+          </button>
           <div>
-            <button
-              onClick={() => {
-                setMode(isSignUp ? "signin" : "signup");
-                setPassword("");
-              }}
+            <Link
+              to="/sign-up"
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              {isSignUp
-                ? "Already have an account? Sign in"
-                : "New to SettleRate? Create an account"}
-            </button>
+              Create an account
+            </Link>
           </div>
         </div>
 
         {/* Disclaimer */}
         <p className="text-center text-xs leading-relaxed text-muted-foreground/70">
-          SettleRate provides analytical tools only and does not provide lending, brokerage, legal, tax, or investment advice.
+          SettleRate provides analytical tools only and does not provide
+          lending, brokerage, legal, tax, or investment advice.
         </p>
       </div>
     </div>

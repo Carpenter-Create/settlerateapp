@@ -9,6 +9,7 @@ import { AdminRoute } from "@/components/admin/AdminRoute";
 
 // Public pages
 import Auth from "./pages/Auth";
+import SignUp from "./pages/SignUp";
 import ResetPassword from "./pages/ResetPassword";
 import ResetPasswordConfirm from "./pages/ResetPasswordConfirm";
 import NotFound from "./pages/NotFound";
@@ -33,6 +34,7 @@ const App = () => (
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Auth />} />
+            <Route path="/sign-up" element={<SignUp />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
 
