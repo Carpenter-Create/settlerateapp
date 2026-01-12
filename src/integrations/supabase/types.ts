@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          target_email: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_email?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_email?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       advisor_access_requests: {
         Row: {
           company: string | null
@@ -413,6 +443,14 @@ export type Database = {
       }
       is_admin: { Args: { uid: string }; Returns: boolean }
       is_advisor: { Args: { uid: string }; Returns: boolean }
+      list_admins: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          user_id: string
+        }[]
+      }
       list_pending_advisor_requests: {
         Args: never
         Returns: {
@@ -436,6 +474,23 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      list_recent_admin_promotions: {
+        Args: { p_limit?: number }
+        Returns: {
+          action: string
+          actor_email: string
+          actor_user_id: string
+          created_at: string
+          id: string
+          target_email: string
+          target_user_id: string
+        }[]
+      }
+      log_webhook_admin_ignored: {
+        Args: { p_email: string; p_event_type: string; p_user_id: string }
+        Returns: undefined
+      }
+      promote_to_admin: { Args: { p_email: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "advisor"
