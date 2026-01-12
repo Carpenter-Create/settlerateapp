@@ -161,7 +161,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
         {/* Mobile Navigation Sheet */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <SheetContent side="right" className="w-full max-w-sm border-l-0 p-0">
+          <SheetContent side="right" className="w-full max-w-sm border-l-0 p-0" hideCloseButton>
             <div className="flex h-full flex-col">
               {/* Header with close button */}
               <div className="flex h-14 items-center justify-between px-4">
