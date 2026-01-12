@@ -284,9 +284,19 @@ export default function Auth() {
             />
           </div>
           <div className="space-y-space-2">
-            <Label htmlFor="password" className="text-sm font-normal">
-              Password
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-sm font-normal">
+                Password
+              </Label>
+              {!isSignUp && (
+                <Link
+                  to="/reset-password"
+                  className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Forgot password?
+                </Link>
+              )}
+            </div>
             <Input
               id="password"
               type="password"
