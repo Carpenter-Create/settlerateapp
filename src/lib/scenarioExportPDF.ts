@@ -110,10 +110,31 @@ export function generatePDFContent(data: ComparisonExportData): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mortgage Scenario Analysis - SettleRate</title>
   <style>
-    /* Page Setup - US Letter (8.5 × 11) */
+    /* Page Setup - US Letter (8.5 × 11) with page footer */
     @page {
       size: letter;
-      margin: 0.75in;
+      margin: 0.75in 0.75in 1in 0.75in;
+      
+      @bottom-left {
+        content: "SettleRate™ — Mortgage decision support\\Ahttps://settlerate.com";
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 6pt;
+        color: rgba(90, 90, 95, 0.5);
+        white-space: pre-line;
+        line-height: 1.4;
+        vertical-align: top;
+      }
+      
+      @bottom-right {
+        content: "Generated on ${formatDate(generatedAt)}\\APage " counter(page) " of " counter(pages);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 6pt;
+        color: rgba(90, 90, 95, 0.5);
+        text-align: right;
+        white-space: pre-line;
+        line-height: 1.4;
+        vertical-align: top;
+      }
     }
 
     * {
@@ -371,7 +392,7 @@ export function generatePDFContent(data: ComparisonExportData): string {
       line-height: 1.6;
     }
 
-    /* Footer Watermark - Lender-Safe */
+    /* Footer - Disclosure only (attribution is in @page margin) */
     .footer {
       margin-top: 32px;
       padding-top: 16px;
@@ -382,33 +403,6 @@ export function generatePDFContent(data: ComparisonExportData): string {
       font-size: 7pt;
       color: rgba(90, 90, 95, 0.6);
       text-align: center;
-      margin-bottom: 16px;
-    }
-
-    .footer-brand {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      padding-top: 12px;
-    }
-
-    .footer-brand-left {
-      font-size: 7pt;
-      color: rgba(90, 90, 95, 0.55);
-    }
-
-    .footer-brand-left .brand-primary {
-      margin-bottom: 2px;
-    }
-
-    .footer-brand-left .brand-url {
-      font-size: 6.5pt;
-    }
-
-    .footer-brand-right {
-      text-align: right;
-      font-size: 7pt;
-      color: rgba(90, 90, 95, 0.55);
     }
 
     /* Print Styles */
@@ -543,19 +537,10 @@ export function generatePDFContent(data: ComparisonExportData): string {
       </p>
     </div>
 
-    <!-- Footer Watermark - Lender-Safe -->
+    <!-- Footer - Disclosure only (attribution in page margin) -->
     <footer class="footer">
       <div class="footer-disclosure">
         SettleRate provides analytical modeling only and does not originate, broker, or recommend mortgage products.
-      </div>
-      <div class="footer-brand">
-        <div class="footer-brand-left">
-          <div class="brand-primary">SettleRate™ — Mortgage decision support</div>
-          <div class="brand-url">https://settlerate.com</div>
-        </div>
-        <div class="footer-brand-right">
-          Generated on ${formatDate(generatedAt)}
-        </div>
       </div>
     </footer>
   </div>
