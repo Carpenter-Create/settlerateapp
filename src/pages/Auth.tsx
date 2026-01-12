@@ -16,12 +16,15 @@ import {
   AuthSecondaryLink,
   AuthDisclaimer,
   AuthConfirmationState,
+  AuthLegalCheckbox,
+  AuthEscapeLink,
 } from "@/components/auth/AuthShell";
 
 /**
  * Unified Access Page - Sign In / Create Account
  * Single page with two modes controlled by query param: ?mode=signin | ?mode=create
  * 
+ * Typography: UI/system font ONLY. No Source Serif 4 on auth pages.
  * Layout and styling are locked via AuthShell component.
  * Do not add inline spacing overrides.
  */
@@ -43,6 +46,7 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Redirect if already authenticated (non-anonymous)
   useEffect(() => {
@@ -56,6 +60,7 @@ export default function Auth() {
   useEffect(() => {
     setViewState("form");
     setPassword("");
+    setAgreedToTerms(false);
   }, [mode]);
 
   const setMode = (newMode: AccessMode) => {
@@ -110,6 +115,10 @@ export default function Auth() {
     }
     if (password.length < 12) {
       toast("Password must be at least 12 characters.");
+      return;
+    }
+    if (!agreedToTerms) {
+      toast("Please agree to the Privacy Policy and Terms of Service.");
       return;
     }
 
@@ -274,6 +283,14 @@ export default function Auth() {
           )}
         </div>
 
+        {/* Legal checkbox for create account */}
+        {mode === "create" && (
+          <AuthLegalCheckbox
+            checked={agreedToTerms}
+            onCheckedChange={setAgreedToTerms}
+          />
+        )}
+
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -300,6 +317,9 @@ export default function Auth() {
           </AuthSecondaryLink>
         </AuthSecondaryAction>
       )}
+
+      {/* Website escape link */}
+      <AuthEscapeLink />
 
       {/* Disclaimer */}
       <AuthDisclaimer />

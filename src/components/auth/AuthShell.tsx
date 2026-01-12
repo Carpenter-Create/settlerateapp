@@ -1,11 +1,14 @@
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 /**
  * AuthShell - Brand-locked authentication page layout
  * 
  * Single source of truth for auth page structure, typography, and spacing.
  * All auth pages MUST use this shell. Do not inline custom spacing.
+ * 
+ * Typography: UI/system font ONLY. No Source Serif 4 on auth pages.
  * 
  * Spacing and typography are driven by --auth-* tokens in index.css.
  */
@@ -39,6 +42,11 @@ interface AuthDisclaimerProps {
   text?: string;
 }
 
+interface AuthLegalCheckboxProps {
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}
+
 // Main shell container
 export function AuthShell({ children, className }: AuthShellProps) {
   return (
@@ -50,7 +58,7 @@ export function AuthShell({ children, className }: AuthShellProps) {
   );
 }
 
-// Brand + title + subtitle header
+// Brand + title + subtitle header (UI font only)
 export function AuthHeader({ title, subtitle }: AuthHeaderProps) {
   return (
     <div className="text-center">
@@ -103,6 +111,31 @@ export function AuthForm({ children, onSubmit }: AuthFormProps) {
   );
 }
 
+// Legal checkbox with Privacy Policy and Terms of Service
+export function AuthLegalCheckbox({ checked, onCheckedChange }: AuthLegalCheckboxProps) {
+  return (
+    <div className="auth-legal-checkbox">
+      <Checkbox
+        id="legal-agreement"
+        checked={checked}
+        onCheckedChange={(val) => onCheckedChange(val === true)}
+        className="mt-0.5"
+      />
+      <label htmlFor="legal-agreement">
+        I agree to the{" "}
+        <a href="/privacy" target="_blank" rel="noopener noreferrer">
+          Privacy Policy
+        </a>{" "}
+        and{" "}
+        <a href="/terms" target="_blank" rel="noopener noreferrer">
+          Terms of Service
+        </a>
+        .
+      </label>
+    </div>
+  );
+}
+
 // Secondary action container (magic link, "already have account" etc.)
 export function AuthSecondaryAction({ children, className }: AuthSecondaryActionProps) {
   return (
@@ -131,6 +164,18 @@ export function AuthSecondaryLink({
     >
       {children}
     </button>
+  );
+}
+
+// Website escape hatch link
+export function AuthEscapeLink() {
+  return (
+    <a
+      href="https://settlerate.com"
+      className="auth-escape-link"
+    >
+      ← Back to SettleRate.com
+    </a>
   );
 }
 
@@ -180,6 +225,7 @@ export function AuthConfirmationState({
           {actionLabel}
         </button>
       </div>
+      <AuthEscapeLink />
       <AuthDisclaimer />
     </AuthShell>
   );
