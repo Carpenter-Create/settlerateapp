@@ -384,18 +384,19 @@
     gap: var(--auth-section-gap);
   }
 
-  /* Typography */
+  /* Typography — UI font only on auth pages (no serif) */
   .auth-h1 {
     margin-top: var(--auth-section-gap);
-    font-family: var(--font-serif, ui-serif, Georgia, serif);
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: var(--auth-h1-size);
-    font-weight: 400;
+    font-weight: 500;
     letter-spacing: -0.01em;
     color: hsl(var(--foreground));
   }
 
   .auth-subtitle {
     margin-top: 8px;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: var(--auth-subtitle-size);
     color: hsl(var(--muted-foreground));
   }
@@ -440,6 +441,31 @@
     margin-top: calc(var(--auth-cta-gap) - var(--auth-field-gap));
   }
 
+  /* Legal checkbox */
+  .auth-legal-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .auth-legal-checkbox label {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .auth-legal-checkbox a {
+    color: hsl(var(--muted-foreground));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.15s ease;
+  }
+
+  .auth-legal-checkbox a:hover {
+    color: hsl(var(--foreground));
+  }
+
   /* Secondary action (magic link, switch mode) */
   .auth-secondary-action {
     text-align: center;
@@ -463,6 +489,19 @@
     cursor: not-allowed;
   }
 
+  /* Website escape link */
+  .auth-escape-link {
+    display: block;
+    text-align: center;
+    font-size: 0.75rem;
+    color: hsl(var(--muted-foreground) / 0.6);
+    transition: color 0.15s ease;
+  }
+
+  .auth-escape-link:hover {
+    color: hsl(var(--muted-foreground));
+  }
+
   /* Disclaimer */
   .auth-disclaimer {
     text-align: center;
@@ -475,6 +514,7 @@
   /* Confirmation states */
   .auth-confirmation-body {
     margin-top: 16px;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: var(--auth-subtitle-size);
     line-height: 1.6;
     color: hsl(var(--muted-foreground));
