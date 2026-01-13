@@ -58,7 +58,7 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SwipeToDelete } from "@/components/mobile/SwipeToDelete";
-import { MobileCard, MobileCardMetadata } from "@/components/mobile/MobileCard";
+import { ListCard } from "@/components/ui/ListCard";
 import { toast } from "sonner";
 
 // ============================================================================
@@ -362,17 +362,12 @@ function MobileComparisonCard({
 }: MobileComparisonCardProps) {
   return (
     <SwipeToDelete onDelete={onDelete} disabled={isDeleting}>
-      <MobileCard onClick={onView} showChevron>
-        <p 
-          className="text-base font-medium text-foreground cursor-pointer hover:text-muted-foreground transition-colors"
-          onClick={(e) => { e.stopPropagation(); onRename(); }}
-        >
-          {comparison.name}
-        </p>
-        <MobileCardMetadata>
-          <span>{formatDate(new Date(comparison.created_at))}</span>
-        </MobileCardMetadata>
-      </MobileCard>
+      <ListCard
+        title={comparison.name}
+        metadata={formatDate(new Date(comparison.created_at))}
+        onClick={onView}
+        onTitleClick={onRename}
+      />
     </SwipeToDelete>
   );
 }
@@ -548,9 +543,9 @@ export default function ComparisonsIndex() {
         isMobile ? (
           // Mobile: Card-based list with swipe-to-delete
           <div className="space-y-3 pb-24">
-            {/* Swipe hint (shown only on first use) */}
-            <p className="text-xs text-muted-foreground px-1">
-              Swipe left to delete
+            {/* Swipe hint */}
+            <p className="text-xs text-muted-foreground/60 px-1">
+              Swipe to delete
             </p>
             
             {comparisons.map((comparison) => (

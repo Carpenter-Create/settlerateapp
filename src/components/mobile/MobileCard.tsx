@@ -129,7 +129,7 @@ export function MobileCardMetric({ children, suffix, className }: MobileCardMetr
   return (
     <p 
       className={cn(
-        "mt-1.5 font-serif font-normal tracking-tight text-foreground",
+        "mt-1.5 font-medium text-foreground",
         className
       )}
       style={{ fontSize: "var(--mobile-metric-size)" }}
@@ -137,7 +137,7 @@ export function MobileCardMetric({ children, suffix, className }: MobileCardMetr
       {children}
       {suffix && (
         <span 
-          className="text-muted-foreground" 
+          className="text-muted-foreground font-normal" 
           style={{ fontSize: "var(--mobile-label-size)", marginLeft: "0.25rem" }}
         >
           {suffix}

@@ -10,7 +10,6 @@ import { ScenarioData } from "@/lib/scenarioContract";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
 import {
   MobileCard,
-  MobileCardLabel,
   MobileCardMetric,
   MobileCardMetadata,
   MobileCardDot,
@@ -146,10 +145,12 @@ export function ScenarioCard({ scenario, onOpen, onDuplicate, onDelete }: Scenar
 
   return (
     <MobileCard onClick={() => onOpen(scenario)} actions={actions}>
-      <MobileCardLabel>
+      {/* Title: body font, medium weight */}
+      <p className="text-base font-medium text-foreground line-clamp-2">
         {scenario.name || "Untitled scenario"}
-      </MobileCardLabel>
+      </p>
       
+      {/* Metric: body font */}
       <MobileCardMetric suffix="/ month">
         {monthlyPayment != null ? formatCurrency(monthlyPayment) : "—"}
       </MobileCardMetric>
