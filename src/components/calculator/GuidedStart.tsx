@@ -541,13 +541,13 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
     <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Discard inputs?</AlertDialogTitle>
+          <AlertDialogTitle>Discard changes</AlertDialogTitle>
           <AlertDialogDescription>
-            Current inputs will not be saved.
+            Changes will not be saved.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleCancelDiscard}>Continue</AlertDialogCancel>
+          <AlertDialogCancel onClick={handleCancelDiscard}>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={handleConfirmDiscard}>Discard</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

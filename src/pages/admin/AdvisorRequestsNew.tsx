@@ -199,7 +199,7 @@ export default function AdvisorRequestsAdmin() {
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="font-serif text-xl">
-                Review Request
+                Advisor request
               </DialogTitle>
             </DialogHeader>
 

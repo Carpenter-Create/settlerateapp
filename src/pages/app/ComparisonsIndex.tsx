@@ -260,10 +260,7 @@ function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm, isCreating
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent side="bottom" className="h-[85vh] flex flex-col">
           <SheetHeader>
-            <SheetTitle>Select scenarios to compare</SheetTitle>
-            <SheetDescription>
-              Choose exactly two scenarios for side-by-side comparison.
-            </SheetDescription>
+            <SheetTitle>New comparison</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-hidden flex flex-col py-4">
             {content}
@@ -282,10 +279,7 @@ function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm, isCreating
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Select scenarios to compare</DialogTitle>
-          <DialogDescription>
-            Choose exactly two scenarios for side-by-side comparison.
-          </DialogDescription>
+          <DialogTitle>New comparison</DialogTitle>
         </DialogHeader>
         {content}
         {errorBlock}
@@ -726,9 +720,9 @@ export default function ComparisonsIndex() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this comparison?</AlertDialogTitle>
+            <AlertDialogTitle>Delete comparison</AlertDialogTitle>
             <AlertDialogDescription>
-              This cannot be undone. The comparison "{comparisonToDelete?.name}" will be permanently removed.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -738,7 +732,7 @@ export default function ComparisonsIndex() {
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

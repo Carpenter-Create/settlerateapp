@@ -378,9 +378,8 @@ export default function ScenarioDetail() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete scenario?</AlertDialogTitle>
+            <AlertDialogTitle>Delete scenario</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete "{scenario.name || "Untitled scenario"}". 
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -391,7 +390,7 @@ export default function ScenarioDetail() {
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
