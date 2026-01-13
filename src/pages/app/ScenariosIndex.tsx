@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageShell } from "@/components/layout/PageShell";
 import { useScenarios } from "@/hooks/useScenarios";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { ScenarioCard } from "@/components/scenarios/ScenarioCard";
@@ -179,66 +180,51 @@ export default function ScenariosIndex() {
   // Loading state
   if (!isLoaded) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <Skeleton className="h-7 w-32" />
-            <Skeleton className="mt-2 h-4 w-64" />
-          </div>
-          {!isMobile && <Skeleton className="h-9 w-32" />}
-        </div>
+      <PageShell title="Scenarios" subtitle="Saved mortgage models for comparison and export.">
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className={isMobile ? "h-28 w-full rounded-[14px]" : "h-14 w-full"} />
           ))}
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   // Empty state
   if (sortedScenarios.length === 0) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center px-4">
-        <h1 className="text-2xl font-medium tracking-tight">
-          No saved scenarios
-        </h1>
-        <p className="mt-3 max-w-md text-sm text-muted-foreground">
-          Create your first scenario to model a purchase or refinance.
-        </p>
-        <Button asChild className="mt-8">
-          <Link to="/app/calculator">
-            <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
-            New scenario
-          </Link>
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6 md:space-y-8">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-medium tracking-tight">
-            Scenarios
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Saved mortgage models for comparison and export.
+      <PageShell title="Scenarios" subtitle="Saved mortgage models for comparison and export.">
+        <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
+          <p className="text-sm font-medium">No saved scenarios</p>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+            Create your first scenario to model a purchase or refinance.
           </p>
-        </div>
-        {/* Desktop action button */}
-        {!isMobile && (
-          <Button asChild variant="outline" className="rounded-md">
+          <Button asChild className="mt-6">
             <Link to="/app/calculator">
               <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
               New scenario
             </Link>
           </Button>
-        )}
-      </div>
+        </div>
+      </PageShell>
+    );
+  }
 
+  const desktopActions = !isMobile ? (
+    <Button asChild variant="outline">
+      <Link to="/app/calculator">
+        <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
+        New scenario
+      </Link>
+    </Button>
+  ) : undefined;
+
+  return (
+    <PageShell
+      title="Scenarios"
+      subtitle="Saved mortgage models for comparison and export."
+      actions={desktopActions}
+    >
       {/* Mobile: Card-based layout */}
       {isMobile ? (
         <div className="space-y-3 pb-20">
@@ -257,30 +243,20 @@ export default function ScenariosIndex() {
         <div className="border border-border rounded-sm overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/40 hover:bg-muted/40">
-                <TableHead className="w-[35%] h-10 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Name
-                </TableHead>
-                <TableHead className="h-10 text-right text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Monthly
-                </TableHead>
-                <TableHead className="h-10 text-right text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Rate
-                </TableHead>
-                <TableHead className="hidden h-10 text-right text-xs font-medium uppercase tracking-wide text-muted-foreground md:table-cell">
-                  Loan
-                </TableHead>
-                <TableHead className="hidden h-10 text-right text-xs font-medium uppercase tracking-wide text-muted-foreground lg:table-cell">
-                  Updated
-                </TableHead>
-                <TableHead className="w-[50px] h-10"></TableHead>
+              <TableRow className="hover:bg-muted/40">
+                <TableHead className="w-[35%]">Name</TableHead>
+                <TableHead className="text-right">Monthly</TableHead>
+                <TableHead className="text-right">Rate</TableHead>
+                <TableHead className="hidden text-right md:table-cell">Loan</TableHead>
+                <TableHead className="hidden text-right lg:table-cell">Updated</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedScenarios.map((scenario) => (
                 <TableRow
                   key={scenario.id}
-                  className="cursor-pointer h-14 border-b border-border/50 last:border-b-0 hover:bg-muted/30"
+                  className="cursor-pointer"
                   onClick={() => handleRowClick(scenario)}
                   onMouseEnter={() => setHoveredRowId(scenario.id)}
                   onMouseLeave={() => setHoveredRowId(null)}
@@ -377,6 +353,6 @@ export default function ScenariosIndex() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageShell>
   );
 }
