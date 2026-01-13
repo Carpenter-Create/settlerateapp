@@ -237,6 +237,80 @@ export type Database = {
         }
         Relationships: []
       }
+      export_files: {
+        Row: {
+          checksum: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          export_version: string
+          id: string
+          owner_user_id: string
+          storage_path: string
+        }
+        Insert: {
+          checksum?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          export_version?: string
+          id?: string
+          owner_user_id: string
+          storage_path: string
+        }
+        Update: {
+          checksum?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          export_version?: string
+          id?: string
+          owner_user_id?: string
+          storage_path?: string
+        }
+        Relationships: []
+      }
+      export_shares: {
+        Row: {
+          created_at: string
+          created_by_user_id: string
+          expires_at: string | null
+          export_file_id: string
+          id: string
+          permission: string
+          revoked_at: string | null
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_user_id: string
+          expires_at?: string | null
+          export_file_id: string
+          id?: string
+          permission?: string
+          revoked_at?: string | null
+          token: string
+        }
+        Update: {
+          created_at?: string
+          created_by_user_id?: string
+          expires_at?: string | null
+          export_file_id?: string
+          id?: string
+          permission?: string
+          revoked_at?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "export_shares_export_file_id_fkey"
+            columns: ["export_file_id"]
+            isOneToOne: false
+            referencedRelation: "export_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

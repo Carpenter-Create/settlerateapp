@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import ResetPasswordConfirm from "./pages/ResetPasswordConfirm";
 import NotFound from "./pages/NotFound";
+import Share from "./pages/Share";
 
 // App pages
 import ScenariosIndex from "./pages/app/ScenariosIndex";
@@ -41,6 +42,9 @@ const App = () => (
             <Route path="/sign-up" element={<Navigate to="/?mode=create" replace />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
+            
+            {/* Public share route - no app chrome */}
+            <Route path="/share/:token" element={<Share />} />
 
             {/* Protected app routes */}
             <Route path="/app" element={<Navigate to="/app/scenarios" replace />} />
