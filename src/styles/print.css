@@ -1,0 +1,59 @@
+/**
+ * Print CSS - Isolation styles for in-page printing
+ * 
+ * Rules:
+ * - Screen: #print-root is hidden
+ * - Print: Only #print-root is visible, app shell is hidden
+ * - Page margins: 18mm x 16mm (professional PDF layout)
+ */
+
+/* Screen: Hide print content */
+@media screen {
+  #print-root {
+    display: none !important;
+  }
+}
+
+/* Print: Show only print content, hide everything else */
+@media print {
+  /* Hide the entire app shell */
+  body > *:not(#print-root) {
+    display: none !important;
+  }
+  
+  /* Show print root */
+  #print-root {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+  
+  /* Print content wrapper */
+  #print-root .print-content {
+    display: block !important;
+  }
+  
+  /* Page settings */
+  @page {
+    size: letter;
+    margin: 18mm 16mm;
+  }
+  
+  /* Prevent page breaks inside sections */
+  .section,
+  table,
+  tr {
+    page-break-inside: avoid;
+  }
+  
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+  
+  /* Force background colors in print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

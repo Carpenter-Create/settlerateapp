@@ -2,21 +2,27 @@
  * PDF Generation Edge Function
  * 
  * Generates real PDF documents from scenario/comparison data.
- * Uses server-side HTML rendering to PDF conversion.
+ * Uses jsPDF for server-side PDF generation.
  * 
  * Endpoints:
  * GET /generate-pdf?type=scenario&id=xxx
  * GET /generate-pdf?type=comparison&id=xxx
  * 
+ * Returns:
+ * - Content-Type: application/pdf
+ * - Content-Disposition: attachment; filename="..."
+ * 
  * Security:
  * - Authenticates user via JWT
  * - Verifies ownership of the resource (RLS-safe)
- * - Returns 403 if user doesn't own the resource
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+// Import jsPDF for PDF generation
+// @deno-types="https://esm.sh/jspdf@2.5.1"
+import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 
-// CORS headers for browser requests
+// CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -25,7 +31,6 @@ const corsHeaders = {
 // Supabase configuration
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 // ============================================================================
 // TYPES
@@ -69,13 +74,6 @@ interface ScenarioData {
   name: string;
   inputs: ScenarioInputs;
   results: ScenarioResults;
-}
-
-interface ComparisonData {
-  id: string;
-  name: string;
-  scenario_a_id: string;
-  scenario_b_id: string;
 }
 
 // ============================================================================
@@ -150,21 +148,10 @@ function formatLtvDelta(value: number): string {
   return `${prefix}${value.toFixed(1)} pts`;
 }
 
-function formatRateDeltaForCopy(bps: number, includeBps = false): string {
-  const absPercent = Math.abs(bps / 100);
-  const percentStr = `${absPercent.toFixed(2)}%`;
-  if (!includeBps || Math.abs(bps) < 1) return percentStr;
-  const absBps = Math.abs(bps);
-  const bpsStr = absBps < 10 ? `${absBps.toFixed(1)} basis points` : `${Math.round(absBps)} basis points`;
-  return `${percentStr} (${bpsStr})`;
-}
-
 function generateSummaryText(a: ScenarioData, b: ScenarioData): string {
   const deltas = calculateDeltas(a, b);
   const monthlyDiff = Math.abs(deltas.monthlyPaymentDelta);
   const totalDiff = Math.abs(deltas.totalCostDelta);
-  const interestDiff = Math.abs(deltas.interestRateDelta);
-  const ltvDiff = Math.abs(deltas.ltvDelta);
   
   const aName = a.name || "Scenario A";
   const bName = b.name || "Scenario B";
@@ -174,225 +161,20 @@ function generateSummaryText(a: ScenarioData, b: ScenarioData): string {
   let summary = `${lowerMonthly} has a lower monthly payment by ${formatCurrency(monthlyDiff)}, `;
   
   if (deltas.totalCostDelta > 0) {
-    summary += `while ${higherMonthly} results in ${formatCurrency(totalDiff)} more in total payments over the loan term. `;
+    summary += `while ${higherMonthly} results in ${formatCurrency(totalDiff)} more in total payments over the loan term.`;
   } else {
-    summary += `and also results in ${formatCurrency(totalDiff)} less in total payments over the loan term. `;
-  }
-  
-  const contextParts: string[] = [];
-  if (interestDiff >= 10) {
-    const rateDirection = deltas.interestRateDelta > 0 ? "higher" : "lower";
-    contextParts.push(`a ${formatRateDeltaForCopy(deltas.interestRateDelta, true)} ${rateDirection} interest rate`);
-  }
-  if (ltvDiff >= 1) {
-    const ltvDirection = deltas.ltvDelta > 0 ? "higher" : "lower";
-    contextParts.push(`a ${Math.abs(deltas.ltvDelta).toFixed(1)}% ${ltvDirection} loan-to-value ratio`);
-  }
-  
-  if (contextParts.length > 0) {
-    summary += `These differences are primarily driven by ${contextParts.join(" and ")}.`;
+    summary += `and also results in ${formatCurrency(totalDiff)} less in total payments over the loan term.`;
   }
   
   return summary;
 }
 
 // ============================================================================
-// HTML GENERATION (SHARED STYLES)
+// PDF GENERATION - SCENARIO
 // ============================================================================
 
-const SHARED_STYLES = `
-  @page {
-    size: letter;
-    margin: 18mm 16mm;
-  }
-
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    font-size: 10pt;
-    line-height: 1.5;
-    color: #111;
-    background: #fff;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  
-  .export-page {
-    background: #fff;
-    color: #111;
-    padding: 0;
-  }
-  
-  .export-content {
-    max-width: none;
-    margin: 0;
-  }
-  
-  .header {
-    margin-bottom: 24px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #d0d0d0;
-  }
-  
-  .header-brand {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 10pt;
-    color: #666;
-    margin-bottom: 16px;
-  }
-  
-  .header-title {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 18pt;
-    font-weight: 500;
-    color: #1a1a1a;
-    margin-bottom: 4px;
-  }
-  
-  .header-meta {
-    font-size: 9pt;
-    color: #666;
-  }
-  
-  .section {
-    margin-bottom: 24px;
-    page-break-inside: avoid;
-  }
-  
-  .section-title {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 11pt;
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 10px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid #e8e8e8;
-  }
-  
-  .summary-text {
-    font-size: 9pt;
-    line-height: 1.65;
-    color: #333;
-    margin-bottom: 16px;
-  }
-  
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 9pt;
-  }
-  
-  th {
-    text-align: left;
-    font-weight: 500;
-    padding: 10px 12px;
-    border-bottom: 1px solid #d0d0d0;
-    color: #333;
-  }
-  
-  th:first-child { padding-left: 0; }
-  th:last-child { padding-right: 0; }
-  th:not(:first-child) { text-align: right; }
-  
-  td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: top;
-  }
-  
-  td:first-child {
-    color: #666;
-    padding-left: 0;
-  }
-  
-  td:last-child { padding-right: 0; }
-  
-  td:not(:first-child) {
-    text-align: right;
-    font-family: "SF Mono", Monaco, "Courier New", monospace;
-    font-size: 9pt;
-  }
-  
-  tr:last-child td { border-bottom: none; }
-  
-  .total-row td {
-    padding-top: 10px;
-    border-top: 1px solid #d0d0d0;
-    font-weight: 500;
-  }
-  
-  .total-row td:first-child { color: #333; }
-  
-  .comparison-table th:first-child { width: 40%; }
-  .comparison-table th:not(:first-child) { width: 30%; }
-  
-  .key-diff-table {
-    font-size: 8pt;
-    border-collapse: collapse;
-  }
-  
-  .key-diff-table td {
-    padding: 6px 16px 6px 0;
-    border-bottom: 1px solid #e8e8e8;
-    vertical-align: top;
-  }
-  
-  .key-diff-label {
-    color: #666;
-    display: block;
-    font-size: 7pt;
-    margin-bottom: 2px;
-  }
-  
-  .key-diff-value {
-    font-family: "SF Mono", Monaco, monospace;
-  }
-  
-  .notes-list {
-    list-style: none;
-    padding: 0;
-    color: #666;
-    font-size: 9pt;
-  }
-  
-  .notes-list li {
-    padding-left: 14px;
-    position: relative;
-    margin-bottom: 5px;
-    line-height: 1.5;
-  }
-  
-  .notes-list li::before {
-    content: "•";
-    position: absolute;
-    left: 0;
-    color: #999;
-  }
-  
-  .footer {
-    margin-top: 32px;
-    padding-top: 12px;
-    border-top: 1px solid #d0d0d0;
-  }
-  
-  .footer-disclaimer {
-    font-size: 8pt;
-    color: #888;
-    line-height: 1.5;
-    text-align: center;
-  }
-`;
-
-// ============================================================================
-// HTML GENERATION
-// ============================================================================
-
-function generateScenarioHTML(scenario: ScenarioData): string {
+function generateScenarioPDF(scenario: ScenarioData): Uint8Array {
+  const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "letter" });
   const dateStr = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -404,14 +186,14 @@ function generateScenarioHTML(scenario: ScenarioData): string {
   const isPurchase = inputs.mode === "purchase";
   
   const propertyValue = isPurchase 
-    ? inputs.purchase!.purchasePrice 
+    ? inputs.purchase?.purchasePrice || 0
     : (inputs.refinance?.estimatedHomeValue ?? results.loanAmount);
   
-  const downPaymentAmount = isPurchase
+  const downPaymentAmount = isPurchase && inputs.purchase
     ? calculateDownPaymentAmount(
-        inputs.purchase!.purchasePrice,
-        inputs.purchase!.downPayment,
-        inputs.purchase!.downPaymentType
+        inputs.purchase.purchasePrice,
+        inputs.purchase.downPayment,
+        inputs.purchase.downPaymentType
       )
     : 0;
 
@@ -422,88 +204,174 @@ function generateScenarioHTML(scenario: ScenarioData): string {
     month: "long",
   });
 
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Mortgage Scenario Summary - ${name || "Untitled"}</title>
-  <style>${SHARED_STYLES}</style>
-</head>
-<body>
-  <div class="export-page">
-    <div class="export-content">
-      <header class="header">
-        <p class="header-brand">SettleRate</p>
-        <h1 class="header-title">Mortgage Scenario Summary</h1>
-        <p class="header-meta">
-          Scenario: ${name || "Untitled"} • ID: ${shortId} • Generated: ${dateStr}
-        </p>
-      </header>
-      
-      <section class="section">
-        <h2 class="section-title">Scenario Overview</h2>
-        <table>
-          <tr><td>Loan type</td><td>${TRANSACTION_TYPE_LABELS[inputs.mode]}</td></tr>
-          <tr><td>Property value</td><td>${formatCurrency(propertyValue)}</td></tr>
-          ${isPurchase ? `
-          <tr><td>Down payment</td><td>${formatCurrency(downPaymentAmount)} (${formatPercent(downPaymentAmount / propertyValue * 100)})</td></tr>
-          ` : `
-          <tr><td>Current loan balance</td><td>${formatCurrency(inputs.refinance!.currentLoanBalance)}</td></tr>
-          `}
-          <tr><td>Loan amount</td><td>${formatCurrency(results.loanAmount)}</td></tr>
-          <tr><td>Loan term</td><td>${inputs.shared.loanTerm} years</td></tr>
-          <tr><td>Interest rate (assumed)</td><td>${formatPercent(inputs.shared.interestRate)}</td></tr>
-          <tr><td>Loan-to-value ratio</td><td>${formatPercent(results.ltvRatio)}</td></tr>
-        </table>
-      </section>
-      
-      <section class="section">
-        <h2 class="section-title">Monthly Payment</h2>
-        <table>
-          <tr><td>Principal & interest</td><td>${formatCurrency(results.monthlyPrincipalInterest)}</td></tr>
-          ${results.monthlyPropertyTax > 0 ? `<tr><td>Property tax</td><td>${formatCurrency(results.monthlyPropertyTax)}</td></tr>` : ""}
-          ${results.monthlyHomeInsurance > 0 ? `<tr><td>Home insurance</td><td>${formatCurrency(results.monthlyHomeInsurance)}</td></tr>` : ""}
-          ${results.monthlyPMI > 0 ? `<tr><td>PMI</td><td>${formatCurrency(results.monthlyPMI)}</td></tr>` : ""}
-          ${results.monthlyHOA > 0 ? `<tr><td>HOA</td><td>${formatCurrency(results.monthlyHOA)}</td></tr>` : ""}
-          <tr class="total-row"><td>Total monthly payment</td><td>${formatCurrency(results.monthlyTotal)}</td></tr>
-        </table>
-      </section>
-      
-      <section class="section">
-        <h2 class="section-title">Long-Term Cost Summary</h2>
-        <table>
-          <tr><td>Total payments over term</td><td>${formatCurrency(results.totalCost)}</td></tr>
-          <tr><td>Total interest paid</td><td>${formatCurrency(results.totalInterest)}</td></tr>
-          <tr><td>Projected payoff date</td><td>${payoffDateStr}</td></tr>
-        </table>
-      </section>
-      
-      <section class="section">
-        <h2 class="section-title">Methodology</h2>
-        <ul class="notes-list">
-          <li>Calculations are based on standard amortization formulas.</li>
-          <li>Rates shown are assumed inputs, not lender quotes.</li>
-          <li>Property taxes and insurance are estimates where applicable.</li>
-          <li>Results are intended for comparison and planning purposes only.</li>
-        </ul>
-      </section>
-      
-      <footer class="footer">
-        <p class="footer-disclaimer">
-          This document is provided for analytical and planning purposes only. SettleRate does not originate, 
-          broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute 
-          a loan offer, guarantee, or financial advice.
-        </p>
-      </footer>
-    </div>
-  </div>
-</body>
-</html>
-  `.trim();
+  // Page setup
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 50;
+  const contentWidth = pageWidth - (margin * 2);
+  let y = margin;
+
+  // Header
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  doc.text("SettleRate", margin, y);
+  y += 24;
+  
+  doc.setFontSize(18);
+  doc.setTextColor(30, 30, 30);
+  doc.text("Mortgage Scenario Summary", margin, y);
+  y += 16;
+  
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Scenario: ${name || "Untitled"}  •  ID: ${shortId}  •  Generated: ${dateStr}`, margin, y);
+  y += 8;
+  
+  // Line under header
+  doc.setDrawColor(200, 200, 200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 24;
+
+  // Section: Scenario Overview
+  doc.setFontSize(11);
+  doc.setTextColor(50, 50, 50);
+  doc.text("Scenario Overview", margin, y);
+  y += 4;
+  doc.setDrawColor(230, 230, 230);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 16;
+
+  const tableData = [
+    ["Loan type", TRANSACTION_TYPE_LABELS[inputs.mode]],
+    ["Property value", formatCurrency(propertyValue)],
+  ];
+  
+  if (isPurchase) {
+    const dpPercent = propertyValue > 0 ? (downPaymentAmount / propertyValue * 100) : 0;
+    tableData.push(["Down payment", `${formatCurrency(downPaymentAmount)} (${formatPercent(dpPercent)})`]);
+  } else if (inputs.refinance) {
+    tableData.push(["Current loan balance", formatCurrency(inputs.refinance.currentLoanBalance)]);
+  }
+  
+  tableData.push(
+    ["Loan amount", formatCurrency(results.loanAmount)],
+    ["Loan term", `${inputs.shared.loanTerm} years`],
+    ["Interest rate (assumed)", formatPercent(inputs.shared.interestRate)],
+    ["Loan-to-value ratio", formatPercent(results.ltvRatio)]
+  );
+
+  // Draw table
+  doc.setFontSize(9);
+  for (const row of tableData) {
+    doc.setTextColor(100, 100, 100);
+    doc.text(row[0], margin, y);
+    doc.setTextColor(30, 30, 30);
+    doc.text(row[1], pageWidth - margin, y, { align: "right" });
+    y += 14;
+  }
+  y += 10;
+
+  // Section: Monthly Payment
+  doc.setFontSize(11);
+  doc.setTextColor(50, 50, 50);
+  doc.text("Monthly Payment", margin, y);
+  y += 4;
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 16;
+
+  const paymentData = [
+    ["Principal & interest", formatCurrency(results.monthlyPrincipalInterest)],
+  ];
+  if (results.monthlyPropertyTax > 0) paymentData.push(["Property tax", formatCurrency(results.monthlyPropertyTax)]);
+  if (results.monthlyHomeInsurance > 0) paymentData.push(["Home insurance", formatCurrency(results.monthlyHomeInsurance)]);
+  if (results.monthlyPMI > 0) paymentData.push(["PMI", formatCurrency(results.monthlyPMI)]);
+  if (results.monthlyHOA > 0) paymentData.push(["HOA", formatCurrency(results.monthlyHOA)]);
+
+  doc.setFontSize(9);
+  for (const row of paymentData) {
+    doc.setTextColor(100, 100, 100);
+    doc.text(row[0], margin, y);
+    doc.setTextColor(30, 30, 30);
+    doc.text(row[1], pageWidth - margin, y, { align: "right" });
+    y += 14;
+  }
+  
+  // Total row
+  y += 4;
+  doc.setDrawColor(200, 200, 200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 12;
+  doc.setTextColor(30, 30, 30);
+  doc.text("Total monthly payment", margin, y);
+  doc.text(formatCurrency(results.monthlyTotal), pageWidth - margin, y, { align: "right" });
+  y += 20;
+
+  // Section: Long-Term Cost
+  doc.setFontSize(11);
+  doc.setTextColor(50, 50, 50);
+  doc.text("Long-Term Cost Summary", margin, y);
+  y += 4;
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 16;
+
+  const costData = [
+    ["Total payments over term", formatCurrency(results.totalCost)],
+    ["Total interest paid", formatCurrency(results.totalInterest)],
+    ["Projected payoff date", payoffDateStr],
+  ];
+
+  doc.setFontSize(9);
+  for (const row of costData) {
+    doc.setTextColor(100, 100, 100);
+    doc.text(row[0], margin, y);
+    doc.setTextColor(30, 30, 30);
+    doc.text(row[1], pageWidth - margin, y, { align: "right" });
+    y += 14;
+  }
+  y += 20;
+
+  // Methodology
+  doc.setFontSize(11);
+  doc.setTextColor(50, 50, 50);
+  doc.text("Methodology", margin, y);
+  y += 4;
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 16;
+
+  doc.setFontSize(8);
+  doc.setTextColor(100, 100, 100);
+  const notes = [
+    "• Calculations are based on standard amortization formulas.",
+    "• Rates shown are assumed inputs, not lender quotes.",
+    "• Property taxes and insurance are estimates where applicable.",
+    "• Results are intended for comparison and planning purposes only.",
+  ];
+  for (const note of notes) {
+    doc.text(note, margin, y);
+    y += 12;
+  }
+
+  // Footer disclaimer
+  y = doc.internal.pageSize.getHeight() - 60;
+  doc.setDrawColor(200, 200, 200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 12;
+  
+  doc.setFontSize(7);
+  doc.setTextColor(130, 130, 130);
+  const disclaimer = "This document is provided for analytical and planning purposes only. SettleRate does not originate, broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute a loan offer, guarantee, or financial advice.";
+  const disclaimerLines = doc.splitTextToSize(disclaimer, contentWidth);
+  doc.text(disclaimerLines, pageWidth / 2, y, { align: "center" });
+
+  return doc.output("arraybuffer") as unknown as Uint8Array;
 }
 
-function generateComparisonHTML(scenarioA: ScenarioData, scenarioB: ScenarioData): string {
+// ============================================================================
+// PDF GENERATION - COMPARISON
+// ============================================================================
+
+function generateComparisonPDF(scenarioA: ScenarioData, scenarioB: ScenarioData): Uint8Array {
+  const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "letter" });
   const dateStr = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -513,125 +381,194 @@ function generateComparisonHTML(scenarioA: ScenarioData, scenarioB: ScenarioData
   const shortIdA = scenarioA.id.substring(0, 8).toUpperCase();
   const shortIdB = scenarioB.id.substring(0, 8).toUpperCase();
   const deltas = calculateDeltas(scenarioA, scenarioB);
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 50;
+  const contentWidth = pageWidth - (margin * 2);
+  const col1 = margin;
+  const col2 = margin + contentWidth * 0.4;
+  const col3 = margin + contentWidth * 0.7;
+  let y = margin;
+
+  // Header
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  doc.text("SettleRate", margin, y);
+  y += 24;
   
+  doc.setFontSize(18);
+  doc.setTextColor(30, 30, 30);
+  doc.text("Mortgage Scenario Comparison", margin, y);
+  y += 16;
+  
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Comparing: ${scenarioA.name || "Scenario A"} (${shortIdA}) vs ${scenarioB.name || "Scenario B"} (${shortIdB})`, margin, y);
+  y += 12;
+  doc.text(`Generated: ${dateStr}`, margin, y);
+  y += 8;
+  
+  doc.setDrawColor(200, 200, 200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 24;
+
+  // Comparison Summary
+  doc.setFontSize(11);
+  doc.setTextColor(50, 50, 50);
+  doc.text("Comparison Summary", margin, y);
+  y += 4;
+  doc.setDrawColor(230, 230, 230);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 16;
+
+  doc.setFontSize(9);
+  doc.setTextColor(50, 50, 50);
+  const summaryText = generateSummaryText(scenarioA, scenarioB);
+  const summaryLines = doc.splitTextToSize(summaryText, contentWidth);
+  doc.text(summaryLines, margin, y);
+  y += summaryLines.length * 12 + 16;
+
+  // Key differences
+  doc.setFontSize(8);
+  doc.setTextColor(100, 100, 100);
+  const keyDiffs = [
+    ["Monthly payment", formatSignedDelta(deltas.monthlyPaymentDelta)],
+    ["Total cost", formatSignedDelta(deltas.totalCostDelta)],
+    ["Interest rate", formatSignedBasisPoints(deltas.interestRateDelta)],
+    ["LTV", formatLtvDelta(deltas.ltvDelta)],
+  ];
+  
+  const diffX = [margin, margin + 120, margin + 240, margin + 340];
+  for (let i = 0; i < keyDiffs.length; i++) {
+    doc.setTextColor(100, 100, 100);
+    doc.text(keyDiffs[i][0], diffX[i], y);
+    doc.setTextColor(30, 30, 30);
+    doc.text(keyDiffs[i][1], diffX[i], y + 10);
+  }
+  y += 30;
+
+  // Scenario Overview table
+  doc.setFontSize(11);
+  doc.setTextColor(50, 50, 50);
+  doc.text("Scenario Overview", margin, y);
+  y += 4;
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 16;
+
+  // Table headers
+  doc.setFontSize(9);
+  doc.setTextColor(50, 50, 50);
+  doc.text("Metric", col1, y);
+  doc.text(scenarioA.name || "Scenario A", col2, y);
+  doc.text(scenarioB.name || "Scenario B", col3, y);
+  y += 4;
+  doc.setDrawColor(200, 200, 200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 14;
+
+  const overviewRows = [
+    ["Loan type", TRANSACTION_TYPE_LABELS[scenarioA.inputs.mode], TRANSACTION_TYPE_LABELS[scenarioB.inputs.mode]],
+    ["Loan amount", formatCurrency(scenarioA.results.loanAmount), formatCurrency(scenarioB.results.loanAmount)],
+    ["Term", `${scenarioA.inputs.shared.loanTerm} years`, `${scenarioB.inputs.shared.loanTerm} years`],
+    ["Interest rate", formatPercent(scenarioA.inputs.shared.interestRate), formatPercent(scenarioB.inputs.shared.interestRate)],
+    ["LTV ratio", formatPercent(scenarioA.results.ltvRatio), formatPercent(scenarioB.results.ltvRatio)],
+  ];
+
+  for (const row of overviewRows) {
+    doc.setTextColor(100, 100, 100);
+    doc.text(row[0], col1, y);
+    doc.setTextColor(30, 30, 30);
+    doc.text(row[1], col2, y);
+    doc.text(row[2], col3, y);
+    y += 14;
+  }
+  y += 10;
+
+  // Monthly Payment table
+  doc.setFontSize(11);
+  doc.setTextColor(50, 50, 50);
+  doc.text("Monthly Payment", margin, y);
+  y += 4;
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 16;
+
+  doc.setFontSize(9);
+  doc.setTextColor(50, 50, 50);
+  doc.text("Component", col1, y);
+  doc.text(scenarioA.name || "Scenario A", col2, y);
+  doc.text(scenarioB.name || "Scenario B", col3, y);
+  y += 4;
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 14;
+
+  doc.setTextColor(100, 100, 100);
+  doc.text("Principal & interest", col1, y);
+  doc.setTextColor(30, 30, 30);
+  doc.text(formatCurrency(scenarioA.results.monthlyPrincipalInterest), col2, y);
+  doc.text(formatCurrency(scenarioB.results.monthlyPrincipalInterest), col3, y);
+  y += 14;
+
+  y += 4;
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 12;
+  doc.setTextColor(30, 30, 30);
+  doc.text("Total monthly payment", col1, y);
+  doc.text(formatCurrency(scenarioA.results.monthlyTotal), col2, y);
+  doc.text(formatCurrency(scenarioB.results.monthlyTotal), col3, y);
+  y += 20;
+
+  // Long-term cost table
+  doc.setFontSize(11);
+  doc.setTextColor(50, 50, 50);
+  doc.text("Long-Term Cost", margin, y);
+  y += 4;
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 16;
+
+  doc.setFontSize(9);
+  doc.setTextColor(50, 50, 50);
+  doc.text("Metric", col1, y);
+  doc.text(scenarioA.name || "Scenario A", col2, y);
+  doc.text(scenarioB.name || "Scenario B", col3, y);
+  y += 4;
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 14;
+
   const getPayoffDate = (scenario: ScenarioData) => {
     const date = new Date();
     date.setMonth(date.getMonth() + scenario.results.payoffMonths);
     return date.toLocaleDateString("en-US", { year: "numeric", month: "short" });
   };
 
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Mortgage Scenario Comparison</title>
-  <style>${SHARED_STYLES}</style>
-</head>
-<body>
-  <div class="export-page">
-    <div class="export-content">
-      <header class="header">
-        <p class="header-brand">SettleRate</p>
-        <h1 class="header-title">Mortgage Scenario Comparison</h1>
-        <p class="header-meta">
-          Comparing: ${scenarioA.name || "Scenario A"} (${shortIdA}) vs ${scenarioB.name || "Scenario B"} (${shortIdB})
-        </p>
-        <p class="header-meta">Generated: ${dateStr}</p>
-      </header>
-      
-      <section class="section">
-        <h2 class="section-title">Comparison Summary</h2>
-        <p class="summary-text">${generateSummaryText(scenarioA, scenarioB)}</p>
-        <table class="key-diff-table">
-          <tr>
-            <td><span class="key-diff-label">Monthly payment</span><span class="key-diff-value">${formatSignedDelta(deltas.monthlyPaymentDelta)}</span></td>
-            <td><span class="key-diff-label">Total cost</span><span class="key-diff-value">${formatSignedDelta(deltas.totalCostDelta)}</span></td>
-            <td><span class="key-diff-label">Total interest</span><span class="key-diff-value">${formatSignedDelta(deltas.totalInterestDelta)}</span></td>
-            <td><span class="key-diff-label">Interest rate</span><span class="key-diff-value">${formatSignedBasisPoints(deltas.interestRateDelta)}</span></td>
-            <td><span class="key-diff-label">LTV</span><span class="key-diff-value">${formatLtvDelta(deltas.ltvDelta)}</span></td>
-          </tr>
-        </table>
-      </section>
-      
-      <section class="section">
-        <h2 class="section-title">Scenario Overview</h2>
-        <table class="comparison-table">
-          <thead>
-            <tr>
-              <th>Metric</th>
-              <th>${scenarioA.name || "Scenario A"}</th>
-              <th>${scenarioB.name || "Scenario B"}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Loan type</td><td>${TRANSACTION_TYPE_LABELS[scenarioA.inputs.mode]}</td><td>${TRANSACTION_TYPE_LABELS[scenarioB.inputs.mode]}</td></tr>
-            <tr><td>Loan amount</td><td>${formatCurrency(scenarioA.results.loanAmount)}</td><td>${formatCurrency(scenarioB.results.loanAmount)}</td></tr>
-            <tr><td>Term</td><td>${scenarioA.inputs.shared.loanTerm} years</td><td>${scenarioB.inputs.shared.loanTerm} years</td></tr>
-            <tr><td>Interest rate (assumed)</td><td>${formatPercent(scenarioA.inputs.shared.interestRate)}</td><td>${formatPercent(scenarioB.inputs.shared.interestRate)}</td></tr>
-            <tr><td>Loan-to-value ratio</td><td>${formatPercent(scenarioA.results.ltvRatio)}</td><td>${formatPercent(scenarioB.results.ltvRatio)}</td></tr>
-          </tbody>
-        </table>
-      </section>
-      
-      <section class="section">
-        <h2 class="section-title">Monthly Payment</h2>
-        <table class="comparison-table">
-          <thead>
-            <tr>
-              <th>Component</th>
-              <th>${scenarioA.name || "Scenario A"}</th>
-              <th>${scenarioB.name || "Scenario B"}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Principal & interest</td><td>${formatCurrency(scenarioA.results.monthlyPrincipalInterest)}</td><td>${formatCurrency(scenarioB.results.monthlyPrincipalInterest)}</td></tr>
-            <tr class="total-row"><td>Total monthly payment</td><td>${formatCurrency(scenarioA.results.monthlyTotal)}</td><td>${formatCurrency(scenarioB.results.monthlyTotal)}</td></tr>
-          </tbody>
-        </table>
-      </section>
-      
-      <section class="section">
-        <h2 class="section-title">Long-Term Cost</h2>
-        <table class="comparison-table">
-          <thead>
-            <tr>
-              <th>Metric</th>
-              <th>${scenarioA.name || "Scenario A"}</th>
-              <th>${scenarioB.name || "Scenario B"}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Total payments over term</td><td>${formatCurrency(scenarioA.results.totalCost)}</td><td>${formatCurrency(scenarioB.results.totalCost)}</td></tr>
-            <tr><td>Total interest paid</td><td>${formatCurrency(scenarioA.results.totalInterest)}</td><td>${formatCurrency(scenarioB.results.totalInterest)}</td></tr>
-            <tr><td>Projected payoff date</td><td>${getPayoffDate(scenarioA)}</td><td>${getPayoffDate(scenarioB)}</td></tr>
-          </tbody>
-        </table>
-      </section>
-      
-      <section class="section">
-        <h2 class="section-title">Methodology</h2>
-        <ul class="notes-list">
-          <li>Calculations are based on standard amortization formulas.</li>
-          <li>Rates shown are assumed inputs, not lender quotes.</li>
-          <li>Property taxes and insurance are estimates where applicable.</li>
-          <li>No recommendation is implied by the order or presentation of scenarios.</li>
-          <li>Results are intended for comparison and planning purposes only.</li>
-        </ul>
-      </section>
-      
-      <footer class="footer">
-        <p class="footer-disclaimer">
-          This document is provided for analytical and planning purposes only. SettleRate does not originate, 
-          broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute 
-          a loan offer, guarantee, or financial advice.
-        </p>
-      </footer>
-    </div>
-  </div>
-</body>
-</html>
-  `.trim();
+  const costRows = [
+    ["Total payments", formatCurrency(scenarioA.results.totalCost), formatCurrency(scenarioB.results.totalCost)],
+    ["Total interest", formatCurrency(scenarioA.results.totalInterest), formatCurrency(scenarioB.results.totalInterest)],
+    ["Payoff date", getPayoffDate(scenarioA), getPayoffDate(scenarioB)],
+  ];
+
+  for (const row of costRows) {
+    doc.setTextColor(100, 100, 100);
+    doc.text(row[0], col1, y);
+    doc.setTextColor(30, 30, 30);
+    doc.text(row[1], col2, y);
+    doc.text(row[2], col3, y);
+    y += 14;
+  }
+
+  // Footer disclaimer
+  y = doc.internal.pageSize.getHeight() - 60;
+  doc.setDrawColor(200, 200, 200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 12;
+  
+  doc.setFontSize(7);
+  doc.setTextColor(130, 130, 130);
+  const disclaimer = "This document is provided for analytical and planning purposes only. SettleRate does not originate, broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute a loan offer, guarantee, or financial advice.";
+  const disclaimerLines = doc.splitTextToSize(disclaimer, contentWidth);
+  doc.text(disclaimerLines, pageWidth / 2, y, { align: "center" });
+
+  return doc.output("arraybuffer") as unknown as Uint8Array;
 }
 
 // ============================================================================
@@ -697,13 +634,14 @@ Deno.serve(async (req: Request) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
+      console.error("EXPORT_PDF_AUTH_FAILED:", { error: authError?.message });
       return new Response(
         JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    let html: string;
+    let pdfBytes: Uint8Array;
     let filename: string;
 
     if (type === "scenario") {
@@ -715,7 +653,11 @@ Deno.serve(async (req: Request) => {
         .single();
 
       if (scenarioError || !scenario) {
-        console.error("Scenario fetch error:", scenarioError);
+        console.error("EXPORT_PDF_SCENARIO_FETCH_FAILED:", {
+          scenario_id: id,
+          user_id: user.id,
+          error: scenarioError?.message,
+        });
         return new Response(
           JSON.stringify({ error: "Scenario not found or access denied" }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -729,8 +671,9 @@ Deno.serve(async (req: Request) => {
         results: scenario.derived as ScenarioResults,
       };
 
-      html = generateScenarioHTML(scenarioData);
+      pdfBytes = generateScenarioPDF(scenarioData);
       filename = generateScenarioFilename(scenarioData);
+      
     } else {
       // Fetch the comparison (RLS will ensure user owns it)
       const { data: comparison, error: comparisonError } = await supabase
@@ -740,11 +683,11 @@ Deno.serve(async (req: Request) => {
         .single();
 
       if (comparisonError || !comparison) {
-        console.error("EXPORT_PDF_COMPARISON_FETCH_FAILED:", JSON.stringify({
+        console.error("EXPORT_PDF_COMPARISON_FETCH_FAILED:", {
           comparison_id: id,
           user_id: user.id,
           error: comparisonError?.message,
-        }));
+        });
         return new Response(
           JSON.stringify({ error: "Comparison not found or access denied" }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -758,14 +701,14 @@ Deno.serve(async (req: Request) => {
         .in("id", [comparison.scenario_a_id, comparison.scenario_b_id]);
 
       if (scenariosError || !scenarios || scenarios.length !== 2) {
-        console.error("EXPORT_PDF_SCENARIOS_FETCH_FAILED:", JSON.stringify({
+        console.error("EXPORT_PDF_SCENARIOS_FETCH_FAILED:", {
           comparison_id: id,
           scenario_a_id: comparison.scenario_a_id,
           scenario_b_id: comparison.scenario_b_id,
           user_id: user.id,
           scenarios_found: scenarios?.length ?? 0,
           error: scenariosError?.message,
-        }));
+        });
         return new Response(
           JSON.stringify({ error: "One or more scenarios not found" }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -776,82 +719,61 @@ Deno.serve(async (req: Request) => {
       const scenarioB = scenarios.find(s => s.id === comparison.scenario_b_id)!;
 
       // Defensive: ensure inputs and derived exist
-      const inputsA = (scenarioA.inputs || {}) as ScenarioInputs;
-      const inputsB = (scenarioB.inputs || {}) as ScenarioInputs;
-      const derivedA = (scenarioA.derived || {}) as ScenarioResults;
-      const derivedB = (scenarioB.derived || {}) as ScenarioResults;
-
-      const scenarioDataA: ScenarioData = {
-        id: scenarioA.id,
-        name: scenarioA.name || "Scenario A",
-        inputs: {
-          mode: inputsA.mode || "purchase",
-          shared: inputsA.shared || { loanTerm: 30, interestRate: 0 },
-          purchase: inputsA.purchase,
-          refinance: inputsA.refinance,
-        },
-        results: {
-          loanAmount: derivedA.loanAmount || 0,
-          monthlyPrincipalInterest: derivedA.monthlyPrincipalInterest || 0,
-          monthlyTotal: derivedA.monthlyTotal || 0,
-          monthlyPropertyTax: derivedA.monthlyPropertyTax || 0,
-          monthlyHomeInsurance: derivedA.monthlyHomeInsurance || 0,
-          monthlyPMI: derivedA.monthlyPMI || 0,
-          monthlyHOA: derivedA.monthlyHOA || 0,
-          totalCost: derivedA.totalCost || 0,
-          totalInterest: derivedA.totalInterest || 0,
-          ltvRatio: derivedA.ltvRatio || 0,
-          payoffMonths: derivedA.payoffMonths || 360,
-        },
+      const buildScenarioData = (s: typeof scenarioA): ScenarioData => {
+        const inputs = (s.inputs || {}) as ScenarioInputs;
+        const derived = (s.derived || {}) as ScenarioResults;
+        return {
+          id: s.id,
+          name: s.name || "Untitled",
+          inputs: {
+            mode: inputs.mode || "purchase",
+            shared: inputs.shared || { loanTerm: 30, interestRate: 0 },
+            purchase: inputs.purchase,
+            refinance: inputs.refinance,
+          },
+          results: {
+            loanAmount: derived.loanAmount || 0,
+            monthlyPrincipalInterest: derived.monthlyPrincipalInterest || 0,
+            monthlyTotal: derived.monthlyTotal || 0,
+            monthlyPropertyTax: derived.monthlyPropertyTax || 0,
+            monthlyHomeInsurance: derived.monthlyHomeInsurance || 0,
+            monthlyPMI: derived.monthlyPMI || 0,
+            monthlyHOA: derived.monthlyHOA || 0,
+            totalCost: derived.totalCost || 0,
+            totalInterest: derived.totalInterest || 0,
+            ltvRatio: derived.ltvRatio || 0,
+            payoffMonths: derived.payoffMonths || 360,
+          },
+        };
       };
 
-      const scenarioDataB: ScenarioData = {
-        id: scenarioB.id,
-        name: scenarioB.name || "Scenario B",
-        inputs: {
-          mode: inputsB.mode || "purchase",
-          shared: inputsB.shared || { loanTerm: 30, interestRate: 0 },
-          purchase: inputsB.purchase,
-          refinance: inputsB.refinance,
-        },
-        results: {
-          loanAmount: derivedB.loanAmount || 0,
-          monthlyPrincipalInterest: derivedB.monthlyPrincipalInterest || 0,
-          monthlyTotal: derivedB.monthlyTotal || 0,
-          monthlyPropertyTax: derivedB.monthlyPropertyTax || 0,
-          monthlyHomeInsurance: derivedB.monthlyHomeInsurance || 0,
-          monthlyPMI: derivedB.monthlyPMI || 0,
-          monthlyHOA: derivedB.monthlyHOA || 0,
-          totalCost: derivedB.totalCost || 0,
-          totalInterest: derivedB.totalInterest || 0,
-          ltvRatio: derivedB.ltvRatio || 0,
-          payoffMonths: derivedB.payoffMonths || 360,
-        },
-      };
+      const scenarioDataA = buildScenarioData(scenarioA);
+      const scenarioDataB = buildScenarioData(scenarioB);
 
-      html = generateComparisonHTML(scenarioDataA, scenarioDataB);
+      pdfBytes = generateComparisonPDF(scenarioDataA, scenarioDataB);
       filename = generateComparisonFilename(scenarioDataA, scenarioDataB);
     }
 
-    // Use jspdf-html2canvas approach via external API
-    // For now, we return HTML that can be converted client-side or use a PDF service
-    // This is a fallback - real PDF generation would require a headless browser service
-    
-    // For edge function environment, we'll generate a simple PDF using basic approach
-    // In production, you'd want to use a service like Browserless, Puppeteer Cloud, etc.
-    
-    // Return HTML with Content-Type that triggers download on most browsers
-    return new Response(html, {
+    console.log("EXPORT_PDF_SUCCESS:", {
+      type,
+      id,
+      user_id: user.id,
+      filename,
+      size_bytes: pdfBytes.length,
+    });
+
+    // Return real PDF with correct headers
+    return new Response(new Uint8Array(pdfBytes), {
       status: 200,
       headers: {
         ...corsHeaders,
-        "Content-Type": "text/html; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${filename}.html"`,
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${filename}.pdf"`,
+        "Cache-Control": "no-store",
       },
     });
 
   } catch (error) {
-    // EXPORT_PDF_GENERATION_FAILED - Log full details for debugging
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
     console.error("EXPORT_PDF_GENERATION_FAILED:", JSON.stringify({
@@ -860,7 +782,7 @@ Deno.serve(async (req: Request) => {
       timestamp: new Date().toISOString(),
     }));
     return new Response(
-      JSON.stringify({ error: "Export failed. Try again." }),
+      JSON.stringify({ error: "Export failed." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
