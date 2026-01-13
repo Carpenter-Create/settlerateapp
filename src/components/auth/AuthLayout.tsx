@@ -1,8 +1,8 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { authClasses, authCn, AUTH_MAX_WIDTH, AUTH_BODY_MIN_HEIGHT } from "@/styles/authStandard";
 import { Checkbox } from "@/components/ui/checkbox";
-
 /**
  * ═══════════════════════════════════════════════════════════════════════════
  * AUTH LAYOUT - Institutional Standard
@@ -309,13 +309,16 @@ interface AuthSecondaryActionProps {
   className?: string;
 }
 
-export function AuthSecondaryAction({ children, className }: AuthSecondaryActionProps) {
-  return (
-    <div className={cn(authClasses.secondaryAction, className)}>
-      {children}
-    </div>
-  );
-}
+export const AuthSecondaryAction = forwardRef<HTMLDivElement, AuthSecondaryActionProps>(
+  ({ children, className }, ref) => {
+    return (
+      <div ref={ref} className={cn(authClasses.secondaryAction, className)}>
+        {children}
+      </div>
+    );
+  }
+);
+AuthSecondaryAction.displayName = "AuthSecondaryAction";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AuthSecondaryLink - Styled secondary action button
@@ -327,18 +330,22 @@ interface AuthSecondaryLinkProps {
   children: React.ReactNode;
 }
 
-export function AuthSecondaryLink({ onClick, disabled, children }: AuthSecondaryLinkProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={authClasses.secondaryLink}
-    >
-      {children}
-    </button>
-  );
-}
+export const AuthSecondaryLink = forwardRef<HTMLButtonElement, AuthSecondaryLinkProps>(
+  ({ onClick, disabled, children }, ref) => {
+    return (
+      <button
+        ref={ref}
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className={authClasses.secondaryLink}
+      >
+        {children}
+      </button>
+    );
+  }
+);
+AuthSecondaryLink.displayName = "AuthSecondaryLink";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AuthEscapeLink - Link back to marketing site (outside card)
