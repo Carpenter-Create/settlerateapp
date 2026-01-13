@@ -58,7 +58,7 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SwipeToDelete } from "@/components/mobile/SwipeToDelete";
-import { MobileCard, MobileCardLabel, MobileCardMetric, MobileCardMetadata } from "@/components/mobile/MobileCard";
+import { MobileCard, MobileCardMetadata } from "@/components/mobile/MobileCard";
 import { toast } from "sonner";
 
 // ============================================================================
@@ -347,8 +347,6 @@ function LoadingState() {
 
 interface MobileComparisonCardProps {
   comparison: SavedComparison;
-  scenarioA: ScenarioData | undefined;
-  scenarioB: ScenarioData | undefined;
   onView: () => void;
   onDelete: () => void;
   onRename: () => void;
@@ -357,36 +355,20 @@ interface MobileComparisonCardProps {
 
 function MobileComparisonCard({
   comparison,
-  scenarioA,
-  scenarioB,
   onView,
   onDelete,
   onRename,
   isDeleting,
 }: MobileComparisonCardProps) {
-  const hasInvalidScenarios = !scenarioA || !scenarioB;
-  
   return (
     <SwipeToDelete onDelete={onDelete} disabled={isDeleting}>
       <MobileCard onClick={onView} showChevron>
-        <MobileCardLabel>
-          <span 
-            className="font-medium truncate cursor-pointer hover:text-muted-foreground transition-colors"
-            onClick={(e) => { e.stopPropagation(); onRename(); }}
-          >
-            {comparison.name}
-          </span>
-        </MobileCardLabel>
-        <MobileCardMetric>
-          {hasInvalidScenarios ? (
-            <span className="flex items-center gap-1.5 text-muted-foreground">
-              <AlertTriangle className="h-4 w-4" />
-              Scenarios unavailable
-            </span>
-          ) : (
-            `${scenarioA?.name || "Untitled"} vs ${scenarioB?.name || "Untitled"}`
-          )}
-        </MobileCardMetric>
+        <p 
+          className="font-serif text-lg font-normal tracking-tight text-foreground cursor-pointer hover:text-muted-foreground transition-colors"
+          onClick={(e) => { e.stopPropagation(); onRename(); }}
+        >
+          {comparison.name}
+        </p>
         <MobileCardMetadata>
           <span>{formatDate(new Date(comparison.created_at))}</span>
         </MobileCardMetadata>
@@ -571,23 +553,16 @@ export default function ComparisonsIndex() {
               Swipe left to delete
             </p>
             
-            {comparisons.map((comparison) => {
-              const scenarioA = scenarioMap.get(comparison.scenario_a_id);
-              const scenarioB = scenarioMap.get(comparison.scenario_b_id);
-              
-              return (
-                <MobileComparisonCard
-                  key={comparison.id}
-                  comparison={comparison}
-                  scenarioA={scenarioA}
-                  scenarioB={scenarioB}
-                  onView={() => navigate(`/app/comparisons/${comparison.id}`)}
-                  onDelete={() => handleDeleteClick(comparison)}
-                  onRename={() => openRenameDialog(comparison)}
-                  isDeleting={isDeleting}
-                />
-              );
-            })}
+            {comparisons.map((comparison) => (
+              <MobileComparisonCard
+                key={comparison.id}
+                comparison={comparison}
+                onView={() => navigate(`/app/comparisons/${comparison.id}`)}
+                onDelete={() => handleDeleteClick(comparison)}
+                onRename={() => openRenameDialog(comparison)}
+                isDeleting={isDeleting}
+              />
+            ))}
           </div>
         ) : (
           // Desktop: Table layout
