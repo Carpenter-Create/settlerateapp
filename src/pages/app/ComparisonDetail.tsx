@@ -22,7 +22,8 @@ import { useComparisons, SavedComparison } from "@/hooks/useComparisons";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
-import { ComparisonExportButton } from "@/components/export/ExportButtons";
+import { ComparisonExportModal } from "@/components/export/ExportModal";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { ComparisonSummary } from "@/components/comparisons/ComparisonSummary";
 import { toast } from "sonner";
 
@@ -449,6 +450,7 @@ export default function ComparisonDetail() {
   const isMobile = useIsMobile();
   const { scenarios, isLoaded: scenariosLoaded } = useScenarios();
   const { getComparison, renameComparison, isLoaded: comparisonsLoaded } = useComparisons();
+  const { canExport, isLoading: capabilitiesLoading } = useCapabilities();
 
   // Local state for the comparison name (for optimistic updates)
   const [localName, setLocalName] = useState<string | null>(null);
@@ -621,14 +623,16 @@ export default function ComparisonDetail() {
             Created {formatFullDate(new Date(validComparison.created_at))}
           </p>
           
-          {/* Actions row - full width button for clarity */}
+          {/* Actions row - full width export modal button */}
           <div className="pt-1">
-            <ComparisonExportButton
+            <ComparisonExportModal
               scenarioA={validScenarioA}
               scenarioB={validScenarioB}
+              comparisonId={id!}
               variant="outline"
               size="default"
               className="w-full h-11"
+              disabled={capabilitiesLoading || !canExport}
             />
           </div>
         </div>
@@ -681,10 +685,12 @@ export default function ComparisonDetail() {
           </p>
         </div>
         
-        <ComparisonExportButton
+        <ComparisonExportModal
           scenarioA={validScenarioA}
           scenarioB={validScenarioB}
+          comparisonId={id!}
           variant="outline"
+          disabled={capabilitiesLoading || !canExport}
         />
       </div>
 
