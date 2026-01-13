@@ -311,6 +311,60 @@ export type Database = {
           },
         ]
       }
+      pdf_exports: {
+        Row: {
+          bytes: number | null
+          content_sha256: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          kind: Database["public"]["Enums"]["export_kind"]
+          share_enabled: boolean
+          share_expires_at: string | null
+          share_token: string | null
+          source_id: string
+          status: Database["public"]["Enums"]["export_status"]
+          storage_bucket: string
+          storage_path: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bytes?: number | null
+          content_sha256?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["export_kind"]
+          share_enabled?: boolean
+          share_expires_at?: string | null
+          share_token?: string | null
+          source_id: string
+          status?: Database["public"]["Enums"]["export_status"]
+          storage_bucket?: string
+          storage_path: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bytes?: number | null
+          content_sha256?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["export_kind"]
+          share_enabled?: boolean
+          share_expires_at?: string | null
+          share_token?: string | null
+          source_id?: string
+          status?: Database["public"]["Enums"]["export_status"]
+          storage_bucket?: string
+          storage_path?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -548,6 +602,14 @@ export type Database = {
         Args: { approve: boolean; request_id: string }
         Returns: Json
       }
+      assert_export_source_owned_by_user: {
+        Args: {
+          p_kind: Database["public"]["Enums"]["export_kind"]
+          p_source_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       duplicate_scenario: {
         Args: { new_name?: string; source_scenario_id: string }
         Returns: string
@@ -613,6 +675,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "advisor"
+      export_kind: "scenario" | "comparison"
+      export_status: "queued" | "rendering" | "ready" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -741,6 +805,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user", "advisor"],
+      export_kind: ["scenario", "comparison"],
+      export_status: ["queued", "rendering", "ready", "failed"],
     },
   },
 } as const
