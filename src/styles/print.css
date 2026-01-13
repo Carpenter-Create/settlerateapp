@@ -1,10 +1,15 @@
 /**
  * Print CSS - Isolation styles for in-page printing
  * 
+ * TYPOGRAPHY STANDARD (LOCKED):
+ * - All print content uses system/body font (Inter)
+ * - No serif font in print output
+ * - Values use font-medium at most
+ * 
  * Rules:
  * - Screen: #print-root is hidden
  * - Print: Only #print-root is visible, app shell is hidden
- * - Page margins: 18mm x 16mm (professional PDF layout)
+ * - Page margins: 24mm top, 18mm sides, 28mm bottom (for footer)
  */
 
 /* Screen: Hide print content */
@@ -32,12 +37,21 @@
   /* Print content wrapper */
   #print-root .print-content {
     display: block !important;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 10pt;
+    line-height: 1.4;
+    color: #1a1a1a;
   }
   
-  /* Page settings */
+  /* Page settings with proper margins */
   @page {
     size: letter;
-    margin: 18mm 16mm;
+    margin: 24mm 18mm 28mm 18mm;
+  }
+  
+  /* First page can have different top margin */
+  @page :first {
+    margin-top: 20mm;
   }
   
   /* Prevent page breaks inside sections */
@@ -49,6 +63,47 @@
   
   h1, h2, h3 {
     page-break-after: avoid;
+  }
+  
+  /* Typography in print - body font only */
+  #print-root h1,
+  #print-root h2,
+  #print-root h3 {
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 500;
+  }
+  
+  #print-root table {
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  #print-root th,
+  #print-root td {
+    padding: 8pt 10pt;
+    text-align: left;
+    border-bottom: 0.5pt solid #e0e0e0;
+  }
+  
+  #print-root th {
+    font-weight: 500;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: #666;
+  }
+  
+  /* Footer positioning */
+  #print-root .print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8pt 0;
+    font-size: 8pt;
+    color: #888;
+    border-top: 0.5pt solid #e0e0e0;
   }
   
   /* Force background colors in print */

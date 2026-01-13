@@ -109,11 +109,15 @@ function MetadataItem({ label, value }: { label: string; value: string }) {
 
 /**
  * Section component for content blocks
+ * 
+ * TYPOGRAPHY (LOCKED):
+ * - Section title uses brand serif (font-serif) for hierarchy
+ * - Content uses body font only
  */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+      <h2 className="font-serif text-base font-normal tracking-tight text-foreground">
         {title}
       </h2>
       <div className="rounded-sm border border-border bg-card p-4">
@@ -233,8 +237,8 @@ export default function ScenarioDetail() {
           </div>
         </div>
 
-        {/* Title */}
-        <h1 className="text-2xl font-medium tracking-tight">
+        {/* Title - brand serif for page headings */}
+        <h1 className="font-serif text-2xl font-normal tracking-tight">
           {scenario.name || "Untitled scenario"}
         </h1>
 

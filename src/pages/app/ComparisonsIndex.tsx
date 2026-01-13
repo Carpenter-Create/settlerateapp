@@ -303,7 +303,8 @@ function LockedState() {
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
         <Lock className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
       </div>
-      <h1 className="text-2xl font-medium tracking-tight">
+      {/* Brand serif for page headings */}
+      <h1 className="font-serif text-2xl font-normal tracking-tight">
         Comparisons
       </h1>
       <p className="mt-3 max-w-md text-sm text-muted-foreground">
@@ -461,7 +462,8 @@ export default function ComparisonsIndex() {
     return (
       <div className="space-y-6 md:space-y-8">
         <div>
-          <h1 className="text-2xl font-medium tracking-tight">
+          {/* Brand serif for page headings */}
+          <h1 className="font-serif text-2xl font-normal tracking-tight">
             Comparisons
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -501,7 +503,8 @@ export default function ComparisonsIndex() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-medium tracking-tight">
+          {/* Brand serif for page headings */}
+          <h1 className="font-serif text-2xl font-normal tracking-tight">
             Comparisons
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">

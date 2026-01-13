@@ -9,6 +9,11 @@ import { cn } from "@/lib/utils";
  * - Actions area (right-aligned on desktop)
  * - Consistent spacing and typography
  * 
+ * TYPOGRAPHY (LOCKED):
+ * - H1 title uses brand serif font (font-serif)
+ * - Subtitle uses body/system font (muted)
+ * - This is the ONLY place where page-level serif headings are applied
+ * 
  * USAGE:
  * <PageShell title="Scenarios" subtitle="Saved mortgage models">
  *   {content}
@@ -16,9 +21,9 @@ import { cn } from "@/lib/utils";
  */
 
 interface PageShellProps {
-  /** Page title - uses system font, medium weight */
+  /** Page title - uses brand serif font */
   title: string;
-  /** Optional subtitle - muted, smaller */
+  /** Optional subtitle - muted, body font */
   subtitle?: string;
   /** Optional actions rendered in header (right side on desktop) */
   actions?: ReactNode;
@@ -50,7 +55,8 @@ export function PageShell({
       {/* Header region */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-medium tracking-tight text-foreground sm:text-2xl">
+          {/* Brand serif for page headings — LOCKED */}
+          <h1 className="font-serif text-xl font-normal tracking-tight text-foreground sm:text-2xl">
             {title}
           </h1>
           {subtitle && (
