@@ -1,8 +1,11 @@
 /**
- * PDF Generation Edge Function
+ * PDF Generation Edge Function - CANONICAL LAYOUT
  * 
- * Generates real PDF documents from scenario/comparison data.
- * Uses jsPDF for server-side PDF generation.
+ * Generates real PDF documents using the same layout structure
+ * as the client-side print HTML. Both use matching:
+ * - Typography (brand serif for headings, system font for body)
+ * - Spacing (consistent margins, section gaps, table padding)
+ * - Content structure (same sections, same data order)
  * 
  * Endpoints:
  * GET /generate-pdf?type=scenario&id=xxx
@@ -11,15 +14,9 @@
  * Returns:
  * - Content-Type: application/pdf
  * - Content-Disposition: attachment; filename="..."
- * 
- * Security:
- * - Authenticates user via JWT
- * - Verifies ownership of the resource (RLS-safe)
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-// Import jsPDF for PDF generation
-// @deno-types="https://esm.sh/jspdf@2.5.1"
 import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 
 // CORS headers
@@ -31,6 +28,37 @@ const corsHeaders = {
 // Supabase configuration
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+
+// ============================================================================
+// BRAND CONSTANTS - Matches exportLayout.ts
+// ============================================================================
+
+const BRAND = {
+  name: "SettleRate",
+  domain: "settlerate.com",
+  colors: {
+    text: [30, 30, 30] as const,
+    textMuted: [100, 100, 100] as const,
+    textLight: [130, 130, 130] as const,
+    border: [200, 200, 200] as const,
+    borderLight: [230, 230, 230] as const,
+  },
+  // PDF margins/spacing - matches canonical layout
+  margins: {
+    page: 50, // ~18mm
+    section: 28,
+    tableRow: 14,
+    headerGap: 24,
+  },
+  fontSize: {
+    brand: 10,
+    title: 18,
+    sectionTitle: 11,
+    body: 9,
+    small: 8,
+    footer: 7,
+  },
+} as const;
 
 // ============================================================================
 // TYPES
@@ -76,8 +104,33 @@ interface ScenarioData {
   results: ScenarioResults;
 }
 
+interface LayoutRow {
+  label: string;
+  value: string;
+  value2?: string;
+}
+
+interface LayoutSection {
+  title: string;
+  type: "table" | "comparison-table" | "key-diff" | "text";
+  rows?: LayoutRow[];
+  columns?: string[];
+  text?: string;
+  items?: { label: string; value: string }[];
+}
+
+interface ExportLayout {
+  brand: string;
+  title: string;
+  meta: string[];
+  generatedDate: string;
+  sections: LayoutSection[];
+  methodology: string[];
+  disclaimer: string;
+}
+
 // ============================================================================
-// FORMATTING UTILITIES
+// FORMATTING UTILITIES - Matches client-side
 // ============================================================================
 
 function formatCurrency(value: number | undefined | null): string {
@@ -101,10 +154,6 @@ const TRANSACTION_TYPE_LABELS: Record<string, string> = {
   refinance: "Refinance",
 };
 
-// ============================================================================
-// CALCULATION UTILITIES
-// ============================================================================
-
 function calculateDownPaymentAmount(
   purchasePrice: number,
   downPayment: number,
@@ -117,17 +166,12 @@ function calculateDownPaymentAmount(
 }
 
 function calculateDeltas(a: ScenarioData, b: ScenarioData) {
-  const aResults = a.results || {};
-  const bResults = b.results || {};
-  const aShared = a.inputs?.shared || {};
-  const bShared = b.inputs?.shared || {};
-  
   return {
-    monthlyPaymentDelta: (aResults.monthlyTotal || 0) - (bResults.monthlyTotal || 0),
-    totalCostDelta: (aResults.totalCost || 0) - (bResults.totalCost || 0),
-    totalInterestDelta: (aResults.totalInterest || 0) - (bResults.totalInterest || 0),
-    interestRateDelta: Math.round(((aShared.interestRate || 0) - (bShared.interestRate || 0)) * 100),
-    ltvDelta: (aResults.ltvRatio || 0) - (bResults.ltvRatio || 0),
+    monthlyPaymentDelta: (a.results.monthlyTotal || 0) - (b.results.monthlyTotal || 0),
+    totalCostDelta: (a.results.totalCost || 0) - (b.results.totalCost || 0),
+    totalInterestDelta: (a.results.totalInterest || 0) - (b.results.totalInterest || 0),
+    interestRateDelta: Math.round(((a.inputs?.shared?.interestRate || 0) - (b.inputs?.shared?.interestRate || 0)) * 100),
+    ltvDelta: (a.results.ltvRatio || 0) - (b.results.ltvRatio || 0),
   };
 }
 
@@ -170,11 +214,10 @@ function generateSummaryText(a: ScenarioData, b: ScenarioData): string {
 }
 
 // ============================================================================
-// PDF GENERATION - SCENARIO
+// LAYOUT BUILDERS - Matches client-side exportLayout.ts
 // ============================================================================
 
-function generateScenarioPDF(scenario: ScenarioData): Uint8Array {
-  const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "letter" });
+function buildScenarioLayout(scenario: ScenarioData): ExportLayout {
   const dateStr = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -204,368 +247,352 @@ function generateScenarioPDF(scenario: ScenarioData): Uint8Array {
     month: "long",
   });
 
-  // Page setup
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 50;
-  const contentWidth = pageWidth - (margin * 2);
-  let y = margin;
-
-  // Header
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(100, 100, 100);
-  doc.text("SettleRate", margin, y);
-  y += 24;
-  
-  doc.setFontSize(18);
-  doc.setTextColor(30, 30, 30);
-  doc.text("Mortgage Scenario Summary", margin, y);
-  y += 16;
-  
-  doc.setFontSize(9);
-  doc.setTextColor(100, 100, 100);
-  doc.text(`Scenario: ${name || "Untitled"}  •  ID: ${shortId}  •  Generated: ${dateStr}`, margin, y);
-  y += 8;
-  
-  // Line under header
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 24;
-
-  // Section: Scenario Overview
-  doc.setFontSize(11);
-  doc.setTextColor(50, 50, 50);
-  doc.text("Scenario Overview", margin, y);
-  y += 4;
-  doc.setDrawColor(230, 230, 230);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 16;
-
-  const tableData = [
-    ["Loan type", TRANSACTION_TYPE_LABELS[inputs.mode]],
-    ["Property value", formatCurrency(propertyValue)],
+  const overviewRows: LayoutRow[] = [
+    { label: "Loan type", value: TRANSACTION_TYPE_LABELS[inputs.mode] },
+    { label: "Property value", value: formatCurrency(propertyValue) },
   ];
   
-  if (isPurchase) {
+  if (isPurchase && inputs.purchase) {
     const dpPercent = propertyValue > 0 ? (downPaymentAmount / propertyValue * 100) : 0;
-    tableData.push(["Down payment", `${formatCurrency(downPaymentAmount)} (${formatPercent(dpPercent)})`]);
+    overviewRows.push({
+      label: "Down payment",
+      value: `${formatCurrency(downPaymentAmount)} (${formatPercent(dpPercent)})`,
+    });
   } else if (inputs.refinance) {
-    tableData.push(["Current loan balance", formatCurrency(inputs.refinance.currentLoanBalance)]);
+    overviewRows.push({
+      label: "Current loan balance",
+      value: formatCurrency(inputs.refinance.currentLoanBalance),
+    });
   }
   
-  tableData.push(
-    ["Loan amount", formatCurrency(results.loanAmount)],
-    ["Loan term", `${inputs.shared.loanTerm} years`],
-    ["Interest rate (assumed)", formatPercent(inputs.shared.interestRate)],
-    ["Loan-to-value ratio", formatPercent(results.ltvRatio)]
+  overviewRows.push(
+    { label: "Loan amount", value: formatCurrency(results.loanAmount) },
+    { label: "Loan term", value: `${inputs.shared.loanTerm} years` },
+    { label: "Interest rate (assumed)", value: formatPercent(inputs.shared.interestRate) },
+    { label: "Loan-to-value ratio", value: formatPercent(results.ltvRatio) }
   );
 
-  // Draw table
-  doc.setFontSize(9);
-  for (const row of tableData) {
-    doc.setTextColor(100, 100, 100);
-    doc.text(row[0], margin, y);
-    doc.setTextColor(30, 30, 30);
-    doc.text(row[1], pageWidth - margin, y, { align: "right" });
-    y += 14;
-  }
-  y += 10;
-
-  // Section: Monthly Payment
-  doc.setFontSize(11);
-  doc.setTextColor(50, 50, 50);
-  doc.text("Monthly Payment", margin, y);
-  y += 4;
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 16;
-
-  const paymentData = [
-    ["Principal & interest", formatCurrency(results.monthlyPrincipalInterest)],
+  const paymentRows: LayoutRow[] = [
+    { label: "Principal & interest", value: formatCurrency(results.monthlyPrincipalInterest) },
   ];
-  if (results.monthlyPropertyTax > 0) paymentData.push(["Property tax", formatCurrency(results.monthlyPropertyTax)]);
-  if (results.monthlyHomeInsurance > 0) paymentData.push(["Home insurance", formatCurrency(results.monthlyHomeInsurance)]);
-  if (results.monthlyPMI > 0) paymentData.push(["PMI", formatCurrency(results.monthlyPMI)]);
-  if (results.monthlyHOA > 0) paymentData.push(["HOA", formatCurrency(results.monthlyHOA)]);
-
-  doc.setFontSize(9);
-  for (const row of paymentData) {
-    doc.setTextColor(100, 100, 100);
-    doc.text(row[0], margin, y);
-    doc.setTextColor(30, 30, 30);
-    doc.text(row[1], pageWidth - margin, y, { align: "right" });
-    y += 14;
+  if (results.monthlyPropertyTax > 0) {
+    paymentRows.push({ label: "Property tax", value: formatCurrency(results.monthlyPropertyTax) });
   }
-  
-  // Total row
-  y += 4;
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 12;
-  doc.setTextColor(30, 30, 30);
-  doc.text("Total monthly payment", margin, y);
-  doc.text(formatCurrency(results.monthlyTotal), pageWidth - margin, y, { align: "right" });
-  y += 20;
-
-  // Section: Long-Term Cost
-  doc.setFontSize(11);
-  doc.setTextColor(50, 50, 50);
-  doc.text("Long-Term Cost Summary", margin, y);
-  y += 4;
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 16;
-
-  const costData = [
-    ["Total payments over term", formatCurrency(results.totalCost)],
-    ["Total interest paid", formatCurrency(results.totalInterest)],
-    ["Projected payoff date", payoffDateStr],
-  ];
-
-  doc.setFontSize(9);
-  for (const row of costData) {
-    doc.setTextColor(100, 100, 100);
-    doc.text(row[0], margin, y);
-    doc.setTextColor(30, 30, 30);
-    doc.text(row[1], pageWidth - margin, y, { align: "right" });
-    y += 14;
+  if (results.monthlyHomeInsurance > 0) {
+    paymentRows.push({ label: "Home insurance", value: formatCurrency(results.monthlyHomeInsurance) });
   }
-  y += 20;
-
-  // Methodology
-  doc.setFontSize(11);
-  doc.setTextColor(50, 50, 50);
-  doc.text("Methodology", margin, y);
-  y += 4;
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 16;
-
-  doc.setFontSize(8);
-  doc.setTextColor(100, 100, 100);
-  const notes = [
-    "• Calculations are based on standard amortization formulas.",
-    "• Rates shown are assumed inputs, not lender quotes.",
-    "• Property taxes and insurance are estimates where applicable.",
-    "• Results are intended for comparison and planning purposes only.",
-  ];
-  for (const note of notes) {
-    doc.text(note, margin, y);
-    y += 12;
+  if (results.monthlyPMI > 0) {
+    paymentRows.push({ label: "PMI", value: formatCurrency(results.monthlyPMI) });
   }
+  if (results.monthlyHOA > 0) {
+    paymentRows.push({ label: "HOA", value: formatCurrency(results.monthlyHOA) });
+  }
+  paymentRows.push({ label: "Total monthly payment", value: formatCurrency(results.monthlyTotal) });
 
-  // Footer disclaimer
-  y = doc.internal.pageSize.getHeight() - 60;
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 12;
-  
-  doc.setFontSize(7);
-  doc.setTextColor(130, 130, 130);
-  const disclaimer = "This document is provided for analytical and planning purposes only. SettleRate does not originate, broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute a loan offer, guarantee, or financial advice.";
-  const disclaimerLines = doc.splitTextToSize(disclaimer, contentWidth);
-  doc.text(disclaimerLines, pageWidth / 2, y, { align: "center" });
-
-  return doc.output("arraybuffer") as unknown as Uint8Array;
+  return {
+    brand: BRAND.name,
+    title: "Mortgage Scenario Summary",
+    meta: [`Scenario: ${name || "Untitled"}`, `ID: ${shortId}`],
+    generatedDate: dateStr,
+    sections: [
+      { title: "Scenario Overview", type: "table", rows: overviewRows },
+      { title: "Monthly Payment", type: "table", rows: paymentRows },
+      {
+        title: "Long-Term Cost Summary",
+        type: "table",
+        rows: [
+          { label: "Total payments over term", value: formatCurrency(results.totalCost) },
+          { label: "Total interest paid", value: formatCurrency(results.totalInterest) },
+          { label: "Projected payoff date", value: payoffDateStr },
+        ],
+      },
+      {
+        title: "Assumptions",
+        type: "table",
+        rows: isPurchase && inputs.purchase
+          ? [
+              { label: "Purchase price", value: formatCurrency(inputs.purchase.purchasePrice) },
+              { label: "Property taxes (annual)", value: results.monthlyPropertyTax > 0 ? formatCurrency(results.monthlyPropertyTax * 12) : "Not specified" },
+              { label: "Home insurance (annual)", value: results.monthlyHomeInsurance > 0 ? formatCurrency(results.monthlyHomeInsurance * 12) : "Not specified" },
+            ]
+          : [
+              { label: "Estimated home value", value: inputs.refinance?.estimatedHomeValue ? formatCurrency(inputs.refinance.estimatedHomeValue) : "Not specified" },
+              { label: "Property taxes (annual)", value: results.monthlyPropertyTax > 0 ? formatCurrency(results.monthlyPropertyTax * 12) : "Not specified" },
+              { label: "Home insurance (annual)", value: results.monthlyHomeInsurance > 0 ? formatCurrency(results.monthlyHomeInsurance * 12) : "Not specified" },
+            ],
+      },
+    ],
+    methodology: [
+      "Calculations are based on standard amortization formulas.",
+      "Rates shown are assumed inputs, not lender quotes.",
+      "Property taxes and insurance are estimates where applicable.",
+      "Results are intended for comparison and planning purposes only.",
+      "Final loan terms subject to lender approval and property appraisal.",
+    ],
+    disclaimer:
+      "This document is provided for analytical and planning purposes only. SettleRate does not originate, broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute a loan offer, guarantee, or financial advice.",
+  };
 }
 
-// ============================================================================
-// PDF GENERATION - COMPARISON
-// ============================================================================
-
-function generateComparisonPDF(scenarioA: ScenarioData, scenarioB: ScenarioData): Uint8Array {
-  const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "letter" });
+function buildComparisonLayout(a: ScenarioData, b: ScenarioData): ExportLayout {
   const dateStr = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
   
-  const shortIdA = scenarioA.id.substring(0, 8).toUpperCase();
-  const shortIdB = scenarioB.id.substring(0, 8).toUpperCase();
-  const deltas = calculateDeltas(scenarioA, scenarioB);
-
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 50;
-  const contentWidth = pageWidth - (margin * 2);
-  const col1 = margin;
-  const col2 = margin + contentWidth * 0.4;
-  const col3 = margin + contentWidth * 0.7;
-  let y = margin;
-
-  // Header
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(100, 100, 100);
-  doc.text("SettleRate", margin, y);
-  y += 24;
+  const shortIdA = a.id.substring(0, 8).toUpperCase();
+  const shortIdB = b.id.substring(0, 8).toUpperCase();
+  const deltas = calculateDeltas(a, b);
   
-  doc.setFontSize(18);
-  doc.setTextColor(30, 30, 30);
-  doc.text("Mortgage Scenario Comparison", margin, y);
-  y += 16;
-  
-  doc.setFontSize(9);
-  doc.setTextColor(100, 100, 100);
-  doc.text(`Comparing: ${scenarioA.name || "Scenario A"} (${shortIdA}) vs ${scenarioB.name || "Scenario B"} (${shortIdB})`, margin, y);
-  y += 12;
-  doc.text(`Generated: ${dateStr}`, margin, y);
-  y += 8;
-  
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 24;
-
-  // Comparison Summary
-  doc.setFontSize(11);
-  doc.setTextColor(50, 50, 50);
-  doc.text("Comparison Summary", margin, y);
-  y += 4;
-  doc.setDrawColor(230, 230, 230);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 16;
-
-  doc.setFontSize(9);
-  doc.setTextColor(50, 50, 50);
-  const summaryText = generateSummaryText(scenarioA, scenarioB);
-  const summaryLines = doc.splitTextToSize(summaryText, contentWidth);
-  doc.text(summaryLines, margin, y);
-  y += summaryLines.length * 12 + 16;
-
-  // Key differences
-  doc.setFontSize(8);
-  doc.setTextColor(100, 100, 100);
-  const keyDiffs = [
-    ["Monthly payment", formatSignedDelta(deltas.monthlyPaymentDelta)],
-    ["Total cost", formatSignedDelta(deltas.totalCostDelta)],
-    ["Interest rate", formatSignedBasisPoints(deltas.interestRateDelta)],
-    ["LTV", formatLtvDelta(deltas.ltvDelta)],
-  ];
-  
-  const diffX = [margin, margin + 120, margin + 240, margin + 340];
-  for (let i = 0; i < keyDiffs.length; i++) {
-    doc.setTextColor(100, 100, 100);
-    doc.text(keyDiffs[i][0], diffX[i], y);
-    doc.setTextColor(30, 30, 30);
-    doc.text(keyDiffs[i][1], diffX[i], y + 10);
-  }
-  y += 30;
-
-  // Scenario Overview table
-  doc.setFontSize(11);
-  doc.setTextColor(50, 50, 50);
-  doc.text("Scenario Overview", margin, y);
-  y += 4;
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 16;
-
-  // Table headers
-  doc.setFontSize(9);
-  doc.setTextColor(50, 50, 50);
-  doc.text("Metric", col1, y);
-  doc.text(scenarioA.name || "Scenario A", col2, y);
-  doc.text(scenarioB.name || "Scenario B", col3, y);
-  y += 4;
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 14;
-
-  const overviewRows = [
-    ["Loan type", TRANSACTION_TYPE_LABELS[scenarioA.inputs.mode], TRANSACTION_TYPE_LABELS[scenarioB.inputs.mode]],
-    ["Loan amount", formatCurrency(scenarioA.results.loanAmount), formatCurrency(scenarioB.results.loanAmount)],
-    ["Term", `${scenarioA.inputs.shared.loanTerm} years`, `${scenarioB.inputs.shared.loanTerm} years`],
-    ["Interest rate", formatPercent(scenarioA.inputs.shared.interestRate), formatPercent(scenarioB.inputs.shared.interestRate)],
-    ["LTV ratio", formatPercent(scenarioA.results.ltvRatio), formatPercent(scenarioB.results.ltvRatio)],
-  ];
-
-  for (const row of overviewRows) {
-    doc.setTextColor(100, 100, 100);
-    doc.text(row[0], col1, y);
-    doc.setTextColor(30, 30, 30);
-    doc.text(row[1], col2, y);
-    doc.text(row[2], col3, y);
-    y += 14;
-  }
-  y += 10;
-
-  // Monthly Payment table
-  doc.setFontSize(11);
-  doc.setTextColor(50, 50, 50);
-  doc.text("Monthly Payment", margin, y);
-  y += 4;
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 16;
-
-  doc.setFontSize(9);
-  doc.setTextColor(50, 50, 50);
-  doc.text("Component", col1, y);
-  doc.text(scenarioA.name || "Scenario A", col2, y);
-  doc.text(scenarioB.name || "Scenario B", col3, y);
-  y += 4;
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 14;
-
-  doc.setTextColor(100, 100, 100);
-  doc.text("Principal & interest", col1, y);
-  doc.setTextColor(30, 30, 30);
-  doc.text(formatCurrency(scenarioA.results.monthlyPrincipalInterest), col2, y);
-  doc.text(formatCurrency(scenarioB.results.monthlyPrincipalInterest), col3, y);
-  y += 14;
-
-  y += 4;
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 12;
-  doc.setTextColor(30, 30, 30);
-  doc.text("Total monthly payment", col1, y);
-  doc.text(formatCurrency(scenarioA.results.monthlyTotal), col2, y);
-  doc.text(formatCurrency(scenarioB.results.monthlyTotal), col3, y);
-  y += 20;
-
-  // Long-term cost table
-  doc.setFontSize(11);
-  doc.setTextColor(50, 50, 50);
-  doc.text("Long-Term Cost", margin, y);
-  y += 4;
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 16;
-
-  doc.setFontSize(9);
-  doc.setTextColor(50, 50, 50);
-  doc.text("Metric", col1, y);
-  doc.text(scenarioA.name || "Scenario A", col2, y);
-  doc.text(scenarioB.name || "Scenario B", col3, y);
-  y += 4;
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 14;
-
   const getPayoffDate = (scenario: ScenarioData) => {
     const date = new Date();
     date.setMonth(date.getMonth() + scenario.results.payoffMonths);
     return date.toLocaleDateString("en-US", { year: "numeric", month: "short" });
   };
 
-  const costRows = [
-    ["Total payments", formatCurrency(scenarioA.results.totalCost), formatCurrency(scenarioB.results.totalCost)],
-    ["Total interest", formatCurrency(scenarioA.results.totalInterest), formatCurrency(scenarioB.results.totalInterest)],
-    ["Payoff date", getPayoffDate(scenarioA), getPayoffDate(scenarioB)],
-  ];
+  const nameA = a.name || "Scenario A";
+  const nameB = b.name || "Scenario B";
 
-  for (const row of costRows) {
-    doc.setTextColor(100, 100, 100);
-    doc.text(row[0], col1, y);
-    doc.setTextColor(30, 30, 30);
-    doc.text(row[1], col2, y);
-    doc.text(row[2], col3, y);
-    y += 14;
+  return {
+    brand: BRAND.name,
+    title: "Mortgage Scenario Comparison",
+    meta: [`Comparing: ${nameA} (${shortIdA}) vs ${nameB} (${shortIdB})`],
+    generatedDate: dateStr,
+    sections: [
+      {
+        title: "Comparison Summary",
+        type: "text",
+        text: generateSummaryText(a, b),
+      },
+      {
+        title: "Key Differences",
+        type: "key-diff",
+        items: [
+          { label: "Monthly payment", value: formatSignedDelta(deltas.monthlyPaymentDelta) },
+          { label: "Total cost", value: formatSignedDelta(deltas.totalCostDelta) },
+          { label: "Total interest", value: formatSignedDelta(deltas.totalInterestDelta) },
+          { label: "Interest rate", value: formatSignedBasisPoints(deltas.interestRateDelta) },
+          { label: "LTV", value: formatLtvDelta(deltas.ltvDelta) },
+        ],
+      },
+      {
+        title: "Scenario Overview",
+        type: "comparison-table",
+        columns: ["Metric", nameA, nameB],
+        rows: [
+          { label: "Loan type", value: TRANSACTION_TYPE_LABELS[a.inputs.mode], value2: TRANSACTION_TYPE_LABELS[b.inputs.mode] },
+          { label: "Loan amount", value: formatCurrency(a.results.loanAmount), value2: formatCurrency(b.results.loanAmount) },
+          { label: "Term", value: `${a.inputs.shared.loanTerm} years`, value2: `${b.inputs.shared.loanTerm} years` },
+          { label: "Interest rate (assumed)", value: formatPercent(a.inputs.shared.interestRate), value2: formatPercent(b.inputs.shared.interestRate) },
+          { label: "Loan-to-value ratio", value: formatPercent(a.results.ltvRatio), value2: formatPercent(b.results.ltvRatio) },
+        ],
+      },
+      {
+        title: "Monthly Payment",
+        type: "comparison-table",
+        columns: ["Component", nameA, nameB],
+        rows: [
+          { label: "Principal & interest", value: formatCurrency(a.results.monthlyPrincipalInterest), value2: formatCurrency(b.results.monthlyPrincipalInterest) },
+          { label: "Total monthly payment", value: formatCurrency(a.results.monthlyTotal), value2: formatCurrency(b.results.monthlyTotal) },
+        ],
+      },
+      {
+        title: "Long-Term Cost",
+        type: "comparison-table",
+        columns: ["Metric", nameA, nameB],
+        rows: [
+          { label: "Total payments over term", value: formatCurrency(a.results.totalCost), value2: formatCurrency(b.results.totalCost) },
+          { label: "Total interest paid", value: formatCurrency(a.results.totalInterest), value2: formatCurrency(b.results.totalInterest) },
+          { label: "Projected payoff date", value: getPayoffDate(a), value2: getPayoffDate(b) },
+        ],
+      },
+    ],
+    methodology: [
+      "Calculations are based on standard amortization formulas.",
+      "Rates shown are assumed inputs, not lender quotes.",
+      "Property taxes and insurance are estimates where applicable.",
+      "No recommendation is implied by the order or presentation of scenarios.",
+      "Results are intended for comparison and planning purposes only.",
+    ],
+    disclaimer:
+      "This document is provided for analytical and planning purposes only. SettleRate does not originate, broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute a loan offer, guarantee, or financial advice.",
+  };
+}
+
+// ============================================================================
+// PDF RENDERER - Uses canonical layout
+// ============================================================================
+
+function renderLayoutToPDF(layout: ExportLayout): Uint8Array {
+  const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "letter" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = BRAND.margins.page;
+  const contentWidth = pageWidth - margin * 2;
+  let y = margin;
+
+  // Helper to check for page break
+  const checkPageBreak = (neededHeight: number) => {
+    if (y + neededHeight > pageHeight - 80) {
+      doc.addPage();
+      y = margin;
+    }
+  };
+
+  // ===== HEADER =====
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(BRAND.fontSize.brand);
+  doc.setTextColor(...BRAND.colors.textMuted);
+  doc.text(layout.brand, margin, y);
+  y += BRAND.margins.headerGap;
+  
+  doc.setFontSize(BRAND.fontSize.title);
+  doc.setTextColor(...BRAND.colors.text);
+  doc.text(layout.title, margin, y);
+  y += 18;
+  
+  doc.setFontSize(BRAND.fontSize.body);
+  doc.setTextColor(...BRAND.colors.textMuted);
+  doc.text(layout.meta.join("  •  "), margin, y);
+  y += 14;
+  doc.text(`Generated: ${layout.generatedDate}`, margin, y);
+  y += 10;
+  
+  // Header border
+  doc.setDrawColor(...BRAND.colors.border);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += BRAND.margins.section;
+
+  // ===== SECTIONS =====
+  for (const section of layout.sections) {
+    checkPageBreak(60);
+    
+    // Section title
+    doc.setFontSize(BRAND.fontSize.sectionTitle);
+    doc.setTextColor(...BRAND.colors.text);
+    doc.text(section.title, margin, y);
+    y += 6;
+    doc.setDrawColor(...BRAND.colors.borderLight);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 16;
+
+    if (section.type === "text" && section.text) {
+      doc.setFontSize(BRAND.fontSize.body);
+      doc.setTextColor(...BRAND.colors.text);
+      const lines = doc.splitTextToSize(section.text, contentWidth);
+      doc.text(lines, margin, y);
+      y += lines.length * 12 + 12;
+    }
+
+    if (section.type === "key-diff" && section.items) {
+      doc.setFontSize(BRAND.fontSize.small);
+      const itemWidth = 100;
+      let x = margin;
+      for (const item of section.items) {
+        doc.setTextColor(...BRAND.colors.textMuted);
+        doc.text(item.label, x, y);
+        doc.setTextColor(...BRAND.colors.text);
+        doc.text(item.value, x, y + 12);
+        x += itemWidth;
+        if (x > pageWidth - margin - itemWidth) {
+          x = margin;
+          y += 28;
+        }
+      }
+      y += 28;
+    }
+
+    if (section.type === "table" && section.rows) {
+      doc.setFontSize(BRAND.fontSize.body);
+      for (const row of section.rows) {
+        checkPageBreak(20);
+        const isTotal = row.label.toLowerCase().includes("total");
+        if (isTotal) {
+          y += 4;
+          doc.setDrawColor(...BRAND.colors.border);
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 12;
+        }
+        const labelColor = isTotal ? BRAND.colors.text : BRAND.colors.textMuted;
+        doc.setTextColor(labelColor[0], labelColor[1], labelColor[2]);
+        doc.text(row.label, margin, y);
+        doc.setTextColor(...BRAND.colors.text);
+        doc.text(row.value, pageWidth - margin, y, { align: "right" });
+        y += BRAND.margins.tableRow;
+      }
+      y += 10;
+    }
+
+    if (section.type === "comparison-table" && section.rows && section.columns) {
+      const col1 = margin;
+      const col2 = margin + contentWidth * 0.4;
+      const col3 = margin + contentWidth * 0.7;
+
+      // Headers
+      doc.setFontSize(BRAND.fontSize.body);
+      doc.setTextColor(...BRAND.colors.text);
+      doc.text(section.columns[0], col1, y);
+      doc.text(section.columns[1], col2, y);
+      doc.text(section.columns[2], col3, y);
+      y += 6;
+      doc.setDrawColor(...BRAND.colors.border);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 14;
+
+      // Rows
+      for (const row of section.rows) {
+        checkPageBreak(20);
+        const isTotal = row.label.toLowerCase().includes("total");
+        if (isTotal) {
+          y += 4;
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 12;
+        }
+        const rowLabelColor = isTotal ? BRAND.colors.text : BRAND.colors.textMuted;
+        doc.setTextColor(rowLabelColor[0], rowLabelColor[1], rowLabelColor[2]);
+        doc.text(row.label, col1, y);
+        doc.setTextColor(...BRAND.colors.text);
+        doc.text(row.value, col2, y);
+        doc.text(row.value2 || "", col3, y);
+        y += BRAND.margins.tableRow;
+      }
+      y += 10;
+    }
   }
 
-  // Footer disclaimer
-  y = doc.internal.pageSize.getHeight() - 60;
-  doc.setDrawColor(200, 200, 200);
+  // ===== METHODOLOGY =====
+  checkPageBreak(80);
+  doc.setFontSize(BRAND.fontSize.sectionTitle);
+  doc.setTextColor(...BRAND.colors.text);
+  doc.text("Methodology", margin, y);
+  y += 6;
+  doc.setDrawColor(...BRAND.colors.borderLight);
   doc.line(margin, y, pageWidth - margin, y);
+  y += 16;
+
+  doc.setFontSize(BRAND.fontSize.small);
+  doc.setTextColor(...BRAND.colors.textMuted);
+  for (const note of layout.methodology) {
+    doc.text(`• ${note}`, margin, y);
+    y += 12;
+  }
+
+  // ===== FOOTER =====
+  y = pageHeight - 70;
+  doc.setDrawColor(...BRAND.colors.border);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 14;
+  
+  // Footer meta
+  doc.setFontSize(BRAND.fontSize.footer);
+  doc.setTextColor(...BRAND.colors.textLight);
+  doc.text(`${layout.brand} — ${BRAND.domain}`, margin, y);
+  doc.text(`Generated ${layout.generatedDate}`, pageWidth - margin, y, { align: "right" });
   y += 12;
   
-  doc.setFontSize(7);
-  doc.setTextColor(130, 130, 130);
-  const disclaimer = "This document is provided for analytical and planning purposes only. SettleRate does not originate, broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute a loan offer, guarantee, or financial advice.";
-  const disclaimerLines = doc.splitTextToSize(disclaimer, contentWidth);
+  // Disclaimer
+  const disclaimerLines = doc.splitTextToSize(layout.disclaimer, contentWidth);
   doc.text(disclaimerLines, pageWidth / 2, y, { align: "center" });
 
   return doc.output("arraybuffer") as unknown as Uint8Array;
@@ -584,10 +611,10 @@ function generateScenarioFilename(scenario: ScenarioData): string {
   return `SettleRate_Scenario_${safeName}_${date}`;
 }
 
-function generateComparisonFilename(scenarioA: ScenarioData, scenarioB: ScenarioData): string {
+function generateComparisonFilename(a: ScenarioData, b: ScenarioData): string {
   const date = new Date().toISOString().split("T")[0];
-  const nameA = (scenarioA.name || "A").replace(/[^a-zA-Z0-9]/g, "_").substring(0, 15);
-  const nameB = (scenarioB.name || "B").replace(/[^a-zA-Z0-9]/g, "_").substring(0, 15);
+  const nameA = (a.name || "A").replace(/[^a-zA-Z0-9]/g, "_").substring(0, 15);
+  const nameB = (b.name || "B").replace(/[^a-zA-Z0-9]/g, "_").substring(0, 15);
   return `SettleRate_Comparison_${nameA}_vs_${nameB}_${date}`;
 }
 
@@ -596,7 +623,6 @@ function generateComparisonFilename(scenarioA: ScenarioData, scenarioB: Scenario
 // ============================================================================
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -620,17 +646,13 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Get the authorization header
     const authHeader = req.headers.get("Authorization");
-    
-    // Create a Supabase client with the user's JWT
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: {
         headers: authHeader ? { Authorization: authHeader } : {},
       },
     });
 
-    // Get the authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
@@ -645,7 +667,6 @@ Deno.serve(async (req: Request) => {
     let filename: string;
 
     if (type === "scenario") {
-      // Fetch the scenario (RLS will ensure user owns it)
       const { data: scenario, error: scenarioError } = await supabase
         .from("scenarios")
         .select("*")
@@ -664,18 +685,12 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      const scenarioData: ScenarioData = {
-        id: scenario.id,
-        name: scenario.name,
-        inputs: scenario.inputs as ScenarioInputs,
-        results: scenario.derived as ScenarioResults,
-      };
-
-      pdfBytes = generateScenarioPDF(scenarioData);
+      const scenarioData = buildScenarioData(scenario);
+      const layout = buildScenarioLayout(scenarioData);
+      pdfBytes = renderLayoutToPDF(layout);
       filename = generateScenarioFilename(scenarioData);
       
     } else {
-      // Fetch the comparison (RLS will ensure user owns it)
       const { data: comparison, error: comparisonError } = await supabase
         .from("user_comparisons")
         .select("*")
@@ -694,7 +709,6 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      // Fetch both scenarios
       const { data: scenarios, error: scenariosError } = await supabase
         .from("scenarios")
         .select("*")
@@ -718,40 +732,11 @@ Deno.serve(async (req: Request) => {
       const scenarioA = scenarios.find(s => s.id === comparison.scenario_a_id)!;
       const scenarioB = scenarios.find(s => s.id === comparison.scenario_b_id)!;
 
-      // Defensive: ensure inputs and derived exist
-      const buildScenarioData = (s: typeof scenarioA): ScenarioData => {
-        const inputs = (s.inputs || {}) as ScenarioInputs;
-        const derived = (s.derived || {}) as ScenarioResults;
-        return {
-          id: s.id,
-          name: s.name || "Untitled",
-          inputs: {
-            mode: inputs.mode || "purchase",
-            shared: inputs.shared || { loanTerm: 30, interestRate: 0 },
-            purchase: inputs.purchase,
-            refinance: inputs.refinance,
-          },
-          results: {
-            loanAmount: derived.loanAmount || 0,
-            monthlyPrincipalInterest: derived.monthlyPrincipalInterest || 0,
-            monthlyTotal: derived.monthlyTotal || 0,
-            monthlyPropertyTax: derived.monthlyPropertyTax || 0,
-            monthlyHomeInsurance: derived.monthlyHomeInsurance || 0,
-            monthlyPMI: derived.monthlyPMI || 0,
-            monthlyHOA: derived.monthlyHOA || 0,
-            totalCost: derived.totalCost || 0,
-            totalInterest: derived.totalInterest || 0,
-            ltvRatio: derived.ltvRatio || 0,
-            payoffMonths: derived.payoffMonths || 360,
-          },
-        };
-      };
-
-      const scenarioDataA = buildScenarioData(scenarioA);
-      const scenarioDataB = buildScenarioData(scenarioB);
-
-      pdfBytes = generateComparisonPDF(scenarioDataA, scenarioDataB);
-      filename = generateComparisonFilename(scenarioDataA, scenarioDataB);
+      const dataA = buildScenarioData(scenarioA);
+      const dataB = buildScenarioData(scenarioB);
+      const layout = buildComparisonLayout(dataA, dataB);
+      pdfBytes = renderLayoutToPDF(layout);
+      filename = generateComparisonFilename(dataA, dataB);
     }
 
     console.log("EXPORT_PDF_SUCCESS:", {
@@ -762,7 +747,6 @@ Deno.serve(async (req: Request) => {
       size_bytes: pdfBytes.length,
     });
 
-    // Return real PDF with correct headers
     return new Response(new Uint8Array(pdfBytes), {
       status: 200,
       headers: {
@@ -787,3 +771,35 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
+
+// ============================================================================
+// DATA BUILDER HELPER
+// ============================================================================
+
+function buildScenarioData(s: any): ScenarioData {
+  const inputs = (s.inputs || {}) as ScenarioInputs;
+  const derived = (s.derived || {}) as ScenarioResults;
+  return {
+    id: s.id,
+    name: s.name || "Untitled",
+    inputs: {
+      mode: inputs.mode || "purchase",
+      shared: inputs.shared || { loanTerm: 30, interestRate: 0 },
+      purchase: inputs.purchase,
+      refinance: inputs.refinance,
+    },
+    results: {
+      loanAmount: derived.loanAmount || 0,
+      monthlyPrincipalInterest: derived.monthlyPrincipalInterest || 0,
+      monthlyTotal: derived.monthlyTotal || 0,
+      monthlyPropertyTax: derived.monthlyPropertyTax || 0,
+      monthlyHomeInsurance: derived.monthlyHomeInsurance || 0,
+      monthlyPMI: derived.monthlyPMI || 0,
+      monthlyHOA: derived.monthlyHOA || 0,
+      totalCost: derived.totalCost || 0,
+      totalInterest: derived.totalInterest || 0,
+      ltvRatio: derived.ltvRatio || 0,
+      payoffMonths: derived.payoffMonths || 360,
+    },
+  };
+}
