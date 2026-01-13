@@ -139,8 +139,13 @@ export function ExportModal(props: ExportModalProps) {
       toast.success("PDF ready");
       setOpen(false);
     } catch (error) {
-      console.error("PDF generation failed:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to generate PDF");
+      // Log detailed error for debugging, show minimal message to user
+      console.error("EXPORT_PDF_CLIENT_FAILED:", {
+        type: props.type,
+        id: isComparison ? props.comparisonId : props.scenario.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      toast.error("Export failed. Try again.");
     } finally {
       setIsDownloading(false);
     }

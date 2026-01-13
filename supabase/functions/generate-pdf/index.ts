@@ -82,7 +82,8 @@ interface ComparisonData {
 // FORMATTING UTILITIES
 // ============================================================================
 
-function formatCurrency(value: number): string {
+function formatCurrency(value: number | undefined | null): string {
+  if (value == null || isNaN(value)) return "$0";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -91,7 +92,8 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-function formatPercent(value: number): string {
+function formatPercent(value: number | undefined | null): string {
+  if (value == null || isNaN(value)) return "0%";
   const decimals = value % 0.01 !== 0 ? 3 : 2;
   return `${value.toFixed(decimals)}%`;
 }
@@ -117,12 +119,17 @@ function calculateDownPaymentAmount(
 }
 
 function calculateDeltas(a: ScenarioData, b: ScenarioData) {
+  const aResults = a.results || {};
+  const bResults = b.results || {};
+  const aShared = a.inputs?.shared || {};
+  const bShared = b.inputs?.shared || {};
+  
   return {
-    monthlyPaymentDelta: a.results.monthlyTotal - b.results.monthlyTotal,
-    totalCostDelta: a.results.totalCost - b.results.totalCost,
-    totalInterestDelta: a.results.totalInterest - b.results.totalInterest,
-    interestRateDelta: Math.round((a.inputs.shared.interestRate - b.inputs.shared.interestRate) * 100),
-    ltvDelta: (a.results.ltvRatio || 0) - (b.results.ltvRatio || 0),
+    monthlyPaymentDelta: (aResults.monthlyTotal || 0) - (bResults.monthlyTotal || 0),
+    totalCostDelta: (aResults.totalCost || 0) - (bResults.totalCost || 0),
+    totalInterestDelta: (aResults.totalInterest || 0) - (bResults.totalInterest || 0),
+    interestRateDelta: Math.round(((aShared.interestRate || 0) - (bShared.interestRate || 0)) * 100),
+    ltvDelta: (aResults.ltvRatio || 0) - (bResults.ltvRatio || 0),
   };
 }
 
@@ -159,8 +166,10 @@ function generateSummaryText(a: ScenarioData, b: ScenarioData): string {
   const interestDiff = Math.abs(deltas.interestRateDelta);
   const ltvDiff = Math.abs(deltas.ltvDelta);
   
-  const lowerMonthly = deltas.monthlyPaymentDelta > 0 ? b.name : a.name;
-  const higherMonthly = deltas.monthlyPaymentDelta > 0 ? a.name : b.name;
+  const aName = a.name || "Scenario A";
+  const bName = b.name || "Scenario B";
+  const lowerMonthly = deltas.monthlyPaymentDelta > 0 ? bName : aName;
+  const higherMonthly = deltas.monthlyPaymentDelta > 0 ? aName : bName;
   
   let summary = `${lowerMonthly} has a lower monthly payment by ${formatCurrency(monthlyDiff)}, `;
   
@@ -731,7 +740,11 @@ Deno.serve(async (req: Request) => {
         .single();
 
       if (comparisonError || !comparison) {
-        console.error("Comparison fetch error:", comparisonError);
+        console.error("EXPORT_PDF_COMPARISON_FETCH_FAILED:", JSON.stringify({
+          comparison_id: id,
+          user_id: user.id,
+          error: comparisonError?.message,
+        }));
         return new Response(
           JSON.stringify({ error: "Comparison not found or access denied" }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -745,7 +758,14 @@ Deno.serve(async (req: Request) => {
         .in("id", [comparison.scenario_a_id, comparison.scenario_b_id]);
 
       if (scenariosError || !scenarios || scenarios.length !== 2) {
-        console.error("Scenarios fetch error:", scenariosError);
+        console.error("EXPORT_PDF_SCENARIOS_FETCH_FAILED:", JSON.stringify({
+          comparison_id: id,
+          scenario_a_id: comparison.scenario_a_id,
+          scenario_b_id: comparison.scenario_b_id,
+          user_id: user.id,
+          scenarios_found: scenarios?.length ?? 0,
+          error: scenariosError?.message,
+        }));
         return new Response(
           JSON.stringify({ error: "One or more scenarios not found" }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -755,18 +775,58 @@ Deno.serve(async (req: Request) => {
       const scenarioA = scenarios.find(s => s.id === comparison.scenario_a_id)!;
       const scenarioB = scenarios.find(s => s.id === comparison.scenario_b_id)!;
 
+      // Defensive: ensure inputs and derived exist
+      const inputsA = (scenarioA.inputs || {}) as ScenarioInputs;
+      const inputsB = (scenarioB.inputs || {}) as ScenarioInputs;
+      const derivedA = (scenarioA.derived || {}) as ScenarioResults;
+      const derivedB = (scenarioB.derived || {}) as ScenarioResults;
+
       const scenarioDataA: ScenarioData = {
         id: scenarioA.id,
-        name: scenarioA.name,
-        inputs: scenarioA.inputs as ScenarioInputs,
-        results: scenarioA.derived as ScenarioResults,
+        name: scenarioA.name || "Scenario A",
+        inputs: {
+          mode: inputsA.mode || "purchase",
+          shared: inputsA.shared || { loanTerm: 30, interestRate: 0 },
+          purchase: inputsA.purchase,
+          refinance: inputsA.refinance,
+        },
+        results: {
+          loanAmount: derivedA.loanAmount || 0,
+          monthlyPrincipalInterest: derivedA.monthlyPrincipalInterest || 0,
+          monthlyTotal: derivedA.monthlyTotal || 0,
+          monthlyPropertyTax: derivedA.monthlyPropertyTax || 0,
+          monthlyHomeInsurance: derivedA.monthlyHomeInsurance || 0,
+          monthlyPMI: derivedA.monthlyPMI || 0,
+          monthlyHOA: derivedA.monthlyHOA || 0,
+          totalCost: derivedA.totalCost || 0,
+          totalInterest: derivedA.totalInterest || 0,
+          ltvRatio: derivedA.ltvRatio || 0,
+          payoffMonths: derivedA.payoffMonths || 360,
+        },
       };
 
       const scenarioDataB: ScenarioData = {
         id: scenarioB.id,
-        name: scenarioB.name,
-        inputs: scenarioB.inputs as ScenarioInputs,
-        results: scenarioB.derived as ScenarioResults,
+        name: scenarioB.name || "Scenario B",
+        inputs: {
+          mode: inputsB.mode || "purchase",
+          shared: inputsB.shared || { loanTerm: 30, interestRate: 0 },
+          purchase: inputsB.purchase,
+          refinance: inputsB.refinance,
+        },
+        results: {
+          loanAmount: derivedB.loanAmount || 0,
+          monthlyPrincipalInterest: derivedB.monthlyPrincipalInterest || 0,
+          monthlyTotal: derivedB.monthlyTotal || 0,
+          monthlyPropertyTax: derivedB.monthlyPropertyTax || 0,
+          monthlyHomeInsurance: derivedB.monthlyHomeInsurance || 0,
+          monthlyPMI: derivedB.monthlyPMI || 0,
+          monthlyHOA: derivedB.monthlyHOA || 0,
+          totalCost: derivedB.totalCost || 0,
+          totalInterest: derivedB.totalInterest || 0,
+          ltvRatio: derivedB.ltvRatio || 0,
+          payoffMonths: derivedB.payoffMonths || 360,
+        },
       };
 
       html = generateComparisonHTML(scenarioDataA, scenarioDataB);
@@ -791,9 +851,16 @@ Deno.serve(async (req: Request) => {
     });
 
   } catch (error) {
-    console.error("PDF generation error:", error);
+    // EXPORT_PDF_GENERATION_FAILED - Log full details for debugging
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error("EXPORT_PDF_GENERATION_FAILED:", JSON.stringify({
+      error: errorMessage,
+      stack: errorStack,
+      timestamp: new Date().toISOString(),
+    }));
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: "Export failed. Try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
