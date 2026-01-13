@@ -364,7 +364,7 @@ function MobileComparisonCard({
     <SwipeToDelete onDelete={onDelete} disabled={isDeleting}>
       <MobileCard onClick={onView} showChevron>
         <p 
-          className="font-serif text-lg font-normal tracking-tight text-foreground cursor-pointer hover:text-muted-foreground transition-colors"
+          className="text-base font-medium text-foreground cursor-pointer hover:text-muted-foreground transition-colors"
           onClick={(e) => { e.stopPropagation(); onRename(); }}
         >
           {comparison.name}
@@ -597,11 +597,11 @@ export default function ComparisonsIndex() {
                       onMouseLeave={() => setHoveredRowId(null)}
                     >
                       <TableCell 
-                        className="py-4 px-4 text-sm font-medium text-foreground"
+                        className="py-4 px-4"
                         onClick={(e) => { e.stopPropagation(); openRenameDialog(comparison); }}
                       >
                         <span 
-                          className="cursor-pointer hover:text-muted-foreground transition-colors truncate block"
+                          className="text-sm font-medium text-foreground cursor-pointer hover:text-muted-foreground transition-colors truncate block"
                           title="Click to rename"
                         >
                           {comparison.name}
