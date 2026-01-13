@@ -63,9 +63,18 @@ export function generateComparisonFilename(scenarioA: ScenarioData, scenarioB: S
 // ============================================================================
 
 const SHARED_STYLES = `
+  /* =================================================================
+   * Export Page Styles - Institutional Grade Print/PDF
+   * 
+   * STRUCTURE:
+   * - .export-page: Root wrapper (mobile padding + centering)
+   * - .export-content: Content container (max-width + auto margins)
+   * - .table-wrap: Scrollable table container for mobile
+   * ================================================================= */
+
   @page {
     size: letter;
-    margin: 0.75in 0.75in 1in 0.75in;
+    margin: 18mm 16mm;
     
     @bottom-left {
       content: "SettleRate™ — Mortgage decision support";
@@ -95,15 +104,64 @@ const SHARED_STYLES = `
   
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    font-size: 10pt;
-    line-height: 1.5;
-    color: #1a1a1a;
-    background: white;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #111;
+    background: #fff;
   }
   
-  .page {
-    max-width: 100%;
-    padding: 0;
+  /* Export root container */
+  .export-page {
+    background: #fff;
+    color: #111;
+  }
+  
+  /* Screen preview (mobile + desktop) */
+  @media screen {
+    .export-page {
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+      padding-top: 16px;
+      padding-bottom: 24px;
+    }
+    
+    /* Constrain line length for document readability */
+    .export-content {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+  }
+  
+  /* Print/PDF styles */
+  @media print {
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      font-size: 10pt;
+      line-height: 1.5;
+    }
+    
+    .export-page {
+      padding: 0 !important;
+    }
+    
+    .export-content {
+      max-width: none;
+      margin: 0;
+    }
+    
+    /* Avoid table rows splitting awkwardly */
+    table, tr, td, th {
+      page-break-inside: avoid;
+    }
+    
+    h1, h2, h3 {
+      page-break-after: avoid;
+    }
+    
+    .section {
+      page-break-inside: avoid;
+    }
   }
   
   /* Typography */
@@ -121,6 +179,16 @@ const SHARED_STYLES = `
   
   .text-light {
     color: #999;
+  }
+
+  /* Export typography (screen) */
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  h2 { font-size: 14px; margin: 18px 0 8px; }
+  p  { margin: 0 0 10px; }
+  
+  @media print {
+    h1 { font-size: 18pt; }
+    h2 { font-size: 11pt; }
   }
   
   /* Header */
@@ -165,6 +233,24 @@ const SHARED_STYLES = `
     border-bottom: 1px solid #e8e8e8;
   }
   
+  /* Table wrapper for mobile scroll */
+  .table-wrap {
+    width: 100%;
+  }
+  
+  @media screen and (max-width: 480px) {
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0 -4px;
+      padding: 0 4px;
+    }
+    
+    .table-wrap table {
+      min-width: 500px;
+    }
+  }
+  
   /* Tables */
   table {
     width: 100%;
@@ -175,9 +261,17 @@ const SHARED_STYLES = `
   th {
     text-align: left;
     font-weight: 500;
-    padding: 8px 0;
+    padding: 10px 12px;
     border-bottom: 1px solid #d0d0d0;
     color: #333;
+  }
+  
+  th:first-child {
+    padding-left: 0;
+  }
+  
+  th:last-child {
+    padding-right: 0;
   }
   
   th:not(:first-child) {
@@ -185,12 +279,18 @@ const SHARED_STYLES = `
   }
   
   td {
-    padding: 8px 0;
+    padding: 10px 12px;
     border-bottom: 1px solid #f0f0f0;
+    vertical-align: top;
   }
   
   td:first-child {
     color: #666;
+    padding-left: 0;
+  }
+  
+  td:last-child {
+    padding-right: 0;
   }
   
   td:not(:first-child) {
@@ -220,6 +320,54 @@ const SHARED_STYLES = `
   
   .comparison-table th:not(:first-child) {
     width: 30%;
+  }
+  
+  /* Key differences summary table */
+  .key-diff-table {
+    font-size: 8pt;
+    border-collapse: collapse;
+  }
+  
+  .key-diff-table td {
+    padding: 6px 16px 6px 0;
+    border-bottom: 1px solid #e8e8e8;
+    vertical-align: top;
+  }
+  
+  .key-diff-table td:last-child {
+    padding-right: 0;
+  }
+  
+  .key-diff-label {
+    color: #666;
+    display: block;
+    font-size: 7pt;
+    margin-bottom: 2px;
+  }
+  
+  .key-diff-value {
+    font-family: "SF Mono", Monaco, monospace;
+  }
+  
+  /* Mobile: stack key differences vertically */
+  @media screen and (max-width: 480px) {
+    .key-diff-table tr {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .key-diff-table td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .key-diff-label {
+      display: inline;
+      margin-bottom: 0;
+    }
   }
   
   /* Notes and methodology */
@@ -258,10 +406,18 @@ const SHARED_STYLES = `
     text-align: center;
   }
   
-  @media print {
-    body {
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+  /* Comparison summary paragraph */
+  .summary-text {
+    font-size: 9pt;
+    line-height: 1.65;
+    color: #333;
+    margin-bottom: 16px;
+  }
+  
+  @media screen and (max-width: 480px) {
+    .summary-text {
+      font-size: 13px;
+      line-height: 1.55;
     }
   }
 `;
@@ -319,166 +475,177 @@ export function generateScenarioHTML(scenario: ScenarioData): string {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mortgage Scenario Summary - ${name || "Untitled"}</title>
   <style>${SHARED_STYLES}</style>
 </head>
 <body>
-  <div class="page">
-    <!-- Header -->
-    <header class="header">
-      <p class="header-brand">SettleRate</p>
-      <h1 class="header-title">Mortgage Scenario Summary</h1>
-      <p class="header-meta">
-        Scenario: ${name || "Untitled"} &nbsp;•&nbsp; ID: ${shortId} &nbsp;•&nbsp; Generated: ${dateStr}
-      </p>
-    </header>
-    
-    <!-- Section 1: Scenario Overview -->
-    <section class="section">
-      <h2 class="section-title">Scenario Overview</h2>
-      <table>
-        <tr>
-          <td>Loan type</td>
-          <td>${TRANSACTION_TYPE_LABELS[inputs.mode]}</td>
-        </tr>
-        <tr>
-          <td>Property value</td>
-          <td>${formatCurrency(propertyValue)}</td>
-        </tr>
-        ${isPurchase ? `
-        <tr>
-          <td>Down payment</td>
-          <td>${formatCurrency(downPaymentAmount)} (${formatPercent(downPaymentAmount / propertyValue * 100)})</td>
-        </tr>
-        ` : `
-        <tr>
-          <td>Current loan balance</td>
-          <td>${formatCurrency(inputs.refinance.currentLoanBalance)}</td>
-        </tr>
-        `}
-        <tr>
-          <td>Loan amount</td>
-          <td>${formatCurrency(results.loanAmount)}</td>
-        </tr>
-        <tr>
-          <td>Loan term</td>
-          <td>${inputs.shared.loanTerm} years</td>
-        </tr>
-        <tr>
-          <td>Interest rate (assumed)</td>
-          <td>${formatPercent(inputs.shared.interestRate)}</td>
-        </tr>
-        <tr>
-          <td>Loan-to-value ratio</td>
-          <td>${formatPercent(results.ltvRatio)}</td>
-        </tr>
-      </table>
-    </section>
-    
-    <!-- Section 2: Monthly Payment -->
-    <section class="section">
-      <h2 class="section-title">Monthly Payment</h2>
-      <table>
-        <tr>
-          <td>Principal & interest</td>
-          <td>${formatCurrency(results.monthlyPrincipalInterest)}</td>
-        </tr>
-        ${results.monthlyPropertyTax > 0 ? `
-        <tr>
-          <td>Property tax</td>
-          <td>${formatCurrency(results.monthlyPropertyTax)}</td>
-        </tr>
-        ` : ""}
-        ${results.monthlyHomeInsurance > 0 ? `
-        <tr>
-          <td>Home insurance</td>
-          <td>${formatCurrency(results.monthlyHomeInsurance)}</td>
-        </tr>
-        ` : ""}
-        ${results.monthlyPMI > 0 ? `
-        <tr>
-          <td>PMI</td>
-          <td>${formatCurrency(results.monthlyPMI)}</td>
-        </tr>
-        ` : ""}
-        ${results.monthlyHOA > 0 ? `
-        <tr>
-          <td>HOA</td>
-          <td>${formatCurrency(results.monthlyHOA)}</td>
-        </tr>
-        ` : ""}
-        <tr class="total-row">
-          <td>Total monthly payment</td>
-          <td>${formatCurrency(results.monthlyTotal)}</td>
-        </tr>
-      </table>
-    </section>
-    
-    <!-- Section 3: Long-Term Cost Summary -->
-    <section class="section">
-      <h2 class="section-title">Long-Term Cost Summary</h2>
-      <table>
-        <tr>
-          <td>Total payments over term</td>
-          <td>${formatCurrency(results.totalCost)}</td>
-        </tr>
-        <tr>
-          <td>Total interest paid</td>
-          <td>${formatCurrency(results.totalInterest)}</td>
-        </tr>
-        <tr>
-          <td>Projected payoff date</td>
-          <td>${payoffDateStr}</td>
-        </tr>
-      </table>
-    </section>
-    
-    <!-- Section 4: Assumptions -->
-    <section class="section">
-      <h2 class="section-title">Assumptions</h2>
-      <table>
-        ${isPurchase ? `
-        <tr>
-          <td>Purchase price</td>
-          <td>${formatCurrency(inputs.purchase.purchasePrice)}</td>
-        </tr>
-        ` : `
-        <tr>
-          <td>Estimated home value</td>
-          <td>${inputs.refinance.estimatedHomeValue ? formatCurrency(inputs.refinance.estimatedHomeValue) : "Not specified"}</td>
-        </tr>
-        `}
-        <tr>
-          <td>Property taxes (annual)</td>
-          <td>${results.monthlyPropertyTax > 0 ? formatCurrency(results.monthlyPropertyTax * 12) : "Not specified"}</td>
-        </tr>
-        <tr>
-          <td>Home insurance (annual)</td>
-          <td>${results.monthlyHomeInsurance > 0 ? formatCurrency(results.monthlyHomeInsurance * 12) : "Not specified"}</td>
-        </tr>
-      </table>
-    </section>
-    
-    <!-- Section 5: Methodology -->
-    <section class="section">
-      <h2 class="section-title">Methodology</h2>
-      <ul class="notes-list">
-        <li>Calculations are based on standard amortization formulas.</li>
-        <li>Rates shown are assumed inputs, not lender quotes.</li>
-        <li>Property taxes and insurance are estimates where applicable.</li>
-        <li>Results are intended for comparison and planning purposes only.</li>
-        <li>Final loan terms subject to lender approval and property appraisal.</li>
-      </ul>
-    </section>
-    
-    <!-- Footer -->
-    <footer class="footer">
-      <p class="footer-disclaimer">
-        This document is provided for analytical and planning purposes only. SettleRate does not originate, 
-        broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute 
-        a loan offer, guarantee, or financial advice.
-      </p>
-    </footer>
+  <div class="export-page">
+    <div class="export-content">
+      <!-- Header -->
+      <header class="header">
+        <p class="header-brand">SettleRate</p>
+        <h1 class="header-title">Mortgage Scenario Summary</h1>
+        <p class="header-meta">
+          Scenario: ${name || "Untitled"} &nbsp;•&nbsp; ID: ${shortId} &nbsp;•&nbsp; Generated: ${dateStr}
+        </p>
+      </header>
+      
+      <!-- Section 1: Scenario Overview -->
+      <section class="section">
+        <h2 class="section-title">Scenario Overview</h2>
+        <div class="table-wrap">
+          <table>
+            <tr>
+              <td>Loan type</td>
+              <td>${TRANSACTION_TYPE_LABELS[inputs.mode]}</td>
+            </tr>
+            <tr>
+              <td>Property value</td>
+              <td>${formatCurrency(propertyValue)}</td>
+            </tr>
+            ${isPurchase ? `
+            <tr>
+              <td>Down payment</td>
+              <td>${formatCurrency(downPaymentAmount)} (${formatPercent(downPaymentAmount / propertyValue * 100)})</td>
+            </tr>
+            ` : `
+            <tr>
+              <td>Current loan balance</td>
+              <td>${formatCurrency(inputs.refinance.currentLoanBalance)}</td>
+            </tr>
+            `}
+            <tr>
+              <td>Loan amount</td>
+              <td>${formatCurrency(results.loanAmount)}</td>
+            </tr>
+            <tr>
+              <td>Loan term</td>
+              <td>${inputs.shared.loanTerm} years</td>
+            </tr>
+            <tr>
+              <td>Interest rate (assumed)</td>
+              <td>${formatPercent(inputs.shared.interestRate)}</td>
+            </tr>
+            <tr>
+              <td>Loan-to-value ratio</td>
+              <td>${formatPercent(results.ltvRatio)}</td>
+            </tr>
+          </table>
+        </div>
+      </section>
+      
+      <!-- Section 2: Monthly Payment -->
+      <section class="section">
+        <h2 class="section-title">Monthly Payment</h2>
+        <div class="table-wrap">
+          <table>
+            <tr>
+              <td>Principal & interest</td>
+              <td>${formatCurrency(results.monthlyPrincipalInterest)}</td>
+            </tr>
+            ${results.monthlyPropertyTax > 0 ? `
+            <tr>
+              <td>Property tax</td>
+              <td>${formatCurrency(results.monthlyPropertyTax)}</td>
+            </tr>
+            ` : ""}
+            ${results.monthlyHomeInsurance > 0 ? `
+            <tr>
+              <td>Home insurance</td>
+              <td>${formatCurrency(results.monthlyHomeInsurance)}</td>
+            </tr>
+            ` : ""}
+            ${results.monthlyPMI > 0 ? `
+            <tr>
+              <td>PMI</td>
+              <td>${formatCurrency(results.monthlyPMI)}</td>
+            </tr>
+            ` : ""}
+            ${results.monthlyHOA > 0 ? `
+            <tr>
+              <td>HOA</td>
+              <td>${formatCurrency(results.monthlyHOA)}</td>
+            </tr>
+            ` : ""}
+            <tr class="total-row">
+              <td>Total monthly payment</td>
+              <td>${formatCurrency(results.monthlyTotal)}</td>
+            </tr>
+          </table>
+        </div>
+      </section>
+      
+      <!-- Section 3: Long-Term Cost Summary -->
+      <section class="section">
+        <h2 class="section-title">Long-Term Cost Summary</h2>
+        <div class="table-wrap">
+          <table>
+            <tr>
+              <td>Total payments over term</td>
+              <td>${formatCurrency(results.totalCost)}</td>
+            </tr>
+            <tr>
+              <td>Total interest paid</td>
+              <td>${formatCurrency(results.totalInterest)}</td>
+            </tr>
+            <tr>
+              <td>Projected payoff date</td>
+              <td>${payoffDateStr}</td>
+            </tr>
+          </table>
+        </div>
+      </section>
+      
+      <!-- Section 4: Assumptions -->
+      <section class="section">
+        <h2 class="section-title">Assumptions</h2>
+        <div class="table-wrap">
+          <table>
+            ${isPurchase ? `
+            <tr>
+              <td>Purchase price</td>
+              <td>${formatCurrency(inputs.purchase.purchasePrice)}</td>
+            </tr>
+            ` : `
+            <tr>
+              <td>Estimated home value</td>
+              <td>${inputs.refinance.estimatedHomeValue ? formatCurrency(inputs.refinance.estimatedHomeValue) : "Not specified"}</td>
+            </tr>
+            `}
+            <tr>
+              <td>Property taxes (annual)</td>
+              <td>${results.monthlyPropertyTax > 0 ? formatCurrency(results.monthlyPropertyTax * 12) : "Not specified"}</td>
+            </tr>
+            <tr>
+              <td>Home insurance (annual)</td>
+              <td>${results.monthlyHomeInsurance > 0 ? formatCurrency(results.monthlyHomeInsurance * 12) : "Not specified"}</td>
+            </tr>
+          </table>
+        </div>
+      </section>
+      
+      <!-- Section 5: Methodology -->
+      <section class="section">
+        <h2 class="section-title">Methodology</h2>
+        <ul class="notes-list">
+          <li>Calculations are based on standard amortization formulas.</li>
+          <li>Rates shown are assumed inputs, not lender quotes.</li>
+          <li>Property taxes and insurance are estimates where applicable.</li>
+          <li>Results are intended for comparison and planning purposes only.</li>
+          <li>Final loan terms subject to lender approval and property appraisal.</li>
+        </ul>
+      </section>
+      
+      <!-- Footer -->
+      <footer class="footer">
+        <p class="footer-disclaimer">
+          This document is provided for analytical and planning purposes only. SettleRate does not originate, 
+          broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute 
+          a loan offer, guarantee, or financial advice.
+        </p>
+      </footer>
+    </div>
   </div>
 </body>
 </html>
@@ -522,171 +689,180 @@ export function generateComparisonHTML(scenarioA: ScenarioData, scenarioB: Scena
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mortgage Scenario Comparison</title>
   <style>${SHARED_STYLES}</style>
 </head>
 <body>
-  <div class="page">
-    <!-- Header -->
-    <header class="header">
-      <p class="header-brand">SettleRate</p>
-      <h1 class="header-title">Mortgage Scenario Comparison</h1>
-      <p class="header-meta">
-        Comparing: ${scenarioA.name || "Scenario A"} (${shortIdA}) vs ${scenarioB.name || "Scenario B"} (${shortIdB})
-      </p>
-      <p class="header-meta">Generated: ${dateStr}</p>
-    </header>
-    
-    <!-- Comparison Summary -->
-    <section class="section" style="page-break-inside: avoid;">
-      <h2 class="section-title">Comparison Summary</h2>
-      <p style="font-size: 9pt; line-height: 1.6; color: #333; margin-bottom: 16px;">
-        ${generateSummaryText(scenarioA, scenarioB)}
-      </p>
-      <table style="font-size: 8pt; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 6px 16px 6px 0; border-bottom: 1px solid #e8e8e8;">
-            <span style="color: #666; display: block; font-size: 7pt; margin-bottom: 2px;">Monthly payment</span>
-            <span style="font-family: 'SF Mono', Monaco, monospace;">${formatSignedDelta(calculateDeltas(scenarioA, scenarioB).monthlyPaymentDelta)}</span>
-          </td>
-          <td style="padding: 6px 16px 6px 0; border-bottom: 1px solid #e8e8e8;">
-            <span style="color: #666; display: block; font-size: 7pt; margin-bottom: 2px;">Total cost</span>
-            <span style="font-family: 'SF Mono', Monaco, monospace;">${formatSignedDelta(calculateDeltas(scenarioA, scenarioB).totalCostDelta)}</span>
-          </td>
-          <td style="padding: 6px 16px 6px 0; border-bottom: 1px solid #e8e8e8;">
-            <span style="color: #666; display: block; font-size: 7pt; margin-bottom: 2px;">Total interest</span>
-            <span style="font-family: 'SF Mono', Monaco, monospace;">${formatSignedDelta(calculateDeltas(scenarioA, scenarioB).totalInterestDelta)}</span>
-          </td>
-          <td style="padding: 6px 16px 6px 0; border-bottom: 1px solid #e8e8e8;">
-            <span style="color: #666; display: block; font-size: 7pt; margin-bottom: 2px;">Interest rate</span>
-            <span style="font-family: 'SF Mono', Monaco, monospace;">${formatSignedBasisPoints(calculateDeltas(scenarioA, scenarioB).interestRateDelta)}</span>
-          </td>
-          <td style="padding: 6px 0; border-bottom: 1px solid #e8e8e8;">
-            <span style="color: #666; display: block; font-size: 7pt; margin-bottom: 2px;">LTV</span>
-            <span style="font-family: 'SF Mono', Monaco, monospace;">${formatLtvDelta(calculateDeltas(scenarioA, scenarioB).ltvDelta)}</span>
-          </td>
-        </tr>
-      </table>
-    </section>
-    
-    <!-- Section 1: Scenario Overview -->
-    <section class="section">
-      <h2 class="section-title">Scenario Overview</h2>
-      <table class="comparison-table">
-        <thead>
+  <div class="export-page">
+    <div class="export-content">
+      <!-- Header -->
+      <header class="header">
+        <p class="header-brand">SettleRate</p>
+        <h1 class="header-title">Mortgage Scenario Comparison</h1>
+        <p class="header-meta">
+          Comparing: ${scenarioA.name || "Scenario A"} (${shortIdA}) vs ${scenarioB.name || "Scenario B"} (${shortIdB})
+        </p>
+        <p class="header-meta">Generated: ${dateStr}</p>
+      </header>
+      
+      <!-- Comparison Summary -->
+      <section class="section" style="page-break-inside: avoid;">
+        <h2 class="section-title">Comparison Summary</h2>
+        <p class="summary-text">
+          ${generateSummaryText(scenarioA, scenarioB)}
+        </p>
+        <table class="key-diff-table">
           <tr>
-            <th>Metric</th>
-            <th>${scenarioA.name || "Scenario A"}</th>
-            <th>${scenarioB.name || "Scenario B"}</th>
+            <td>
+              <span class="key-diff-label">Monthly payment</span>
+              <span class="key-diff-value">${formatSignedDelta(calculateDeltas(scenarioA, scenarioB).monthlyPaymentDelta)}</span>
+            </td>
+            <td>
+              <span class="key-diff-label">Total cost</span>
+              <span class="key-diff-value">${formatSignedDelta(calculateDeltas(scenarioA, scenarioB).totalCostDelta)}</span>
+            </td>
+            <td>
+              <span class="key-diff-label">Total interest</span>
+              <span class="key-diff-value">${formatSignedDelta(calculateDeltas(scenarioA, scenarioB).totalInterestDelta)}</span>
+            </td>
+            <td>
+              <span class="key-diff-label">Interest rate</span>
+              <span class="key-diff-value">${formatSignedBasisPoints(calculateDeltas(scenarioA, scenarioB).interestRateDelta)}</span>
+            </td>
+            <td>
+              <span class="key-diff-label">LTV</span>
+              <span class="key-diff-value">${formatLtvDelta(calculateDeltas(scenarioA, scenarioB).ltvDelta)}</span>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Loan type</td>
-            <td>${TRANSACTION_TYPE_LABELS[scenarioA.inputs.mode]}</td>
-            <td>${TRANSACTION_TYPE_LABELS[scenarioB.inputs.mode]}</td>
-          </tr>
-          <tr>
-            <td>Loan amount</td>
-            <td>${formatCurrency(scenarioA.results.loanAmount)}</td>
-            <td>${formatCurrency(scenarioB.results.loanAmount)}</td>
-          </tr>
-          <tr>
-            <td>Term</td>
-            <td>${scenarioA.inputs.shared.loanTerm} years</td>
-            <td>${scenarioB.inputs.shared.loanTerm} years</td>
-          </tr>
-          <tr>
-            <td>Interest rate (assumed)</td>
-            <td>${formatPercent(scenarioA.inputs.shared.interestRate)}</td>
-            <td>${formatPercent(scenarioB.inputs.shared.interestRate)}</td>
-          </tr>
-          <tr>
-            <td>Loan-to-value ratio</td>
-            <td>${formatPercent(scenarioA.results.ltvRatio)}</td>
-            <td>${formatPercent(scenarioB.results.ltvRatio)}</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-    
-    <!-- Section 2: Monthly Payment -->
-    <section class="section">
-      <h2 class="section-title">Monthly Payment</h2>
-      <table class="comparison-table">
-        <thead>
-          <tr>
-            <th>Component</th>
-            <th>${scenarioA.name || "Scenario A"}</th>
-            <th>${scenarioB.name || "Scenario B"}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Principal & interest</td>
-            <td>${formatCurrency(scenarioA.results.monthlyPrincipalInterest)}</td>
-            <td>${formatCurrency(scenarioB.results.monthlyPrincipalInterest)}</td>
-          </tr>
-          <tr class="total-row">
-            <td>Total monthly payment</td>
-            <td>${formatCurrency(scenarioA.results.monthlyTotal)}</td>
-            <td>${formatCurrency(scenarioB.results.monthlyTotal)}</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-    
-    <!-- Section 3: Long-Term Cost -->
-    <section class="section">
-      <h2 class="section-title">Long-Term Cost</h2>
-      <table class="comparison-table">
-        <thead>
-          <tr>
-            <th>Metric</th>
-            <th>${scenarioA.name || "Scenario A"}</th>
-            <th>${scenarioB.name || "Scenario B"}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Total payments over term</td>
-            <td>${formatCurrency(scenarioA.results.totalCost)}</td>
-            <td>${formatCurrency(scenarioB.results.totalCost)}</td>
-          </tr>
-          <tr>
-            <td>Total interest paid</td>
-            <td>${formatCurrency(scenarioA.results.totalInterest)}</td>
-            <td>${formatCurrency(scenarioB.results.totalInterest)}</td>
-          </tr>
-          <tr>
-            <td>Projected payoff date</td>
-            <td>${getPayoffDate(scenarioA)}</td>
-            <td>${getPayoffDate(scenarioB)}</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-    
-    <!-- Section 4: Methodology -->
-    <section class="section">
-      <h2 class="section-title">Methodology</h2>
-      <ul class="notes-list">
-        <li>Calculations are based on standard amortization formulas.</li>
-        <li>Rates shown are assumed inputs, not lender quotes.</li>
-        <li>Property taxes and insurance are estimates where applicable.</li>
-        <li>No recommendation is implied by the order or presentation of scenarios.</li>
-        <li>Results are intended for comparison and planning purposes only.</li>
-      </ul>
-    </section>
-    
-    <!-- Footer -->
-    <footer class="footer">
-      <p class="footer-disclaimer">
-        This document is provided for analytical and planning purposes only. SettleRate does not originate, 
-        broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute 
-        a loan offer, guarantee, or financial advice.
-      </p>
-    </footer>
+        </table>
+      </section>
+      
+      <!-- Section 1: Scenario Overview -->
+      <section class="section">
+        <h2 class="section-title">Scenario Overview</h2>
+        <div class="table-wrap">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>${scenarioA.name || "Scenario A"}</th>
+                <th>${scenarioB.name || "Scenario B"}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Loan type</td>
+                <td>${TRANSACTION_TYPE_LABELS[scenarioA.inputs.mode]}</td>
+                <td>${TRANSACTION_TYPE_LABELS[scenarioB.inputs.mode]}</td>
+              </tr>
+              <tr>
+                <td>Loan amount</td>
+                <td>${formatCurrency(scenarioA.results.loanAmount)}</td>
+                <td>${formatCurrency(scenarioB.results.loanAmount)}</td>
+              </tr>
+              <tr>
+                <td>Term</td>
+                <td>${scenarioA.inputs.shared.loanTerm} years</td>
+                <td>${scenarioB.inputs.shared.loanTerm} years</td>
+              </tr>
+              <tr>
+                <td>Interest rate (assumed)</td>
+                <td>${formatPercent(scenarioA.inputs.shared.interestRate)}</td>
+                <td>${formatPercent(scenarioB.inputs.shared.interestRate)}</td>
+              </tr>
+              <tr>
+                <td>Loan-to-value ratio</td>
+                <td>${formatPercent(scenarioA.results.ltvRatio)}</td>
+                <td>${formatPercent(scenarioB.results.ltvRatio)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      
+      <!-- Section 2: Monthly Payment -->
+      <section class="section">
+        <h2 class="section-title">Monthly Payment</h2>
+        <div class="table-wrap">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>${scenarioA.name || "Scenario A"}</th>
+                <th>${scenarioB.name || "Scenario B"}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Principal & interest</td>
+                <td>${formatCurrency(scenarioA.results.monthlyPrincipalInterest)}</td>
+                <td>${formatCurrency(scenarioB.results.monthlyPrincipalInterest)}</td>
+              </tr>
+              <tr class="total-row">
+                <td>Total monthly payment</td>
+                <td>${formatCurrency(scenarioA.results.monthlyTotal)}</td>
+                <td>${formatCurrency(scenarioB.results.monthlyTotal)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      
+      <!-- Section 3: Long-Term Cost -->
+      <section class="section">
+        <h2 class="section-title">Long-Term Cost</h2>
+        <div class="table-wrap">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>${scenarioA.name || "Scenario A"}</th>
+                <th>${scenarioB.name || "Scenario B"}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Total payments over term</td>
+                <td>${formatCurrency(scenarioA.results.totalCost)}</td>
+                <td>${formatCurrency(scenarioB.results.totalCost)}</td>
+              </tr>
+              <tr>
+                <td>Total interest paid</td>
+                <td>${formatCurrency(scenarioA.results.totalInterest)}</td>
+                <td>${formatCurrency(scenarioB.results.totalInterest)}</td>
+              </tr>
+              <tr>
+                <td>Projected payoff date</td>
+                <td>${getPayoffDate(scenarioA)}</td>
+                <td>${getPayoffDate(scenarioB)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      
+      <!-- Section 4: Methodology -->
+      <section class="section">
+        <h2 class="section-title">Methodology</h2>
+        <ul class="notes-list">
+          <li>Calculations are based on standard amortization formulas.</li>
+          <li>Rates shown are assumed inputs, not lender quotes.</li>
+          <li>Property taxes and insurance are estimates where applicable.</li>
+          <li>No recommendation is implied by the order or presentation of scenarios.</li>
+          <li>Results are intended for comparison and planning purposes only.</li>
+        </ul>
+      </section>
+      
+      <!-- Footer -->
+      <footer class="footer">
+        <p class="footer-disclaimer">
+          This document is provided for analytical and planning purposes only. SettleRate does not originate, 
+          broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute 
+          a loan offer, guarantee, or financial advice.
+        </p>
+      </footer>
+    </div>
   </div>
 </body>
 </html>
