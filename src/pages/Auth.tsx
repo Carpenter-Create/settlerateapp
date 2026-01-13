@@ -1,45 +1,39 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  AuthShell,
+  AuthLayout,
+  AuthCard,
   AuthHeader,
   AuthSegmentedControl,
   AuthForm,
   AuthBodyRegion,
+  AuthInput,
+  AuthButton,
   AuthSecondaryAction,
   AuthSecondaryLink,
-  AuthDisclaimer,
-  AuthConfirmationState,
   AuthLegalCheckbox,
-  AuthEscapeLink,
   AuthSessionBanner,
-} from "@/components/auth/AuthShell";
+  AuthErrorBanner,
+  AuthConfirmationState,
+} from "@/components/auth/AuthLayout";
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
  * Unified Access Page - PRODUCTION AUTH STANDARD
  * ═══════════════════════════════════════════════════════════════════════════
  * 
- * Single page with two modes controlled by query param: ?mode=signin | ?mode=create
+ * Uses AuthLayout + authStandard.ts for all styling.
+ * No ad-hoc styling permitted — all tokens come from the standard.
  * 
- * LOCKED BEHAVIOR:
- * - Typography: UI/system font ONLY
- * - Method hierarchy: Password primary, magic link secondary
- * - Error handling: Inline, neutral, factual
- * - Loading states: Button text changes, form disabled
- * - Session handling: Redirect with neutral banner
+ * @see /src/styles/AUTH_UI_STANDARD.md
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
 type AccessMode = "signin" | "create";
 type ViewState = "form" | "magic-link-sent" | "confirm-email";
 
-// Inline error state type
 interface FieldErrors {
   email?: string;
   password?: string;
@@ -110,7 +104,6 @@ export default function Auth() {
     clearSessionExpired();
     setErrors({});
 
-    // Validation
     const newErrors: FieldErrors = {};
     if (!email.trim()) {
       newErrors.email = "Enter a valid email address.";
@@ -152,7 +145,6 @@ export default function Auth() {
     clearSessionExpired();
     setErrors({});
 
-    // Validation
     const newErrors: FieldErrors = {};
     if (!email.trim()) {
       newErrors.email = "Enter a valid email address.";
@@ -234,11 +226,13 @@ export default function Auth() {
   // Loading state
   if (isLoading) {
     return (
-      <AuthShell>
-        <div className="flex items-center justify-center py-12">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
-        </div>
-      </AuthShell>
+      <AuthLayout>
+        <AuthCard>
+          <div className="flex items-center justify-center py-12">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+          </div>
+        </AuthCard>
+      </AuthLayout>
     );
   }
 
@@ -286,129 +280,109 @@ export default function Auth() {
 
   // Main form view
   return (
-    <AuthShell>
-      {/* Session expired banner */}
-      {sessionExpired && (
-        <AuthSessionBanner message="Your session has expired. Please sign in again." />
-      )}
+    <AuthLayout>
+      <AuthCard>
+        {/* Session expired banner */}
+        {sessionExpired && (
+          <AuthSessionBanner message="Your session has expired. Please sign in again." />
+        )}
 
-      {/* Header — minimal copy, no marketing language */}
-      <AuthHeader
-        title={mode === "create" ? "Create account" : "Sign in"}
-        subtitle=""
-      />
+        {/* Header */}
+        <AuthHeader title={mode === "create" ? "Create account" : "Sign in"} />
 
-      {/* Mode tabs (segmented control) */}
-      <AuthSegmentedControl activeTab={mode} onTabChange={setMode} />
+        {/* Mode tabs */}
+        <AuthSegmentedControl activeTab={mode} onTabChange={setMode} />
 
-      {/* General error */}
-      {errors.general && (
-        <p className="auth-error-inline">{errors.general}</p>
-      )}
+        {/* General error banner */}
+        {errors.general && <AuthErrorBanner message={errors.general} />}
 
-      {/* Body Region — fixed height container for form + actions */}
-      <AuthBodyRegion>
-        {/* Form */}
-        <AuthForm onSubmit={mode === "create" ? handleCreateAccount : handleSignIn}>
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-normal">
-              Email address
-            </Label>
-            <Input
+        {/* Body Region */}
+        <AuthBodyRegion>
+          {/* Form */}
+          <AuthForm onSubmit={mode === "create" ? handleCreateAccount : handleSignIn}>
+            <AuthInput
               id="email"
               type="email"
+              label="Email address"
               value={email}
               onChange={(e) => handleEmailChange(e.target.value)}
               placeholder="you@example.com"
               disabled={isSubmitting}
               autoComplete="email"
               autoFocus
-              aria-invalid={!!errors.email}
+              error={errors.email}
             />
-            {errors.email && (
-              <p className="auth-error-inline">{errors.email}</p>
-            )}
-          </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-sm font-normal">
-                Password
-              </Label>
-              {/* Forgot password link — hidden via visibility in create mode to preserve layout */}
-              <Link
-                to="/reset-password"
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                style={{ 
-                  visibility: mode === "signin" && !isSubmitting ? "visible" : "hidden",
-                  pointerEvents: mode === "signin" && !isSubmitting ? "auto" : "none"
-                }}
-                tabIndex={mode === "signin" && !isSubmitting ? 0 : -1}
-                aria-hidden={mode !== "signin"}
-              >
-                Forgot password?
-              </Link>
-            </div>
-            <Input
+            <AuthInput
               id="password"
               type="password"
+              label="Password"
               value={password}
               onChange={(e) => handlePasswordChange(e.target.value)}
               placeholder={mode === "create" ? "At least 9 characters" : ""}
               disabled={isSubmitting}
               autoComplete={mode === "create" ? "new-password" : "current-password"}
-              aria-invalid={!!errors.password}
+              error={errors.password}
+              rightElement={
+                <Link
+                  to="/reset-password"
+                  className="text-xs text-[hsl(220_8%_52%)] transition-colors hover:text-foreground hover:underline hover:underline-offset-2"
+                  style={{ 
+                    visibility: mode === "signin" && !isSubmitting ? "visible" : "hidden",
+                    pointerEvents: mode === "signin" && !isSubmitting ? "auto" : "none"
+                  }}
+                  tabIndex={mode === "signin" && !isSubmitting ? 0 : -1}
+                  aria-hidden={mode !== "signin"}
+                >
+                  Forgot password?
+                </Link>
+              }
             />
-            {errors.password && (
-              <p className="auth-error-inline">{errors.password}</p>
-            )}
-          </div>
 
-          {/* Legal checkbox — always in DOM to preserve layout, visibility toggles */}
-          <div
-            style={{ 
-              visibility: mode === "create" ? "visible" : "hidden",
-              pointerEvents: mode === "create" ? "auto" : "none"
-            }}
-            aria-hidden={mode !== "create"}
-          >
-            <AuthLegalCheckbox
-              checked={agreedToTerms}
-              onCheckedChange={(checked) => {
-                setAgreedToTerms(checked);
-                if (errors.terms) setErrors((prev) => ({ ...prev, terms: undefined }));
+            {/* Legal checkbox — always in DOM to preserve layout */}
+            <div
+              style={{ 
+                visibility: mode === "create" ? "visible" : "hidden",
+                pointerEvents: mode === "create" ? "auto" : "none"
               }}
-              disabled={isSubmitting || mode !== "create"}
-            />
-            {errors.terms && (
-              <p className="auth-error-inline mt-1">{errors.terms}</p>
-            )}
-          </div>
-
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {getButtonText()}
-          </Button>
-        </AuthForm>
-
-        {/* Secondary action — magic link for sign in mode only */}
-        <AuthSecondaryAction>
-          <span
-            style={{ 
-              visibility: mode === "signin" ? "visible" : "hidden",
-              position: mode === "signin" ? "static" : "absolute",
-              pointerEvents: mode === "signin" ? "auto" : "none"
-            }}
-            aria-hidden={mode !== "signin"}
-          >
-            <AuthSecondaryLink 
-              onClick={handleMagicLink} 
-              disabled={isSubmitting || mode !== "signin"}
+              aria-hidden={mode !== "create"}
             >
-              Email me a sign-in link
-            </AuthSecondaryLink>
-          </span>
-        </AuthSecondaryAction>
-      </AuthBodyRegion>
-    </AuthShell>
+              <AuthLegalCheckbox
+                checked={agreedToTerms}
+                onCheckedChange={(checked) => {
+                  setAgreedToTerms(checked);
+                  if (errors.terms) setErrors((prev) => ({ ...prev, terms: undefined }));
+                }}
+                disabled={isSubmitting || mode !== "create"}
+                error={errors.terms}
+              />
+            </div>
+
+            <AuthButton disabled={isSubmitting}>
+              {getButtonText()}
+            </AuthButton>
+          </AuthForm>
+
+          {/* Secondary action — magic link for sign in mode only */}
+          <AuthSecondaryAction>
+            <span
+              style={{ 
+                visibility: mode === "signin" ? "visible" : "hidden",
+                position: mode === "signin" ? "static" : "absolute",
+                pointerEvents: mode === "signin" ? "auto" : "none"
+              }}
+              aria-hidden={mode !== "signin"}
+            >
+              <AuthSecondaryLink 
+                onClick={handleMagicLink} 
+                disabled={isSubmitting || mode !== "signin"}
+              >
+                Email me a sign-in link
+              </AuthSecondaryLink>
+            </span>
+          </AuthSecondaryAction>
+        </AuthBodyRegion>
+      </AuthCard>
+    </AuthLayout>
   );
 }
