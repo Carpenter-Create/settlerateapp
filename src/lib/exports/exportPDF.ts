@@ -874,32 +874,41 @@ export function generateComparisonHTML(scenarioA: ScenarioData, scenarioB: Scena
 // ============================================================================
 
 /**
- * Open print dialog for PDF export
+ * Trigger in-page print without opening new tab
+ * (Legacy - use PrintController instead)
  */
 function openPrintWindow(html: string, filename: string): void {
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) {
-    console.error("Unable to open print window. Please check popup blocker settings.");
-    return;
+  // Create print root if it doesn't exist
+  let printRoot = document.getElementById("print-root");
+  if (!printRoot) {
+    printRoot = document.createElement("div");
+    printRoot.id = "print-root";
+    document.body.appendChild(printRoot);
   }
 
-  // Set document title for PDF filename suggestion
-  const htmlWithTitle = html.replace(
-    /<title>.*?<\/title>/,
-    `<title>${filename}</title>`
-  );
+  // Create content wrapper
+  const wrapper = document.createElement("div");
+  wrapper.className = "print-content";
+  wrapper.innerHTML = html;
+  printRoot.appendChild(wrapper);
 
-  printWindow.document.write(htmlWithTitle);
-  printWindow.document.close();
-
-  printWindow.onload = () => {
-    printWindow.focus();
-    printWindow.print();
+  // Cleanup after print
+  const cleanup = () => {
+    window.removeEventListener("afterprint", cleanup);
+    printRoot?.removeChild(wrapper);
   };
+  window.addEventListener("afterprint", cleanup);
+
+  // Trigger print after DOM update
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  });
 }
 
 /**
- * Export single scenario as PDF
+ * Export single scenario - opens print dialog in-place
  */
 export function exportScenarioPDF(scenario: ScenarioData): void {
   const html = generateScenarioHTML(scenario);
@@ -908,7 +917,7 @@ export function exportScenarioPDF(scenario: ScenarioData): void {
 }
 
 /**
- * Export comparison as PDF
+ * Export comparison - opens print dialog in-place
  */
 export function exportComparisonPDF(scenarioA: ScenarioData, scenarioB: ScenarioData): void {
   const html = generateComparisonHTML(scenarioA, scenarioB);

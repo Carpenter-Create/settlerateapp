@@ -3,9 +3,11 @@
  * 
  * Provides export options for scenarios and comparisons:
  * - Download PDF (primary): Server-generated real PDF
- * - Open print view (secondary): Opens HTML in new tab for browser print
+ * - Print (secondary): In-place browser print dialog
  * 
- * Mobile-first: defaults to Download PDF action.
+ * BEHAVIOR (LOCKED):
+ * - "Download PDF" calls edge function → returns application/pdf
+ * - "Print" triggers window.print() in-place (NO new tab)
  */
 
 import { useState } from "react";
@@ -14,21 +16,20 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScenarioData } from "@/lib/scenarioContract";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   generateComparisonFilename,
   generateScenarioFilename,
-  exportScenarioPDF,
-  exportComparisonPDF,
+  generateScenarioHTML,
+  generateComparisonHTML,
 } from "@/lib/exports/exportPDF";
+import { usePrintController } from "./PrintController";
 
 // ============================================================================
 // TYPES
@@ -67,7 +68,6 @@ async function downloadPDFFromServer(
   id: string,
   filename: string
 ): Promise<void> {
-  // Get the current session for authentication
   const { data: { session } } = await supabase.auth.getSession();
   
   if (!session?.access_token) {
@@ -82,7 +82,6 @@ async function downloadPDFFromServer(
     method: "GET",
     headers: {
       "Authorization": `Bearer ${session.access_token}`,
-      "Content-Type": "application/json",
     },
   });
 
@@ -91,20 +90,33 @@ async function downloadPDFFromServer(
     throw new Error(errorData.error || `Failed to generate PDF (${response.status})`);
   }
 
+  // Guard: Ensure response is actually a PDF
+  const contentType = response.headers.get("Content-Type") || "";
+  if (!contentType.includes("application/pdf")) {
+    const text = await response.text();
+    console.error("EXPORT_PDF_INVALID_CONTENT_TYPE:", { contentType, preview: text.slice(0, 200) });
+    throw new Error("Export failed. Server returned invalid format.");
+  }
+
   const blob = await response.blob();
   
-  // On iOS Safari, open in new tab for share sheet access
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  // Verify blob is PDF
+  if (blob.type && !blob.type.includes("application/pdf")) {
+    throw new Error("Export failed. Invalid file format received.");
+  }
+  
   const url = URL.createObjectURL(blob);
   
+  // iOS Safari: open in new tab for share sheet
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  
   if (isIOS) {
-    // iOS: open blob URL in new tab (triggers iOS share sheet)
     window.open(url, "_blank", "noopener,noreferrer");
   } else {
-    // Desktop: trigger download
+    // Desktop: trigger download with correct .pdf extension
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${filename}.html`;
+    link.download = `${filename}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -118,9 +130,10 @@ async function downloadPDFFromServer(
 
 export function ExportModal(props: ExportModalProps) {
   const { variant = "outline", size = "default", className, disabled } = props;
-  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const { triggerPrint } = usePrintController();
 
   const isComparison = props.type === "comparison";
   
@@ -139,73 +152,80 @@ export function ExportModal(props: ExportModalProps) {
       toast.success("PDF ready");
       setOpen(false);
     } catch (error) {
-      // Log detailed error for debugging, show minimal message to user
       console.error("EXPORT_PDF_CLIENT_FAILED:", {
         type: props.type,
         id: isComparison ? props.comparisonId : props.scenario.id,
         error: error instanceof Error ? error.message : String(error),
       });
-      toast.error("Export failed. Try again.");
+      toast.error("Export failed.");
     } finally {
       setIsDownloading(false);
     }
   };
 
-  const handleOpenPrintView = () => {
-    if (isComparison) {
-      exportComparisonPDF(props.scenarioA, props.scenarioB);
-    } else {
-      exportScenarioPDF(props.scenario);
-    }
+  const handlePrint = () => {
+    setIsPrinting(true);
     setOpen(false);
+    
+    // Generate HTML for printing
+    const html = isComparison
+      ? generateComparisonHTML(props.scenarioA, props.scenarioB)
+      : generateScenarioHTML(props.scenario);
+    
+    // Trigger in-place print (no new tab)
+    triggerPrint(html, () => {
+      setIsPrinting(false);
+    });
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant={variant}
-          size={size}
-          disabled={disabled}
-          className={className}
-        >
-          <FileDown className="mr-2 h-4 w-4" />
-          Export
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-sm [&>button]:min-h-[44px] [&>button]:min-w-[44px]">
-        <DialogHeader>
-          <DialogTitle>Export</DialogTitle>
-        </DialogHeader>
-        
-        <div className="flex flex-col gap-2 pt-2">
-          {/* Primary: Download PDF */}
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
           <Button
-            onClick={handleDownloadPDF}
-            disabled={isDownloading}
-            className="w-full h-11 justify-center gap-2"
+            variant={variant}
+            size={size}
+            disabled={disabled || isPrinting}
+            className={className}
           >
-            {isDownloading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <FileDown className="h-4 w-4" />
-            )}
-            <span>{isDownloading ? "Generating..." : "Download PDF"}</span>
+            <FileDown className="mr-2 h-4 w-4" />
+            Export
           </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-sm [&>button]:min-h-[44px] [&>button]:min-w-[44px]">
+          <DialogHeader>
+            <DialogTitle>Export</DialogTitle>
+          </DialogHeader>
           
-          {/* Secondary: Print view */}
-          <Button
-            variant="ghost"
-            onClick={handleOpenPrintView}
-            disabled={isDownloading}
-            className="w-full h-11 justify-center gap-2 text-muted-foreground"
-          >
-            <Printer className="h-4 w-4" />
-            <span>Print view</span>
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          <div className="flex flex-col gap-2 pt-2">
+            {/* Primary: Download PDF */}
+            <Button
+              onClick={handleDownloadPDF}
+              disabled={isDownloading}
+              className="w-full h-11 justify-center gap-2"
+            >
+              {isDownloading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileDown className="h-4 w-4" />
+              )}
+              <span>{isDownloading ? "Generating..." : "Download PDF"}</span>
+            </Button>
+            
+            {/* Secondary: Print (in-place) */}
+            <Button
+              variant="ghost"
+              onClick={handlePrint}
+              disabled={isDownloading}
+              className="w-full h-11 justify-center gap-2 text-muted-foreground"
+            >
+              <Printer className="h-4 w-4" />
+              <span>Print</span>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
