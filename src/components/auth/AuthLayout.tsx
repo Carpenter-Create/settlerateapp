@@ -68,7 +68,16 @@ export function AuthCard({ children, className }: AuthCardProps) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AuthHeader - Brand + title + optional subtitle
+// AuthHeader - Brand wordmark + title
+// 
+// TYPOGRAPHY (LOCKED):
+// - Wordmark: Brand serif, smaller, quieter
+// - Title: Brand serif, dominant but restrained
+// - Subtitle: System font
+// 
+// SPACING:
+// - Wordmark → Title: 28px (increased for editorial feel)
+// - Title → Segmented Control: handled by card gap
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface AuthHeaderProps {
@@ -81,11 +90,12 @@ export function AuthHeader({ title, subtitle, showBrand = true }: AuthHeaderProp
   return (
     <div className="text-center">
       {showBrand && (
-        <Link to="/" className={authClasses.brandLink}>
+        <Link to="/" className={authClasses.brandWordmark || authClasses.brandLink}>
           SettleRate
         </Link>
       )}
-      <h1 className={cn(authClasses.title, showBrand && "mt-6")}>{title}</h1>
+      {/* Increased spacing: 28px between wordmark and heading for editorial feel */}
+      <h1 className={cn(authClasses.title, showBrand && "mt-7")}>{title}</h1>
       {subtitle && <p className={authClasses.subtitle}>{subtitle}</p>}
     </div>
   );
@@ -400,10 +410,10 @@ export function AuthConfirmationState({
     <AuthLayout>
       <AuthCard>
         <div className="text-center">
-          <Link to="/" className={authClasses.brandLink}>
+          <Link to="/" className={authClasses.brandWordmark || authClasses.brandLink}>
             SettleRate
           </Link>
-          <h1 className={cn(authClasses.title, "mt-6")}>{title}</h1>
+          <h1 className={cn(authClasses.title, "mt-7")}>{title}</h1>
           <p className={authClasses.confirmationBody}>
             {body}
             {email && (

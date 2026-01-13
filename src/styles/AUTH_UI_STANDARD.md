@@ -13,14 +13,23 @@
 
 ## Do / Don't Rules
 
-### Typography
+### Typography (LOCKED)
 
-| ✅ Do | ❌ Don't |
-|-------|---------|
-| Use system/sans-serif font everywhere | Use serif fonts (Source Serif 4) |
-| Medium weight (500) for titles | Bold weight for emphasis |
-| Restrained sizes (max 1.375rem for h1) | Large display typography |
-| -0.01em letter spacing | Tight or wide letter spacing |
+| Element | Font | Weight | Size | Notes |
+|---------|------|--------|------|-------|
+| Wordmark ("SettleRate") | Serif (font-serif) | Normal (400) | 1.0625rem | Understated, not promotional |
+| Page heading ("Sign in") | Serif (font-serif) | Normal (400) | 1.375rem | Dominant but restrained |
+| Subtitle | System/sans-serif | Normal | 0.875rem | Secondary text only |
+| Labels, inputs, buttons | System/sans-serif | Medium/Normal | 0.9375rem | All form elements |
+| Helper text, links | System/sans-serif | Normal | 0.8125rem | Tertiary text |
+
+**Rules:**
+- ✅ Use brand serif ONLY for wordmark and primary headings
+- ✅ Use system font for all interactive/form elements
+- ✅ Natural font weight (no bolding beyond 500)
+- ✅ Neutral dark gray for text (not pure black)
+- ❌ Never use serif fonts in form fields or buttons
+- ❌ Never use bold weight for emphasis
 
 ### Layout
 
