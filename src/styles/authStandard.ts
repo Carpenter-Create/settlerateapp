@@ -144,6 +144,11 @@ export const errorPolicy = {
 /**
  * Tailwind class compositions for auth components
  * Use these instead of inline class strings
+ * 
+ * FONT POLICY (LOCKED):
+ * - Wordmark ("SettleRate"): Brand serif font (font-serif)
+ * - Page headings ("Sign in", "Create account"): Brand serif font
+ * - All other elements: System/UI font (font-sans)
  */
 export const authClasses = {
   // Page frame - full viewport, centered
@@ -164,32 +169,44 @@ export const authClasses = {
   ].join(' '),
   cardPadding: 'p-10 sm:p-10 p-7',
   
-  // Typography
+  // Typography - Brand serif for wordmark and headings
+  // LOCKED: These are the ONLY elements using the brand serif font
+  brandWordmark: [
+    'inline-block',
+    'font-serif',           // Brand serif font
+    'text-[1.0625rem]',     // Slightly smaller than heading (understated)
+    'font-normal',          // Natural weight, no bolding
+    'tracking-tight',
+    'text-[hsl(220_12%_25%)]', // Neutral dark gray, not pure black
+    'transition-opacity',
+    'hover:opacity-70',
+  ].join(' '),
+  
   title: [
-    'font-sans',
-    'text-[1.375rem]',
-    'font-medium',
+    'font-serif',           // Brand serif font for headings
+    'text-[1.375rem]',      // Dominant but restrained
+    'font-normal',          // Natural weight, no bolding
     'tracking-tight',
     'text-[hsl(220_12%_18%)]',
     'text-center',
   ].join(' '),
   
   subtitle: [
-    'font-sans',
+    'font-sans',            // System font for secondary text
     'text-sm',
     'text-[hsl(220_8%_52%)]',
     'text-center',
     'mt-2',
   ].join(' '),
   
-  // Brand link
+  // Brand link (legacy - kept for compatibility, use brandWordmark instead)
   brandLink: [
     'inline-block',
-    'font-sans',
-    'text-base',
-    'font-medium',
+    'font-serif',
+    'text-[1.0625rem]',
+    'font-normal',
     'tracking-tight',
-    'text-[hsl(220_8%_52%)]',
+    'text-[hsl(220_12%_25%)]',
     'transition-opacity',
     'hover:opacity-70',
   ].join(' '),
