@@ -164,7 +164,8 @@ function ErrorState({ title, message, showRetry, onRetry, isRetrying }: ErrorSta
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
         <AlertTriangle className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
       </div>
-      <h1 className="text-xl font-medium tracking-tight">
+      {/* Brand serif for error state headings */}
+      <h1 className="font-serif text-xl font-normal tracking-tight">
         {title}
       </h1>
       <p className="mt-3 max-w-md text-sm text-muted-foreground">
@@ -257,17 +258,20 @@ interface ComparisonSectionProps {
 /**
  * ComparisonSection - Institutional ledger section
  * 
+ * TYPOGRAPHY (LOCKED):
+ * - Section title: brand serif (font-serif), text-base, normal weight
+ * - This provides visual hierarchy while maintaining institutional tone
+ * 
  * Styling rules:
- * - Section headers: text-xs, uppercase, tracking-wider, muted
  * - Spacing: mt-8 mb-3 (first section uses mt-4)
  * - Container: subtle border, no elevation
  */
 function ComparisonSection({ title, children, isFirst = false }: ComparisonSectionProps) {
   return (
     <div className={isFirst ? "mt-4" : "mt-8"}>
-      <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <h2 className="mb-3 font-serif text-base font-normal tracking-tight text-foreground">
         {title}
-      </h3>
+      </h2>
       <div className="border border-border rounded-sm overflow-hidden bg-card">
         {children}
       </div>
@@ -603,9 +607,9 @@ export default function ComparisonDetail() {
             Comparisons
           </Button>
           
-          {/* Title - proper wrapping, no clipping */}
+          {/* Title - brand serif, proper wrapping, no clipping */}
           <h1 
-            className="text-xl font-medium tracking-tight leading-snug"
+            className="font-serif text-xl font-normal tracking-tight leading-snug"
             style={{ 
               wordBreak: 'break-word',
               textWrap: 'balance' as any,
@@ -673,7 +677,8 @@ export default function ComparisonDetail() {
             <ArrowLeft className="mr-1 h-4 w-4" />
             Comparisons
           </Button>
-          <h1 className="text-2xl font-medium tracking-tight pb-5">
+          {/* Title - brand serif for page headings */}
+          <h1 className="font-serif text-2xl font-normal tracking-tight pb-5">
             <InlineEditableName
               value={localName || validComparison.name}
               onSave={handleRename}

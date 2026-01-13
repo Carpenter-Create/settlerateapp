@@ -90,7 +90,8 @@ export default function Account() {
     return (
       <div className="mx-auto max-w-2xl space-y-8">
         <div>
-          <h1 className="text-2xl font-medium tracking-tight">Account</h1>
+          {/* Brand serif for page headings */}
+          <h1 className="font-serif text-2xl font-normal tracking-tight">Account</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Account information
           </p>
@@ -137,7 +138,8 @@ export default function Account() {
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div>
-        <h1 className="text-2xl font-medium tracking-tight">Account</h1>
+        {/* Brand serif for page headings */}
+        <h1 className="font-serif text-2xl font-normal tracking-tight">Account</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Subscription and billing management
         </p>

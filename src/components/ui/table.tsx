@@ -32,12 +32,18 @@ const TableFooter = React.forwardRef<HTMLTableSectionElement, React.HTMLAttribut
 );
 TableFooter.displayName = "TableFooter";
 
+/**
+ * TableRow - Institutional table row
+ * 
+ * TYPOGRAPHY: Body font only (no serif). Values use font-medium at most.
+ * SPACING: min-height 56px for institutional density
+ */
 const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTMLTableRowElement>>(
   ({ className, ...props }, ref) => (
     <tr
       ref={ref}
       className={cn(
-        "h-14 border-b border-border/50 transition-colors last:border-0 data-[state=selected]:bg-muted hover:bg-muted/30",
+        "min-h-[56px] border-b border-border/50 transition-colors last:border-0 data-[state=selected]:bg-muted hover:bg-muted/30",
         className,
       )}
       {...props}
@@ -46,12 +52,18 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
 );
 TableRow.displayName = "TableRow";
 
+/**
+ * TableHead - Table header cell
+ * 
+ * TYPOGRAPHY: Uppercase, small (text-xs), regulatory tone, body font only
+ * SPACING: 14px vertical, 16px horizontal padding
+ */
 const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
     <th
       ref={ref}
       className={cn(
-        "h-11 px-4 text-left align-middle text-xs font-medium uppercase tracking-wide text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        "h-12 py-3.5 px-4 text-left align-middle text-xs font-medium uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0",
         className,
       )}
       {...props}
@@ -60,9 +72,15 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
 );
 TableHead.displayName = "TableHead";
 
+/**
+ * TableCell - Table data cell
+ * 
+ * TYPOGRAPHY: Body font only. Values semibold at most (font-medium).
+ * SPACING: 14px vertical, 16px horizontal padding minimum
+ */
 const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
-    <td ref={ref} className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)} {...props} />
+    <td ref={ref} className={cn("py-3.5 px-4 align-middle text-sm [&:has([role=checkbox])]:pr-0", className)} {...props} />
   ),
 );
 TableCell.displayName = "TableCell";

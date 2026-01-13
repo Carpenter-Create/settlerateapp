@@ -150,10 +150,10 @@ export function ScenarioEditor({
       <div className="grid w-full max-w-full gap-8 lg:grid-cols-[1fr,360px] lg:gap-12">
         {/* Inputs */}
         <div className="min-w-0 space-y-6">
-          {/* Header - institutional, understated */}
+          {/* Header - brand serif for page title, institutional tone */}
           <div className="space-y-1">
             <div className="flex items-center justify-between gap-4">
-              <h1 className="text-2xl font-medium tracking-tight">Calculator</h1>
+              <h1 className="font-serif text-2xl font-normal tracking-tight">Calculator</h1>
               {!isEditing && onOpenGuidedStart && (
                 <button 
                   type="button"
