@@ -12,6 +12,11 @@ const DialogPortal = DialogPrimitive.Portal;
 
 const DialogClose = DialogPrimitive.Close;
 
+/**
+ * Dialog Overlay - Mercury-style subtle tint
+ * 
+ * Uses a lighter overlay with slight blur for institutional feel
+ */
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -19,7 +24,10 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50",
+      "bg-[hsl(220_20%_15%/0.35)] backdrop-blur-[2px]",
+      "data-[state=open]:animate-in data-[state=closed]:animate-out",
+      "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className,
     )}
     {...props}
@@ -32,6 +40,13 @@ interface DialogContentProps
   overlayClassName?: string;
 }
 
+/**
+ * Dialog Content - Institutional modal styling
+ * 
+ * - Subtle shadow, rounded corners
+ * - Close button with adequate hit area (min 44x44)
+ * - Proper inset from edges
+ */
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
@@ -41,13 +56,35 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg",
+        "translate-x-[-50%] translate-y-[-50%]",
+        "gap-4 border border-border/60 bg-background",
+        "p-5 sm:p-6 shadow-lg rounded-lg",
+        "duration-200",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out",
+        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        "data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]",
+        "data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
         className,
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-accent data-[state=open]:text-muted-foreground hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+      {/* Close button - 44x44 hit area, inset 12px from edges */}
+      <DialogPrimitive.Close 
+        className={cn(
+          "absolute right-3 top-3",
+          "flex items-center justify-center",
+          "h-[44px] w-[44px] -m-2",
+          "rounded-md opacity-60",
+          "transition-opacity duration-150",
+          "hover:opacity-100",
+          "focus:outline-none focus-visible:outline focus-visible:outline-2",
+          "focus-visible:outline-foreground/30 focus-visible:outline-offset-0",
+          "disabled:pointer-events-none"
+        )}
+      >
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
@@ -72,7 +109,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+    className={cn("text-lg font-medium leading-none tracking-tight", className)}
     {...props}
   />
 ));
