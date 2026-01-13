@@ -8,7 +8,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Loader2, AlertCircle, FileText } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 type ShareStatus = "loading" | "error" | "success";
 
@@ -37,22 +36,10 @@ export default function Share() {
 
   const resolveShare = async (shareToken: string) => {
     try {
-      // Call the edge function to resolve the token
-      const { data, error: fnError } = await supabase.functions.invoke(
-        "export-share",
-        {
-          method: "GET",
-          // Pass token as query param via the body/headers workaround
-          headers: {
-            "x-share-token": shareToken,
-          },
-        }
-      );
-
-      // The function is called with GET but supabase-js always uses POST for invoke
-      // So we need to use fetch directly
+      // Call the edge function directly with GET to resolve the token
+      // supabase-js invoke uses POST, so we use fetch directly
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL || "https://vpcxzbaxhpucvevnkalo.supabase.co"}/functions/v1/export-share?token=${encodeURIComponent(shareToken)}`,
+        `https://vpcxzbaxhpucvevnkalo.supabase.co/functions/v1/export-share?token=${encodeURIComponent(shareToken)}`,
         {
           method: "GET",
           headers: {
