@@ -186,11 +186,10 @@ export default function AppSettings() {
 
       {/* Delete confirmation dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Remove account</DialogTitle>
             <DialogDescription>
-              This will permanently remove your account, scenarios, and all associated data.
               This action cannot be undone.
             </DialogDescription>
           </DialogHeader>

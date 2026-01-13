@@ -9,7 +9,6 @@ import { useState, useEffect, KeyboardEvent } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -103,15 +102,12 @@ export function RenameComparisonDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Rename comparison</DialogTitle>
-          <DialogDescription>
-            Enter a new name for this comparison.
-          </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-2 py-4">
+        <div className="space-y-2 py-2">
           <Label htmlFor="comparison-name" className="sr-only">
             Comparison name
           </Label>
@@ -146,7 +142,7 @@ export function RenameComparisonDialog({
             onClick={handleSave}
             disabled={isSaving || !name.trim()}
           >
-            {isSaving ? "Saving..." : "Save"}
+            {isSaving ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>
