@@ -292,14 +292,10 @@ export default function Auth() {
         <AuthSessionBanner message="Your session has expired. Please sign in again." />
       )}
 
-      {/* Header */}
+      {/* Header — minimal copy, no marketing language */}
       <AuthHeader
         title={mode === "create" ? "Create account" : "Sign in"}
-        subtitle={
-          mode === "create"
-            ? "Create an account to save your scenarios."
-            : "Access your saved scenarios and continue your analysis."
-        }
+        subtitle=""
       />
 
       {/* Mode tabs (segmented control) */}
@@ -394,9 +390,8 @@ export default function Auth() {
           </Button>
         </AuthForm>
 
-        {/* Secondary actions — single container, both always rendered */}
+        {/* Secondary action — magic link for sign in mode only */}
         <AuthSecondaryAction>
-          {/* Sign in mode: magic link */}
           <span
             style={{ 
               visibility: mode === "signin" ? "visible" : "hidden",
@@ -412,30 +407,8 @@ export default function Auth() {
               Email me a sign-in link
             </AuthSecondaryLink>
           </span>
-          {/* Create mode: switch to sign in */}
-          <span
-            style={{ 
-              visibility: mode === "create" ? "visible" : "hidden",
-              position: mode === "create" ? "static" : "absolute",
-              pointerEvents: mode === "create" ? "auto" : "none"
-            }}
-            aria-hidden={mode !== "create"}
-          >
-            <AuthSecondaryLink 
-              onClick={() => setMode("signin")} 
-              disabled={isSubmitting || mode !== "create"}
-            >
-              Already have an account? Sign in
-            </AuthSecondaryLink>
-          </span>
         </AuthSecondaryAction>
       </AuthBodyRegion>
-
-      {/* Website escape link */}
-      <AuthEscapeLink />
-
-      {/* Disclaimer */}
-      <AuthDisclaimer />
     </AuthShell>
   );
 }
