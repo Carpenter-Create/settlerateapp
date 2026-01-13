@@ -1,7 +1,8 @@
 /**
  * Export Share Hook
  * 
- * Handles creating and managing shareable PDF links.
+ * Handles creating and managing shareable PDF links using the
+ * unified pdf_exports table with share_token column.
  */
 
 import { useState, useCallback } from "react";
@@ -15,17 +16,18 @@ interface ShareResult {
   createdAt: string;
 }
 
-interface ExportShare {
+interface PdfExport {
   id: string;
-  token: string;
-  expires_at: string | null;
-  revoked_at: string | null;
+  share_token: string | null;
+  share_enabled: boolean;
+  share_expires_at: string | null;
   created_at: string;
+  status: string;
 }
 
 export function useExportShare() {
   const [isCreating, setIsCreating] = useState(false);
-  const [shares, setShares] = useState<ExportShare[]>([]);
+  const [shares, setShares] = useState<PdfExport[]>([]);
   const [isLoadingShares, setIsLoadingShares] = useState(false);
 
   /**
@@ -92,40 +94,29 @@ export function useExportShare() {
   );
 
   /**
-   * Fetch existing shares for an entity
+   * Fetch existing shares for an entity from pdf_exports table
    */
   const fetchShares = useCallback(
     async (entityType: "scenario" | "comparison", entityId: string) => {
       setIsLoadingShares(true);
 
       try {
-        // First get the export file
-        const { data: exportFile, error: fileError } = await supabase
-          .from("export_files")
-          .select("id")
-          .eq("entity_type", entityType)
-          .eq("entity_id", entityId)
-          .maybeSingle();
-
-        if (fileError || !exportFile) {
-          setShares([]);
-          return [];
-        }
-
-        // Then get shares for that file
-        const { data: sharesData, error: sharesError } = await supabase
-          .from("export_shares")
-          .select("id, token, expires_at, revoked_at, created_at")
-          .eq("export_file_id", exportFile.id)
+        // Query pdf_exports table for shares with this entity
+        const { data: exports, error } = await supabase
+          .from("pdf_exports")
+          .select("id, share_token, share_enabled, share_expires_at, created_at, status")
+          .eq("kind", entityType)
+          .eq("source_id", entityId)
+          .eq("share_enabled", true)
           .order("created_at", { ascending: false });
 
-        if (sharesError) {
-          console.error("Fetch shares error:", sharesError);
+        if (error) {
+          console.error("Fetch shares error:", error);
           setShares([]);
           return [];
         }
 
-        const result = (sharesData || []) as ExportShare[];
+        const result = (exports || []) as PdfExport[];
         setShares(result);
         return result;
       } catch (err) {
@@ -140,14 +131,18 @@ export function useExportShare() {
   );
 
   /**
-   * Revoke a share link
+   * Revoke a share link by disabling sharing on the pdf_export
    */
-  const revokeShare = useCallback(async (shareId: string): Promise<boolean> => {
+  const revokeShare = useCallback(async (exportId: string): Promise<boolean> => {
     try {
       const { error } = await supabase
-        .from("export_shares")
-        .update({ revoked_at: new Date().toISOString() })
-        .eq("id", shareId);
+        .from("pdf_exports")
+        .update({ 
+          share_enabled: false,
+          share_token: null,
+          share_expires_at: null,
+        })
+        .eq("id", exportId);
 
       if (error) {
         console.error("Revoke share error:", error);

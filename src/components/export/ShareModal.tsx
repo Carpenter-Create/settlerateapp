@@ -78,7 +78,8 @@ export function ShareModal({
     }
   };
 
-  const activeShares = shares.filter((s) => !s.revoked_at);
+  // Filter to only show shares that are enabled and have a token
+  const activeShares = shares.filter((s) => s.share_enabled && s.share_token);
   const entityLabel = entityType === "scenario" ? "Scenario" : "Comparison";
 
   return (
@@ -164,12 +165,12 @@ export function ShareModal({
                     >
                       <div className="flex-1 min-w-0">
                         <code className="text-xs text-muted-foreground truncate block">
-                          ...{share.token.slice(-12)}
+                          ...{share.share_token?.slice(-12)}
                         </code>
                         <span className="text-xs text-muted-foreground">
                           Created {new Date(share.created_at).toLocaleDateString()}
-                          {share.expires_at && (
-                            <> · Expires {new Date(share.expires_at).toLocaleDateString()}</>
+                          {share.share_expires_at && (
+                            <> · Expires {new Date(share.share_expires_at).toLocaleDateString()}</>
                           )}
                         </span>
                       </div>
@@ -177,7 +178,7 @@ export function ShareModal({
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleCopy(share.token)}
+                          onClick={() => share.share_token && handleCopy(share.share_token)}
                           className="h-8 w-8 p-0"
                         >
                           <Copy className="h-3.5 w-3.5" />

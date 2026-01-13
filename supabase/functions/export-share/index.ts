@@ -7,8 +7,10 @@
  * 
  * Security:
  * - Creating shares requires authentication
- * - Token resolution is public but validates expiry/revocation
+ * - Token resolution is public but validates expiry
  * - Storage paths are never exposed directly; only signed URLs are returned
+ * 
+ * Uses the canonical pdf_exports table with share_token column.
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -22,11 +24,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-// Export layout version - bump when layout changes materially
-const EXPORT_LAYOUT_VERSION = "1";
-
-// Generate a cryptographically secure random token
-function generateToken(length = 32): string {
+// Generate a cryptographically secure random token (min 32 chars per DB constraint)
+function generateToken(length = 48): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const array = new Uint8Array(length);
   crypto.getRandomValues(array);
@@ -78,25 +77,14 @@ async function handleResolveShare(token: string): Promise<Response> {
   // Use service role to bypass RLS for token lookup
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-  // Look up the share by token
-  const { data: share, error: shareError } = await supabase
-    .from("export_shares")
-    .select(`
-      id,
-      expires_at,
-      revoked_at,
-      export_file_id,
-      export_files!inner (
-        id,
-        storage_path,
-        entity_type,
-        entity_id
-      )
-    `)
-    .eq("token", token)
+  // Look up the pdf_export by share_token
+  const { data: pdfExport, error: exportError } = await supabase
+    .from("pdf_exports")
+    .select("id, storage_path, kind, source_id, share_enabled, share_expires_at, status")
+    .eq("share_token", token)
     .single();
 
-  if (shareError || !share) {
+  if (exportError || !pdfExport) {
     console.log("Share not found:", token);
     return new Response(
       JSON.stringify({ error: "Share link not found" }),
@@ -104,31 +92,31 @@ async function handleResolveShare(token: string): Promise<Response> {
     );
   }
 
-  // Check if revoked
-  if (share.revoked_at) {
+  // Check if sharing is enabled
+  if (!pdfExport.share_enabled) {
     return new Response(
-      JSON.stringify({ error: "This share link has been revoked" }),
-      { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Sharing is not enabled for this export" }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
   // Check if expired
-  if (share.expires_at && new Date(share.expires_at) < new Date()) {
+  if (pdfExport.share_expires_at && new Date(pdfExport.share_expires_at) < new Date()) {
     return new Response(
       JSON.stringify({ error: "This share link has expired" }),
       { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
-  // Get the export file
-  const exportFile = share.export_files as unknown as {
-    id: string;
-    storage_path: string;
-    entity_type: string;
-    entity_id: string;
-  };
+  // Check if PDF is ready
+  if (pdfExport.status !== "ready") {
+    return new Response(
+      JSON.stringify({ error: "Export is still being generated" }),
+      { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
 
-  if (!exportFile?.storage_path) {
+  if (!pdfExport.storage_path) {
     return new Response(
       JSON.stringify({ error: "Export file not found" }),
       { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -138,7 +126,7 @@ async function handleResolveShare(token: string): Promise<Response> {
   // Generate a short-lived signed URL (60 seconds)
   const { data: signedUrlData, error: signedUrlError } = await supabase.storage
     .from("exports")
-    .createSignedUrl(exportFile.storage_path, 60);
+    .createSignedUrl(pdfExport.storage_path, 60);
 
   if (signedUrlError || !signedUrlData?.signedUrl) {
     console.error("Signed URL error:", signedUrlError);
@@ -152,8 +140,8 @@ async function handleResolveShare(token: string): Promise<Response> {
   return new Response(
     JSON.stringify({
       signedUrl: signedUrlData.signedUrl,
-      entityType: exportFile.entity_type,
-      entityId: exportFile.entity_id,
+      entityType: pdfExport.kind,
+      entityId: pdfExport.source_id,
     }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
@@ -231,132 +219,212 @@ async function handleCreateShare(req: Request): Promise<Response> {
     );
   }
 
-  // Check for existing export file with current version
-  let exportFile: { id: string; storage_path: string } | null = null;
-  const { data: existingFile } = await supabase
-    .from("export_files")
-    .select("id, storage_path")
-    .eq("entity_type", entityType)
-    .eq("entity_id", entityId)
-    .eq("export_version", EXPORT_LAYOUT_VERSION)
-    .eq("owner_user_id", user.id)
-    .single();
+  // Check for existing ready pdf_export
+  const { data: existingExport } = await supabase
+    .from("pdf_exports")
+    .select("id, storage_path, share_token, share_enabled")
+    .eq("kind", entityType)
+    .eq("source_id", entityId)
+    .eq("user_id", user.id)
+    .eq("status", "ready")
+    .maybeSingle();
 
-  if (existingFile) {
-    exportFile = existingFile;
-  } else {
-    // Generate PDF using the generate-pdf function
-    const pdfResponse = await fetch(
-      `${SUPABASE_URL}/functions/v1/generate-pdf?type=${entityType}&id=${entityId}`,
-      {
-        headers: { Authorization: authHeader },
+  let pdfExportId: string;
+  let shareToken: string;
+
+  if (existingExport?.id) {
+    // If already has sharing enabled, just return existing token
+    if (existingExport.share_enabled && existingExport.share_token) {
+      // Update expiration if requested
+      let expiresAt: string | null = null;
+      if (expiresInDays && expiresInDays > 0) {
+        const expDate = new Date();
+        expDate.setDate(expDate.getDate() + expiresInDays);
+        expiresAt = expDate.toISOString();
       }
-    );
 
-    if (!pdfResponse.ok) {
-      const errorText = await pdfResponse.text();
-      console.error("PDF generation failed:", errorText);
+      const { error: updateError } = await supabase
+        .from("pdf_exports")
+        .update({ share_expires_at: expiresAt })
+        .eq("id", existingExport.id);
+
+      if (updateError) {
+        console.error("Update expiration error:", updateError);
+      }
+
       return new Response(
-        JSON.stringify({ error: "Failed to generate PDF" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          shareId: existingExport.id,
+          token: existingExport.share_token,
+          expiresAt,
+          createdAt: new Date().toISOString(),
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const contentType = pdfResponse.headers.get("Content-Type");
-    if (!contentType?.includes("application/pdf")) {
-      console.error("Invalid content type from generate-pdf:", contentType);
-      return new Response(
-        JSON.stringify({ error: "PDF generation returned invalid content" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Enable sharing on existing export
+    pdfExportId = existingExport.id;
+    shareToken = generateToken(48);
+
+    let expiresAt: string | null = null;
+    if (expiresInDays && expiresInDays > 0) {
+      const expDate = new Date();
+      expDate.setDate(expDate.getDate() + expiresInDays);
+      expiresAt = expDate.toISOString();
     }
 
-    // Get PDF bytes
-    const pdfBytes = await pdfResponse.arrayBuffer();
-    const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
-
-    // Upload to storage
-    const storagePath = `${user.id}/${entityType}_${entityId}_v${EXPORT_LAYOUT_VERSION}.pdf`;
-
-    // Use service role for storage upload
-    const serviceSupabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-    const { error: uploadError } = await serviceSupabase.storage
-      .from("exports")
-      .upload(storagePath, pdfBlob, {
-        contentType: "application/pdf",
-        upsert: true,
-      });
-
-    if (uploadError) {
-      console.error("Upload error:", uploadError);
-      return new Response(
-        JSON.stringify({ error: "Failed to store export file" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Create export_files record
-    const { data: newFile, error: fileError } = await supabase
-      .from("export_files")
-      .insert({
-        owner_user_id: user.id,
-        entity_type: entityType,
-        entity_id: entityId,
-        storage_path: storagePath,
-        export_version: EXPORT_LAYOUT_VERSION,
+    const { error: updateError } = await supabase
+      .from("pdf_exports")
+      .update({
+        share_enabled: true,
+        share_token: shareToken,
+        share_expires_at: expiresAt,
       })
-      .select("id, storage_path")
-      .single();
+      .eq("id", pdfExportId);
 
-    if (fileError || !newFile) {
-      console.error("File record error:", fileError);
+    if (updateError) {
+      console.error("Enable sharing error:", updateError);
       return new Response(
-        JSON.stringify({ error: "Failed to create export record" }),
+        JSON.stringify({ error: "Failed to enable sharing" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    exportFile = newFile;
+    return new Response(
+      JSON.stringify({
+        shareId: pdfExportId,
+        token: shareToken,
+        expiresAt,
+        createdAt: new Date().toISOString(),
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 
-  // Generate a unique token
-  const token = generateToken(32);
+  // No existing export - need to generate PDF
+  // First create a queued record
+  shareToken = generateToken(48);
+  const storagePath = `${user.id}/${entityType}_${entityId}.pdf`;
 
-  // Calculate expiration if specified
-  let expiresAt: Date | null = null;
+  let expiresAt: string | null = null;
   if (expiresInDays && expiresInDays > 0) {
-    expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + expiresInDays);
+    const expDate = new Date();
+    expDate.setDate(expDate.getDate() + expiresInDays);
+    expiresAt = expDate.toISOString();
   }
 
-  // Create share record
-  const { data: share, error: shareError } = await supabase
-    .from("export_shares")
+  const { data: newExport, error: insertError } = await supabase
+    .from("pdf_exports")
     .insert({
-      export_file_id: exportFile.id,
-      token,
-      permission: "view",
-      expires_at: expiresAt?.toISOString() ?? null,
-      created_by_user_id: user.id,
+      user_id: user.id,
+      kind: entityType,
+      source_id: entityId,
+      storage_path: storagePath,
+      status: "rendering",
+      share_enabled: true,
+      share_token: shareToken,
+      share_expires_at: expiresAt,
     })
-    .select("id, token, expires_at, created_at")
+    .select("id")
     .single();
 
-  if (shareError || !share) {
-    console.error("Share creation error:", shareError);
+  if (insertError || !newExport) {
+    console.error("Insert export error:", insertError);
     return new Response(
-      JSON.stringify({ error: "Failed to create share link" }),
+      JSON.stringify({ error: "Failed to create export record" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+  }
+
+  pdfExportId = newExport.id;
+
+  // Generate PDF using the generate-pdf function
+  const pdfResponse = await fetch(
+    `${SUPABASE_URL}/functions/v1/generate-pdf?type=${entityType}&id=${entityId}`,
+    {
+      headers: { Authorization: authHeader },
+    }
+  );
+
+  if (!pdfResponse.ok) {
+    const errorText = await pdfResponse.text();
+    console.error("PDF generation failed:", errorText);
+    
+    // Mark as failed
+    await supabase
+      .from("pdf_exports")
+      .update({ status: "failed", error_message: errorText })
+      .eq("id", pdfExportId);
+
+    return new Response(
+      JSON.stringify({ error: "Failed to generate PDF" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  const contentType = pdfResponse.headers.get("Content-Type");
+  if (!contentType?.includes("application/pdf")) {
+    console.error("Invalid content type from generate-pdf:", contentType);
+    
+    await supabase
+      .from("pdf_exports")
+      .update({ status: "failed", error_message: "Invalid content type" })
+      .eq("id", pdfExportId);
+
+    return new Response(
+      JSON.stringify({ error: "PDF generation returned invalid content" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  // Get PDF bytes
+  const pdfBytes = await pdfResponse.arrayBuffer();
+  const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
+
+  // Upload to storage using service role
+  const serviceSupabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  const { error: uploadError } = await serviceSupabase.storage
+    .from("exports")
+    .upload(storagePath, pdfBlob, {
+      contentType: "application/pdf",
+      upsert: true,
+    });
+
+  if (uploadError) {
+    console.error("Upload error:", uploadError);
+    
+    await supabase
+      .from("pdf_exports")
+      .update({ status: "failed", error_message: uploadError.message })
+      .eq("id", pdfExportId);
+
+    return new Response(
+      JSON.stringify({ error: "Failed to store export file" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  // Mark as ready
+  const { error: readyError } = await supabase
+    .from("pdf_exports")
+    .update({ 
+      status: "ready",
+      bytes: pdfBytes.byteLength,
+    })
+    .eq("id", pdfExportId);
+
+  if (readyError) {
+    console.error("Mark ready error:", readyError);
   }
 
   // Return the share info
   return new Response(
     JSON.stringify({
-      shareId: share.id,
-      token: share.token,
-      expiresAt: share.expires_at,
-      createdAt: share.created_at,
+      shareId: pdfExportId,
+      token: shareToken,
+      expiresAt,
+      createdAt: new Date().toISOString(),
     }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
