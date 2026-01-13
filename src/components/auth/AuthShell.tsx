@@ -65,30 +65,47 @@ interface AuthSessionBannerProps {
   message: string;
 }
 
-// Main shell container — fixed frame architecture for layout stability
-// Uses flex with align-start and fixed top padding for pinned position
+// Main shell container — centers card with escape/disclaimer outside
 export function AuthShell({ children, className }: AuthShellProps) {
   return (
     <div className="auth-shell-frame">
-      <div className={cn("auth-container", className)}>
-        {children}
+      <div className="auth-shell-wrapper">
+        <div className={cn("auth-container", className)}>
+          {children}
+        </div>
+        {/* Escape link outside card */}
+        <AuthEscapeLinkExternal />
       </div>
     </div>
   );
 }
 
-// Brand + title + subtitle header (UI font only)
+// External escape link (rendered by AuthShell, outside card)
+function AuthEscapeLinkExternal() {
+  return (
+    <div className="auth-external-links">
+      <a
+        href="https://settlerate.com"
+        className="auth-escape-link"
+      >
+        ← Back to SettleRate.com
+      </a>
+    </div>
+  );
+}
+
+// Brand + title header (UI font only, subtitle optional)
 export function AuthHeader({ title, subtitle }: AuthHeaderProps) {
   return (
     <div className="text-center">
       <Link
         to="/"
-        className="inline-block font-serif text-lg tracking-tight transition-opacity hover:opacity-70"
+        className="inline-block font-sans text-base font-medium tracking-tight text-[hsl(220_8%_52%)] transition-opacity hover:opacity-70"
       >
         SettleRate
       </Link>
       <h1 className="auth-h1">{title}</h1>
-      <p className="auth-subtitle">{subtitle}</p>
+      {subtitle && <p className="auth-subtitle">{subtitle}</p>}
     </div>
   );
 }
@@ -216,16 +233,11 @@ export function AuthSecondaryLink({
   );
 }
 
-// Website escape hatch link
+// Website escape hatch link — kept for backward compatibility but now rendered by AuthShell
 export function AuthEscapeLink() {
-  return (
-    <a
-      href="https://settlerate.com"
-      className="auth-escape-link"
-    >
-      ← Back to SettleRate.com
-    </a>
-  );
+  // This is now rendered automatically by AuthShell outside the card
+  // Keeping this component for API compatibility
+  return null;
 }
 
 // Footer disclaimer
@@ -256,7 +268,7 @@ export function AuthConfirmationState({
       <div className="text-center">
         <Link
           to="/"
-          className="inline-block font-serif text-lg tracking-tight transition-opacity hover:opacity-70"
+          className="inline-block font-sans text-base font-medium tracking-tight text-[hsl(220_8%_52%)] transition-opacity hover:opacity-70"
         >
           SettleRate
         </Link>
@@ -274,8 +286,6 @@ export function AuthConfirmationState({
           {actionLabel}
         </button>
       </div>
-      <AuthEscapeLink />
-      <AuthDisclaimer />
     </AuthShell>
   );
 }

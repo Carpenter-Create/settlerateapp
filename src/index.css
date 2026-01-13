@@ -159,28 +159,34 @@
        
        DO NOT modify without explicit auth standard review.
        ═══════════════════════════════════════════════════════════════ */
-    --auth-container-max-width: 384px;
-    --auth-section-gap: 20px;
-    --auth-header-title-gap: 20px;
-    --auth-header-subtitle-gap: 6px;
-    --auth-field-gap: 16px;
-    --auth-cta-gap: 20px;
-    --auth-secondary-gap: 12px;
-    --auth-escape-gap: 8px;
-    --auth-fineprint-gap: 24px;
-    --auth-h1-size: 1.5rem;
+    --auth-container-max-width: 400px;
+    --auth-container-padding: 40px;
+    --auth-container-padding-mobile: 28px;
+    --auth-section-gap: 24px;
+    --auth-header-title-gap: 24px;
+    --auth-header-subtitle-gap: 8px;
+    --auth-field-gap: 20px;
+    --auth-cta-gap: 28px;
+    --auth-secondary-gap: 16px;
+    --auth-escape-gap: 16px;
+    --auth-fineprint-gap: 32px;
+    --auth-h1-size: 1.375rem;
     --auth-subtitle-size: 0.875rem;
     --auth-fineprint-size: 0.75rem;
-    --auth-radius: 0.5rem;
-    --auth-input-height: 2.5rem;
-    --auth-button-height: 2.5rem;
+    --auth-radius: 8px;
+    --auth-input-height: 46px;
+    --auth-button-height: 46px;
     
-    /* Fixed frame: top padding for pinned position */
-    --auth-frame-top: 80px;
-    --auth-frame-top-mobile: 48px;
+    /* Page background - very light neutral (Mercury-style) */
+    --auth-page-bg: 220 14% 97%;
+    
+    /* Card surface */
+    --auth-card-bg: 0 0% 100%;
+    --auth-card-border: 220 10% 88%;
+    --auth-card-shadow: 0 4px 24px -4px hsl(220 20% 20% / 0.06), 0 1px 3px 0 hsl(220 20% 20% / 0.03);
     
     /* Body region height: locks form area to prevent collapse */
-    --auth-body-min-height: 340px;
+    --auth-body-min-height: 360px;
   }
 
   .dark {
@@ -404,33 +410,44 @@
      - All mode elements stay in DOM with visibility toggle
      ═══════════════════════════════════════════════════════════════ */
 
-  /* Fixed frame — pins card at consistent Y position, no vertical centering */
+  /* Fixed frame — vertically centered, Mercury-style light background */
   .auth-shell-frame {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding-top: var(--auth-frame-top);
-    padding-left: 1rem;
-    padding-right: 1rem;
-    padding-bottom: 2rem;
-    background: hsl(var(--background));
+    justify-content: center;
+    padding: 2rem 1rem;
+    background: hsl(var(--auth-page-bg));
   }
 
-  @media (max-width: 640px) {
-    .auth-shell-frame {
-      padding-top: var(--auth-frame-top-mobile);
-    }
-  }
-
-  /* Container — fixed width, consistent gap structure */
-  .auth-container {
+  /* Wrapper — holds card + external elements */
+  .auth-shell-wrapper {
     width: 100%;
     max-width: var(--auth-container-max-width);
     display: flex;
     flex-direction: column;
+    align-items: center;
+  }
+
+  /* Container — card surface with padding */
+  .auth-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
     gap: var(--auth-section-gap);
+    background: hsl(var(--auth-card-bg));
+    border: 1px solid hsl(var(--auth-card-border));
+    border-radius: var(--auth-radius);
+    box-shadow: var(--auth-card-shadow);
+    padding: var(--auth-container-padding);
+  }
+
+  @media (max-width: 640px) {
+    .auth-container {
+      padding: var(--auth-container-padding-mobile);
+      border-radius: calc(var(--auth-radius) - 2px);
+    }
   }
 
   /* Body region — form content with fixed min-height */
@@ -448,7 +465,7 @@
     font-size: var(--auth-h1-size);
     font-weight: 500;
     letter-spacing: -0.01em;
-    color: hsl(var(--foreground));
+    color: hsl(220 12% 18%);
   }
 
   .auth-subtitle {
@@ -456,7 +473,10 @@
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: var(--auth-subtitle-size);
     line-height: 1.5;
-    color: hsl(var(--muted-foreground));
+    color: hsl(220 8% 52%);
+    max-width: 280px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   /* Segmented control — mode toggle
@@ -468,32 +488,34 @@
     display: flex;
     padding: 4px;
     border-radius: var(--auth-radius);
-    background: #F3F4F6; /* gray-100 */
+    background: hsl(220 14% 95%);
+    border: 1px solid hsl(220 10% 90%);
   }
 
   .auth-tab {
     flex: 1;
-    padding: 8px 12px;
-    border-radius: calc(var(--auth-radius) - 2px);
+    padding: 10px 14px;
+    border-radius: calc(var(--auth-radius) - 3px);
     border: none;
     background: transparent;
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 0.875rem;
     font-weight: 400;
-    color: #6B7280; /* gray-500 */
+    color: hsl(220 8% 50%);
     cursor: pointer;
+    transition: color 0.15s ease;
   }
 
   .auth-tab:hover:not(.auth-tab-active) {
-    color: #374151; /* gray-700 */
+    color: hsl(220 10% 35%);
   }
 
   .auth-tab-active {
-    background: #FFFFFF;
-    border: 1px solid #D0D5DD;
-    color: #111827; /* gray-900 */
+    background: hsl(0 0% 100%);
+    border: 1px solid hsl(220 10% 86%);
+    color: hsl(220 12% 18%);
     font-weight: 500;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 2px hsl(220 20% 20% / 0.04);
   }
 
   /* Form — consistent field spacing */
@@ -503,34 +525,73 @@
     gap: var(--auth-field-gap);
   }
 
+  /* Taller inputs for auth forms — neutral border, no icons */
+  .auth-form input {
+    height: var(--auth-input-height);
+    background: hsl(0 0% 100%);
+    border: 1px solid hsl(220 10% 85%);
+    border-radius: calc(var(--auth-radius) - 2px);
+    font-size: 0.9375rem;
+    transition: border-color 0.15s ease;
+  }
+
+  .auth-form input:focus {
+    border-color: hsl(220 10% 65%);
+    box-shadow: none;
+    outline: none;
+  }
+
+  .auth-form input::placeholder {
+    color: hsl(220 8% 62%);
+  }
+
+  /* Primary CTA — neutral dark gray, taller */
   .auth-form > button[type="submit"] {
     margin-top: calc(var(--auth-cta-gap) - var(--auth-field-gap));
+    height: var(--auth-button-height);
+    background: hsl(220 12% 22%);
+    color: hsl(0 0% 100%);
+    border: none;
+    border-radius: calc(var(--auth-radius) - 2px);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .auth-form > button[type="submit"]:hover:not(:disabled) {
+    background: hsl(220 12% 28%);
+  }
+
+  .auth-form > button[type="submit"]:disabled {
+    background: hsl(220 8% 72%);
+    cursor: not-allowed;
   }
 
   /* Legal checkbox — required for account creation */
   .auth-legal-checkbox {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    margin-top: 4px;
+    gap: 12px;
+    margin-top: 8px;
   }
 
   .auth-legal-checkbox label {
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 0.8125rem;
     line-height: 1.5;
-    color: hsl(var(--muted-foreground));
+    color: hsl(220 8% 52%);
   }
 
   .auth-legal-checkbox a {
-    color: hsl(var(--muted-foreground));
+    color: hsl(220 8% 52%);
     text-decoration: underline;
     text-underline-offset: 2px;
     transition: color 0.15s ease;
   }
 
   .auth-legal-checkbox a:hover {
-    color: hsl(var(--foreground));
+    color: hsl(220 12% 25%);
   }
 
   /* Secondary action — magic link is secondary to password
@@ -567,29 +628,35 @@
     cursor: not-allowed;
   }
 
+  /* External links container — positioned outside card */
+  .auth-external-links {
+    width: 100%;
+    text-align: center;
+    margin-top: 20px;
+  }
+
   /* Website escape link — permanent, quiet */
   .auth-escape-link {
-    display: block;
-    text-align: center;
-    margin-top: calc(var(--auth-escape-gap) - var(--auth-section-gap));
+    display: inline-block;
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 0.75rem;
-    color: hsl(var(--muted-foreground) / 0.55);
+    font-size: 0.8125rem;
+    color: hsl(220 8% 55%);
     transition: color 0.15s ease;
   }
 
   .auth-escape-link:hover {
-    color: hsl(var(--muted-foreground));
+    color: hsl(220 10% 40%);
   }
 
-  /* Disclaimer — visually secondary */
+  /* Disclaimer — visually secondary, below card */
   .auth-disclaimer {
     text-align: center;
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: var(--auth-fineprint-size);
     line-height: 1.5;
-    color: hsl(var(--muted-foreground) / 0.6);
-    margin-top: calc(var(--auth-fineprint-gap) - var(--auth-section-gap));
+    color: hsl(220 8% 58%);
+    margin-top: 16px;
+    max-width: 320px;
   }
 
   /* Confirmation states — email sent, confirm email */
