@@ -168,34 +168,24 @@ export function ExportModal(props: ExportModalProps) {
           Export
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-sm [&>button]:min-h-[44px] [&>button]:min-w-[44px]">
         <DialogHeader>
-          <DialogTitle>Export {isComparison ? "Comparison" : "Scenario"}</DialogTitle>
-          <DialogDescription>
-            Download a lender-ready PDF or open the print preview.
-          </DialogDescription>
+          <DialogTitle>Export</DialogTitle>
         </DialogHeader>
         
-        <div className="flex flex-col gap-3 pt-4">
+        <div className="flex flex-col gap-2 pt-2">
           {/* Primary: Download PDF */}
           <Button
             onClick={handleDownloadPDF}
             disabled={isDownloading}
-            className="w-full h-12 justify-start gap-3 text-left"
+            className="w-full h-11 justify-center gap-2"
           >
             {isDownloading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <FileDown className="h-5 w-5" />
+              <FileDown className="h-4 w-4" />
             )}
-            <div className="flex flex-col items-start">
-              <span className="font-medium">
-                {isDownloading ? "Generating PDF..." : "Download PDF"}
-              </span>
-              <span className="text-xs text-primary-foreground/70">
-                Save or share a real PDF file
-              </span>
-            </div>
+            <span>{isDownloading ? "Generating..." : "Download PDF"}</span>
           </Button>
           
           {/* Secondary: Print view */}
@@ -203,15 +193,10 @@ export function ExportModal(props: ExportModalProps) {
             variant="ghost"
             onClick={handleOpenPrintView}
             disabled={isDownloading}
-            className="w-full h-12 justify-start gap-3 text-left text-muted-foreground"
+            className="w-full h-11 justify-center gap-2 text-muted-foreground"
           >
-            <Printer className="h-5 w-5" />
-            <div className="flex flex-col items-start">
-              <span className="font-medium">Open print view</span>
-              <span className="text-xs">
-                Use browser print dialog
-              </span>
-            </div>
+            <Printer className="h-4 w-4" />
+            <span>Print view</span>
           </Button>
         </div>
       </DialogContent>
