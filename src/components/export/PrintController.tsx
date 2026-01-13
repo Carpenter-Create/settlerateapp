@@ -2,8 +2,14 @@
  * Print Controller Component
  * 
  * Renders printable content in-page and triggers window.print()
- * without opening a new tab. Uses a portal to render content
+ * WITHOUT opening a new tab. Uses a portal to render content
  * in a dedicated #print-root element.
+ * 
+ * BEHAVIOR (LOCKED):
+ * - Clicking "Print" renders HTML into #print-root
+ * - Triggers window.print() in-place after short delay
+ * - Calls onAfterPrint when done
+ * - NEVER opens a new tab or window
  */
 
 import { useEffect, useCallback } from "react";
@@ -71,7 +77,17 @@ export function PrintController({ html, onAfterPrint, isActive }: PrintControlle
 }
 
 /**
- * Hook to manage print state
+ * Hook to manage print state - triggers in-place printing
+ * 
+ * Usage:
+ * const { triggerPrint } = usePrintController();
+ * triggerPrint(htmlString, () => console.log('Print done'));
+ * 
+ * BEHAVIOR:
+ * - Creates temporary print-root if needed
+ * - Injects HTML content
+ * - Calls window.print() in same tab
+ * - Cleans up after print dialog closes
  */
 export function usePrintController() {
   return {
@@ -93,12 +109,15 @@ export function usePrintController() {
       // Handle afterprint
       const cleanup = () => {
         window.removeEventListener("afterprint", cleanup);
-        printRoot?.removeChild(wrapper);
+        // Clean up the wrapper
+        if (printRoot && wrapper.parentNode === printRoot) {
+          printRoot.removeChild(wrapper);
+        }
         onComplete();
       };
       window.addEventListener("afterprint", cleanup);
 
-      // Trigger print
+      // Trigger print after allowing DOM to update
       requestAnimationFrame(() => {
         setTimeout(() => {
           window.print();

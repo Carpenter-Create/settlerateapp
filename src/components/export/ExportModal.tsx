@@ -8,6 +8,11 @@
  * BEHAVIOR (LOCKED):
  * - "Download PDF" calls edge function → returns application/pdf
  * - "Print" triggers window.print() in-place (NO new tab)
+ * 
+ * MODAL STANDARD:
+ * - Title: "Export" (noun phrase only)
+ * - No descriptions or helper text
+ * - Primary: "Download PDF", Secondary: "Print"
  */
 
 import { useState } from "react";
@@ -71,7 +76,7 @@ async function downloadPDFFromServer(
   const { data: { session } } = await supabase.auth.getSession();
   
   if (!session?.access_token) {
-    throw new Error("You must be signed in to export PDFs");
+    throw new Error("Authentication required");
   }
 
   const endpoint = type === "scenario" 
@@ -86,23 +91,40 @@ async function downloadPDFFromServer(
   });
 
   if (!response.ok) {
+    // Log detailed error server-side, show generic to user
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Failed to generate PDF (${response.status})`);
+    console.error("EXPORT_PDF_SERVER_ERROR:", {
+      status: response.status,
+      type,
+      id,
+      error: errorData.error || "Unknown error",
+    });
+    throw new Error("Export failed. Try again.");
   }
 
-  // Guard: Ensure response is actually a PDF
+  // Strict content-type validation: must be application/pdf
   const contentType = response.headers.get("Content-Type") || "";
   if (!contentType.includes("application/pdf")) {
-    const text = await response.text();
-    console.error("EXPORT_PDF_INVALID_CONTENT_TYPE:", { contentType, preview: text.slice(0, 200) });
-    throw new Error("Export failed. Server returned invalid format.");
+    const preview = await response.text().catch(() => "");
+    console.error("EXPORT_PDF_INVALID_CONTENT_TYPE:", { 
+      contentType, 
+      preview: preview.slice(0, 200),
+      type,
+      id,
+    });
+    throw new Error("Export failed. Try again.");
   }
 
   const blob = await response.blob();
   
-  // Verify blob is PDF
+  // Verify blob type
   if (blob.type && !blob.type.includes("application/pdf")) {
-    throw new Error("Export failed. Invalid file format received.");
+    console.error("EXPORT_PDF_INVALID_BLOB_TYPE:", { 
+      blobType: blob.type,
+      type,
+      id,
+    });
+    throw new Error("Export failed. Try again.");
   }
   
   const url = URL.createObjectURL(blob);
@@ -152,12 +174,14 @@ export function ExportModal(props: ExportModalProps) {
       toast.success("PDF ready");
       setOpen(false);
     } catch (error) {
-      console.error("EXPORT_PDF_CLIENT_FAILED:", {
+      // Log full error for debugging, show minimal message to user
+      console.error("EXPORT_PDF_CLIENT_ERROR:", {
         type: props.type,
         id: isComparison ? props.comparisonId : props.scenario.id,
         error: error instanceof Error ? error.message : String(error),
       });
-      toast.error("Export failed.");
+      // User-facing: no technical jargon
+      toast.error("Export failed. Try again.");
     } finally {
       setIsDownloading(false);
     }
@@ -172,7 +196,7 @@ export function ExportModal(props: ExportModalProps) {
       ? generateComparisonHTML(props.scenarioA, props.scenarioB)
       : generateScenarioHTML(props.scenario);
     
-    // Trigger in-place print (no new tab)
+    // Trigger in-place print (NO new tab)
     triggerPrint(html, () => {
       setIsPrinting(false);
     });
@@ -192,12 +216,13 @@ export function ExportModal(props: ExportModalProps) {
             Export
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-sm [&>button]:min-h-[44px] [&>button]:min-w-[44px]">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Export</DialogTitle>
           </DialogHeader>
           
-          <div className="flex flex-col gap-2 pt-2">
+          {/* Actions - vertically stacked, primary first */}
+          <div className="flex flex-col gap-2 pt-1">
             {/* Primary: Download PDF */}
             <Button
               onClick={handleDownloadPDF}
@@ -212,7 +237,7 @@ export function ExportModal(props: ExportModalProps) {
               <span>{isDownloading ? "Generating..." : "Download PDF"}</span>
             </Button>
             
-            {/* Secondary: Print (in-place) */}
+            {/* Secondary: Print (in-place, no new tab) */}
             <Button
               variant="ghost"
               onClick={handlePrint}
