@@ -6,6 +6,11 @@
  * 
  * Calculation baseline: Scenario B (unless otherwise specified)
  * Supports 2 or 3 scenario comparisons.
+ * 
+ * LANGUAGE GUARDRAILS:
+ * - Use "Under these assumptions" framing (never "best choice")
+ * - LTV uses "pp" (percentage points) not "pts"
+ * - Interest rate uses "0.25% (25 basis points)" format
  */
 
 import type { ScenarioData } from "@/lib/scenarioContract";
@@ -28,6 +33,63 @@ export interface ThreeWayDeltas {
 }
 
 export type ComparisonPattern = "tradeoff" | "cost_efficient" | "minimal_difference" | "insufficient_data";
+
+// ============================================================================
+// LOWEST COST DETERMINATION
+// ============================================================================
+
+export interface LowestCostResult {
+  lowestCostScenario: "A" | "B" | "C";
+  lowestCostName: string;
+  totalCost: number;
+  monthlyPayment: number;
+  totalInterest: number;
+}
+
+/**
+ * Determine lowest-cost scenario using tie-breaker logic:
+ * 1. Lowest Total Cost (primary)
+ * 2. Lowest Monthly Payment (tie-breaker)
+ * 3. Lowest Total Interest (second tie-breaker)
+ */
+export function determineLowestCost(
+  scenarioA: ScenarioData,
+  scenarioB: ScenarioData,
+  scenarioC?: ScenarioData | null
+): LowestCostResult {
+  const scenarios: { label: "A" | "B" | "C"; data: ScenarioData }[] = [
+    { label: "A", data: scenarioA },
+    { label: "B", data: scenarioB },
+  ];
+  
+  if (scenarioC) {
+    scenarios.push({ label: "C", data: scenarioC });
+  }
+
+  // Sort by total cost, then monthly, then interest
+  scenarios.sort((a, b) => {
+    const costA = a.data.results.totalCost ?? Infinity;
+    const costB = b.data.results.totalCost ?? Infinity;
+    if (costA !== costB) return costA - costB;
+    
+    const monthlyA = a.data.results.monthlyTotal ?? Infinity;
+    const monthlyB = b.data.results.monthlyTotal ?? Infinity;
+    if (monthlyA !== monthlyB) return monthlyA - monthlyB;
+    
+    const interestA = a.data.results.totalInterest ?? Infinity;
+    const interestB = b.data.results.totalInterest ?? Infinity;
+    return interestA - interestB;
+  });
+
+  const winner = scenarios[0];
+  return {
+    lowestCostScenario: winner.label,
+    lowestCostName: winner.data.name || `Scenario ${winner.label}`,
+    totalCost: winner.data.results.totalCost ?? 0,
+    monthlyPayment: winner.data.results.monthlyTotal ?? 0,
+    totalInterest: winner.data.results.totalInterest ?? 0,
+  };
+}
 
 // ============================================================================
 // CALCULATIONS
@@ -76,6 +138,39 @@ export function calculateThreeWayDeltas(
   return {
     aVsB: calculateDeltas(scenarioA, scenarioB),
     cVsB: scenarioC ? calculateDeltas(scenarioC, scenarioB) : null,
+  };
+}
+
+/**
+ * Calculate deltas relative to winner (for summary)
+ */
+export function calculateDeltasVsWinner(
+  scenario: ScenarioData,
+  winner: ScenarioData
+): ComparisonDeltas {
+  const sMonthly = scenario.results.monthlyTotal;
+  const wMonthly = winner.results.monthlyTotal;
+  const sTotalCost = scenario.results.totalCost;
+  const wTotalCost = winner.results.totalCost;
+  const sTotalInterest = scenario.results.totalInterest;
+  const wTotalInterest = winner.results.totalInterest;
+  const sRate = scenario.inputs.shared?.interestRate ?? 0;
+  const wRate = winner.inputs.shared?.interestRate ?? 0;
+  const sLtv = scenario.results.ltvRatio ?? 0;
+  const wLtv = winner.results.ltvRatio ?? 0;
+
+  return {
+    monthlyPaymentDelta: wMonthly && wMonthly > 0 && sMonthly != null
+      ? ((sMonthly - wMonthly) / wMonthly) * 100
+      : null,
+    totalCostDelta: wTotalCost && wTotalCost > 0 && sTotalCost != null
+      ? ((sTotalCost - wTotalCost) / wTotalCost) * 100
+      : null,
+    totalInterestDelta: wTotalInterest && wTotalInterest > 0
+      ? ((sTotalInterest - wTotalInterest) / wTotalInterest) * 100
+      : null,
+    interestRateDelta: (sRate - wRate) * 100,
+    ltvDelta: sLtv - wLtv,
   };
 }
 
@@ -156,11 +251,12 @@ export function formatSignedBasisPoints(bps: number | null): string {
 
 /**
  * Format LTV delta for display
+ * Uses "pp" (percentage points) for clarity
  */
 export function formatLtvDelta(delta: number | null): string {
   if (delta === null) return "—";
   const sign = delta > 0 ? "+" : "";
-  return `${sign}${delta.toFixed(1)} pts`;
+  return `${sign}${delta.toFixed(1)} pp`;
 }
 
 // ============================================================================
@@ -201,117 +297,94 @@ export function determinePattern(deltas: ComparisonDeltas): ComparisonPattern {
 }
 
 // ============================================================================
-// COPY GENERATION
+// COPY GENERATION - DECISION STATEMENT PATTERN
 // ============================================================================
 
 /**
- * Generate institutional summary copy based on pattern and deltas (2 scenarios)
+ * Generate "Under these assumptions" decision statement for 2 scenarios
+ * Institutional, compliant, non-advisory
  */
 export function generateSummaryCopy(
   deltas: ComparisonDeltas,
   pattern: ComparisonPattern,
   nameA: string,
-  nameB: string
+  nameB: string,
+  scenarioA?: ScenarioData,
+  scenarioB?: ScenarioData
 ): string[] {
-  const { monthlyPaymentDelta, totalCostDelta, totalInterestDelta, interestRateDelta, ltvDelta } = deltas;
-
   if (pattern === "insufficient_data") {
-    return ["Comparison data is incomplete. Additional scenario inputs may be required to generate a quantitative summary."];
+    return ["Comparison data is incomplete. Additional scenario inputs may be required."];
   }
 
   const sentences: string[] = [];
   const displayNameA = nameA || "Scenario A";
   const displayNameB = nameB || "Scenario B";
 
+  // Determine lowest cost if we have scenario data
+  if (scenarioA && scenarioB) {
+    const lowestCost = determineLowestCost(scenarioA, scenarioB);
+    
+    // First line: "Under these assumptions" statement
+    sentences.push(
+      `Under these assumptions, ${lowestCost.lowestCostName} is the lowest projected cost.`
+    );
+
+    // Second line: quantify the gap vs other scenario
+    const otherLabel = lowestCost.lowestCostScenario === "A" ? displayNameB : displayNameA;
+    const otherDeltas = lowestCost.lowestCostScenario === "A" 
+      ? calculateDeltasVsWinner(scenarioB, scenarioA)
+      : calculateDeltasVsWinner(scenarioA, scenarioB);
+
+    if (otherDeltas.totalCostDelta !== null && Math.abs(otherDeltas.totalCostDelta) >= 0.1) {
+      const costDiff = formatDeltaPercent(otherDeltas.totalCostDelta);
+      const monthlyDiff = otherDeltas.monthlyPaymentDelta !== null 
+        ? formatDeltaPercent(otherDeltas.monthlyPaymentDelta)
+        : null;
+      
+      if (monthlyDiff && Math.abs(otherDeltas.monthlyPaymentDelta!) >= 0.1) {
+        sentences.push(
+          `${otherLabel}: +${costDiff} total cost, +${monthlyDiff} monthly payment.`
+        );
+      } else {
+        sentences.push(
+          `${otherLabel}: +${costDiff} total cost.`
+        );
+      }
+    }
+
+    // Third line: drivers (rate, LTV)
+    const driverParts: string[] = [];
+    if (otherDeltas.interestRateDelta !== null && Math.abs(otherDeltas.interestRateDelta) >= 5) {
+      driverParts.push(formatRateDeltaForCopy(otherDeltas.interestRateDelta, true) + " rate");
+    }
+    if (otherDeltas.ltvDelta !== null && Math.abs(otherDeltas.ltvDelta) >= 1) {
+      driverParts.push(`${Math.abs(otherDeltas.ltvDelta).toFixed(1)} pp LTV`);
+    }
+
+    if (driverParts.length > 0) {
+      sentences.push(`Drivers: ${driverParts.join("; ")}.`);
+    }
+
+    return sentences;
+  }
+
+  // Fallback if no scenario data (legacy path)
   if (pattern === "minimal_difference") {
     sentences.push(
-      `The modeled outcomes between the two scenarios differ by less than 3% across monthly payment and total cost.`
+      `The modeled outcomes differ by less than 3% across monthly payment and total cost.`
     );
-    
-    if (interestRateDelta !== null && Math.abs(interestRateDelta) > 0) {
-      sentences.push(
-        `Small variations are driven by marginal differences in interest rate and loan amount, suggesting broadly similar cost profiles under the assumptions used.`
-      );
-    } else {
-      sentences.push(
-        `The scenarios reflect broadly similar cost profiles under the current assumptions.`
-      );
-    }
-    
     return sentences;
   }
 
-  if (pattern === "tradeoff") {
-    // Build tradeoff description
-    if (monthlyPaymentDelta !== null && totalInterestDelta !== null) {
-      const monthlyDirection = monthlyPaymentDelta > 0 ? "higher" : "lower";
-      const interestDirection = totalInterestDelta > 0 ? "higher" : "lower";
-      
-      sentences.push(
-        `Relative to ${displayNameB}, ${displayNameA} results in ${formatDeltaPercent(monthlyPaymentDelta)} ${monthlyDirection} monthly payments, but ${formatDeltaPercent(totalInterestDelta)} ${interestDirection} total interest paid over the loan term.`
-      );
-    }
-
-    if (totalCostDelta !== null) {
-      const costDirection = totalCostDelta > 0 ? "higher" : "lower";
-      sentences.push(
-        `Total projected cost is ${formatDeltaPercent(totalCostDelta)} ${costDirection}, driven by differences in interest rate and loan structure.`
-      );
-    }
-
-    sentences.push(
-      `The comparison highlights a tradeoff between near-term affordability and long-term interest exposure under the modeled assumptions.`
-    );
-
-    return sentences;
-  }
-
-  // Cost efficient pattern
-  if (monthlyPaymentDelta !== null) {
-    const monthlyDirection = monthlyPaymentDelta > 0 ? "higher" : "lower";
-    const totalCostDirection = totalCostDelta !== null ? (totalCostDelta > 0 ? "higher" : "lower") : null;
-    
-    if (totalCostDirection) {
-      sentences.push(
-        `${displayNameA} produces ${formatDeltaPercent(monthlyPaymentDelta)} ${monthlyDirection} monthly payments and a ${formatDeltaPercent(totalCostDelta!)} ${totalCostDirection} total projected cost compared to ${displayNameB}.`
-      );
-    } else {
-      sentences.push(
-        `${displayNameA} produces ${formatDeltaPercent(monthlyPaymentDelta)} ${monthlyDirection} monthly payments compared to ${displayNameB}.`
-      );
-    }
-  }
-
-  // Add rate/LTV context if meaningful
-  // LANGUAGE GUARDRAIL: Use plain percentages, with optional spelled-out basis points
-  const contextParts: string[] = [];
-  if (interestRateDelta !== null && Math.abs(interestRateDelta) >= 5) {
-    const rateDirection = interestRateDelta > 0 ? "higher" : "lower";
-    // Use percentage as primary, with basis points spelled out in parentheses
-    contextParts.push(`a ${formatRateDeltaForCopy(interestRateDelta, true)} ${rateDirection} interest rate`);
-  }
-  if (ltvDelta !== null && Math.abs(ltvDelta) >= 1) {
-    const ltvDirection = ltvDelta > 0 ? "higher" : "lower";
-    contextParts.push(`a ${Math.abs(ltvDelta).toFixed(1)}% ${ltvDirection} loan-to-value ratio`);
-  }
-
-  if (contextParts.length > 0) {
-    sentences.push(
-      `These differences are primarily driven by ${contextParts.join(" and ")}.`
-    );
-  }
-
-  // Determine summary statement
-  const isABetter = (monthlyPaymentDelta !== null && monthlyPaymentDelta < 0) || 
-                   (totalCostDelta !== null && totalCostDelta < 0);
+  // Generic fallback
+  const { monthlyPaymentDelta, totalCostDelta, interestRateDelta, ltvDelta } = deltas;
   
-  if (isABetter) {
+  if (monthlyPaymentDelta !== null && totalCostDelta !== null) {
+    const monthlyDir = monthlyPaymentDelta > 0 ? "higher" : "lower";
+    const costDir = totalCostDelta > 0 ? "higher" : "lower";
+    
     sentences.push(
-      `Under the current assumptions, ${displayNameA} reflects a more cost-efficient structure.`
-    );
-  } else {
-    sentences.push(
-      `Under the current assumptions, ${displayNameB} reflects a more cost-efficient structure.`
+      `${displayNameA} produces ${formatDeltaPercent(monthlyPaymentDelta)} ${monthlyDir} monthly payments and ${formatDeltaPercent(totalCostDelta)} ${costDir} total projected cost compared to ${displayNameB}.`
     );
   }
 
@@ -319,16 +392,17 @@ export function generateSummaryCopy(
 }
 
 /**
- * Generate institutional summary copy for 3-scenario comparison
- * Compares A vs B and C vs B (B is baseline)
+ * Generate decision statement for 3-scenario comparison
  */
 export function generateThreeWaySummaryCopy(
   threeWayDeltas: ThreeWayDeltas,
   nameA: string,
   nameB: string,
-  nameC: string
+  nameC: string,
+  scenarioA?: ScenarioData,
+  scenarioB?: ScenarioData,
+  scenarioC?: ScenarioData
 ): string[] {
-  const { aVsB, cVsB } = threeWayDeltas;
   const sentences: string[] = [];
   
   const displayNameA = nameA || "Scenario A";
@@ -336,43 +410,112 @@ export function generateThreeWaySummaryCopy(
   const displayNameC = nameC || "Scenario C";
 
   // Check for insufficient data
-  if (aVsB.monthlyPaymentDelta === null || aVsB.totalCostDelta === null) {
-    return ["Comparison data is incomplete. Additional scenario inputs may be required to generate a quantitative summary."];
+  if (threeWayDeltas.aVsB.monthlyPaymentDelta === null || threeWayDeltas.aVsB.totalCostDelta === null) {
+    return ["Comparison data is incomplete. Additional scenario inputs may be required."];
   }
 
+  // Determine lowest cost across all three
+  if (scenarioA && scenarioB && scenarioC) {
+    const lowestCost = determineLowestCost(scenarioA, scenarioB, scenarioC);
+    
+    // First line: "Under these assumptions" statement
+    sentences.push(
+      `Under these assumptions, ${lowestCost.lowestCostName} is the lowest projected cost.`
+    );
+
+    // Get the winner scenario data
+    const winnerData = lowestCost.lowestCostScenario === "A" ? scenarioA 
+      : lowestCost.lowestCostScenario === "B" ? scenarioB 
+      : scenarioC;
+
+    // Build deltas for non-winners
+    const others: { name: string; deltas: ComparisonDeltas }[] = [];
+    
+    if (lowestCost.lowestCostScenario !== "A") {
+      others.push({ 
+        name: displayNameA, 
+        deltas: calculateDeltasVsWinner(scenarioA, winnerData) 
+      });
+    }
+    if (lowestCost.lowestCostScenario !== "B") {
+      others.push({ 
+        name: displayNameB, 
+        deltas: calculateDeltasVsWinner(scenarioB, winnerData) 
+      });
+    }
+    if (lowestCost.lowestCostScenario !== "C") {
+      others.push({ 
+        name: displayNameC, 
+        deltas: calculateDeltasVsWinner(scenarioC, winnerData) 
+      });
+    }
+
+    // Second line: quantify gaps for each non-winner
+    const gapParts = others
+      .filter(o => o.deltas.totalCostDelta !== null && Math.abs(o.deltas.totalCostDelta) >= 0.1)
+      .map(o => `+${formatDeltaPercent(o.deltas.totalCostDelta!)} vs ${o.name}`);
+
+    if (gapParts.length > 0) {
+      sentences.push(`Total cost: ${gapParts.join("; ")}.`);
+    }
+
+    // Third line: key drivers from the winner
+    const driverParts: string[] = [];
+    const winnerRate = winnerData.inputs.shared?.interestRate ?? 0;
+    const winnerLtv = winnerData.results.ltvRatio ?? 0;
+    
+    // Compare rate vs average of others
+    const avgOtherRate = others.reduce((sum, o) => {
+      const scenario = o.name === displayNameA ? scenarioA 
+        : o.name === displayNameB ? scenarioB 
+        : scenarioC;
+      return sum + (scenario.inputs.shared?.interestRate ?? 0);
+    }, 0) / others.length;
+    
+    const rateDiff = (winnerRate - avgOtherRate) * 100;
+    if (Math.abs(rateDiff) >= 5) {
+      const dir = rateDiff < 0 ? "lower" : "higher";
+      driverParts.push(`${formatRateDeltaForCopy(Math.abs(rateDiff), true)} ${dir} rate`);
+    }
+
+    const avgOtherLtv = others.reduce((sum, o) => {
+      const scenario = o.name === displayNameA ? scenarioA 
+        : o.name === displayNameB ? scenarioB 
+        : scenarioC;
+      return sum + (scenario.results.ltvRatio ?? 0);
+    }, 0) / others.length;
+    
+    const ltvDiff = winnerLtv - avgOtherLtv;
+    if (Math.abs(ltvDiff) >= 1) {
+      const dir = ltvDiff < 0 ? "lower" : "higher";
+      driverParts.push(`${Math.abs(ltvDiff).toFixed(1)} pp ${dir} LTV`);
+    }
+
+    if (driverParts.length > 0) {
+      sentences.push(`Drivers: ${driverParts.join("; ")}.`);
+    }
+
+    return sentences;
+  }
+
+  // Fallback without full scenario data
+  const { aVsB, cVsB } = threeWayDeltas;
+  
   // A vs B summary
-  const aMonthlyDir = aVsB.monthlyPaymentDelta > 0 ? "higher" : "lower";
-  const aCostDir = aVsB.totalCostDelta > 0 ? "higher" : "lower";
+  const aMonthlyDir = aVsB.monthlyPaymentDelta! > 0 ? "higher" : "lower";
+  const aCostDir = aVsB.totalCostDelta! > 0 ? "higher" : "lower";
   
   sentences.push(
-    `Relative to ${displayNameB}, ${displayNameA} produces ${formatDeltaPercent(aVsB.monthlyPaymentDelta)} ${aMonthlyDir} monthly payments and ${formatDeltaPercent(aVsB.totalCostDelta)} ${aCostDir} total projected cost.`
+    `Relative to ${displayNameB}, ${displayNameA} produces ${formatDeltaPercent(aVsB.monthlyPaymentDelta!)} ${aMonthlyDir} monthly payments and ${formatDeltaPercent(aVsB.totalCostDelta!)} ${aCostDir} total projected cost.`
   );
 
-  // C vs B summary (if available)
+  // C vs B summary
   if (cVsB && cVsB.monthlyPaymentDelta !== null && cVsB.totalCostDelta !== null) {
     const cMonthlyDir = cVsB.monthlyPaymentDelta > 0 ? "higher" : "lower";
     const cCostDir = cVsB.totalCostDelta > 0 ? "higher" : "lower";
     
     sentences.push(
       `${displayNameC} results in ${formatDeltaPercent(cVsB.monthlyPaymentDelta)} ${cMonthlyDir} monthly payments and ${formatDeltaPercent(cVsB.totalCostDelta)} ${cCostDir} total cost compared to ${displayNameB}.`
-    );
-  }
-
-  // Add contextual insight
-  const patternA = determinePattern(aVsB);
-  const patternC = cVsB ? determinePattern(cVsB) : null;
-
-  if (patternA === "minimal_difference" && patternC === "minimal_difference") {
-    sentences.push(
-      `All three scenarios produce broadly similar outcomes under the current assumptions.`
-    );
-  } else if (patternA === "tradeoff" || patternC === "tradeoff") {
-    sentences.push(
-      `The comparison highlights tradeoffs between near-term affordability and long-term cost across the modeled scenarios.`
-    );
-  } else {
-    sentences.push(
-      `These differences are driven by variations in interest rate, loan amount, and term structure.`
     );
   }
 
@@ -385,7 +528,7 @@ export function generateThreeWaySummaryCopy(
 export function generateSummaryText(scenarioA: ScenarioData, scenarioB: ScenarioData): string {
   const deltas = calculateDeltas(scenarioA, scenarioB);
   const pattern = determinePattern(deltas);
-  const sentences = generateSummaryCopy(deltas, pattern, scenarioA.name, scenarioB.name);
+  const sentences = generateSummaryCopy(deltas, pattern, scenarioA.name, scenarioB.name, scenarioA, scenarioB);
   return sentences.join(" ");
 }
 
@@ -402,7 +545,10 @@ export function generateThreeWaySummaryText(
     threeWayDeltas,
     scenarioA.name,
     scenarioB.name,
-    scenarioC.name
+    scenarioC.name,
+    scenarioA,
+    scenarioB,
+    scenarioC
   );
   return sentences.join(" ");
 }
