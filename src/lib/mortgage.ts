@@ -121,6 +121,9 @@ export interface SharedInputs {
  */
 import { HelocInputs, DEFAULT_HELOC_INPUTS } from "./heloc";
 import { AssumptionInputs, DEFAULT_ASSUMPTION_INPUTS } from "./assumption";
+import { RateMeta, DEFAULT_RATE_META } from "./rateMeta";
+
+export type { RateMeta };
 
 export interface MortgageInputs {
   // Mode is REQUIRED - determines which inputs are active
@@ -136,6 +139,9 @@ export interface MortgageInputs {
   
   // Shared inputs (common to purchase/refinance modes)
   shared: SharedInputs;
+  
+  // Rate source metadata (global + component-level)
+  rateMeta?: RateMeta;
 }
 
 // Legacy flat interface for backward compatibility during migration
@@ -211,6 +217,7 @@ export const DEFAULT_INPUTS: MortgageInputs = {
   heloc: { ...DEFAULT_HELOC_INPUTS },
   assumption: { ...DEFAULT_ASSUMPTION_INPUTS },
   shared: { ...DEFAULT_SHARED_INPUTS },
+  rateMeta: { ...DEFAULT_RATE_META },
 };
 
 // =============================================================================
