@@ -116,7 +116,7 @@ interface ScenarioSelectorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   scenarios: ScenarioData[];
-  onConfirm: (scenarioA: ScenarioData, scenarioB: ScenarioData) => Promise<void>;
+  onConfirm: (scenarioA: ScenarioData, scenarioB: ScenarioData, scenarioC?: ScenarioData) => Promise<void>;
   isCreating?: boolean;
 }
 
@@ -132,10 +132,10 @@ function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm, isCreating
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
-      } else if (next.size < 2) {
+      } else if (next.size < 3) {
         next.add(id);
       }
-      // Don't allow more than 2 selections
+      // Don't allow more than 3 selections
       return next;
     });
   };
@@ -143,14 +143,15 @@ function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm, isCreating
   const handleConfirm = async () => {
     if (isSubmitting || isCreating) return;
 
-    if (selectedIds.size !== 2) {
-      setSubmitError("Select exactly two scenarios.");
+    if (selectedIds.size < 2) {
+      setSubmitError("Select at least two scenarios.");
       return;
     }
 
-    const [aId, bId] = Array.from(selectedIds);
-    const scenarioA = scenarios.find((s) => s.id === aId);
-    const scenarioB = scenarios.find((s) => s.id === bId);
+    const ids = Array.from(selectedIds);
+    const scenarioA = scenarios.find((s) => s.id === ids[0]);
+    const scenarioB = scenarios.find((s) => s.id === ids[1]);
+    const scenarioC = ids[2] ? scenarios.find((s) => s.id === ids[2]) : undefined;
 
     if (!scenarioA || !scenarioB) {
       setSubmitError("Unable to create comparison. Try again.");
@@ -160,7 +161,7 @@ function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm, isCreating
     setSubmitError(null);
     setIsSubmitting(true);
     try {
-      await onConfirm(scenarioA, scenarioB);
+      await onConfirm(scenarioA, scenarioB, scenarioC);
       // parent will close + navigate on success
     } catch (e) {
       setSubmitError("Unable to create comparison. Try again.");
@@ -178,14 +179,14 @@ function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm, isCreating
   };
 
   const isDisabled = (id: string) => {
-    // Disable if we have 2 selected and this one isn't one of them
-    return selectedIds.size >= 2 && !selectedIds.has(id);
+    // Disable if we have 3 selected and this one isn't one of them
+    return selectedIds.size >= 3 && !selectedIds.has(id);
   };
 
   const content = (
     <>
       <div className="text-xs text-muted-foreground mb-4">
-        Select exactly two scenarios. ({selectedIds.size}/2 selected)
+        Select 2 or 3 scenarios. ({selectedIds.size}/3 selected)
       </div>
 
       <div className={isMobile ? "flex-1 overflow-y-auto -mx-4 px-4" : "max-h-[50vh] overflow-y-auto -mx-6 px-6"}>
@@ -241,9 +242,9 @@ function ScenarioSelector({ open, onOpenChange, scenarios, onConfirm, isCreating
       </Button>
       <Button
         onClick={handleConfirm}
-        disabled={selectedIds.size !== 2 || isSubmitting || isCreating}
+        disabled={selectedIds.size < 2 || isSubmitting || isCreating}
       >
-        {isSubmitting || isCreating ? "Creating comparison..." : "Compare selected scenarios"}
+        {isSubmitting || isCreating ? "Creating comparison..." : `Compare ${selectedIds.size} scenarios`}
       </Button>
     </>
   );
@@ -416,12 +417,16 @@ export default function ComparisonsIndex() {
   const scenarioMap = new Map(scenarios.map(s => [s.id, s]));
 
   // Handle comparison creation (atomic: create → navigate once)
-  const handleCreateComparison = async (scenarioA: ScenarioData, scenarioB: ScenarioData) => {
-    const name = `${scenarioA.name || "Untitled"} vs ${scenarioB.name || "Untitled"}`;
+  const handleCreateComparison = async (scenarioA: ScenarioData, scenarioB: ScenarioData, scenarioC?: ScenarioData) => {
+    const names = [scenarioA.name || "Untitled", scenarioB.name || "Untitled"];
+    if (scenarioC) names.push(scenarioC.name || "Untitled");
+    const name = names.join(" vs ");
+    
     const comparison = await createComparison({
       name,
       scenario_a_id: scenarioA.id,
       scenario_b_id: scenarioB.id,
+      scenario_c_id: scenarioC?.id ?? null,
     });
 
     setSelectorOpen(false);

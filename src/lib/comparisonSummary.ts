@@ -5,6 +5,7 @@
  * Used by both the UI component and PDF export to ensure consistency.
  * 
  * Calculation baseline: Scenario B (unless otherwise specified)
+ * Supports 2 or 3 scenario comparisons.
  */
 
 import type { ScenarioData } from "@/lib/scenarioContract";
@@ -19,6 +20,11 @@ export interface ComparisonDeltas {
   totalInterestDelta: number | null;     // Percentage
   interestRateDelta: number | null;      // Basis points
   ltvDelta: number | null;               // Absolute percentage points
+}
+
+export interface ThreeWayDeltas {
+  aVsB: ComparisonDeltas;
+  cVsB: ComparisonDeltas | null;
 }
 
 export type ComparisonPattern = "tradeoff" | "cost_efficient" | "minimal_difference" | "insufficient_data";
@@ -55,6 +61,21 @@ export function calculateDeltas(a: ScenarioData, b: ScenarioData): ComparisonDel
       : null,
     interestRateDelta: (aRate - bRate) * 100, // Convert to basis points
     ltvDelta: aLtv - bLtv, // Absolute percentage points
+  };
+}
+
+/**
+ * Calculate deltas for 2 or 3 scenario comparison
+ * Returns A vs B and optionally C vs B
+ */
+export function calculateThreeWayDeltas(
+  scenarioA: ScenarioData,
+  scenarioB: ScenarioData,
+  scenarioC?: ScenarioData | null
+): ThreeWayDeltas {
+  return {
+    aVsB: calculateDeltas(scenarioA, scenarioB),
+    cVsB: scenarioC ? calculateDeltas(scenarioC, scenarioB) : null,
   };
 }
 
@@ -184,7 +205,7 @@ export function determinePattern(deltas: ComparisonDeltas): ComparisonPattern {
 // ============================================================================
 
 /**
- * Generate institutional summary copy based on pattern and deltas
+ * Generate institutional summary copy based on pattern and deltas (2 scenarios)
  */
 export function generateSummaryCopy(
   deltas: ComparisonDeltas,
@@ -298,11 +319,90 @@ export function generateSummaryCopy(
 }
 
 /**
+ * Generate institutional summary copy for 3-scenario comparison
+ * Compares A vs B and C vs B (B is baseline)
+ */
+export function generateThreeWaySummaryCopy(
+  threeWayDeltas: ThreeWayDeltas,
+  nameA: string,
+  nameB: string,
+  nameC: string
+): string[] {
+  const { aVsB, cVsB } = threeWayDeltas;
+  const sentences: string[] = [];
+  
+  const displayNameA = nameA || "Scenario A";
+  const displayNameB = nameB || "Scenario B";
+  const displayNameC = nameC || "Scenario C";
+
+  // Check for insufficient data
+  if (aVsB.monthlyPaymentDelta === null || aVsB.totalCostDelta === null) {
+    return ["Comparison data is incomplete. Additional scenario inputs may be required to generate a quantitative summary."];
+  }
+
+  // A vs B summary
+  const aMonthlyDir = aVsB.monthlyPaymentDelta > 0 ? "higher" : "lower";
+  const aCostDir = aVsB.totalCostDelta > 0 ? "higher" : "lower";
+  
+  sentences.push(
+    `Relative to ${displayNameB}, ${displayNameA} produces ${formatDeltaPercent(aVsB.monthlyPaymentDelta)} ${aMonthlyDir} monthly payments and ${formatDeltaPercent(aVsB.totalCostDelta)} ${aCostDir} total projected cost.`
+  );
+
+  // C vs B summary (if available)
+  if (cVsB && cVsB.monthlyPaymentDelta !== null && cVsB.totalCostDelta !== null) {
+    const cMonthlyDir = cVsB.monthlyPaymentDelta > 0 ? "higher" : "lower";
+    const cCostDir = cVsB.totalCostDelta > 0 ? "higher" : "lower";
+    
+    sentences.push(
+      `${displayNameC} results in ${formatDeltaPercent(cVsB.monthlyPaymentDelta)} ${cMonthlyDir} monthly payments and ${formatDeltaPercent(cVsB.totalCostDelta)} ${cCostDir} total cost compared to ${displayNameB}.`
+    );
+  }
+
+  // Add contextual insight
+  const patternA = determinePattern(aVsB);
+  const patternC = cVsB ? determinePattern(cVsB) : null;
+
+  if (patternA === "minimal_difference" && patternC === "minimal_difference") {
+    sentences.push(
+      `All three scenarios produce broadly similar outcomes under the current assumptions.`
+    );
+  } else if (patternA === "tradeoff" || patternC === "tradeoff") {
+    sentences.push(
+      `The comparison highlights tradeoffs between near-term affordability and long-term cost across the modeled scenarios.`
+    );
+  } else {
+    sentences.push(
+      `These differences are driven by variations in interest rate, loan amount, and term structure.`
+    );
+  }
+
+  return sentences;
+}
+
+/**
  * Generate the full summary text as a single string (for PDF export)
  */
 export function generateSummaryText(scenarioA: ScenarioData, scenarioB: ScenarioData): string {
   const deltas = calculateDeltas(scenarioA, scenarioB);
   const pattern = determinePattern(deltas);
   const sentences = generateSummaryCopy(deltas, pattern, scenarioA.name, scenarioB.name);
+  return sentences.join(" ");
+}
+
+/**
+ * Generate summary text for 3-scenario comparison (for PDF export)
+ */
+export function generateThreeWaySummaryText(
+  scenarioA: ScenarioData,
+  scenarioB: ScenarioData,
+  scenarioC: ScenarioData
+): string {
+  const threeWayDeltas = calculateThreeWayDeltas(scenarioA, scenarioB, scenarioC);
+  const sentences = generateThreeWaySummaryCopy(
+    threeWayDeltas,
+    scenarioA.name,
+    scenarioB.name,
+    scenarioC.name
+  );
   return sentences.join(" ");
 }

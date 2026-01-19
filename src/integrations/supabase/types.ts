@@ -513,6 +513,7 @@ export type Database = {
           name: string
           scenario_a_id: string
           scenario_b_id: string
+          scenario_c_id: string | null
           updated_at: string
           user_id: string
         }
@@ -522,6 +523,7 @@ export type Database = {
           name: string
           scenario_a_id: string
           scenario_b_id: string
+          scenario_c_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -531,6 +533,7 @@ export type Database = {
           name?: string
           scenario_a_id?: string
           scenario_b_id?: string
+          scenario_c_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -545,6 +548,13 @@ export type Database = {
           {
             foreignKeyName: "user_comparisons_scenario_b_id_fkey"
             columns: ["scenario_b_id"]
+            isOneToOne: false
+            referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_comparisons_scenario_c_id_fkey"
+            columns: ["scenario_c_id"]
             isOneToOne: false
             referencedRelation: "scenarios"
             referencedColumns: ["id"]

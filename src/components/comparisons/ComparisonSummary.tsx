@@ -4,6 +4,10 @@
  * Displays a dynamically generated analytical summary of the comparison
  * with percentage-based differences. Neutral, institutional tone.
  * 
+ * Supports 2 or 3 scenario comparisons:
+ * - 2 scenarios: Single set of A vs B deltas
+ * - 3 scenarios: Two groups (A vs B, C vs B)
+ * 
  * Includes:
  * - Prose summary (2-4 sentences)
  * - Key metrics row with delta percentages
@@ -12,16 +16,20 @@
 import { ScenarioData } from "@/lib/scenarioContract";
 import {
   calculateDeltas,
+  calculateThreeWayDeltas,
   determinePattern,
   generateSummaryCopy,
+  generateThreeWaySummaryCopy,
   formatSignedDelta,
   formatSignedBasisPoints,
   formatLtvDelta,
+  ComparisonDeltas,
 } from "@/lib/comparisonSummary";
 
 interface ComparisonSummaryProps {
   scenarioA: ScenarioData;
   scenarioB: ScenarioData;
+  scenarioC?: ScenarioData | null;
 }
 
 interface MetricItemProps {
@@ -54,15 +62,102 @@ function MobileMetricRow({ label, value }: MetricItemProps) {
   );
 }
 
-export function ComparisonSummary({ scenarioA, scenarioB }: ComparisonSummaryProps) {
-  const deltas = calculateDeltas(scenarioA, scenarioB);
-  const pattern = determinePattern(deltas);
-  const summaryCopy = generateSummaryCopy(
-    deltas,
-    pattern,
-    scenarioA.name,
-    scenarioB.name
+/**
+ * Render key differences for a single comparison pair
+ */
+function KeyDifferencesBlock({ 
+  deltas, 
+  label,
+  showLabel = false 
+}: { 
+  deltas: ComparisonDeltas; 
+  label?: string;
+  showLabel?: boolean;
+}) {
+  return (
+    <div>
+      {showLabel && label && (
+        <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+          {label}
+        </div>
+      )}
+      
+      {/* Desktop: single row */}
+      <div className="hidden sm:flex sm:flex-row sm:gap-8">
+        <DesktopMetricItem 
+          label="Monthly payment" 
+          value={formatSignedDelta(deltas.monthlyPaymentDelta)} 
+        />
+        <DesktopMetricItem 
+          label="Total cost" 
+          value={formatSignedDelta(deltas.totalCostDelta)} 
+        />
+        <DesktopMetricItem 
+          label="Total interest" 
+          value={formatSignedDelta(deltas.totalInterestDelta)} 
+        />
+        <DesktopMetricItem 
+          label="Interest rate" 
+          value={formatSignedBasisPoints(deltas.interestRateDelta)} 
+        />
+        <DesktopMetricItem 
+          label="LTV" 
+          value={formatLtvDelta(deltas.ltvDelta)} 
+        />
+      </div>
+
+      {/* Mobile: stacked rows with dividers */}
+      <div className="sm:hidden">
+        <MobileMetricRow 
+          label="Monthly payment" 
+          value={formatSignedDelta(deltas.monthlyPaymentDelta)} 
+        />
+        <MobileMetricRow 
+          label="Total cost" 
+          value={formatSignedDelta(deltas.totalCostDelta)} 
+        />
+        <MobileMetricRow 
+          label="Total interest" 
+          value={formatSignedDelta(deltas.totalInterestDelta)} 
+        />
+        <MobileMetricRow 
+          label="Interest rate" 
+          value={formatSignedBasisPoints(deltas.interestRateDelta)} 
+        />
+        <MobileMetricRow 
+          label="LTV" 
+          value={formatLtvDelta(deltas.ltvDelta)} 
+        />
+      </div>
+    </div>
   );
+}
+
+export function ComparisonSummary({ scenarioA, scenarioB, scenarioC }: ComparisonSummaryProps) {
+  const hasScenarioC = !!scenarioC;
+  
+  // Calculate deltas
+  const threeWayDeltas = calculateThreeWayDeltas(scenarioA, scenarioB, scenarioC);
+  const { aVsB, cVsB } = threeWayDeltas;
+  
+  // Generate summary copy
+  const summaryCopy = hasScenarioC
+    ? generateThreeWaySummaryCopy(
+        threeWayDeltas,
+        scenarioA.name,
+        scenarioB.name,
+        scenarioC!.name
+      )
+    : generateSummaryCopy(
+        aVsB,
+        determinePattern(aVsB),
+        scenarioA.name,
+        scenarioB.name
+      );
+
+  const nameA = scenarioA.name || "Scenario A";
+  const nameB = scenarioB.name || "Scenario B";
+  const nameC = scenarioC?.name || "Scenario C";
 
   return (
     <div className="relative pl-4 border-l-2 border-border/30 bg-muted/20 py-4 px-4 sm:py-6 sm:px-6 rounded-r-sm">
@@ -86,52 +181,33 @@ export function ComparisonSummary({ scenarioA, scenarioB }: ComparisonSummaryPro
           Key differences
         </div>
         
-        {/* Desktop: single row */}
-        <div className="hidden sm:flex sm:flex-row sm:gap-8">
-          <DesktopMetricItem 
-            label="Monthly payment" 
-            value={formatSignedDelta(deltas.monthlyPaymentDelta)} 
-          />
-          <DesktopMetricItem 
-            label="Total cost" 
-            value={formatSignedDelta(deltas.totalCostDelta)} 
-          />
-          <DesktopMetricItem 
-            label="Total interest" 
-            value={formatSignedDelta(deltas.totalInterestDelta)} 
-          />
-          <DesktopMetricItem 
-            label="Interest rate" 
-            value={formatSignedBasisPoints(deltas.interestRateDelta)} 
-          />
-          <DesktopMetricItem 
-            label="LTV" 
-            value={formatLtvDelta(deltas.ltvDelta)} 
-          />
-        </div>
-
-        {/* Mobile: stacked rows with dividers */}
-        <div className="sm:hidden">
-          <MobileMetricRow 
-            label="Monthly payment" 
-            value={formatSignedDelta(deltas.monthlyPaymentDelta)} 
-          />
-          <MobileMetricRow 
-            label="Total cost" 
-            value={formatSignedDelta(deltas.totalCostDelta)} 
-          />
-          <MobileMetricRow 
-            label="Total interest" 
-            value={formatSignedDelta(deltas.totalInterestDelta)} 
-          />
-          <MobileMetricRow 
-            label="Interest rate" 
-            value={formatSignedBasisPoints(deltas.interestRateDelta)} 
-          />
-          <MobileMetricRow 
-            label="LTV" 
-            value={formatLtvDelta(deltas.ltvDelta)} 
-          />
+        {hasScenarioC ? (
+          // 3-scenario layout: two stacked groups
+          <div className="space-y-5">
+            <KeyDifferencesBlock 
+              deltas={aVsB} 
+              label={`${nameA} vs ${nameB}`}
+              showLabel={true}
+            />
+            {cVsB && (
+              <KeyDifferencesBlock 
+                deltas={cVsB} 
+                label={`${nameC} vs ${nameB}`}
+                showLabel={true}
+              />
+            )}
+          </div>
+        ) : (
+          // 2-scenario layout: single group
+          <KeyDifferencesBlock deltas={aVsB} />
+        )}
+        
+        {/* Micro-helper text */}
+        <div className="mt-4 text-[11px] text-muted-foreground/70 leading-relaxed">
+          Percent differences reflect Scenario A relative to Scenario B. Positive means higher; negative means lower.
+          {hasScenarioC && (
+            <> Scenario C is also shown relative to Scenario B.</>
+          )}
         </div>
       </div>
     </div>
