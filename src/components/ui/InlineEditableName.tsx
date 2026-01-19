@@ -28,6 +28,8 @@ interface InlineEditableNameProps {
   maxLength?: number;
   /** Show pencil icon on hover (default: true) */
   showEditIcon?: boolean;
+  /** Allow text to wrap instead of truncate (default: false) */
+  allowWrap?: boolean;
 }
 
 export function InlineEditableName({
@@ -39,6 +41,7 @@ export function InlineEditableName({
   disabled = false,
   maxLength = 80,
   showEditIcon = true,
+  allowWrap = false,
 }: InlineEditableNameProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
@@ -166,11 +169,12 @@ export function InlineEditableName({
       data-inline-edit
       className={cn(
         // Group for hover state
-        "group inline-flex items-center gap-1.5",
+        "group inline-flex items-start gap-1.5",
         // Text cursor on hover
         "cursor-text",
-        // Truncate gracefully
-        "truncate",
+        // Truncate or wrap
+        !allowWrap && "truncate",
+        allowWrap && "break-words [overflow-wrap:anywhere]",
         // Hover hint
         !disabled && "hover:bg-muted/40 rounded-sm px-1 -mx-1 transition-colors duration-100",
         disabled && "cursor-default",
@@ -178,10 +182,12 @@ export function InlineEditableName({
       )}
       title={disabled ? undefined : "Click to rename"}
     >
-      <span className="truncate">{value || placeholder}</span>
+      <span className={cn(!allowWrap && "truncate", allowWrap && "break-words [overflow-wrap:anywhere]")}>
+        {value || placeholder}
+      </span>
       {showEditIcon && !disabled && (
         <Pencil 
-          className="h-3.5 w-3.5 text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" 
+          className="h-3.5 w-3.5 text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1" 
           strokeWidth={1.5}
         />
       )}

@@ -221,25 +221,6 @@ function ScenariosUnavailableState() {
 }
 
 // ============================================================================
-// LAYOUT CONSTANTS (Mercury-style spacing)
-// ============================================================================
-
-const LAYOUT = {
-  maxWidth: "1120px",
-  desktop: {
-    padding: "32px",
-    sectionGap: "40px",
-    summaryMaxWidth: "720px",
-  },
-  tablet: {
-    padding: "24px",
-  },
-  mobile: {
-    padding: "16px",
-  },
-} as const;
-
-// ============================================================================
 // COMPARISON COMPONENTS - SUPPORT 2 OR 3 SCENARIOS
 // ============================================================================
 
@@ -252,22 +233,28 @@ interface ComparisonRowProps {
 
 /**
  * ComparisonRow - Institutional-grade table row (2 or 3 scenarios)
- * Padding: 14px vertical, 20px horizontal for institutional density
- * No content touches edges
+ * Uses min-widths for columns to maintain readability while allowing scroll
  */
 function ComparisonRow({ label, valueA, valueB, valueC }: ComparisonRowProps) {
   const hasC = valueC !== undefined;
-  const gridCols = hasC ? "grid-cols-4" : "grid-cols-3";
   
   return (
-    <div className={`grid ${gridCols} gap-x-4 border-b border-border/40 last:border-b-0`}>
-      {/* Label cell: generous padding, nothing touches edges */}
-      <div className="py-[14px] px-5 text-sm text-muted-foreground font-normal leading-snug">{label}</div>
-      {/* Value cells: medium weight (not bold), tabular nums, comfortable padding */}
-      <div className="py-[14px] px-5 text-sm text-right font-normal tabular-nums">{valueA ?? "—"}</div>
-      <div className="py-[14px] px-5 text-sm text-right font-normal tabular-nums">{valueB ?? "—"}</div>
+    <div className="flex border-b border-border/40 last:border-b-0">
+      {/* Label cell: flexible width, min-width for readability */}
+      <div className="flex-1 min-w-[140px] py-[14px] px-4 sm:px-5 text-sm text-muted-foreground font-normal leading-snug">
+        {label}
+      </div>
+      {/* Value cells: fixed min-width, right-aligned */}
+      <div className="min-w-[100px] sm:min-w-[120px] py-[14px] px-4 sm:px-5 text-sm text-right font-normal tabular-nums">
+        {valueA ?? "—"}
+      </div>
+      <div className="min-w-[100px] sm:min-w-[120px] py-[14px] px-4 sm:px-5 text-sm text-right font-normal tabular-nums">
+        {valueB ?? "—"}
+      </div>
       {hasC && (
-        <div className="py-[14px] px-5 text-sm text-right font-normal tabular-nums">{valueC ?? "—"}</div>
+        <div className="min-w-[100px] sm:min-w-[120px] py-[14px] px-4 sm:px-5 text-sm text-right font-normal tabular-nums">
+          {valueC ?? "—"}
+        </div>
       )}
     </div>
   );
@@ -279,7 +266,7 @@ interface ComparisonSectionProps {
 }
 
 /**
- * ComparisonSection - Institutional ledger section
+ * ComparisonSection - Institutional ledger section with horizontal scroll wrapper
  * 40px margin-top for major section gaps
  * Section headers use serif for headings only
  */
@@ -289,9 +276,11 @@ function ComparisonSection({ title, children }: ComparisonSectionProps) {
       <h2 className="mb-3 font-serif text-base font-normal tracking-tight text-foreground">
         {title}
       </h2>
-      {/* Muted dividers (border-border/50), not harsh borders */}
-      <div className="border border-border/50 rounded-lg overflow-hidden bg-card">
-        {children}
+      {/* Scroll wrapper for narrow viewports */}
+      <div className="overflow-x-auto -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
+        <div className="border border-border/50 rounded-lg overflow-hidden bg-card min-w-[460px] lg:min-w-0">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -625,14 +614,7 @@ export default function ComparisonDetail() {
   // Mobile layout - Institutional-grade with safe areas and clean hierarchy
   if (isMobile) {
     return (
-      <div 
-        className="w-full max-w-[1120px] mx-auto"
-        style={{ 
-          paddingLeft: '16px',
-          paddingRight: '16px',
-          paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
-        }}
-      >
+      <div className="w-full max-w-[1120px] mx-auto px-4 pb-6" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
         <div className="space-y-6">
           {/* Header area */}
           <div className="space-y-4">
@@ -648,17 +630,12 @@ export default function ComparisonDetail() {
             </Button>
             
             {/* Title - brand serif, proper wrapping, no clipping */}
-            <h1 
-              className="font-serif text-xl font-normal tracking-tight leading-snug"
-              style={{ 
-                wordBreak: 'break-word',
-                textWrap: 'balance' as any,
-              }}
-            >
+            <h1 className="font-serif text-xl font-normal tracking-tight leading-snug">
               <InlineEditableName
                 value={localName || validComparison.name}
                 onSave={handleRename}
                 maxLength={80}
+                allowWrap
               />
             </h1>
             
@@ -712,25 +689,20 @@ export default function ComparisonDetail() {
     );
   }
 
-  // Desktop layout
+  // Desktop/Tablet layout
   const monthlyPIA = getMonthlyPI(validScenarioA);
   const monthlyPIB = getMonthlyPI(validScenarioB);
   const monthlyPIC = validScenarioC ? getMonthlyPI(validScenarioC) : null;
   const propertyValueA = getPropertyValue(validScenarioA);
   const propertyValueB = getPropertyValue(validScenarioB);
   const propertyValueC = validScenarioC ? getPropertyValue(validScenarioC) : null;
-  
-  const gridCols = hasScenarioC ? "grid-cols-4" : "grid-cols-3";
 
   return (
-    <div 
-      className="w-full max-w-[1120px] mx-auto"
-      style={{ paddingLeft: '32px', paddingRight: '32px' }}
-    >
+    <div className="w-full max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 overflow-x-hidden">
       <div className="pb-12">
         {/* Header - 32px gap to summary */}
-        <div className="flex items-start justify-between mb-8">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+          <div className="min-w-0 flex-1">
             <Button
               variant="ghost"
               size="sm"
@@ -740,12 +712,13 @@ export default function ComparisonDetail() {
               <ArrowLeft className="mr-1 h-4 w-4" />
               Comparisons
             </Button>
-            {/* Title - brand serif for page headings */}
-            <h1 className="font-serif text-2xl font-normal tracking-tight pb-2">
+            {/* Title - brand serif for page headings, proper wrapping */}
+            <h1 className="font-serif text-xl sm:text-2xl font-normal tracking-tight pb-2">
               <InlineEditableName
                 value={localName || validComparison.name}
                 onSave={handleRename}
                 maxLength={80}
+                allowWrap
               />
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -753,14 +726,16 @@ export default function ComparisonDetail() {
             </p>
           </div>
           
-          <ComparisonExportModal
-            scenarioA={validScenarioA}
-            scenarioB={validScenarioB}
-            scenarioC={validScenarioC}
-            comparisonId={id!}
-            variant="outline"
-            disabled={capabilitiesLoading || !canExport}
-          />
+          <div className="flex-shrink-0">
+            <ComparisonExportModal
+              scenarioA={validScenarioA}
+              scenarioB={validScenarioB}
+              scenarioC={validScenarioC}
+              comparisonId={id!}
+              variant="outline"
+              disabled={capabilitiesLoading || !canExport}
+            />
+          </div>
         </div>
 
         {/* Quantified Decision Summary - 32px gap from header */}
@@ -771,25 +746,29 @@ export default function ComparisonDetail() {
         />
 
         {/* Scenario headers - 40px gap from summary */}
-        {/* Body font for cards/list items, padding increased to match tables */}
-        <div className={`grid ${gridCols} gap-x-4 border-b border-border/50 pb-4 px-5 mt-10`}>
-          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Metric
-          </div>
-          <div className="text-right">
-            <div className="text-sm font-normal">{validScenarioA.name || "Untitled"}</div>
-            <div className="text-xs text-muted-foreground">Scenario A</div>
-          </div>
-          <div className="text-right">
-            <div className="text-sm font-normal">{validScenarioB.name || "Untitled"}</div>
-            <div className="text-xs text-muted-foreground">Scenario B</div>
-          </div>
-          {hasScenarioC && (
-            <div className="text-right">
-              <div className="text-sm font-normal">{validScenarioC.name || "Untitled"}</div>
-              <div className="text-xs text-muted-foreground">Scenario C</div>
+        {/* Horizontal scroll wrapper for narrow viewports */}
+        <div className="overflow-x-auto -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 mt-10">
+          <div className="min-w-[460px] lg:min-w-0">
+            <div className="flex border-b border-border/50 pb-4 px-4 sm:px-5">
+              <div className="flex-1 min-w-[140px] text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Metric
+              </div>
+              <div className="min-w-[100px] sm:min-w-[120px] text-right px-4 sm:px-5">
+                <div className="text-sm font-normal truncate">{validScenarioA.name || "Untitled"}</div>
+                <div className="text-xs text-muted-foreground">Scenario A</div>
+              </div>
+              <div className="min-w-[100px] sm:min-w-[120px] text-right px-4 sm:px-5">
+                <div className="text-sm font-normal truncate">{validScenarioB.name || "Untitled"}</div>
+                <div className="text-xs text-muted-foreground">Scenario B</div>
+              </div>
+              {hasScenarioC && (
+                <div className="min-w-[100px] sm:min-w-[120px] text-right px-4 sm:px-5">
+                  <div className="text-sm font-normal truncate">{validScenarioC.name || "Untitled"}</div>
+                  <div className="text-xs text-muted-foreground">Scenario C</div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Section 1: Scenario Overview */}
