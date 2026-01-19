@@ -100,7 +100,7 @@ function KeyDifferencesBlock({
           value={formatSignedDelta(deltas.totalInterestDelta)} 
         />
         <DesktopMetricItem 
-          label="Interest rate" 
+          label="Interest rate (assumed)" 
           value={formatSignedBasisPoints(deltas.interestRateDelta)} 
         />
         <DesktopMetricItem 
@@ -124,7 +124,7 @@ function KeyDifferencesBlock({
           value={formatSignedDelta(deltas.totalInterestDelta)} 
         />
         <MobileMetricRow 
-          label="Interest rate" 
+          label="Interest rate (assumed)" 
           value={formatSignedBasisPoints(deltas.interestRateDelta)} 
         />
         <MobileMetricRow 
@@ -216,8 +216,9 @@ export function ComparisonSummary({ scenarioA, scenarioB, scenarioC }: Compariso
         )}
         
         {/* Footnote explaining the comparison */}
-        <div className="mt-4 text-[11px] text-muted-foreground/70 leading-relaxed">
-          Percentages compare each option to the others using the same assumptions.
+        <div className="mt-4 text-[11px] text-muted-foreground/70 leading-relaxed space-y-1">
+          <p>Percentages compare each option to the others using the same assumptions.</p>
+          <p>Rates shown are inputs provided by the user or advisor and are not lender quotes.</p>
         </div>
       </div>
     </div>

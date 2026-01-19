@@ -369,7 +369,7 @@ function MobileScenarioBlock({ scenario, label }: MobileScenarioBlockProps) {
           value={`${scenario.inputs.shared?.loanTerm || 30} years`} 
         />
         <MobileMetricRow 
-          label="Interest rate" 
+          label="Interest rate (assumed)" 
           value={formatPercent(scenario.inputs.shared?.interestRate || 0)} 
         />
         <MobileMetricRow 

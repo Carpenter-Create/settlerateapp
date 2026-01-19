@@ -432,10 +432,10 @@ function buildScenarioLayout(scenario: ScenarioData): ExportLayout {
     ],
     methodology: [
       "Calculations are based on standard amortization formulas.",
-      "Rates shown are assumed inputs, not lender quotes.",
+      "Rates shown are inputs provided by the user or advisor and are not lender quotes.",
       "Property taxes and insurance are estimates where applicable.",
       "Results are intended for comparison and planning purposes only.",
-      "Final loan terms subject to lender approval and property appraisal.",
+      "Summary reflects modeled totals under stated assumptions. Not financial advice.",
     ],
     disclaimer:
       "This document is provided for analytical and planning purposes only. SettleRate does not originate, broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute a loan offer, guarantee, or financial advice.",
@@ -486,10 +486,10 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
           {
             label: `${nameA} vs ${nameB}`,
             items: [
-              { label: "Monthly payment", value: formatSignedDelta(aVsBDeltas.monthlyPaymentDelta) },
+          { label: "Monthly payment", value: formatSignedDelta(aVsBDeltas.monthlyPaymentDelta) },
               { label: "Total cost over time", value: formatSignedDelta(aVsBDeltas.totalCostDelta) },
               { label: "Total interest", value: formatSignedDelta(aVsBDeltas.totalInterestDelta) },
-              { label: "Interest rate", value: formatSignedRateDelta(aVsBDeltas.interestRateDelta) },
+              { label: "Interest rate (assumed)", value: formatSignedRateDelta(aVsBDeltas.interestRateDelta) },
               { label: "Loan size vs home value", value: formatLtvDelta(aVsBDeltas.ltvDelta) },
             ],
           },
@@ -499,7 +499,7 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
               { label: "Monthly payment", value: formatSignedDelta(cVsBDeltas!.monthlyPaymentDelta) },
               { label: "Total cost over time", value: formatSignedDelta(cVsBDeltas!.totalCostDelta) },
               { label: "Total interest", value: formatSignedDelta(cVsBDeltas!.totalInterestDelta) },
-              { label: "Interest rate", value: formatSignedRateDelta(cVsBDeltas!.interestRateDelta) },
+              { label: "Interest rate (assumed)", value: formatSignedRateDelta(cVsBDeltas!.interestRateDelta) },
               { label: "Loan size vs home value", value: formatLtvDelta(cVsBDeltas!.ltvDelta) },
             ],
           },
@@ -512,7 +512,7 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
           { label: "Monthly payment", value: formatSignedDelta(aVsBDeltas.monthlyPaymentDelta) },
           { label: "Total cost over time", value: formatSignedDelta(aVsBDeltas.totalCostDelta) },
           { label: "Total interest", value: formatSignedDelta(aVsBDeltas.totalInterestDelta) },
-          { label: "Interest rate", value: formatSignedRateDelta(aVsBDeltas.interestRateDelta) },
+          { label: "Interest rate (assumed)", value: formatSignedRateDelta(aVsBDeltas.interestRateDelta) },
           { label: "Loan size vs home value", value: formatLtvDelta(aVsBDeltas.ltvDelta) },
         ],
       };
@@ -574,10 +574,10 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
     ],
     methodology: [
       "Calculations are based on standard amortization formulas.",
-      "Rates shown are assumed inputs, not lender quotes.",
+      "Rates shown are inputs provided by the user or advisor and are not lender quotes.",
       "Property taxes and insurance are estimates where applicable.",
-      "No recommendation is implied by the order or presentation of scenarios.",
       "Results are intended for comparison and planning purposes only.",
+      "Summary reflects modeled totals under stated assumptions. Not financial advice.",
     ],
     disclaimer:
       "This document is provided for analytical and planning purposes only. SettleRate does not originate, broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute a loan offer, guarantee, or financial advice.",
