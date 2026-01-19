@@ -85,8 +85,8 @@ function KeyDifferencesBlock({
         </div>
       )}
       
-      {/* Desktop: single row */}
-      <div className="hidden sm:flex sm:flex-row sm:gap-8">
+      {/* Desktop: responsive grid that wraps on medium screens */}
+      <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-5 sm:gap-4 lg:gap-6">
         <DesktopMetricItem 
           label="Monthly payment" 
           value={formatSignedDelta(deltas.monthlyPaymentDelta)} 
@@ -171,17 +171,17 @@ export function ComparisonSummary({ scenarioA, scenarioB, scenarioC }: Compariso
   const nameC = scenarioC?.name || "Scenario C";
 
   return (
-    <div className="relative border-l-2 border-border/30 bg-muted/20 rounded-r-lg overflow-hidden">
-      <div className="py-5 px-5 sm:py-6 sm:px-8">
+    <div className="relative border-l-2 border-border/30 bg-muted/20 rounded-r-lg overflow-hidden w-full">
+      <div className="py-5 px-4 sm:py-6 sm:px-6 lg:px-8">
         {/* Label */}
         <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-3">
           Comparison summary
         </div>
         
         {/* Summary text - decision statement with max-width for readability */}
-        <div className="space-y-2 mb-5" style={{ maxWidth: '720px' }}>
+        <div className="space-y-2 mb-5 max-w-[720px]">
           {summaryCopy.map((sentence, index) => (
-            <p key={index} className="text-sm text-foreground/85 leading-[1.65]">
+            <p key={index} className="text-sm text-foreground/85 leading-[1.65] break-words">
               {sentence}
             </p>
           ))}
@@ -217,7 +217,7 @@ export function ComparisonSummary({ scenarioA, scenarioB, scenarioC }: Compariso
           )}
           
           {/* Footnote explaining the comparison */}
-          <div className="mt-5 text-[11px] text-muted-foreground/70 leading-relaxed space-y-1" style={{ maxWidth: '720px' }}>
+          <div className="mt-5 text-[11px] text-muted-foreground/70 leading-relaxed space-y-1 max-w-[720px]">
             <p>Percentages compare each option to the others using the same assumptions.</p>
             <p>Rates shown are inputs provided by the user or advisor and are not lender quotes.</p>
           </div>
