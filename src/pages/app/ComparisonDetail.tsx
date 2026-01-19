@@ -233,18 +233,22 @@ interface ComparisonRowProps {
 
 /**
  * ComparisonRow - Institutional-grade table row (2 or 3 scenarios)
+ * Increased padding for institutional density: 14-16px vertical, 16-20px horizontal
+ * Font weight: medium (not bold-heavy)
  */
 function ComparisonRow({ label, valueA, valueB, valueC }: ComparisonRowProps) {
   const hasC = valueC !== undefined;
   const gridCols = hasC ? "grid-cols-4" : "grid-cols-3";
   
   return (
-    <div className={`grid ${gridCols} gap-x-4 border-b border-border/60 last:border-b-0`}>
-      <div className="py-4 px-4 text-sm text-muted-foreground font-normal">{label}</div>
-      <div className="py-4 px-4 text-sm text-right font-medium tabular-nums">{valueA ?? "—"}</div>
-      <div className="py-4 px-4 text-sm text-right font-medium tabular-nums">{valueB ?? "—"}</div>
+    <div className={`grid ${gridCols} gap-x-4 border-b border-border/40 last:border-b-0`}>
+      {/* Label cell: generous padding, nothing touches edges */}
+      <div className="py-[14px] px-5 text-sm text-muted-foreground font-normal leading-snug">{label}</div>
+      {/* Value cells: medium weight (not bold), tabular nums, comfortable padding */}
+      <div className="py-[14px] px-5 text-sm text-right font-normal tabular-nums">{valueA ?? "—"}</div>
+      <div className="py-[14px] px-5 text-sm text-right font-normal tabular-nums">{valueB ?? "—"}</div>
       {hasC && (
-        <div className="py-4 px-4 text-sm text-right font-medium tabular-nums">{valueC ?? "—"}</div>
+        <div className="py-[14px] px-5 text-sm text-right font-normal tabular-nums">{valueC ?? "—"}</div>
       )}
     </div>
   );
@@ -258,6 +262,7 @@ interface ComparisonSectionProps {
 
 /**
  * ComparisonSection - Institutional ledger section
+ * Section headers use serif for headings only
  */
 function ComparisonSection({ title, children, isFirst = false }: ComparisonSectionProps) {
   return (
@@ -265,7 +270,8 @@ function ComparisonSection({ title, children, isFirst = false }: ComparisonSecti
       <h2 className="mb-3 font-serif text-base font-normal tracking-tight text-foreground">
         {title}
       </h2>
-      <div className="border border-border rounded-sm overflow-hidden bg-card">
+      {/* Muted dividers (border-border/50), not harsh borders */}
+      <div className="border border-border/50 rounded-sm overflow-hidden bg-card">
         {children}
       </div>
     </div>
@@ -283,6 +289,7 @@ interface MobileScenarioBlockProps {
 
 /**
  * Mobile metric row - clean left-right layout with proper height
+ * Increased padding: 14-18px vertical, 16px horizontal
  */
 function MobileMetricRow({ 
   label, 
@@ -294,9 +301,10 @@ function MobileMetricRow({
   isBold?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between min-h-[44px] py-2.5">
+    <div className="flex items-center justify-between min-h-[48px] py-3.5">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className={`text-[15px] tabular-nums ${isBold ? 'font-medium' : ''}`}>
+      {/* Font weight: normal for most values, medium only for key figures */}
+      <span className={`text-[15px] tabular-nums ${isBold ? 'font-medium' : 'font-normal'}`}>
         {value}
       </span>
     </div>
@@ -305,6 +313,7 @@ function MobileMetricRow({
 
 /**
  * Mobile section wrapper with proper padding and no edge-touching
+ * Minimum 16px internal padding on all sides
  */
 function MobileSection({ 
   title, 
@@ -314,12 +323,14 @@ function MobileSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-[14px] border border-border/60 bg-card overflow-hidden">
+    <div className="rounded-[14px] border border-border/50 bg-card overflow-hidden">
       <div className="px-4 py-3 bg-muted/30 border-b border-border/40">
+        {/* Section title uses system font (body), not serif */}
         <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           {title}
         </div>
       </div>
+      {/* Generous internal padding: 16px horizontal */}
       <div className="px-4 divide-y divide-border/30">
         {children}
       </div>
@@ -729,21 +740,22 @@ export default function ComparisonDetail() {
       />
 
       {/* Scenario headers - institutional ledger style (2 or 3 scenarios) */}
-      <div className={`grid ${gridCols} gap-x-4 border-b border-border pb-4 px-4`}>
+      {/* Body font for cards/list items, padding increased to match tables */}
+      <div className={`grid ${gridCols} gap-x-4 border-b border-border/50 pb-4 px-5`}>
         <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Metric
         </div>
         <div className="text-right">
-          <div className="text-sm font-medium">{validScenarioA.name || "Untitled"}</div>
+          <div className="text-sm font-normal">{validScenarioA.name || "Untitled"}</div>
           <div className="text-xs text-muted-foreground">Scenario A</div>
         </div>
         <div className="text-right">
-          <div className="text-sm font-medium">{validScenarioB.name || "Untitled"}</div>
+          <div className="text-sm font-normal">{validScenarioB.name || "Untitled"}</div>
           <div className="text-xs text-muted-foreground">Scenario B</div>
         </div>
         {hasScenarioC && (
           <div className="text-right">
-            <div className="text-sm font-medium">{validScenarioC.name || "Untitled"}</div>
+            <div className="text-sm font-normal">{validScenarioC.name || "Untitled"}</div>
             <div className="text-xs text-muted-foreground">Scenario C</div>
           </div>
         )}

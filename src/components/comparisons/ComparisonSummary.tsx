@@ -2,15 +2,16 @@
  * Quantified Decision Summary for Comparisons
  * 
  * Displays a dynamically generated analytical summary of the comparison
- * with percentage-based differences. Neutral, institutional tone.
+ * with "Under these assumptions" decision statement. Neutral, institutional tone.
  * 
  * Supports 2 or 3 scenario comparisons:
  * - 2 scenarios: Single set of A vs B deltas
  * - 3 scenarios: Two groups (A vs B, C vs B)
  * 
  * Includes:
- * - Prose summary (2-4 sentences)
+ * - Decision statement (lowest projected cost)
  * - Key metrics row with delta percentages
+ * - Methodology disclaimer
  */
 
 import { ScenarioData } from "@/lib/scenarioContract";
@@ -23,6 +24,7 @@ import {
   formatSignedDelta,
   formatSignedBasisPoints,
   formatLtvDelta,
+  determineLowestCost,
   ComparisonDeltas,
 } from "@/lib/comparisonSummary";
 
@@ -140,19 +142,27 @@ export function ComparisonSummary({ scenarioA, scenarioB, scenarioC }: Compariso
   const threeWayDeltas = calculateThreeWayDeltas(scenarioA, scenarioB, scenarioC);
   const { aVsB, cVsB } = threeWayDeltas;
   
-  // Generate summary copy
+  // Determine lowest cost for baseline label
+  const lowestCost = determineLowestCost(scenarioA, scenarioB, scenarioC);
+  
+  // Generate summary copy with scenario data for "Under these assumptions" format
   const summaryCopy = hasScenarioC
     ? generateThreeWaySummaryCopy(
         threeWayDeltas,
         scenarioA.name,
         scenarioB.name,
-        scenarioC!.name
+        scenarioC!.name,
+        scenarioA,
+        scenarioB,
+        scenarioC!
       )
     : generateSummaryCopy(
         aVsB,
         determinePattern(aVsB),
         scenarioA.name,
-        scenarioB.name
+        scenarioB.name,
+        scenarioA,
+        scenarioB
       );
 
   const nameA = scenarioA.name || "Scenario A";
@@ -166,7 +176,7 @@ export function ComparisonSummary({ scenarioA, scenarioB, scenarioC }: Compariso
         Comparison summary
       </div>
       
-      {/* Summary text */}
+      {/* Summary text - decision statement */}
       <div className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-5">
         {summaryCopy.map((sentence, index) => (
           <p key={index} className="text-sm text-foreground/85 leading-[1.6]">
@@ -177,8 +187,14 @@ export function ComparisonSummary({ scenarioA, scenarioB, scenarioC }: Compariso
 
       {/* Key Metrics */}
       <div className="pt-3.5 sm:pt-4 border-t border-border/30">
-        <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2.5 sm:mb-3">
-          Key differences
+        <div className="flex items-center gap-2 mb-2.5 sm:mb-3">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Key differences
+          </div>
+          {/* Baseline indicator */}
+          <div className="text-[10px] text-muted-foreground/70">
+            (Baseline: {nameB})
+          </div>
         </div>
         
         {hasScenarioC ? (
@@ -202,12 +218,9 @@ export function ComparisonSummary({ scenarioA, scenarioB, scenarioC }: Compariso
           <KeyDifferencesBlock deltas={aVsB} />
         )}
         
-        {/* Micro-helper text */}
+        {/* Methodology disclaimer - updated per spec */}
         <div className="mt-4 text-[11px] text-muted-foreground/70 leading-relaxed">
-          Percent differences reflect Scenario A relative to Scenario B. Positive means higher; negative means lower.
-          {hasScenarioC && (
-            <> Scenario C is also shown relative to Scenario B.</>
-          )}
+          Summary reflects modeled totals under stated assumptions. Not financial advice.
         </div>
       </div>
     </div>
