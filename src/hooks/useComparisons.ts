@@ -2,6 +2,7 @@
  * Hook for managing saved comparisons
  * 
  * Provides CRUD operations for user comparisons stored in the database.
+ * Supports 2 or 3 scenario comparisons.
  */
 
 import { useCallback } from "react";
@@ -14,6 +15,7 @@ export interface SavedComparison {
   name: string;
   scenario_a_id: string;
   scenario_b_id: string;
+  scenario_c_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -22,6 +24,14 @@ interface CreateComparisonParams {
   name: string;
   scenario_a_id: string;
   scenario_b_id: string;
+  scenario_c_id?: string | null;
+}
+
+interface UpdateScenariosParams {
+  id: string;
+  scenario_a_id?: string;
+  scenario_b_id?: string;
+  scenario_c_id?: string | null;
 }
 
 export function useComparisons() {
@@ -76,7 +86,7 @@ export function useComparisons() {
     [userId, isAnonymous]
   );
 
-  // Create a new comparison
+  // Create a new comparison (2 or 3 scenarios)
   const createMutation = useMutation({
     mutationFn: async (params: CreateComparisonParams): Promise<SavedComparison> => {
       if (!user?.id || isAnonymous) {
@@ -90,6 +100,7 @@ export function useComparisons() {
           name: params.name,
           scenario_a_id: params.scenario_a_id,
           scenario_b_id: params.scenario_b_id,
+          scenario_c_id: params.scenario_c_id ?? null,
         })
         .select()
         .single();
@@ -133,6 +144,47 @@ export function useComparisons() {
     },
   });
 
+  // Update scenarios in a comparison (add/remove Scenario C)
+  const updateScenariosMutation = useMutation({
+    mutationFn: async (params: UpdateScenariosParams): Promise<SavedComparison> => {
+      if (!user?.id || isAnonymous) {
+        throw new Error("Must be authenticated to update comparisons");
+      }
+
+      const updates: Record<string, string | null> = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (params.scenario_a_id !== undefined) {
+        updates.scenario_a_id = params.scenario_a_id;
+      }
+      if (params.scenario_b_id !== undefined) {
+        updates.scenario_b_id = params.scenario_b_id;
+      }
+      if (params.scenario_c_id !== undefined) {
+        updates.scenario_c_id = params.scenario_c_id;
+      }
+
+      const { data, error } = await supabase
+        .from("user_comparisons")
+        .update(updates)
+        .eq("id", params.id)
+        .eq("user_id", user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error updating comparison scenarios:", error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comparisons", user?.id] });
+    },
+  });
+
   // Delete a comparison
   const deleteMutation = useMutation({
     mutationFn: async (id: string): Promise<void> => {
@@ -163,9 +215,11 @@ export function useComparisons() {
     getComparison,
     createComparison: createMutation.mutateAsync,
     renameComparison: renameMutation.mutateAsync,
+    updateScenarios: updateScenariosMutation.mutateAsync,
     deleteComparison: deleteMutation.mutateAsync,
     isCreating: createMutation.isPending,
     isRenaming: renameMutation.isPending,
+    isUpdatingScenarios: updateScenariosMutation.isPending,
     isDeleting: deleteMutation.isPending,
   };
 }
