@@ -16,16 +16,13 @@ import {
   DEFAULT_ASSUMED_LOAN_INPUTS,
   DEFAULT_GAP_INPUTS
 } from "@/lib/assumption";
-import { RateMeta, DEFAULT_RATE_META, isRateLocked, RateKey } from "@/lib/rateMeta";
+import { RateMeta, DEFAULT_RATE_META } from "@/lib/rateMeta";
 import { CurrencyInput } from "./CurrencyInput";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
 import { RateSourceSelector } from "./RateSourceSelector";
-import { AdvisorRateLock } from "./AdvisorRateLock";
-import { ChevronDown, ChevronUp, Info, Lock } from "lucide-react";
+import { ChevronDown, ChevronUp, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCapabilities } from "@/hooks/useCapabilities";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface AssumptionInputsPanelProps {
   inputs: MortgageInputs;
@@ -43,28 +40,10 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
   const assumed = assumption.assumed ?? DEFAULT_ASSUMED_LOAN_INPUTS;
   const gap = assumption.gap ?? DEFAULT_GAP_INPUTS;
   const rateMeta = inputs.rateMeta ?? DEFAULT_RATE_META;
-  const { isAdvisor } = useCapabilities();
-  const { user } = useAuth();
   
   const [showEscrow, setShowEscrow] = useState(
     assumed.monthlyPmi > 0 || assumed.monthlyEscrow > 0
   );
-
-  // Check lock status for each rate
-  const isAssumedAprLocked = isRateLocked(rateMeta, "assumption.assumed_apr");
-  const isGapSecondAprLocked = isRateLocked(rateMeta, "assumption.gap_second_apr");
-  const isGapHelocAprLocked = isRateLocked(rateMeta, "assumption.gap_heloc_apr");
-
-  // Determine which rate keys are relevant based on gap method
-  const getRelevantRateKeys = useCallback((): RateKey[] => {
-    const keys: RateKey[] = ["assumption.assumed_apr"];
-    if (gap.method === "second_loan") {
-      keys.push("assumption.gap_second_apr");
-    } else if (gap.method === "heloc") {
-      keys.push("assumption.gap_heloc_apr");
-    }
-    return keys;
-  }, [gap.method]);
 
   const updateAssumption = useCallback((updates: Partial<AssumptionInputs>) => {
     onBatchUpdate({
@@ -89,36 +68,6 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
       rateMeta: newRateMeta,
     });
   }, [onBatchUpdate]);
-
-  const handleLockRate = useCallback((rateKey: RateKey, lock: boolean) => {
-    if (!user?.id) return;
-    
-    const current = rateMeta.components[rateKey] ?? { 
-      sourceType: "user_entered", 
-      sourceNote: null, 
-      locked: false, 
-      lockedBy: null, 
-      lockedAt: null 
-    };
-    
-    updateRateMeta({
-      ...rateMeta,
-      components: {
-        ...rateMeta.components,
-        [rateKey]: {
-          ...current,
-          locked: lock,
-          lockedBy: lock ? user.id : null,
-          lockedAt: lock ? new Date().toISOString() : null,
-        },
-      },
-    });
-  }, [rateMeta, updateRateMeta, user?.id]);
-
-  const handleLockAll = useCallback((lock: boolean) => {
-    const keys = getRelevantRateKeys();
-    keys.forEach(key => handleLockRate(key, lock));
-  }, [getRelevantRateKeys, handleLockRate]);
 
   // Calculate gap amount for display
   const gapAmount = Math.max(0, assumption.purchasePrice - assumed.balance - assumption.downPaymentCash);
@@ -181,12 +130,7 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
 
         <div className="space-y-3">
           <InputField 
-            label={
-              <span className="flex items-center gap-1.5">
-                Interest rate (assumed)
-                {isAssumedAprLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
-              </span>
-            }
+            label="Interest rate (assumed)"
             description="Rate on assumed loan"
           >
             <PercentInput
@@ -195,7 +139,6 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
               min={0}
               max={15}
               step={0.125}
-              disabled={isAssumedAprLocked}
             />
           </InputField>
           <RateSourceSelector
@@ -205,7 +148,6 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
             rateKey="assumption.assumed_apr"
             rateMeta={rateMeta}
             onUpdateRateMeta={updateRateMeta}
-            isLocked={isAssumedAprLocked}
           />
         </div>
       </div>
@@ -328,12 +270,7 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
         <div className="grid gap-5 md:grid-cols-2 animate-slide-up">
           <div className="space-y-3">
             <InputField 
-              label={
-                <span className="flex items-center gap-1.5">
-                  Second loan APR (assumed)
-                  {isGapSecondAprLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
-                </span>
-              }
+              label="Second loan APR (assumed)"
               description="Rate for the gap loan"
             >
               <PercentInput
@@ -342,7 +279,6 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
                 min={0}
                 max={20}
                 step={0.125}
-                disabled={isGapSecondAprLocked}
               />
             </InputField>
             <RateSourceSelector
@@ -352,7 +288,6 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
               rateKey="assumption.gap_second_apr"
               rateMeta={rateMeta}
               onUpdateRateMeta={updateRateMeta}
-              isLocked={isGapSecondAprLocked}
             />
           </div>
 
@@ -381,12 +316,7 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
         <div className="grid gap-5 md:grid-cols-2 animate-slide-up">
           <div className="space-y-3">
             <InputField 
-              label={
-                <span className="flex items-center gap-1.5">
-                  HELOC APR (assumed)
-                  {isGapHelocAprLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
-                </span>
-              }
+              label="HELOC APR (assumed)"
               description="Rate for the HELOC"
             >
               <PercentInput
@@ -395,7 +325,6 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
                 min={0}
                 max={20}
                 step={0.125}
-                disabled={isGapHelocAprLocked}
               />
             </InputField>
             <RateSourceSelector
@@ -405,7 +334,6 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
               rateKey="assumption.gap_heloc_apr"
               rateMeta={rateMeta}
               onUpdateRateMeta={updateRateMeta}
-              isLocked={isGapHelocAprLocked}
             />
           </div>
 
@@ -428,16 +356,6 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
             </div>
           </InputField>
         </div>
-      )}
-
-      {/* Advisor rate lock controls */}
-      {isAdvisor && (
-        <AdvisorRateLock
-          rateMeta={rateMeta}
-          rateKeys={getRelevantRateKeys()}
-          onLockRate={handleLockRate}
-          onLockAll={handleLockAll}
-        />
       )}
     </div>
   );
