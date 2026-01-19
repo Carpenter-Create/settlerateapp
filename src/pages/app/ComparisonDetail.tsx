@@ -221,6 +221,25 @@ function ScenariosUnavailableState() {
 }
 
 // ============================================================================
+// LAYOUT CONSTANTS (Mercury-style spacing)
+// ============================================================================
+
+const LAYOUT = {
+  maxWidth: "1120px",
+  desktop: {
+    padding: "32px",
+    sectionGap: "40px",
+    summaryMaxWidth: "720px",
+  },
+  tablet: {
+    padding: "24px",
+  },
+  mobile: {
+    padding: "16px",
+  },
+} as const;
+
+// ============================================================================
 // COMPARISON COMPONENTS - SUPPORT 2 OR 3 SCENARIOS
 // ============================================================================
 
@@ -233,8 +252,8 @@ interface ComparisonRowProps {
 
 /**
  * ComparisonRow - Institutional-grade table row (2 or 3 scenarios)
- * Increased padding for institutional density: 14-16px vertical, 16-20px horizontal
- * Font weight: medium (not bold-heavy)
+ * Padding: 14px vertical, 20px horizontal for institutional density
+ * No content touches edges
  */
 function ComparisonRow({ label, valueA, valueB, valueC }: ComparisonRowProps) {
   const hasC = valueC !== undefined;
@@ -257,21 +276,21 @@ function ComparisonRow({ label, valueA, valueB, valueC }: ComparisonRowProps) {
 interface ComparisonSectionProps {
   title: string;
   children: React.ReactNode;
-  isFirst?: boolean;
 }
 
 /**
  * ComparisonSection - Institutional ledger section
+ * 40px margin-top for major section gaps
  * Section headers use serif for headings only
  */
-function ComparisonSection({ title, children, isFirst = false }: ComparisonSectionProps) {
+function ComparisonSection({ title, children }: ComparisonSectionProps) {
   return (
-    <div className={isFirst ? "mt-4" : "mt-8"}>
+    <div className="mt-10">
       <h2 className="mb-3 font-serif text-base font-normal tracking-tight text-foreground">
         {title}
       </h2>
       {/* Muted dividers (border-border/50), not harsh borders */}
-      <div className="border border-border/50 rounded-sm overflow-hidden bg-card">
+      <div className="border border-border/50 rounded-lg overflow-hidden bg-card">
         {children}
       </div>
     </div>
@@ -607,79 +626,87 @@ export default function ComparisonDetail() {
   if (isMobile) {
     return (
       <div 
-        className="space-y-5"
-        style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}
+        className="w-full max-w-[1120px] mx-auto"
+        style={{ 
+          paddingLeft: '16px',
+          paddingRight: '16px',
+          paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
+        }}
       >
-        {/* Header area */}
-        <div className="space-y-3">
-          {/* Back navigation */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-ml-2"
-            onClick={() => navigate("/app/comparisons")}
-          >
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            Comparisons
-          </Button>
-          
-          {/* Title - brand serif, proper wrapping, no clipping */}
-          <h1 
-            className="font-serif text-xl font-normal tracking-tight leading-snug"
-            style={{ 
-              wordBreak: 'break-word',
-              textWrap: 'balance' as any,
-            }}
-          >
-            <InlineEditableName
-              value={localName || validComparison.name}
-              onSave={handleRename}
-              maxLength={80}
-            />
-          </h1>
-          
-          {/* Meta row */}
-          <p className="text-[13px] text-muted-foreground">
-            Created {formatFullDate(new Date(validComparison.created_at))}
-          </p>
-          
-          {/* Actions row - full width export modal button */}
-          <div className="pt-1">
-            <ComparisonExportModal
-              scenarioA={validScenarioA}
-              scenarioB={validScenarioB}
+        <div className="space-y-6">
+          {/* Header area */}
+          <div className="space-y-4">
+            {/* Back navigation */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="-ml-2"
+              onClick={() => navigate("/app/comparisons")}
+            >
+              <ArrowLeft className="mr-1 h-4 w-4" />
+              Comparisons
+            </Button>
+            
+            {/* Title - brand serif, proper wrapping, no clipping */}
+            <h1 
+              className="font-serif text-xl font-normal tracking-tight leading-snug"
+              style={{ 
+                wordBreak: 'break-word',
+                textWrap: 'balance' as any,
+              }}
+            >
+              <InlineEditableName
+                value={localName || validComparison.name}
+                onSave={handleRename}
+                maxLength={80}
+              />
+            </h1>
+            
+            {/* Meta row */}
+            <p className="text-[13px] text-muted-foreground">
+              Created {formatFullDate(new Date(validComparison.created_at))}
+            </p>
+            
+            {/* Actions row - full width export modal button */}
+            <div className="pt-1">
+              <ComparisonExportModal
+                scenarioA={validScenarioA}
+                scenarioB={validScenarioB}
+                scenarioC={validScenarioC}
+                comparisonId={id!}
+                variant="outline"
+                size="default"
+                className="w-full h-11"
+                disabled={capabilitiesLoading || !canExport}
+              />
+            </div>
+          </div>
+
+          {/* Quantified Decision Summary - 32px gap from header */}
+          <div className="pt-2">
+            <ComparisonSummary 
+              scenarioA={validScenarioA} 
+              scenarioB={validScenarioB} 
               scenarioC={validScenarioC}
-              comparisonId={id!}
-              variant="outline"
-              size="default"
-              className="w-full h-11"
-              disabled={capabilitiesLoading || !canExport}
             />
           </div>
-        </div>
-
-        {/* Quantified Decision Summary */}
-        <ComparisonSummary 
-          scenarioA={validScenarioA} 
-          scenarioB={validScenarioB} 
-          scenarioC={validScenarioC}
-        />
-        
-        {/* Scenario blocks with visual separation */}
-        <div className="space-y-8 pt-2">
-          <MobileScenarioBlock scenario={validScenarioA} label="A" />
           
-          {/* Visual separator between scenarios */}
-          <div className="border-t border-border/40" />
-          
-          <MobileScenarioBlock scenario={validScenarioB} label="B" />
-          
-          {hasScenarioC && (
-            <>
-              <div className="border-t border-border/40" />
-              <MobileScenarioBlock scenario={validScenarioC} label="C" />
-            </>
-          )}
+          {/* Scenario blocks with visual separation - 40px gap */}
+          <div className="space-y-10 pt-4">
+            <MobileScenarioBlock scenario={validScenarioA} label="A" />
+            
+            {/* Visual separator between scenarios */}
+            <div className="border-t border-border/40" />
+            
+            <MobileScenarioBlock scenario={validScenarioB} label="B" />
+            
+            {hasScenarioC && (
+              <>
+                <div className="border-t border-border/40" />
+                <MobileScenarioBlock scenario={validScenarioC} label="C" />
+              </>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -696,176 +723,181 @@ export default function ComparisonDetail() {
   const gridCols = hasScenarioC ? "grid-cols-4" : "grid-cols-3";
 
   return (
-    <div className="space-y-6 pb-8">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-ml-2 mb-2"
-            onClick={() => navigate("/app/comparisons")}
-          >
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            Comparisons
-          </Button>
-          {/* Title - brand serif for page headings */}
-          <h1 className="font-serif text-2xl font-normal tracking-tight pb-5">
-            <InlineEditableName
-              value={localName || validComparison.name}
-              onSave={handleRename}
-              maxLength={80}
-            />
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Created {formatFullDate(new Date(validComparison.created_at))}
-          </p>
+    <div 
+      className="w-full max-w-[1120px] mx-auto"
+      style={{ paddingLeft: '32px', paddingRight: '32px' }}
+    >
+      <div className="pb-12">
+        {/* Header - 32px gap to summary */}
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="-ml-2 mb-2"
+              onClick={() => navigate("/app/comparisons")}
+            >
+              <ArrowLeft className="mr-1 h-4 w-4" />
+              Comparisons
+            </Button>
+            {/* Title - brand serif for page headings */}
+            <h1 className="font-serif text-2xl font-normal tracking-tight pb-2">
+              <InlineEditableName
+                value={localName || validComparison.name}
+                onSave={handleRename}
+                maxLength={80}
+              />
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Created {formatFullDate(new Date(validComparison.created_at))}
+            </p>
+          </div>
+          
+          <ComparisonExportModal
+            scenarioA={validScenarioA}
+            scenarioB={validScenarioB}
+            scenarioC={validScenarioC}
+            comparisonId={id!}
+            variant="outline"
+            disabled={capabilitiesLoading || !canExport}
+          />
         </div>
-        
-        <ComparisonExportModal
-          scenarioA={validScenarioA}
+
+        {/* Quantified Decision Summary - 32px gap from header */}
+        <ComparisonSummary 
+          scenarioA={validScenarioA} 
           scenarioB={validScenarioB}
           scenarioC={validScenarioC}
-          comparisonId={id!}
-          variant="outline"
-          disabled={capabilitiesLoading || !canExport}
         />
-      </div>
 
-      {/* Quantified Decision Summary */}
-      <ComparisonSummary 
-        scenarioA={validScenarioA} 
-        scenarioB={validScenarioB}
-        scenarioC={validScenarioC}
-      />
-
-      {/* Scenario headers - institutional ledger style (2 or 3 scenarios) */}
-      {/* Body font for cards/list items, padding increased to match tables */}
-      <div className={`grid ${gridCols} gap-x-4 border-b border-border/50 pb-4 px-5`}>
-        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Metric
-        </div>
-        <div className="text-right">
-          <div className="text-sm font-normal">{validScenarioA.name || "Untitled"}</div>
-          <div className="text-xs text-muted-foreground">Scenario A</div>
-        </div>
-        <div className="text-right">
-          <div className="text-sm font-normal">{validScenarioB.name || "Untitled"}</div>
-          <div className="text-xs text-muted-foreground">Scenario B</div>
-        </div>
-        {hasScenarioC && (
-          <div className="text-right">
-            <div className="text-sm font-normal">{validScenarioC.name || "Untitled"}</div>
-            <div className="text-xs text-muted-foreground">Scenario C</div>
+        {/* Scenario headers - 40px gap from summary */}
+        {/* Body font for cards/list items, padding increased to match tables */}
+        <div className={`grid ${gridCols} gap-x-4 border-b border-border/50 pb-4 px-5 mt-10`}>
+          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Metric
           </div>
-        )}
+          <div className="text-right">
+            <div className="text-sm font-normal">{validScenarioA.name || "Untitled"}</div>
+            <div className="text-xs text-muted-foreground">Scenario A</div>
+          </div>
+          <div className="text-right">
+            <div className="text-sm font-normal">{validScenarioB.name || "Untitled"}</div>
+            <div className="text-xs text-muted-foreground">Scenario B</div>
+          </div>
+          {hasScenarioC && (
+            <div className="text-right">
+              <div className="text-sm font-normal">{validScenarioC.name || "Untitled"}</div>
+              <div className="text-xs text-muted-foreground">Scenario C</div>
+            </div>
+          )}
+        </div>
+
+        {/* Section 1: Scenario Overview */}
+        <ComparisonSection title="Scenario overview">
+          <ComparisonRow 
+            label="Loan type" 
+            valueA={TRANSACTION_TYPE_LABELS[validScenarioA.inputs.mode]}
+            valueB={TRANSACTION_TYPE_LABELS[validScenarioB.inputs.mode]}
+            valueC={hasScenarioC ? TRANSACTION_TYPE_LABELS[validScenarioC.inputs.mode] : undefined}
+          />
+          <ComparisonRow 
+            label="Loan amount" 
+            valueA={formatCurrency(validScenarioA.results.loanAmount)}
+            valueB={formatCurrency(validScenarioB.results.loanAmount)}
+            valueC={hasScenarioC ? formatCurrency(validScenarioC.results.loanAmount) : undefined}
+          />
+          <ComparisonRow 
+            label="Term" 
+            valueA={`${validScenarioA.inputs.shared?.loanTerm || 30} years`}
+            valueB={`${validScenarioB.inputs.shared?.loanTerm || 30} years`}
+            valueC={hasScenarioC ? `${validScenarioC.inputs.shared?.loanTerm || 30} years` : undefined}
+          />
+          <ComparisonRow 
+            label="Interest rate (assumed)" 
+            valueA={formatPercent(validScenarioA.inputs.shared?.interestRate || 0)}
+            valueB={formatPercent(validScenarioB.inputs.shared?.interestRate || 0)}
+            valueC={hasScenarioC ? formatPercent(validScenarioC.inputs.shared?.interestRate || 0) : undefined}
+          />
+          <ComparisonRow 
+            label="LTV" 
+            valueA={validScenarioA.results.ltvRatio ? formatPercent(validScenarioA.results.ltvRatio) : null}
+            valueB={validScenarioB.results.ltvRatio ? formatPercent(validScenarioB.results.ltvRatio) : null}
+            valueC={hasScenarioC ? (validScenarioC.results.ltvRatio ? formatPercent(validScenarioC.results.ltvRatio) : null) : undefined}
+          />
+        </ComparisonSection>
+
+        {/* Section 2: Monthly Payment */}
+        <ComparisonSection title="Monthly payment">
+          <ComparisonRow 
+            label="Principal & interest" 
+            valueA={monthlyPIA ? formatCurrency(monthlyPIA) : null}
+            valueB={monthlyPIB ? formatCurrency(monthlyPIB) : null}
+            valueC={hasScenarioC ? (monthlyPIC ? formatCurrency(monthlyPIC) : null) : undefined}
+          />
+          <ComparisonRow 
+            label="Total monthly payment" 
+            valueA={validScenarioA.results.monthlyTotal ? formatCurrency(validScenarioA.results.monthlyTotal) : null}
+            valueB={validScenarioB.results.monthlyTotal ? formatCurrency(validScenarioB.results.monthlyTotal) : null}
+            valueC={hasScenarioC ? (validScenarioC.results.monthlyTotal ? formatCurrency(validScenarioC.results.monthlyTotal) : null) : undefined}
+          />
+        </ComparisonSection>
+
+        {/* Section 3: Long-term Cost */}
+        <ComparisonSection title="Long-term cost">
+          <ComparisonRow 
+            label="Total payments" 
+            valueA={validScenarioA.results.totalCost ? formatCurrency(validScenarioA.results.totalCost) : null}
+            valueB={validScenarioB.results.totalCost ? formatCurrency(validScenarioB.results.totalCost) : null}
+            valueC={hasScenarioC ? (validScenarioC.results.totalCost ? formatCurrency(validScenarioC.results.totalCost) : null) : undefined}
+          />
+          <ComparisonRow 
+            label="Total interest" 
+            valueA={formatCurrency(validScenarioA.results.totalInterest)}
+            valueB={formatCurrency(validScenarioB.results.totalInterest)}
+            valueC={hasScenarioC ? formatCurrency(validScenarioC.results.totalInterest) : undefined}
+          />
+          <ComparisonRow 
+            label="Payoff date" 
+            valueA={getPayoffDate(validScenarioA)}
+            valueB={getPayoffDate(validScenarioB)}
+            valueC={hasScenarioC ? getPayoffDate(validScenarioC) : undefined}
+          />
+        </ComparisonSection>
+
+        {/* Section 4: Assumptions */}
+        <ComparisonSection title="Assumptions">
+          <ComparisonRow 
+            label="Property value" 
+            valueA={propertyValueA ? formatCurrency(propertyValueA) : null}
+            valueB={propertyValueB ? formatCurrency(propertyValueB) : null}
+            valueC={hasScenarioC ? (propertyValueC ? formatCurrency(propertyValueC) : null) : undefined}
+          />
+          <ComparisonRow 
+            label="Property taxes (annual)" 
+            valueA={validScenarioA.inputs.shared?.propertyTaxAnnual != null 
+              ? formatCurrency(validScenarioA.inputs.shared.propertyTaxAnnual) 
+              : null}
+            valueB={validScenarioB.inputs.shared?.propertyTaxAnnual != null 
+              ? formatCurrency(validScenarioB.inputs.shared.propertyTaxAnnual) 
+              : null}
+            valueC={hasScenarioC ? (validScenarioC.inputs.shared?.propertyTaxAnnual != null 
+              ? formatCurrency(validScenarioC.inputs.shared.propertyTaxAnnual) 
+              : null) : undefined}
+          />
+          <ComparisonRow 
+            label="Home insurance (annual)" 
+            valueA={validScenarioA.inputs.shared?.homeInsuranceMonthly != null 
+              ? formatCurrency(validScenarioA.inputs.shared.homeInsuranceMonthly * 12) 
+              : null}
+            valueB={validScenarioB.inputs.shared?.homeInsuranceMonthly != null 
+              ? formatCurrency(validScenarioB.inputs.shared.homeInsuranceMonthly * 12) 
+              : null}
+            valueC={hasScenarioC ? (validScenarioC.inputs.shared?.homeInsuranceMonthly != null 
+              ? formatCurrency(validScenarioC.inputs.shared.homeInsuranceMonthly * 12) 
+              : null) : undefined}
+          />
+        </ComparisonSection>
       </div>
-
-      {/* Section 1: Scenario Overview */}
-      <ComparisonSection title="Scenario overview" isFirst>
-        <ComparisonRow 
-          label="Loan type" 
-          valueA={TRANSACTION_TYPE_LABELS[validScenarioA.inputs.mode]}
-          valueB={TRANSACTION_TYPE_LABELS[validScenarioB.inputs.mode]}
-          valueC={hasScenarioC ? TRANSACTION_TYPE_LABELS[validScenarioC.inputs.mode] : undefined}
-        />
-        <ComparisonRow 
-          label="Loan amount" 
-          valueA={formatCurrency(validScenarioA.results.loanAmount)}
-          valueB={formatCurrency(validScenarioB.results.loanAmount)}
-          valueC={hasScenarioC ? formatCurrency(validScenarioC.results.loanAmount) : undefined}
-        />
-        <ComparisonRow 
-          label="Term" 
-          valueA={`${validScenarioA.inputs.shared?.loanTerm || 30} years`}
-          valueB={`${validScenarioB.inputs.shared?.loanTerm || 30} years`}
-          valueC={hasScenarioC ? `${validScenarioC.inputs.shared?.loanTerm || 30} years` : undefined}
-        />
-        <ComparisonRow 
-          label="Interest rate (assumed)" 
-          valueA={formatPercent(validScenarioA.inputs.shared?.interestRate || 0)}
-          valueB={formatPercent(validScenarioB.inputs.shared?.interestRate || 0)}
-          valueC={hasScenarioC ? formatPercent(validScenarioC.inputs.shared?.interestRate || 0) : undefined}
-        />
-        <ComparisonRow 
-          label="LTV" 
-          valueA={validScenarioA.results.ltvRatio ? formatPercent(validScenarioA.results.ltvRatio) : null}
-          valueB={validScenarioB.results.ltvRatio ? formatPercent(validScenarioB.results.ltvRatio) : null}
-          valueC={hasScenarioC ? (validScenarioC.results.ltvRatio ? formatPercent(validScenarioC.results.ltvRatio) : null) : undefined}
-        />
-      </ComparisonSection>
-
-      {/* Section 2: Monthly Payment */}
-      <ComparisonSection title="Monthly payment">
-        <ComparisonRow 
-          label="Principal & interest" 
-          valueA={monthlyPIA ? formatCurrency(monthlyPIA) : null}
-          valueB={monthlyPIB ? formatCurrency(monthlyPIB) : null}
-          valueC={hasScenarioC ? (monthlyPIC ? formatCurrency(monthlyPIC) : null) : undefined}
-        />
-        <ComparisonRow 
-          label="Total monthly payment" 
-          valueA={validScenarioA.results.monthlyTotal ? formatCurrency(validScenarioA.results.monthlyTotal) : null}
-          valueB={validScenarioB.results.monthlyTotal ? formatCurrency(validScenarioB.results.monthlyTotal) : null}
-          valueC={hasScenarioC ? (validScenarioC.results.monthlyTotal ? formatCurrency(validScenarioC.results.monthlyTotal) : null) : undefined}
-        />
-      </ComparisonSection>
-
-      {/* Section 3: Long-term Cost */}
-      <ComparisonSection title="Long-term cost">
-        <ComparisonRow 
-          label="Total payments" 
-          valueA={validScenarioA.results.totalCost ? formatCurrency(validScenarioA.results.totalCost) : null}
-          valueB={validScenarioB.results.totalCost ? formatCurrency(validScenarioB.results.totalCost) : null}
-          valueC={hasScenarioC ? (validScenarioC.results.totalCost ? formatCurrency(validScenarioC.results.totalCost) : null) : undefined}
-        />
-        <ComparisonRow 
-          label="Total interest" 
-          valueA={formatCurrency(validScenarioA.results.totalInterest)}
-          valueB={formatCurrency(validScenarioB.results.totalInterest)}
-          valueC={hasScenarioC ? formatCurrency(validScenarioC.results.totalInterest) : undefined}
-        />
-        <ComparisonRow 
-          label="Payoff date" 
-          valueA={getPayoffDate(validScenarioA)}
-          valueB={getPayoffDate(validScenarioB)}
-          valueC={hasScenarioC ? getPayoffDate(validScenarioC) : undefined}
-        />
-      </ComparisonSection>
-
-      {/* Section 4: Assumptions */}
-      <ComparisonSection title="Assumptions">
-        <ComparisonRow 
-          label="Property value" 
-          valueA={propertyValueA ? formatCurrency(propertyValueA) : null}
-          valueB={propertyValueB ? formatCurrency(propertyValueB) : null}
-          valueC={hasScenarioC ? (propertyValueC ? formatCurrency(propertyValueC) : null) : undefined}
-        />
-        <ComparisonRow 
-          label="Property taxes (annual)" 
-          valueA={validScenarioA.inputs.shared?.propertyTaxAnnual != null 
-            ? formatCurrency(validScenarioA.inputs.shared.propertyTaxAnnual) 
-            : null}
-          valueB={validScenarioB.inputs.shared?.propertyTaxAnnual != null 
-            ? formatCurrency(validScenarioB.inputs.shared.propertyTaxAnnual) 
-            : null}
-          valueC={hasScenarioC ? (validScenarioC.inputs.shared?.propertyTaxAnnual != null 
-            ? formatCurrency(validScenarioC.inputs.shared.propertyTaxAnnual) 
-            : null) : undefined}
-        />
-        <ComparisonRow 
-          label="Home insurance (annual)" 
-          valueA={validScenarioA.inputs.shared?.homeInsuranceMonthly != null 
-            ? formatCurrency(validScenarioA.inputs.shared.homeInsuranceMonthly * 12) 
-            : null}
-          valueB={validScenarioB.inputs.shared?.homeInsuranceMonthly != null 
-            ? formatCurrency(validScenarioB.inputs.shared.homeInsuranceMonthly * 12) 
-            : null}
-          valueC={hasScenarioC ? (validScenarioC.inputs.shared?.homeInsuranceMonthly != null 
-            ? formatCurrency(validScenarioC.inputs.shared.homeInsuranceMonthly * 12) 
-            : null) : undefined}
-        />
-      </ComparisonSection>
     </div>
   );
 }

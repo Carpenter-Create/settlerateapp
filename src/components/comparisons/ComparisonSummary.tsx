@@ -171,54 +171,56 @@ export function ComparisonSummary({ scenarioA, scenarioB, scenarioC }: Compariso
   const nameC = scenarioC?.name || "Scenario C";
 
   return (
-    <div className="relative pl-4 border-l-2 border-border/30 bg-muted/20 py-4 px-4 sm:py-6 sm:px-6 rounded-r-sm">
-      {/* Label */}
-      <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2.5 sm:mb-3">
-        Comparison summary
-      </div>
-      
-      {/* Summary text - decision statement */}
-      <div className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-5">
-        {summaryCopy.map((sentence, index) => (
-          <p key={index} className="text-sm text-foreground/85 leading-[1.6]">
-            {sentence}
-          </p>
-        ))}
-      </div>
-
-      {/* Key Metrics - renamed to "Why this option costs less" */}
-      <div className="pt-3.5 sm:pt-4 border-t border-border/30">
-        <div className="flex items-center gap-2 mb-2.5 sm:mb-3">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            {hasScenarioC ? "How the options compare" : "How the options compare"}
-          </div>
+    <div className="relative border-l-2 border-border/30 bg-muted/20 rounded-r-lg overflow-hidden">
+      <div className="py-5 px-5 sm:py-6 sm:px-8">
+        {/* Label */}
+        <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-3">
+          Comparison summary
         </div>
         
-        {hasScenarioC ? (
-          // 3-scenario layout: two stacked groups
-          <div className="space-y-5">
-            <KeyDifferencesBlock 
-              deltas={aVsB} 
-              label={`${nameA} vs ${nameB}`}
-              showLabel={true}
-            />
-            {cVsB && (
+        {/* Summary text - decision statement with max-width for readability */}
+        <div className="space-y-2 mb-5" style={{ maxWidth: '720px' }}>
+          {summaryCopy.map((sentence, index) => (
+            <p key={index} className="text-sm text-foreground/85 leading-[1.65]">
+              {sentence}
+            </p>
+          ))}
+        </div>
+
+        {/* Key Metrics - "How the options compare" */}
+        <div className="pt-4 border-t border-border/30">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              How the options compare
+            </div>
+          </div>
+          
+          {hasScenarioC ? (
+            // 3-scenario layout: two stacked groups with metric spacing
+            <div className="space-y-6">
               <KeyDifferencesBlock 
-                deltas={cVsB} 
-                label={`${nameC} vs ${nameB}`}
+                deltas={aVsB} 
+                label={`${nameA} vs ${nameB}`}
                 showLabel={true}
               />
-            )}
+              {cVsB && (
+                <KeyDifferencesBlock 
+                  deltas={cVsB} 
+                  label={`${nameC} vs ${nameB}`}
+                  showLabel={true}
+                />
+              )}
+            </div>
+          ) : (
+            // 2-scenario layout: single group
+            <KeyDifferencesBlock deltas={aVsB} />
+          )}
+          
+          {/* Footnote explaining the comparison */}
+          <div className="mt-5 text-[11px] text-muted-foreground/70 leading-relaxed space-y-1" style={{ maxWidth: '720px' }}>
+            <p>Percentages compare each option to the others using the same assumptions.</p>
+            <p>Rates shown are inputs provided by the user or advisor and are not lender quotes.</p>
           </div>
-        ) : (
-          // 2-scenario layout: single group
-          <KeyDifferencesBlock deltas={aVsB} />
-        )}
-        
-        {/* Footnote explaining the comparison */}
-        <div className="mt-4 text-[11px] text-muted-foreground/70 leading-relaxed space-y-1">
-          <p>Percentages compare each option to the others using the same assumptions.</p>
-          <p>Rates shown are inputs provided by the user or advisor and are not lender quotes.</p>
         </div>
       </div>
     </div>
