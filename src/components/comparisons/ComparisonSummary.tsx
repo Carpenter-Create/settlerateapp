@@ -66,6 +66,7 @@ function MobileMetricRow({ label, value }: MetricItemProps) {
 
 /**
  * Render key differences for a single comparison pair
+ * Using plain-English labels that homeowners can understand
  */
 function KeyDifferencesBlock({ 
   deltas, 
@@ -91,7 +92,7 @@ function KeyDifferencesBlock({
           value={formatSignedDelta(deltas.monthlyPaymentDelta)} 
         />
         <DesktopMetricItem 
-          label="Total cost" 
+          label="Total cost over time" 
           value={formatSignedDelta(deltas.totalCostDelta)} 
         />
         <DesktopMetricItem 
@@ -103,7 +104,7 @@ function KeyDifferencesBlock({
           value={formatSignedBasisPoints(deltas.interestRateDelta)} 
         />
         <DesktopMetricItem 
-          label="LTV" 
+          label="Loan size vs home value" 
           value={formatLtvDelta(deltas.ltvDelta)} 
         />
       </div>
@@ -115,7 +116,7 @@ function KeyDifferencesBlock({
           value={formatSignedDelta(deltas.monthlyPaymentDelta)} 
         />
         <MobileMetricRow 
-          label="Total cost" 
+          label="Total cost over time" 
           value={formatSignedDelta(deltas.totalCostDelta)} 
         />
         <MobileMetricRow 
@@ -127,7 +128,7 @@ function KeyDifferencesBlock({
           value={formatSignedBasisPoints(deltas.interestRateDelta)} 
         />
         <MobileMetricRow 
-          label="LTV" 
+          label="Loan size vs home value" 
           value={formatLtvDelta(deltas.ltvDelta)} 
         />
       </div>
@@ -185,15 +186,11 @@ export function ComparisonSummary({ scenarioA, scenarioB, scenarioC }: Compariso
         ))}
       </div>
 
-      {/* Key Metrics */}
+      {/* Key Metrics - renamed to "Why this option costs less" */}
       <div className="pt-3.5 sm:pt-4 border-t border-border/30">
         <div className="flex items-center gap-2 mb-2.5 sm:mb-3">
           <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Key differences
-          </div>
-          {/* Baseline indicator */}
-          <div className="text-[10px] text-muted-foreground/70">
-            (Baseline: {nameB})
+            {hasScenarioC ? "How the options compare" : "How the options compare"}
           </div>
         </div>
         
@@ -218,9 +215,9 @@ export function ComparisonSummary({ scenarioA, scenarioB, scenarioC }: Compariso
           <KeyDifferencesBlock deltas={aVsB} />
         )}
         
-        {/* Methodology disclaimer - updated per spec */}
+        {/* Footnote explaining the comparison */}
         <div className="mt-4 text-[11px] text-muted-foreground/70 leading-relaxed">
-          Summary reflects modeled totals under stated assumptions. Not financial advice.
+          Percentages compare each option to the others using the same assumptions.
         </div>
       </div>
     </div>

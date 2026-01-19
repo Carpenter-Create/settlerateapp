@@ -189,67 +189,134 @@ function formatSignedDelta(value: number): string {
   return `${prefix}${formatCurrency(value)}`;
 }
 
-function formatSignedBasisPoints(bps: number): string {
-  const absBps = Math.abs(bps);
-  const percent = (absBps / 100).toFixed(2);
-  const prefix = bps >= 0 ? "+" : "-";
-  return `${prefix}${percent}%`;
+/**
+ * Format rate delta for plain-English display
+ * Shows percentage with direction (e.g., "0.38% lower")
+ */
+function formatSignedRateDelta(bps: number): string {
+  const absPercent = Math.abs(bps / 100);
+  if (Math.abs(bps) < 1) return "Same";
+  const direction = bps >= 0 ? "higher" : "lower";
+  return `${absPercent.toFixed(2)}% ${direction}`;
 }
 
+/**
+ * Format LTV delta for plain-English display
+ * Uses full words instead of abbreviations
+ */
 function formatLtvDelta(value: number): string {
-  const prefix = value >= 0 ? "+" : "";
-  return `${prefix}${value.toFixed(1)} pts`;
+  if (Math.abs(value) < 0.1) return "Same";
+  const direction = value >= 0 ? "higher" : "lower";
+  return `About ${Math.abs(value).toFixed(0)}% ${direction}`;
 }
 
+/**
+ * Determine lowest cost scenario with tie-breaker logic
+ */
+function determineLowestCost(scenarios: { name: string; data: ScenarioData }[]): { name: string; data: ScenarioData } {
+  return scenarios.reduce((best, current) => {
+    const bestCost = best.data.results.totalCost ?? Infinity;
+    const currentCost = current.data.results.totalCost ?? Infinity;
+    if (currentCost < bestCost) return current;
+    if (currentCost > bestCost) return best;
+    
+    // Tie-breaker: lower monthly payment
+    const bestMonthly = best.data.results.monthlyTotal ?? Infinity;
+    const currentMonthly = current.data.results.monthlyTotal ?? Infinity;
+    if (currentMonthly < bestMonthly) return current;
+    if (currentMonthly > bestMonthly) return best;
+    
+    // Second tie-breaker: lower total interest
+    const bestInterest = best.data.results.totalInterest ?? Infinity;
+    const currentInterest = current.data.results.totalInterest ?? Infinity;
+    return currentInterest < bestInterest ? current : best;
+  });
+}
+
+/**
+ * Generate plain-English summary text for 2 scenarios (homeowner-friendly)
+ */
 function generateSummaryText(a: ScenarioData, b: ScenarioData): string {
-  const deltas = calculateDeltas(a, b);
-  const monthlyDiff = Math.abs(deltas.monthlyPaymentDelta);
-  const totalDiff = Math.abs(deltas.totalCostDelta);
+  const scenarios = [
+    { name: a.name || "Scenario A", data: a },
+    { name: b.name || "Scenario B", data: b },
+  ];
   
-  const aName = a.name || "Scenario A";
-  const bName = b.name || "Scenario B";
-  const lowerMonthly = deltas.monthlyPaymentDelta > 0 ? bName : aName;
-  const higherMonthly = deltas.monthlyPaymentDelta > 0 ? aName : bName;
+  const winner = determineLowestCost(scenarios);
+  const other = scenarios.find(s => s.name !== winner.name)!;
   
-  let summary = `${lowerMonthly} has a lower monthly payment by ${formatCurrency(monthlyDiff)}, `;
+  // Calculate percentage difference
+  const winnerCost = winner.data.results.totalCost ?? 0;
+  const otherCost = other.data.results.totalCost ?? 0;
+  const costDiffPercent = winnerCost > 0 ? ((otherCost - winnerCost) / winnerCost) * 100 : 0;
   
-  if (deltas.totalCostDelta > 0) {
-    summary += `while ${higherMonthly} results in ${formatCurrency(totalDiff)} more in total payments over the loan term.`;
-  } else {
-    summary += `and also results in ${formatCurrency(totalDiff)} less in total payments over the loan term.`;
+  let summary = `Under these assumptions, ${winner.name} is the least expensive option overall. `;
+  
+  if (Math.abs(costDiffPercent) >= 0.5) {
+    const monthlyDiffPercent = ((other.data.results.monthlyTotal - winner.data.results.monthlyTotal) / winner.data.results.monthlyTotal) * 100;
+    
+    if (Math.abs(monthlyDiffPercent) < 3 && Math.abs(costDiffPercent) >= 5) {
+      summary += `Compared to ${other.name}, it results in meaningfully lower total costs over the life of the loan, even though the monthly payments may look similar at first. `;
+    } else {
+      summary += `Compared to ${other.name}, it results in about ${Math.abs(costDiffPercent).toFixed(0)}% lower total costs over the life of the loan. `;
+    }
+  }
+  
+  // Add driver explanation
+  const winnerRate = winner.data.inputs?.shared?.interestRate ?? 0;
+  const otherRate = other.data.inputs?.shared?.interestRate ?? 0;
+  const rateDiff = (otherRate - winnerRate) * 100;
+  
+  if (Math.abs(rateDiff) >= 5) {
+    summary += `This is driven primarily by a lower interest rate (about ${Math.abs(rateDiff / 100).toFixed(2)}% lower), which reduces long-term interest.`;
   }
   
   return summary;
 }
 
+/**
+ * Generate plain-English summary text for 3 scenarios (homeowner-friendly)
+ */
 function generateThreeWaySummaryText(a: ScenarioData, b: ScenarioData, c: ScenarioData): string {
-  const aVsBDeltas = calculateDeltas(a, b);
-  const cVsBDeltas = calculateDeltas(c, b);
-  
-  const aName = a.name || "Scenario A";
-  const bName = b.name || "Scenario B";
-  const cName = c.name || "Scenario C";
-  
-  // Determine lowest monthly payment
   const scenarios = [
-    { name: aName, monthly: a.results.monthlyTotal, total: a.results.totalCost },
-    { name: bName, monthly: b.results.monthlyTotal, total: b.results.totalCost },
-    { name: cName, monthly: c.results.monthlyTotal, total: c.results.totalCost },
+    { name: a.name || "Scenario A", data: a },
+    { name: b.name || "Scenario B", data: b },
+    { name: c.name || "Scenario C", data: c },
   ];
   
-  const lowestMonthly = scenarios.reduce((min, s) => s.monthly < min.monthly ? s : min);
-  const lowestTotal = scenarios.reduce((min, s) => s.total < min.total ? s : min);
+  const winner = determineLowestCost(scenarios);
+  const others = scenarios.filter(s => s.name !== winner.name);
   
-  let summary = `${lowestMonthly.name} has the lowest monthly payment`;
+  let summary = `Under these assumptions, ${winner.name} is the least expensive option overall. `;
   
-  if (lowestMonthly.name !== lowestTotal.name) {
-    summary += `, while ${lowestTotal.name} has the lowest total cost over the loan term`;
-  } else {
-    summary += ` and also the lowest total cost over the loan term`;
+  // Calculate percentage differences for others
+  const winnerCost = winner.data.results.totalCost ?? 0;
+  const comparisons = others
+    .filter(o => {
+      const otherCost = o.data.results.totalCost ?? 0;
+      const diff = winnerCost > 0 ? ((otherCost - winnerCost) / winnerCost) * 100 : 0;
+      return Math.abs(diff) >= 3;
+    })
+    .map(o => {
+      const diff = ((o.data.results.totalCost - winnerCost) / winnerCost) * 100;
+      return `about ${Math.abs(diff).toFixed(0)}% lower than ${o.name}`;
+    });
+  
+  if (comparisons.length > 0) {
+    const comparisonText = comparisons.length === 1 
+      ? comparisons[0]
+      : `${comparisons[0]} and ${comparisons[1]}`;
+    summary += `Its total cost over the life of the loan is ${comparisonText}. `;
   }
   
-  summary += `. Relative to ${bName}: ${aName} differs by ${formatSignedDelta(aVsBDeltas.monthlyPaymentDelta)}/month`;
-  summary += `; ${cName} differs by ${formatSignedDelta(cVsBDeltas.monthlyPaymentDelta)}/month.`;
+  // Add driver explanation
+  const winnerRate = winner.data.inputs?.shared?.interestRate ?? 0;
+  const avgOtherRate = others.reduce((sum, o) => sum + (o.data.inputs?.shared?.interestRate ?? 0), 0) / others.length;
+  const rateDiff = (avgOtherRate - winnerRate) * 100;
+  
+  if (Math.abs(rateDiff) >= 5) {
+    summary += `This is driven primarily by a lower interest rate (about ${Math.abs(rateDiff / 100).toFixed(2)}% lower), which reduces long-term interest.`;
+  }
   
   return summary;
 }
@@ -410,43 +477,43 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
     ? generateThreeWaySummaryText(a, b, c!)
     : generateSummaryText(a, b);
 
-  // Build key differences section
+  // Build key differences section with plain-English labels
   const keyDiffSection: LayoutSection = hasScenarioC
     ? {
-        title: "Key Differences",
+        title: "How the Options Compare",
         type: "key-diff-groups",
         groups: [
           {
             label: `${nameA} vs ${nameB}`,
             items: [
               { label: "Monthly payment", value: formatSignedDelta(aVsBDeltas.monthlyPaymentDelta) },
-              { label: "Total cost", value: formatSignedDelta(aVsBDeltas.totalCostDelta) },
+              { label: "Total cost over time", value: formatSignedDelta(aVsBDeltas.totalCostDelta) },
               { label: "Total interest", value: formatSignedDelta(aVsBDeltas.totalInterestDelta) },
-              { label: "Interest rate", value: formatSignedBasisPoints(aVsBDeltas.interestRateDelta) },
-              { label: "LTV", value: formatLtvDelta(aVsBDeltas.ltvDelta) },
+              { label: "Interest rate", value: formatSignedRateDelta(aVsBDeltas.interestRateDelta) },
+              { label: "Loan size vs home value", value: formatLtvDelta(aVsBDeltas.ltvDelta) },
             ],
           },
           {
             label: `${nameC} vs ${nameB}`,
             items: [
               { label: "Monthly payment", value: formatSignedDelta(cVsBDeltas!.monthlyPaymentDelta) },
-              { label: "Total cost", value: formatSignedDelta(cVsBDeltas!.totalCostDelta) },
+              { label: "Total cost over time", value: formatSignedDelta(cVsBDeltas!.totalCostDelta) },
               { label: "Total interest", value: formatSignedDelta(cVsBDeltas!.totalInterestDelta) },
-              { label: "Interest rate", value: formatSignedBasisPoints(cVsBDeltas!.interestRateDelta) },
-              { label: "LTV", value: formatLtvDelta(cVsBDeltas!.ltvDelta) },
+              { label: "Interest rate", value: formatSignedRateDelta(cVsBDeltas!.interestRateDelta) },
+              { label: "Loan size vs home value", value: formatLtvDelta(cVsBDeltas!.ltvDelta) },
             ],
           },
         ],
       }
     : {
-        title: "Key Differences",
+        title: "How the Options Compare",
         type: "key-diff",
         items: [
           { label: "Monthly payment", value: formatSignedDelta(aVsBDeltas.monthlyPaymentDelta) },
-          { label: "Total cost", value: formatSignedDelta(aVsBDeltas.totalCostDelta) },
+          { label: "Total cost over time", value: formatSignedDelta(aVsBDeltas.totalCostDelta) },
           { label: "Total interest", value: formatSignedDelta(aVsBDeltas.totalInterestDelta) },
-          { label: "Interest rate", value: formatSignedBasisPoints(aVsBDeltas.interestRateDelta) },
-          { label: "LTV", value: formatLtvDelta(aVsBDeltas.ltvDelta) },
+          { label: "Interest rate", value: formatSignedRateDelta(aVsBDeltas.interestRateDelta) },
+          { label: "Loan size vs home value", value: formatLtvDelta(aVsBDeltas.ltvDelta) },
         ],
       };
 
