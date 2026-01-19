@@ -154,6 +154,59 @@ export type Database = {
           },
         ]
       }
+      comparison_shares: {
+        Row: {
+          access_count: number
+          comparison_id: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          last_accessed_at: string | null
+          permission: string
+          require_auth: boolean
+          revoked_at: string | null
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          access_count?: number
+          comparison_id: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          permission?: string
+          require_auth?: boolean
+          revoked_at?: string | null
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          access_count?: number
+          comparison_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          permission?: string
+          require_auth?: boolean
+          revoked_at?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comparison_shares_comparison_id_fkey"
+            columns: ["comparison_id"]
+            isOneToOne: false
+            referencedRelation: "saved_comparisons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comparison_versions: {
         Row: {
           assumptions_hash: string
@@ -624,6 +677,7 @@ export type Database = {
         Args: { new_name?: string; source_scenario_id: string }
         Returns: string
       }
+      generate_share_token: { Args: never; Returns: string }
       get_effective_tier: { Args: { target_user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -682,6 +736,19 @@ export type Database = {
         Returns: undefined
       }
       promote_to_admin: { Args: { p_email: string }; Returns: Json }
+      touch_comparison_share: { Args: { p_token: string }; Returns: undefined }
+      validate_comparison_share: {
+        Args: { p_token: string }
+        Returns: {
+          comparison_id: string
+          expires_at: string
+          is_valid: boolean
+          permission: string
+          require_auth: boolean
+          revoked_at: string
+          share_id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "advisor"
