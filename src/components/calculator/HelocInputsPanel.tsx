@@ -8,15 +8,12 @@
 import { useState, useCallback } from "react";
 import { MortgageInputs } from "@/lib/mortgage";
 import { HelocInputs, DEFAULT_HELOC_INPUTS } from "@/lib/heloc";
-import { RateMeta, DEFAULT_RATE_META, isRateLocked } from "@/lib/rateMeta";
+import { RateMeta, DEFAULT_RATE_META } from "@/lib/rateMeta";
 import { CurrencyInput } from "./CurrencyInput";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
 import { RateSourceSelector } from "./RateSourceSelector";
-import { AdvisorRateLock } from "./AdvisorRateLock";
-import { ChevronDown, ChevronUp, Info, Lock } from "lucide-react";
-import { useCapabilities } from "@/hooks/useCapabilities";
-import { useAuth } from "@/contexts/AuthContext";
+import { ChevronDown, ChevronUp, Info } from "lucide-react";
 
 interface HelocInputsPanelProps {
   inputs: MortgageInputs;
@@ -26,14 +23,10 @@ interface HelocInputsPanelProps {
 export function HelocInputsPanel({ inputs, onBatchUpdate }: HelocInputsPanelProps) {
   const heloc = inputs.heloc ?? DEFAULT_HELOC_INPUTS;
   const rateMeta = inputs.rateMeta ?? DEFAULT_RATE_META;
-  const { isAdvisor } = useCapabilities();
-  const { user } = useAuth();
   
   const [showAdvanced, setShowAdvanced] = useState(
     heloc.annualFee > 0 || heloc.closingCosts > 0 || heloc.monthlyDraw > 0
   );
-
-  const isAprLocked = isRateLocked(rateMeta, "heloc.apr");
 
   const updateHeloc = useCallback((updates: Partial<HelocInputs>) => {
     onBatchUpdate({
@@ -46,35 +39,6 @@ export function HelocInputsPanel({ inputs, onBatchUpdate }: HelocInputsPanelProp
       rateMeta: newRateMeta,
     });
   }, [onBatchUpdate]);
-
-  const handleLockRate = useCallback((rateKey: "heloc.apr", lock: boolean) => {
-    if (!user?.id) return;
-    
-    const current = rateMeta.components[rateKey] ?? { 
-      sourceType: "user_entered", 
-      sourceNote: null, 
-      locked: false, 
-      lockedBy: null, 
-      lockedAt: null 
-    };
-    
-    updateRateMeta({
-      ...rateMeta,
-      components: {
-        ...rateMeta.components,
-        [rateKey]: {
-          ...current,
-          locked: lock,
-          lockedBy: lock ? user.id : null,
-          lockedAt: lock ? new Date().toISOString() : null,
-        },
-      },
-    });
-  }, [rateMeta, updateRateMeta, user?.id]);
-
-  const handleLockAll = useCallback((lock: boolean) => {
-    handleLockRate("heloc.apr", lock);
-  }, [handleLockRate]);
 
   return (
     <div className="space-y-5">
@@ -114,12 +78,7 @@ export function HelocInputsPanel({ inputs, onBatchUpdate }: HelocInputsPanelProp
       <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-3">
           <InputField 
-            label={
-              <span className="flex items-center gap-1.5">
-                APR (assumed)
-                {isAprLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
-              </span>
-            }
+            label="APR (assumed)"
             description="Current annual percentage rate"
           >
             <PercentInput
@@ -128,7 +87,6 @@ export function HelocInputsPanel({ inputs, onBatchUpdate }: HelocInputsPanelProp
               min={0}
               max={25}
               step={0.125}
-              disabled={isAprLocked}
             />
           </InputField>
           <RateSourceSelector
@@ -138,20 +96,9 @@ export function HelocInputsPanel({ inputs, onBatchUpdate }: HelocInputsPanelProp
             rateKey="heloc.apr"
             rateMeta={rateMeta}
             onUpdateRateMeta={updateRateMeta}
-            isLocked={isAprLocked}
           />
         </div>
       </div>
-
-      {/* Advisor rate lock controls */}
-      {isAdvisor && (
-        <AdvisorRateLock
-          rateMeta={rateMeta}
-          rateKeys={["heloc.apr"]}
-          onLockRate={handleLockRate}
-          onLockAll={handleLockAll}
-        />
-      )}
 
       {/* Term inputs */}
       <div className="grid gap-5 md:grid-cols-2">

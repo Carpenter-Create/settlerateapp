@@ -17,7 +17,7 @@ import { useState, useCallback, useMemo } from "react";
 import { MortgageInputs, MortgageResults, ScenarioType, SharedInputs, DEFAULT_INPUTS, calculateLoanAmount, isMortgageType } from "@/lib/mortgage";
 import { calculateHeloc, DEFAULT_HELOC_INPUTS } from "@/lib/heloc";
 import { calculateAssumption, DEFAULT_ASSUMPTION_INPUTS } from "@/lib/assumption";
-import { RateMeta, DEFAULT_RATE_META, isRateLocked, RateKey } from "@/lib/rateMeta";
+import { RateMeta, DEFAULT_RATE_META } from "@/lib/rateMeta";
 import { Scenario, SaveStatus } from "@/hooks/useScenarios";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
@@ -35,12 +35,10 @@ import { MethodologyPanel } from "./MethodologyPanel";
 import { AmortizationTable } from "./AmortizationTable";
 import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import { RateSourceSelector } from "./RateSourceSelector";
-import { AdvisorRateLock } from "./AdvisorRateLock";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "./CurrencyInput";
 import { Input } from "@/components/ui/input";
-import { Save, RotateCcw, ChevronDown, ChevronUp, Copy, MoreHorizontal, Pencil, FilePlus, Lock } from "lucide-react";
-import { useCapabilities } from "@/hooks/useCapabilities";
+import { Save, RotateCcw, ChevronDown, ChevronUp, Copy, MoreHorizontal, Pencil, FilePlus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
@@ -106,10 +104,8 @@ export function ScenarioEditor({
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
   const [saveAsName, setSaveAsName] = useState("");
 
-  const { isAdvisor } = useCapabilities();
   const { user } = useAuth();
   const rateMeta = inputs.rateMeta ?? DEFAULT_RATE_META;
-  const isMortgageRateLocked = isRateLocked(rateMeta, "mortgage.apr");
 
   // Helper to update shared inputs
   const updateShared = useCallback((updates: Partial<SharedInputs>) => {
@@ -121,24 +117,6 @@ export function ScenarioEditor({
   const updateRateMeta = useCallback((newRateMeta: RateMeta) => {
     onBatchUpdate({ rateMeta: newRateMeta });
   }, [onBatchUpdate]);
-
-  const handleLockRate = useCallback((rateKey: RateKey, lock: boolean) => {
-    if (!user?.id) return;
-    const current = rateMeta.components[rateKey] ?? { 
-      sourceType: "user_entered", sourceNote: null, locked: false, lockedBy: null, lockedAt: null 
-    };
-    updateRateMeta({
-      ...rateMeta,
-      components: {
-        ...rateMeta.components,
-        [rateKey]: { ...current, locked: lock, lockedBy: lock ? user.id : null, lockedAt: lock ? new Date().toISOString() : null },
-      },
-    });
-  }, [rateMeta, updateRateMeta, user?.id]);
-
-  const handleLockAll = useCallback((lock: boolean) => {
-    handleLockRate("mortgage.apr", lock);
-  }, [handleLockRate]);
 
   // Start renaming
   const handleStartRename = useCallback(() => {
@@ -274,12 +252,7 @@ export function ScenarioEditor({
                   <div className="grid gap-5 md:grid-cols-2">
                     <div className="space-y-3">
                       <InputField 
-                        label={
-                          <span className="flex items-center gap-1.5">
-                            {inputs.mode === "purchase" ? "Interest rate (assumed)" : "New interest rate (assumed)"}
-                            {isMortgageRateLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
-                          </span>
-                        }
+                        label={inputs.mode === "purchase" ? "Interest rate (assumed)" : "New interest rate (assumed)"}
                       >
                         <PercentInput
                           value={inputs.shared.interestRate}
@@ -287,7 +260,6 @@ export function ScenarioEditor({
                           min={0}
                           max={25}
                           step={0.125}
-                          disabled={isMortgageRateLocked}
                         />
                       </InputField>
                       <RateSourceSelector
@@ -297,16 +269,7 @@ export function ScenarioEditor({
                         rateKey="mortgage.apr"
                         rateMeta={rateMeta}
                         onUpdateRateMeta={updateRateMeta}
-                        isLocked={isMortgageRateLocked}
                       />
-                      {isAdvisor && (
-                        <AdvisorRateLock
-                          rateMeta={rateMeta}
-                          rateKeys={["mortgage.apr"]}
-                          onLockRate={handleLockRate}
-                          onLockAll={handleLockAll}
-                        />
-                      )}
                     </div>
 
                     <LoanTermInput
