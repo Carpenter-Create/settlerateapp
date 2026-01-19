@@ -14,7 +14,9 @@
  */
 
 import { useState, useCallback, useMemo } from "react";
-import { MortgageInputs, MortgageResults, ScenarioType, SharedInputs, DEFAULT_INPUTS, calculateLoanAmount } from "@/lib/mortgage";
+import { MortgageInputs, MortgageResults, ScenarioType, SharedInputs, DEFAULT_INPUTS, calculateLoanAmount, isMortgageType } from "@/lib/mortgage";
+import { calculateHeloc, DEFAULT_HELOC_INPUTS } from "@/lib/heloc";
+import { calculateAssumption, DEFAULT_ASSUMPTION_INPUTS } from "@/lib/assumption";
 import { Scenario, SaveStatus } from "@/hooks/useScenarios";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
@@ -22,8 +24,12 @@ import { LoanTermInput } from "./LoanTermInput";
 import { ScenarioTypeSelector } from "./ScenarioTypeSelector";
 import { PurchaseInputs } from "./PurchaseInputs";
 import { RefinanceInputs } from "./RefinanceInputs";
+import { HelocInputsPanel } from "./HelocInputsPanel";
+import { AssumptionInputsPanel } from "./AssumptionInputsPanel";
 import { TaxInsuranceSection } from "./TaxInsuranceSection";
 import { ResultsCard } from "./ResultsCard";
+import { HelocResultsCard } from "./HelocResultsCard";
+import { AssumptionResultsCard } from "./AssumptionResultsCard";
 import { MethodologyPanel } from "./MethodologyPanel";
 import { AmortizationTable } from "./AmortizationTable";
 import { SaveStatusIndicator } from "./SaveStatusIndicator";
@@ -207,40 +213,66 @@ export function ScenarioEditor({
               <div className="divider-subtle" />
 
               {/* Conditional inputs based on scenario type */}
-              {inputs.mode === "purchase" ? (
+              {inputs.mode === "purchase" && (
                 <PurchaseInputs
                   inputs={inputs}
                   onBatchUpdate={onBatchUpdate}
                 />
-              ) : (
+              )}
+              {inputs.mode === "refinance" && (
                 <RefinanceInputs
                   inputs={inputs}
                   onBatchUpdate={onBatchUpdate}
                 />
               )}
-
-              {/* Shared loan terms */}
-              <div className="grid gap-5 md:grid-cols-2">
-                <InputField 
-                  label={inputs.mode === "purchase" ? "Interest rate (assumed)" : "New interest rate (assumed)"}
-                >
-                  <PercentInput
-                    value={inputs.shared.interestRate}
-                    onChange={(v) => updateShared({ interestRate: v })}
-                    min={0}
-                    max={25}
-                    step={0.125}
-                  />
-                </InputField>
-
-                <LoanTermInput
-                  value={inputs.shared.loanTerm}
-                  onChange={(v) => updateShared({ loanTerm: v })}
-                  label={inputs.mode === "purchase" ? "Loan term" : "New loan term"}
+              {inputs.mode === "heloc" && (
+                <HelocInputsPanel
+                  inputs={inputs}
+                  onBatchUpdate={onBatchUpdate}
                 />
-              </div>
+              )}
+              {inputs.mode === "assumption" && (
+                <AssumptionInputsPanel
+                  inputs={inputs}
+                  onBatchUpdate={onBatchUpdate}
+                />
+              )}
 
-              <div className="divider-subtle" />
+              {/* Shared loan terms - only for purchase/refinance */}
+              {isMortgageType(inputs.mode) && (
+                <>
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <InputField 
+                      label={inputs.mode === "purchase" ? "Interest rate (assumed)" : "New interest rate (assumed)"}
+                    >
+                      <PercentInput
+                        value={inputs.shared.interestRate}
+                        onChange={(v) => updateShared({ interestRate: v })}
+                        min={0}
+                        max={25}
+                        step={0.125}
+                      />
+                    </InputField>
+
+                    <LoanTermInput
+                      value={inputs.shared.loanTerm}
+                      onChange={(v) => updateShared({ loanTerm: v })}
+                      label={inputs.mode === "purchase" ? "Loan term" : "New loan term"}
+                    />
+                  </div>
+
+                  <div className="divider-subtle" />
+
+                  {/* Taxes & Insurance Section (Optional) */}
+                  <TaxInsuranceSection
+                    inputs={inputs}
+                    ltvRatio={ltvRatio}
+                    onBatchUpdate={onBatchUpdate}
+                  />
+
+                  <div className="divider-subtle" />
+                </>
+              )}
 
               {/* Taxes & Insurance Section (Optional) */}
               <TaxInsuranceSection
