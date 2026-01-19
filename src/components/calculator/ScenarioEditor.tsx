@@ -315,19 +315,10 @@ export function ScenarioEditor({
                       label={inputs.mode === "purchase" ? "Loan term" : "New loan term"}
                     />
                   </div>
-
-                  <div className="divider-subtle" />
-
-                  {/* Taxes & Insurance Section (Optional) */}
-                  <TaxInsuranceSection
-                    inputs={inputs}
-                    ltvRatio={ltvRatio}
-                    onBatchUpdate={onBatchUpdate}
-                  />
-
-                  <div className="divider-subtle" />
                 </>
               )}
+
+              <div className="divider-subtle" />
 
               {/* Taxes & Insurance Section (Optional) */}
               <TaxInsuranceSection
