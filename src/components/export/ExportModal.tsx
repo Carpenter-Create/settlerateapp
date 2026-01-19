@@ -56,6 +56,7 @@ interface ComparisonExportModalProps extends BaseExportModalProps {
   type: "comparison";
   scenarioA: ScenarioData;
   scenarioB: ScenarioData;
+  scenarioC?: ScenarioData | null;
   comparisonId: string;
 }
 
@@ -160,7 +161,7 @@ export function ExportModal(props: ExportModalProps) {
   const isComparison = props.type === "comparison";
   
   const filename = isComparison
-    ? generateComparisonFilename(props.scenarioA, props.scenarioB)
+    ? generateComparisonFilename(props.scenarioA, props.scenarioB, props.scenarioC)
     : generateScenarioFilename(props.scenario);
 
   const handleDownloadPDF = async () => {
@@ -193,7 +194,7 @@ export function ExportModal(props: ExportModalProps) {
     
     // Generate HTML for printing
     const html = isComparison
-      ? generateComparisonHTML(props.scenarioA, props.scenarioB)
+      ? generateComparisonHTML(props.scenarioA, props.scenarioB, props.scenarioC)
       : generateScenarioHTML(props.scenario);
     
     // Trigger in-place print (NO new tab)
@@ -282,6 +283,7 @@ export function ScenarioExportModal({
 interface ComparisonExportButtonProps {
   scenarioA: ScenarioData;
   scenarioB: ScenarioData;
+  scenarioC?: ScenarioData | null;
   comparisonId: string;
   variant?: "default" | "outline" | "ghost";
   size?: "default" | "sm" | "lg";
@@ -292,6 +294,7 @@ interface ComparisonExportButtonProps {
 export function ComparisonExportModal({
   scenarioA,
   scenarioB,
+  scenarioC,
   comparisonId,
   ...rest
 }: ComparisonExportButtonProps) {
@@ -300,6 +303,7 @@ export function ComparisonExportModal({
       type="comparison"
       scenarioA={scenarioA}
       scenarioB={scenarioB}
+      scenarioC={scenarioC}
       comparisonId={comparisonId}
       {...rest}
     />
