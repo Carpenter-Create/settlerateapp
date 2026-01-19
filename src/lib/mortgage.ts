@@ -1,4 +1,8 @@
-export type ScenarioType = "purchase" | "refinance";
+export type ScenarioType = "purchase" | "refinance" | "heloc" | "assumption";
+
+// Re-export HELOC and Assumption types for convenience
+export type { HelocInputs, HelocResults } from "./heloc";
+export type { AssumptionInputs, AssumptionResults, GapMethod } from "./assumption";
 
 // =============================================================================
 // TRANSACTION TYPE LABELS (LOCKED - Single source of truth)
@@ -11,6 +15,18 @@ export type ScenarioType = "purchase" | "refinance";
 export const TRANSACTION_TYPE_LABELS: Record<ScenarioType, string> = {
   purchase: "Purchase",
   refinance: "Refinance",
+  heloc: "HELOC",
+  assumption: "Assumption",
+} as const;
+
+/**
+ * Short descriptions for each transaction type
+ */
+export const TRANSACTION_TYPE_DESCRIPTIONS: Record<ScenarioType, string> = {
+  purchase: "New home purchase",
+  refinance: "Refinance existing mortgage",
+  heloc: "Home equity line of credit",
+  assumption: "Take over an existing loan",
 } as const;
 
 /**
@@ -84,6 +100,9 @@ export interface SharedInputs {
  * 2. Switching modes preserves previous values (can switch back)
  * 3. Deep clone captures everything needed for accurate duplication
  */
+import { HelocInputs, DEFAULT_HELOC_INPUTS } from "./heloc";
+import { AssumptionInputs, DEFAULT_ASSUMPTION_INPUTS } from "./assumption";
+
 export interface MortgageInputs {
   // Mode is REQUIRED - determines which inputs are active
   mode: ScenarioType;
@@ -92,7 +111,11 @@ export interface MortgageInputs {
   purchase: PurchaseInputs;
   refinance: RefinanceInputs;
   
-  // Shared inputs (common to both modes)
+  // New scenario type inputs
+  heloc?: HelocInputs;
+  assumption?: AssumptionInputs;
+  
+  // Shared inputs (common to purchase/refinance modes)
   shared: SharedInputs;
 }
 
@@ -164,6 +187,8 @@ export const DEFAULT_INPUTS: MortgageInputs = {
   mode: "purchase",
   purchase: { ...DEFAULT_PURCHASE_INPUTS },
   refinance: { ...DEFAULT_REFINANCE_INPUTS },
+  heloc: { ...DEFAULT_HELOC_INPUTS },
+  assumption: { ...DEFAULT_ASSUMPTION_INPUTS },
   shared: { ...DEFAULT_SHARED_INPUTS },
 };
 
@@ -587,20 +612,31 @@ export function validateInputs(inputs: unknown): { valid: boolean; errors: strin
   // Check mode
   if (!obj.mode) {
     errors.push("Missing required field: mode");
-  } else if (obj.mode !== "purchase" && obj.mode !== "refinance") {
-    errors.push("Invalid mode: must be 'purchase' or 'refinance'");
+  } else if (!["purchase", "refinance", "heloc", "assumption"].includes(obj.mode as string)) {
+    errors.push("Invalid mode: must be 'purchase', 'refinance', 'heloc', or 'assumption'");
   }
   
-  // Check namespaced inputs
-  if (!obj.purchase || typeof obj.purchase !== "object") {
+  const mode = obj.mode as ScenarioType;
+  
+  // Check mode-specific inputs
+  if (mode === "purchase" && (!obj.purchase || typeof obj.purchase !== "object")) {
     errors.push("Missing required field: purchase inputs");
   }
   
-  if (!obj.refinance || typeof obj.refinance !== "object") {
+  if (mode === "refinance" && (!obj.refinance || typeof obj.refinance !== "object")) {
     errors.push("Missing required field: refinance inputs");
   }
   
-  if (!obj.shared || typeof obj.shared !== "object") {
+  if (mode === "heloc" && (!obj.heloc || typeof obj.heloc !== "object")) {
+    errors.push("Missing required field: heloc inputs");
+  }
+  
+  if (mode === "assumption" && (!obj.assumption || typeof obj.assumption !== "object")) {
+    errors.push("Missing required field: assumption inputs");
+  }
+  
+  // Shared inputs only required for purchase/refinance
+  if ((mode === "purchase" || mode === "refinance") && (!obj.shared || typeof obj.shared !== "object")) {
     errors.push("Missing required field: shared inputs");
   }
   
@@ -608,4 +644,22 @@ export function validateInputs(inputs: unknown): { valid: boolean; errors: strin
     valid: errors.length === 0,
     errors,
   };
+}
+
+// =============================================================================
+// SCENARIO TYPE HELPERS
+// =============================================================================
+
+/**
+ * Check if a scenario type uses the traditional mortgage calculation
+ */
+export function isMortgageType(mode: ScenarioType): mode is "purchase" | "refinance" {
+  return mode === "purchase" || mode === "refinance";
+}
+
+/**
+ * Check if a scenario type is a specialized product
+ */
+export function isSpecializedType(mode: ScenarioType): mode is "heloc" | "assumption" {
+  return mode === "heloc" || mode === "assumption";
 }
