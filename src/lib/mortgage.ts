@@ -59,11 +59,30 @@ export interface RefinanceInputs {
 }
 
 /**
+ * Rate source types for tracking where the interest rate came from
+ */
+export type RateSourceType = "user_entered" | "advisor_quote" | "market_index" | "assumption";
+
+/**
+ * Canonical labels for rate source types
+ */
+export const RATE_SOURCE_LABELS: Record<RateSourceType, string> = {
+  user_entered: "User-entered estimate",
+  advisor_quote: "Advisor quote",
+  market_index: "Market index",
+  assumption: "Planning assumption",
+} as const;
+
+/**
  * Shared inputs (common to both modes)
  */
 export interface SharedInputs {
   interestRate: number;
   loanTerm: number; // years
+  
+  // Rate source metadata
+  rateSourceType: RateSourceType;
+  rateSourceNote: string | null;
   
   // Taxes & Insurance (optional section)
   includeEstimates: boolean;
@@ -167,6 +186,8 @@ export const DEFAULT_REFINANCE_INPUTS: RefinanceInputs = {
 export const DEFAULT_SHARED_INPUTS: SharedInputs = {
   interestRate: 6.5,
   loanTerm: 30,
+  rateSourceType: "user_entered",
+  rateSourceNote: null,
   includeEstimates: false,
   zipCode: null,
   usedZipEstimate: false,
@@ -227,6 +248,8 @@ export function migrateLegacyInputs(legacy: LegacyMortgageInputs): MortgageInput
     shared: {
       interestRate: legacy.interestRate,
       loanTerm: legacy.loanTerm,
+      rateSourceType: "user_entered",
+      rateSourceNote: null,
       includeEstimates: legacy.includeEstimates,
       zipCode: legacy.zipCode,
       usedZipEstimate: legacy.usedZipEstimate,

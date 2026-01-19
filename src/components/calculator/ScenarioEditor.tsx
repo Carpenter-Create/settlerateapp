@@ -33,6 +33,7 @@ import { AssumptionResultsCard } from "./AssumptionResultsCard";
 import { MethodologyPanel } from "./MethodologyPanel";
 import { AmortizationTable } from "./AmortizationTable";
 import { SaveStatusIndicator } from "./SaveStatusIndicator";
+import { RateSourceSelector } from "./RateSourceSelector";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "./CurrencyInput";
 import { Input } from "@/components/ui/input";
@@ -242,17 +243,24 @@ export function ScenarioEditor({
               {isMortgageType(inputs.mode) && (
                 <>
                   <div className="grid gap-5 md:grid-cols-2">
-                    <InputField 
-                      label={inputs.mode === "purchase" ? "Interest rate (assumed)" : "New interest rate (assumed)"}
-                    >
-                      <PercentInput
-                        value={inputs.shared.interestRate}
-                        onChange={(v) => updateShared({ interestRate: v })}
-                        min={0}
-                        max={25}
-                        step={0.125}
+                    <div className="space-y-3">
+                      <InputField 
+                        label={inputs.mode === "purchase" ? "Interest rate (assumed)" : "New interest rate (assumed)"}
+                      >
+                        <PercentInput
+                          value={inputs.shared.interestRate}
+                          onChange={(v) => updateShared({ interestRate: v })}
+                          min={0}
+                          max={25}
+                          step={0.125}
+                        />
+                      </InputField>
+                      <RateSourceSelector
+                        rateSourceType={inputs.shared.rateSourceType}
+                        rateSourceNote={inputs.shared.rateSourceNote}
+                        onUpdate={updateShared}
                       />
-                    </InputField>
+                    </div>
 
                     <LoanTermInput
                       value={inputs.shared.loanTerm}

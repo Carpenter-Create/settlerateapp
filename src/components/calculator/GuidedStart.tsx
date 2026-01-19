@@ -185,6 +185,8 @@ export function GuidedStart({ open, onOpenChange, onComplete }: GuidedStartProps
       shared: {
         interestRate,
         loanTerm,
+        rateSourceType: "user_entered",
+        rateSourceNote: null,
         includeEstimates,
         zipCode: zipCode || null,
         usedZipEstimate: zipCode.length === 5,
