@@ -7,6 +7,8 @@
  * - Spacing (consistent margins, section gaps, table padding)
  * - Content structure (same sections, same data order)
  * 
+ * Supports 2 or 3 scenario comparisons.
+ * 
  * Endpoints:
  * GET /generate-pdf?type=scenario&id=xxx
  * GET /generate-pdf?type=comparison&id=xxx
@@ -108,15 +110,22 @@ interface LayoutRow {
   label: string;
   value: string;
   value2?: string;
+  value3?: string;
+}
+
+interface KeyDiffGroup {
+  label: string;
+  items: { label: string; value: string }[];
 }
 
 interface LayoutSection {
   title: string;
-  type: "table" | "comparison-table" | "key-diff" | "text";
+  type: "table" | "comparison-table" | "key-diff" | "key-diff-groups" | "text";
   rows?: LayoutRow[];
   columns?: string[];
   text?: string;
   items?: { label: string; value: string }[];
+  groups?: KeyDiffGroup[];
 }
 
 interface ExportLayout {
@@ -209,6 +218,38 @@ function generateSummaryText(a: ScenarioData, b: ScenarioData): string {
   } else {
     summary += `and also results in ${formatCurrency(totalDiff)} less in total payments over the loan term.`;
   }
+  
+  return summary;
+}
+
+function generateThreeWaySummaryText(a: ScenarioData, b: ScenarioData, c: ScenarioData): string {
+  const aVsBDeltas = calculateDeltas(a, b);
+  const cVsBDeltas = calculateDeltas(c, b);
+  
+  const aName = a.name || "Scenario A";
+  const bName = b.name || "Scenario B";
+  const cName = c.name || "Scenario C";
+  
+  // Determine lowest monthly payment
+  const scenarios = [
+    { name: aName, monthly: a.results.monthlyTotal, total: a.results.totalCost },
+    { name: bName, monthly: b.results.monthlyTotal, total: b.results.totalCost },
+    { name: cName, monthly: c.results.monthlyTotal, total: c.results.totalCost },
+  ];
+  
+  const lowestMonthly = scenarios.reduce((min, s) => s.monthly < min.monthly ? s : min);
+  const lowestTotal = scenarios.reduce((min, s) => s.total < min.total ? s : min);
+  
+  let summary = `${lowestMonthly.name} has the lowest monthly payment`;
+  
+  if (lowestMonthly.name !== lowestTotal.name) {
+    summary += `, while ${lowestTotal.name} has the lowest total cost over the loan term`;
+  } else {
+    summary += ` and also the lowest total cost over the loan term`;
+  }
+  
+  summary += `. Relative to ${bName}: ${aName} differs by ${formatSignedDelta(aVsBDeltas.monthlyPaymentDelta)}/month`;
+  summary += `; ${cName} differs by ${formatSignedDelta(cVsBDeltas.monthlyPaymentDelta)}/month.`;
   
   return summary;
 }
@@ -334,7 +375,7 @@ function buildScenarioLayout(scenario: ScenarioData): ExportLayout {
   };
 }
 
-function buildComparisonLayout(a: ScenarioData, b: ScenarioData): ExportLayout {
+function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioData | null): ExportLayout {
   const dateStr = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -343,7 +384,11 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData): ExportLayout {
   
   const shortIdA = a.id.substring(0, 8).toUpperCase();
   const shortIdB = b.id.substring(0, 8).toUpperCase();
-  const deltas = calculateDeltas(a, b);
+  const shortIdC = c?.id.substring(0, 8).toUpperCase();
+  
+  const hasScenarioC = !!c;
+  const aVsBDeltas = calculateDeltas(a, b);
+  const cVsBDeltas = c ? calculateDeltas(c, b) : null;
   
   const getPayoffDate = (scenario: ScenarioData) => {
     const date = new Date();
@@ -353,58 +398,110 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData): ExportLayout {
 
   const nameA = a.name || "Scenario A";
   const nameB = b.name || "Scenario B";
+  const nameC = c?.name || "Scenario C";
+
+  // Build comparison meta line
+  const metaLine = hasScenarioC
+    ? `Comparing: ${nameA} (${shortIdA}) vs ${nameB} (${shortIdB}) vs ${nameC} (${shortIdC})`
+    : `Comparing: ${nameA} (${shortIdA}) vs ${nameB} (${shortIdB})`;
+
+  // Build summary text
+  const summaryText = hasScenarioC
+    ? generateThreeWaySummaryText(a, b, c!)
+    : generateSummaryText(a, b);
+
+  // Build key differences section
+  const keyDiffSection: LayoutSection = hasScenarioC
+    ? {
+        title: "Key Differences",
+        type: "key-diff-groups",
+        groups: [
+          {
+            label: `${nameA} vs ${nameB}`,
+            items: [
+              { label: "Monthly payment", value: formatSignedDelta(aVsBDeltas.monthlyPaymentDelta) },
+              { label: "Total cost", value: formatSignedDelta(aVsBDeltas.totalCostDelta) },
+              { label: "Total interest", value: formatSignedDelta(aVsBDeltas.totalInterestDelta) },
+              { label: "Interest rate", value: formatSignedBasisPoints(aVsBDeltas.interestRateDelta) },
+              { label: "LTV", value: formatLtvDelta(aVsBDeltas.ltvDelta) },
+            ],
+          },
+          {
+            label: `${nameC} vs ${nameB}`,
+            items: [
+              { label: "Monthly payment", value: formatSignedDelta(cVsBDeltas!.monthlyPaymentDelta) },
+              { label: "Total cost", value: formatSignedDelta(cVsBDeltas!.totalCostDelta) },
+              { label: "Total interest", value: formatSignedDelta(cVsBDeltas!.totalInterestDelta) },
+              { label: "Interest rate", value: formatSignedBasisPoints(cVsBDeltas!.interestRateDelta) },
+              { label: "LTV", value: formatLtvDelta(cVsBDeltas!.ltvDelta) },
+            ],
+          },
+        ],
+      }
+    : {
+        title: "Key Differences",
+        type: "key-diff",
+        items: [
+          { label: "Monthly payment", value: formatSignedDelta(aVsBDeltas.monthlyPaymentDelta) },
+          { label: "Total cost", value: formatSignedDelta(aVsBDeltas.totalCostDelta) },
+          { label: "Total interest", value: formatSignedDelta(aVsBDeltas.totalInterestDelta) },
+          { label: "Interest rate", value: formatSignedBasisPoints(aVsBDeltas.interestRateDelta) },
+          { label: "LTV", value: formatLtvDelta(aVsBDeltas.ltvDelta) },
+        ],
+      };
+
+  // Build comparison table rows (2 or 3 columns)
+  const columns = hasScenarioC
+    ? ["Metric", nameA, nameB, nameC]
+    : ["Metric", nameA, nameB];
+
+  const buildRow = (label: string, valueA: string, valueB: string, valueC?: string): LayoutRow => {
+    return hasScenarioC
+      ? { label, value: valueA, value2: valueB, value3: valueC }
+      : { label, value: valueA, value2: valueB };
+  };
 
   return {
     brand: BRAND.name,
     title: "Mortgage Scenario Comparison",
-    meta: [`Comparing: ${nameA} (${shortIdA}) vs ${nameB} (${shortIdB})`],
+    meta: [metaLine],
     generatedDate: dateStr,
     sections: [
       {
         title: "Comparison Summary",
         type: "text",
-        text: generateSummaryText(a, b),
+        text: summaryText,
       },
-      {
-        title: "Key Differences",
-        type: "key-diff",
-        items: [
-          { label: "Monthly payment", value: formatSignedDelta(deltas.monthlyPaymentDelta) },
-          { label: "Total cost", value: formatSignedDelta(deltas.totalCostDelta) },
-          { label: "Total interest", value: formatSignedDelta(deltas.totalInterestDelta) },
-          { label: "Interest rate", value: formatSignedBasisPoints(deltas.interestRateDelta) },
-          { label: "LTV", value: formatLtvDelta(deltas.ltvDelta) },
-        ],
-      },
+      keyDiffSection,
       {
         title: "Scenario Overview",
         type: "comparison-table",
-        columns: ["Metric", nameA, nameB],
+        columns,
         rows: [
-          { label: "Loan type", value: TRANSACTION_TYPE_LABELS[a.inputs.mode], value2: TRANSACTION_TYPE_LABELS[b.inputs.mode] },
-          { label: "Loan amount", value: formatCurrency(a.results.loanAmount), value2: formatCurrency(b.results.loanAmount) },
-          { label: "Term", value: `${a.inputs.shared.loanTerm} years`, value2: `${b.inputs.shared.loanTerm} years` },
-          { label: "Interest rate (assumed)", value: formatPercent(a.inputs.shared.interestRate), value2: formatPercent(b.inputs.shared.interestRate) },
-          { label: "Loan-to-value ratio", value: formatPercent(a.results.ltvRatio), value2: formatPercent(b.results.ltvRatio) },
+          buildRow("Loan type", TRANSACTION_TYPE_LABELS[a.inputs.mode], TRANSACTION_TYPE_LABELS[b.inputs.mode], c ? TRANSACTION_TYPE_LABELS[c.inputs.mode] : undefined),
+          buildRow("Loan amount", formatCurrency(a.results.loanAmount), formatCurrency(b.results.loanAmount), c ? formatCurrency(c.results.loanAmount) : undefined),
+          buildRow("Term", `${a.inputs.shared.loanTerm} years`, `${b.inputs.shared.loanTerm} years`, c ? `${c.inputs.shared.loanTerm} years` : undefined),
+          buildRow("Interest rate (assumed)", formatPercent(a.inputs.shared.interestRate), formatPercent(b.inputs.shared.interestRate), c ? formatPercent(c.inputs.shared.interestRate) : undefined),
+          buildRow("Loan-to-value ratio", formatPercent(a.results.ltvRatio), formatPercent(b.results.ltvRatio), c ? formatPercent(c.results.ltvRatio) : undefined),
         ],
       },
       {
         title: "Monthly Payment",
         type: "comparison-table",
-        columns: ["Component", nameA, nameB],
+        columns: hasScenarioC ? ["Component", nameA, nameB, nameC] : ["Component", nameA, nameB],
         rows: [
-          { label: "Principal & interest", value: formatCurrency(a.results.monthlyPrincipalInterest), value2: formatCurrency(b.results.monthlyPrincipalInterest) },
-          { label: "Total monthly payment", value: formatCurrency(a.results.monthlyTotal), value2: formatCurrency(b.results.monthlyTotal) },
+          buildRow("Principal & interest", formatCurrency(a.results.monthlyPrincipalInterest), formatCurrency(b.results.monthlyPrincipalInterest), c ? formatCurrency(c.results.monthlyPrincipalInterest) : undefined),
+          buildRow("Total monthly payment", formatCurrency(a.results.monthlyTotal), formatCurrency(b.results.monthlyTotal), c ? formatCurrency(c.results.monthlyTotal) : undefined),
         ],
       },
       {
         title: "Long-Term Cost",
         type: "comparison-table",
-        columns: ["Metric", nameA, nameB],
+        columns: hasScenarioC ? ["Metric", nameA, nameB, nameC] : ["Metric", nameA, nameB],
         rows: [
-          { label: "Total payments over term", value: formatCurrency(a.results.totalCost), value2: formatCurrency(b.results.totalCost) },
-          { label: "Total interest paid", value: formatCurrency(a.results.totalInterest), value2: formatCurrency(b.results.totalInterest) },
-          { label: "Projected payoff date", value: getPayoffDate(a), value2: getPayoffDate(b) },
+          buildRow("Total payments over term", formatCurrency(a.results.totalCost), formatCurrency(b.results.totalCost), c ? formatCurrency(c.results.totalCost) : undefined),
+          buildRow("Total interest paid", formatCurrency(a.results.totalInterest), formatCurrency(b.results.totalInterest), c ? formatCurrency(c.results.totalInterest) : undefined),
+          buildRow("Projected payoff date", getPayoffDate(a), getPayoffDate(b), c ? getPayoffDate(c) : undefined),
         ],
       },
     ],
@@ -502,6 +599,33 @@ function renderLayoutToPDF(layout: ExportLayout): Uint8Array {
       }
       y += 28;
     }
+    
+    if (section.type === "key-diff-groups" && section.groups) {
+      for (const group of section.groups) {
+        checkPageBreak(50);
+        // Group label
+        doc.setFontSize(BRAND.fontSize.small);
+        doc.setTextColor(...BRAND.colors.textMuted);
+        doc.text(group.label, margin, y);
+        y += 14;
+        
+        // Group items
+        const itemWidth = 100;
+        let x = margin;
+        for (const item of group.items) {
+          doc.setTextColor(...BRAND.colors.textMuted);
+          doc.text(item.label, x, y);
+          doc.setTextColor(...BRAND.colors.text);
+          doc.text(item.value, x, y + 12);
+          x += itemWidth;
+          if (x > pageWidth - margin - itemWidth) {
+            x = margin;
+            y += 28;
+          }
+        }
+        y += 32;
+      }
+    }
 
     if (section.type === "table" && section.rows) {
       doc.setFontSize(BRAND.fontSize.body);
@@ -525,9 +649,14 @@ function renderLayoutToPDF(layout: ExportLayout): Uint8Array {
     }
 
     if (section.type === "comparison-table" && section.rows && section.columns) {
+      const numCols = section.columns.length;
+      const is4Col = numCols === 4;
+      
+      // Column positions for 3-col vs 4-col
       const col1 = margin;
-      const col2 = margin + contentWidth * 0.4;
-      const col3 = margin + contentWidth * 0.7;
+      const col2 = is4Col ? margin + contentWidth * 0.30 : margin + contentWidth * 0.40;
+      const col3 = is4Col ? margin + contentWidth * 0.53 : margin + contentWidth * 0.70;
+      const col4 = is4Col ? margin + contentWidth * 0.76 : 0;
 
       // Headers
       doc.setFontSize(BRAND.fontSize.body);
@@ -535,6 +664,9 @@ function renderLayoutToPDF(layout: ExportLayout): Uint8Array {
       doc.text(section.columns[0], col1, y);
       doc.text(section.columns[1], col2, y);
       doc.text(section.columns[2], col3, y);
+      if (is4Col && section.columns[3]) {
+        doc.text(section.columns[3], col4, y);
+      }
       y += 6;
       doc.setDrawColor(...BRAND.colors.border);
       doc.line(margin, y, pageWidth - margin, y);
@@ -555,6 +687,9 @@ function renderLayoutToPDF(layout: ExportLayout): Uint8Array {
         doc.setTextColor(...BRAND.colors.text);
         doc.text(row.value, col2, y);
         doc.text(row.value2 || "", col3, y);
+        if (is4Col) {
+          doc.text(row.value3 || "", col4, y);
+        }
         y += BRAND.margins.tableRow;
       }
       y += 10;
@@ -611,10 +746,14 @@ function generateScenarioFilename(scenario: ScenarioData): string {
   return `SettleRate_Scenario_${safeName}_${date}`;
 }
 
-function generateComparisonFilename(a: ScenarioData, b: ScenarioData): string {
+function generateComparisonFilename(a: ScenarioData, b: ScenarioData, c?: ScenarioData | null): string {
   const date = new Date().toISOString().split("T")[0];
-  const nameA = (a.name || "A").replace(/[^a-zA-Z0-9]/g, "_").substring(0, 15);
-  const nameB = (b.name || "B").replace(/[^a-zA-Z0-9]/g, "_").substring(0, 15);
+  const nameA = (a.name || "A").replace(/[^a-zA-Z0-9]/g, "_").substring(0, 12);
+  const nameB = (b.name || "B").replace(/[^a-zA-Z0-9]/g, "_").substring(0, 12);
+  if (c) {
+    const nameC = (c.name || "C").replace(/[^a-zA-Z0-9]/g, "_").substring(0, 12);
+    return `SettleRate_Comparison_${nameA}_vs_${nameB}_vs_${nameC}_${date}`;
+  }
   return `SettleRate_Comparison_${nameA}_vs_${nameB}_${date}`;
 }
 
@@ -709,18 +848,27 @@ Deno.serve(async (req: Request) => {
         );
       }
 
+      // Build list of scenario IDs to fetch (2 or 3)
+      const scenarioIds = [comparison.scenario_a_id, comparison.scenario_b_id];
+      if (comparison.scenario_c_id) {
+        scenarioIds.push(comparison.scenario_c_id);
+      }
+
       const { data: scenarios, error: scenariosError } = await supabase
         .from("scenarios")
         .select("*")
-        .in("id", [comparison.scenario_a_id, comparison.scenario_b_id]);
+        .in("id", scenarioIds);
 
-      if (scenariosError || !scenarios || scenarios.length !== 2) {
+      const expectedCount = scenarioIds.length;
+      if (scenariosError || !scenarios || scenarios.length !== expectedCount) {
         console.error("EXPORT_PDF_SCENARIOS_FETCH_FAILED:", {
           comparison_id: id,
           scenario_a_id: comparison.scenario_a_id,
           scenario_b_id: comparison.scenario_b_id,
+          scenario_c_id: comparison.scenario_c_id,
           user_id: user.id,
           scenarios_found: scenarios?.length ?? 0,
+          expected: expectedCount,
           error: scenariosError?.message,
         });
         return new Response(
@@ -731,12 +879,17 @@ Deno.serve(async (req: Request) => {
 
       const scenarioA = scenarios.find(s => s.id === comparison.scenario_a_id)!;
       const scenarioB = scenarios.find(s => s.id === comparison.scenario_b_id)!;
+      const scenarioC = comparison.scenario_c_id 
+        ? scenarios.find(s => s.id === comparison.scenario_c_id) 
+        : null;
 
       const dataA = buildScenarioData(scenarioA);
       const dataB = buildScenarioData(scenarioB);
-      const layout = buildComparisonLayout(dataA, dataB);
+      const dataC = scenarioC ? buildScenarioData(scenarioC) : null;
+      
+      const layout = buildComparisonLayout(dataA, dataB, dataC);
       pdfBytes = renderLayoutToPDF(layout);
-      filename = generateComparisonFilename(dataA, dataB);
+      filename = generateComparisonFilename(dataA, dataB, dataC);
     }
 
     console.log("EXPORT_PDF_SUCCESS:", {

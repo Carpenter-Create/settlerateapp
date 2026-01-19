@@ -46,13 +46,15 @@ export function generateScenarioHTML(scenario: ScenarioData): string {
 
 /**
  * Generate HTML for comparison export using canonical layout.
+ * Supports 2 or 3 scenarios.
  * This HTML is used for in-page printing via window.print().
  */
 export function generateComparisonHTML(
   scenarioA: ScenarioData,
-  scenarioB: ScenarioData
+  scenarioB: ScenarioData,
+  scenarioC?: ScenarioData | null
 ): string {
-  const layout = buildComparisonLayout(scenarioA, scenarioB);
+  const layout = buildComparisonLayout(scenarioA, scenarioB, scenarioC);
   return generateHTMLFromLayout(layout);
 }
 
@@ -108,10 +110,11 @@ export function exportScenarioPDF(scenario: ScenarioData): void {
  */
 export function exportComparisonPDF(
   scenarioA: ScenarioData,
-  scenarioB: ScenarioData
+  scenarioB: ScenarioData,
+  scenarioC?: ScenarioData | null
 ): void {
-  const html = generateComparisonHTML(scenarioA, scenarioB);
-  const filename = generateComparisonFilename(scenarioA, scenarioB);
+  const html = generateComparisonHTML(scenarioA, scenarioB, scenarioC);
+  const filename = generateComparisonFilename(scenarioA, scenarioB, scenarioC);
   openPrintWindow(html, filename);
 }
 
@@ -129,10 +132,11 @@ export function downloadScenarioHTML(scenario: ScenarioData): void {
  */
 export function downloadComparisonHTML(
   scenarioA: ScenarioData,
-  scenarioB: ScenarioData
+  scenarioB: ScenarioData,
+  scenarioC?: ScenarioData | null
 ): void {
-  const html = generateComparisonHTML(scenarioA, scenarioB);
-  const filename = generateComparisonFilename(scenarioA, scenarioB);
+  const html = generateComparisonHTML(scenarioA, scenarioB, scenarioC);
+  const filename = generateComparisonFilename(scenarioA, scenarioB, scenarioC);
   downloadHTML(html, `${filename}.html`);
 }
 

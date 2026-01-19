@@ -1,7 +1,7 @@
 /**
  * Comparison Detail View
  * 
- * Institutional, analytical comparison of two saved mortgage scenarios.
+ * Institutional, analytical comparison of 2 or 3 saved mortgage scenarios.
  * Designed for advisor and lender review - no recommendations or color-coding.
  * Loads from saved comparison record by ID.
  * 
@@ -13,7 +13,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, GitCompare, AlertTriangle, RefreshCw } from "lucide-react";
+import { ArrowLeft, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InlineEditableName } from "@/components/ui/InlineEditableName";
@@ -221,30 +221,31 @@ function ScenariosUnavailableState() {
 }
 
 // ============================================================================
-// COMPARISON COMPONENTS
+// COMPARISON COMPONENTS - SUPPORT 2 OR 3 SCENARIOS
 // ============================================================================
 
 interface ComparisonRowProps {
   label: string;
   valueA: string | null;
   valueB: string | null;
+  valueC?: string | null;
 }
 
 /**
- * ComparisonRow - Institutional-grade table row
- * 
- * Styling rules:
- * - Labels: text-sm, muted, normal weight
- * - Values: text-sm, font-medium (NOT bold), tabular-nums for alignment
- * - Generous cell padding: py-4 px-4 desktop
- * - Subtle row separator
+ * ComparisonRow - Institutional-grade table row (2 or 3 scenarios)
  */
-function ComparisonRow({ label, valueA, valueB }: ComparisonRowProps) {
+function ComparisonRow({ label, valueA, valueB, valueC }: ComparisonRowProps) {
+  const hasC = valueC !== undefined;
+  const gridCols = hasC ? "grid-cols-4" : "grid-cols-3";
+  
   return (
-    <div className="grid grid-cols-3 gap-x-6 border-b border-border/60 last:border-b-0">
+    <div className={`grid ${gridCols} gap-x-4 border-b border-border/60 last:border-b-0`}>
       <div className="py-4 px-4 text-sm text-muted-foreground font-normal">{label}</div>
       <div className="py-4 px-4 text-sm text-right font-medium tabular-nums">{valueA ?? "—"}</div>
       <div className="py-4 px-4 text-sm text-right font-medium tabular-nums">{valueB ?? "—"}</div>
+      {hasC && (
+        <div className="py-4 px-4 text-sm text-right font-medium tabular-nums">{valueC ?? "—"}</div>
+      )}
     </div>
   );
 }
@@ -257,14 +258,6 @@ interface ComparisonSectionProps {
 
 /**
  * ComparisonSection - Institutional ledger section
- * 
- * TYPOGRAPHY (LOCKED):
- * - Section title: brand serif (font-serif), text-base, normal weight
- * - This provides visual hierarchy while maintaining institutional tone
- * 
- * Styling rules:
- * - Spacing: mt-8 mb-3 (first section uses mt-4)
- * - Container: subtle border, no elevation
  */
 function ComparisonSection({ title, children, isFirst = false }: ComparisonSectionProps) {
   return (
@@ -285,7 +278,7 @@ function ComparisonSection({ title, children, isFirst = false }: ComparisonSecti
 
 interface MobileScenarioBlockProps {
   scenario: ScenarioData;
-  label: "A" | "B";
+  label: "A" | "B" | "C";
 }
 
 /**
@@ -442,6 +435,7 @@ type ReadyPayload = {
   comparison: SavedComparison;
   scenarioA: ScenarioData;
   scenarioB: ScenarioData;
+  scenarioC: ScenarioData | null;
 };
 
 // ============================================================================
@@ -491,13 +485,22 @@ export default function ComparisonDetail() {
       // Resolve scenarios from the loaded scenario store (stable, no extra network)
       const scenarioA = scenarios.find((s) => s.id === comp.scenario_a_id) ?? null;
       const scenarioB = scenarios.find((s) => s.id === comp.scenario_b_id) ?? null;
+      const scenarioC = comp.scenario_c_id 
+        ? scenarios.find((s) => s.id === comp.scenario_c_id) ?? null 
+        : null;
 
       if (!scenarioA || !scenarioB) {
         setStatus("scenarios_unavailable");
         return;
       }
+      
+      // If scenario_c_id exists but couldn't be resolved, that's also an error
+      if (comp.scenario_c_id && !scenarioC) {
+        setStatus("scenarios_unavailable");
+        return;
+      }
 
-      setReady({ comparison: comp, scenarioA, scenarioB });
+      setReady({ comparison: comp, scenarioA, scenarioB, scenarioC });
       setLocalName(comp.name);
       setStatus("ready");
     } catch (error) {
@@ -586,6 +589,8 @@ export default function ComparisonDetail() {
   const validComparison = ready.comparison;
   const validScenarioA = ready.scenarioA;
   const validScenarioB = ready.scenarioB;
+  const validScenarioC = ready.scenarioC;
+  const hasScenarioC = !!validScenarioC;
 
   // Mobile layout - Institutional-grade with safe areas and clean hierarchy
   if (isMobile) {
@@ -632,6 +637,7 @@ export default function ComparisonDetail() {
             <ComparisonExportModal
               scenarioA={validScenarioA}
               scenarioB={validScenarioB}
+              scenarioC={validScenarioC}
               comparisonId={id!}
               variant="outline"
               size="default"
@@ -642,7 +648,11 @@ export default function ComparisonDetail() {
         </div>
 
         {/* Quantified Decision Summary */}
-        <ComparisonSummary scenarioA={validScenarioA} scenarioB={validScenarioB} />
+        <ComparisonSummary 
+          scenarioA={validScenarioA} 
+          scenarioB={validScenarioB} 
+          scenarioC={validScenarioC}
+        />
         
         {/* Scenario blocks with visual separation */}
         <div className="space-y-8 pt-2">
@@ -652,6 +662,13 @@ export default function ComparisonDetail() {
           <div className="border-t border-border/40" />
           
           <MobileScenarioBlock scenario={validScenarioB} label="B" />
+          
+          {hasScenarioC && (
+            <>
+              <div className="border-t border-border/40" />
+              <MobileScenarioBlock scenario={validScenarioC} label="C" />
+            </>
+          )}
         </div>
       </div>
     );
@@ -660,8 +677,12 @@ export default function ComparisonDetail() {
   // Desktop layout
   const monthlyPIA = getMonthlyPI(validScenarioA);
   const monthlyPIB = getMonthlyPI(validScenarioB);
+  const monthlyPIC = validScenarioC ? getMonthlyPI(validScenarioC) : null;
   const propertyValueA = getPropertyValue(validScenarioA);
   const propertyValueB = getPropertyValue(validScenarioB);
+  const propertyValueC = validScenarioC ? getPropertyValue(validScenarioC) : null;
+  
+  const gridCols = hasScenarioC ? "grid-cols-4" : "grid-cols-3";
 
   return (
     <div className="space-y-6 pb-8">
@@ -693,6 +714,7 @@ export default function ComparisonDetail() {
         <ComparisonExportModal
           scenarioA={validScenarioA}
           scenarioB={validScenarioB}
+          scenarioC={validScenarioC}
           comparisonId={id!}
           variant="outline"
           disabled={capabilitiesLoading || !canExport}
@@ -700,10 +722,14 @@ export default function ComparisonDetail() {
       </div>
 
       {/* Quantified Decision Summary */}
-      <ComparisonSummary scenarioA={validScenarioA} scenarioB={validScenarioB} />
+      <ComparisonSummary 
+        scenarioA={validScenarioA} 
+        scenarioB={validScenarioB}
+        scenarioC={validScenarioC}
+      />
 
-      {/* Scenario headers - institutional ledger style */}
-      <div className="grid grid-cols-3 gap-x-6 border-b border-border pb-4 px-4">
+      {/* Scenario headers - institutional ledger style (2 or 3 scenarios) */}
+      <div className={`grid ${gridCols} gap-x-4 border-b border-border pb-4 px-4`}>
         <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Metric
         </div>
@@ -715,6 +741,12 @@ export default function ComparisonDetail() {
           <div className="text-sm font-medium">{validScenarioB.name || "Untitled"}</div>
           <div className="text-xs text-muted-foreground">Scenario B</div>
         </div>
+        {hasScenarioC && (
+          <div className="text-right">
+            <div className="text-sm font-medium">{validScenarioC.name || "Untitled"}</div>
+            <div className="text-xs text-muted-foreground">Scenario C</div>
+          </div>
+        )}
       </div>
 
       {/* Section 1: Scenario Overview */}
@@ -723,26 +755,31 @@ export default function ComparisonDetail() {
           label="Loan type" 
           valueA={TRANSACTION_TYPE_LABELS[validScenarioA.inputs.mode]}
           valueB={TRANSACTION_TYPE_LABELS[validScenarioB.inputs.mode]}
+          valueC={hasScenarioC ? TRANSACTION_TYPE_LABELS[validScenarioC.inputs.mode] : undefined}
         />
         <ComparisonRow 
           label="Loan amount" 
           valueA={formatCurrency(validScenarioA.results.loanAmount)}
           valueB={formatCurrency(validScenarioB.results.loanAmount)}
+          valueC={hasScenarioC ? formatCurrency(validScenarioC.results.loanAmount) : undefined}
         />
         <ComparisonRow 
           label="Term" 
           valueA={`${validScenarioA.inputs.shared?.loanTerm || 30} years`}
           valueB={`${validScenarioB.inputs.shared?.loanTerm || 30} years`}
+          valueC={hasScenarioC ? `${validScenarioC.inputs.shared?.loanTerm || 30} years` : undefined}
         />
         <ComparisonRow 
           label="Interest rate (assumed)" 
           valueA={formatPercent(validScenarioA.inputs.shared?.interestRate || 0)}
           valueB={formatPercent(validScenarioB.inputs.shared?.interestRate || 0)}
+          valueC={hasScenarioC ? formatPercent(validScenarioC.inputs.shared?.interestRate || 0) : undefined}
         />
         <ComparisonRow 
           label="LTV" 
           valueA={validScenarioA.results.ltvRatio ? formatPercent(validScenarioA.results.ltvRatio) : null}
           valueB={validScenarioB.results.ltvRatio ? formatPercent(validScenarioB.results.ltvRatio) : null}
+          valueC={hasScenarioC ? (validScenarioC.results.ltvRatio ? formatPercent(validScenarioC.results.ltvRatio) : null) : undefined}
         />
       </ComparisonSection>
 
@@ -752,11 +789,13 @@ export default function ComparisonDetail() {
           label="Principal & interest" 
           valueA={monthlyPIA ? formatCurrency(monthlyPIA) : null}
           valueB={monthlyPIB ? formatCurrency(monthlyPIB) : null}
+          valueC={hasScenarioC ? (monthlyPIC ? formatCurrency(monthlyPIC) : null) : undefined}
         />
         <ComparisonRow 
           label="Total monthly payment" 
           valueA={validScenarioA.results.monthlyTotal ? formatCurrency(validScenarioA.results.monthlyTotal) : null}
           valueB={validScenarioB.results.monthlyTotal ? formatCurrency(validScenarioB.results.monthlyTotal) : null}
+          valueC={hasScenarioC ? (validScenarioC.results.monthlyTotal ? formatCurrency(validScenarioC.results.monthlyTotal) : null) : undefined}
         />
       </ComparisonSection>
 
@@ -766,16 +805,19 @@ export default function ComparisonDetail() {
           label="Total payments" 
           valueA={validScenarioA.results.totalCost ? formatCurrency(validScenarioA.results.totalCost) : null}
           valueB={validScenarioB.results.totalCost ? formatCurrency(validScenarioB.results.totalCost) : null}
+          valueC={hasScenarioC ? (validScenarioC.results.totalCost ? formatCurrency(validScenarioC.results.totalCost) : null) : undefined}
         />
         <ComparisonRow 
           label="Total interest" 
           valueA={formatCurrency(validScenarioA.results.totalInterest)}
           valueB={formatCurrency(validScenarioB.results.totalInterest)}
+          valueC={hasScenarioC ? formatCurrency(validScenarioC.results.totalInterest) : undefined}
         />
         <ComparisonRow 
           label="Payoff date" 
           valueA={getPayoffDate(validScenarioA)}
           valueB={getPayoffDate(validScenarioB)}
+          valueC={hasScenarioC ? getPayoffDate(validScenarioC) : undefined}
         />
       </ComparisonSection>
 
@@ -785,6 +827,7 @@ export default function ComparisonDetail() {
           label="Property value" 
           valueA={propertyValueA ? formatCurrency(propertyValueA) : null}
           valueB={propertyValueB ? formatCurrency(propertyValueB) : null}
+          valueC={hasScenarioC ? (propertyValueC ? formatCurrency(propertyValueC) : null) : undefined}
         />
         <ComparisonRow 
           label="Property taxes (annual)" 
@@ -794,6 +837,9 @@ export default function ComparisonDetail() {
           valueB={validScenarioB.inputs.shared?.propertyTaxAnnual != null 
             ? formatCurrency(validScenarioB.inputs.shared.propertyTaxAnnual) 
             : null}
+          valueC={hasScenarioC ? (validScenarioC.inputs.shared?.propertyTaxAnnual != null 
+            ? formatCurrency(validScenarioC.inputs.shared.propertyTaxAnnual) 
+            : null) : undefined}
         />
         <ComparisonRow 
           label="Home insurance (annual)" 
@@ -803,6 +849,9 @@ export default function ComparisonDetail() {
           valueB={validScenarioB.inputs.shared?.homeInsuranceMonthly != null 
             ? formatCurrency(validScenarioB.inputs.shared.homeInsuranceMonthly * 12) 
             : null}
+          valueC={hasScenarioC ? (validScenarioC.inputs.shared?.homeInsuranceMonthly != null 
+            ? formatCurrency(validScenarioC.inputs.shared.homeInsuranceMonthly * 12) 
+            : null) : undefined}
         />
       </ComparisonSection>
     </div>
