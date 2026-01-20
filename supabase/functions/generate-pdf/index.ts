@@ -175,18 +175,46 @@ function calculateDownPaymentAmount(
 }
 
 function calculateDeltas(a: ScenarioData, b: ScenarioData) {
+  const aMonthly = a.results.monthlyTotal || 0;
+  const bMonthly = b.results.monthlyTotal || 0;
+  const aTotalCost = a.results.totalCost || 0;
+  const bTotalCost = b.results.totalCost || 0;
+  const aTotalInterest = a.results.totalInterest || 0;
+  const bTotalInterest = b.results.totalInterest || 0;
+  
   return {
-    monthlyPaymentDelta: (a.results.monthlyTotal || 0) - (b.results.monthlyTotal || 0),
-    totalCostDelta: (a.results.totalCost || 0) - (b.results.totalCost || 0),
-    totalInterestDelta: (a.results.totalInterest || 0) - (b.results.totalInterest || 0),
+    // Dollar deltas (independent per metric)
+    monthlyPaymentDelta: aMonthly - bMonthly,
+    totalCostDelta: aTotalCost - bTotalCost,
+    totalInterestDelta: aTotalInterest - bTotalInterest,
     interestRateDelta: Math.round(((a.inputs?.shared?.interestRate || 0) - (b.inputs?.shared?.interestRate || 0)) * 100),
     ltvDelta: (a.results.ltvRatio || 0) - (b.results.ltvRatio || 0),
+    // Percentage deltas (computed independently - never reuse across categories)
+    monthlyPaymentPercentDelta: bMonthly > 0 ? ((aMonthly - bMonthly) / bMonthly) * 100 : 0,
+    totalCostPercentDelta: bTotalCost > 0 ? ((aTotalCost - bTotalCost) / bTotalCost) * 100 : 0,
+    totalInterestPercentDelta: bTotalInterest > 0 ? ((aTotalInterest - bTotalInterest) / bTotalInterest) * 100 : 0,
   };
 }
 
-function formatSignedDelta(value: number): string {
-  const prefix = value >= 0 ? "+" : "";
-  return `${prefix}${formatCurrency(value)}`;
+/**
+ * Format delta percent with appropriate precision
+ */
+function formatDeltaPercent(value: number): string {
+  const absValue = Math.abs(value);
+  if (absValue >= 5) return `${Math.round(absValue)}%`;
+  return `${absValue.toFixed(1)}%`;
+}
+
+/**
+ * Format dollar-first delta (dollars first, percentage second)
+ * Example: "+$245/mo (+8.2%)"
+ */
+function formatDollarFirstDelta(dollarDelta: number, percentDelta: number, suffix = ""): string {
+  const dollarSign = dollarDelta > 0 ? "+" : dollarDelta < 0 ? "-" : "";
+  const percentSign = percentDelta > 0 ? "+" : "";
+  const dollarStr = `${dollarSign}${formatCurrency(Math.abs(dollarDelta))}${suffix}`;
+  const percentStr = `${percentSign}${formatDeltaPercent(percentDelta)}`;
+  return `${dollarStr} (${percentStr})`;
 }
 
 /**
@@ -211,26 +239,33 @@ function formatLtvDelta(value: number): string {
 }
 
 /**
- * Determine lowest cost scenario with tie-breaker logic
+ * Determine lowest cost scenario with tie-breaker logic:
+ * 1. Lowest Total Cost (primary)
+ * 2. Lowest Total Interest (first tie-breaker)
+ * 3. Lowest Monthly Payment (second tie-breaker)
+ * 4. Lowest LTV (third tie-breaker)
  */
 function determineLowestCost(scenarios: { name: string; data: ScenarioData }[]): { name: string; data: ScenarioData } {
-  return scenarios.reduce((best, current) => {
-    const bestCost = best.data.results.totalCost ?? Infinity;
-    const currentCost = current.data.results.totalCost ?? Infinity;
-    if (currentCost < bestCost) return current;
-    if (currentCost > bestCost) return best;
+  return [...scenarios].sort((a, b) => {
+    const costA = a.data.results.totalCost ?? Infinity;
+    const costB = b.data.results.totalCost ?? Infinity;
+    if (costA !== costB) return costA - costB;
     
-    // Tie-breaker: lower monthly payment
-    const bestMonthly = best.data.results.monthlyTotal ?? Infinity;
-    const currentMonthly = current.data.results.monthlyTotal ?? Infinity;
-    if (currentMonthly < bestMonthly) return current;
-    if (currentMonthly > bestMonthly) return best;
+    // Tie-breaker 1: lower total interest
+    const interestA = a.data.results.totalInterest ?? Infinity;
+    const interestB = b.data.results.totalInterest ?? Infinity;
+    if (interestA !== interestB) return interestA - interestB;
     
-    // Second tie-breaker: lower total interest
-    const bestInterest = best.data.results.totalInterest ?? Infinity;
-    const currentInterest = current.data.results.totalInterest ?? Infinity;
-    return currentInterest < bestInterest ? current : best;
-  });
+    // Tie-breaker 2: lower monthly payment
+    const monthlyA = a.data.results.monthlyTotal ?? Infinity;
+    const monthlyB = b.data.results.monthlyTotal ?? Infinity;
+    if (monthlyA !== monthlyB) return monthlyA - monthlyB;
+    
+    // Tie-breaker 3: lower LTV
+    const ltvA = a.data.results.ltvRatio ?? Infinity;
+    const ltvB = b.data.results.ltvRatio ?? Infinity;
+    return ltvA - ltvB;
+  })[0];
 }
 
 /**
@@ -486,9 +521,9 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
           {
             label: `${nameA} vs ${nameB}`,
             items: [
-          { label: "Monthly payment", value: formatSignedDelta(aVsBDeltas.monthlyPaymentDelta) },
-              { label: "Total cost over time", value: formatSignedDelta(aVsBDeltas.totalCostDelta) },
-              { label: "Total interest", value: formatSignedDelta(aVsBDeltas.totalInterestDelta) },
+          { label: "Monthly payment", value: formatDollarFirstDelta(aVsBDeltas.monthlyPaymentDelta, aVsBDeltas.monthlyPaymentPercentDelta, "/mo") },
+              { label: "Total cost over time", value: formatDollarFirstDelta(aVsBDeltas.totalCostDelta, aVsBDeltas.totalCostPercentDelta) },
+              { label: "Total interest", value: formatDollarFirstDelta(aVsBDeltas.totalInterestDelta, aVsBDeltas.totalInterestPercentDelta) },
               { label: "Interest rate (assumed)", value: formatSignedRateDelta(aVsBDeltas.interestRateDelta) },
               { label: "Loan size vs home value", value: formatLtvDelta(aVsBDeltas.ltvDelta) },
             ],
@@ -496,9 +531,9 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
           {
             label: `${nameC} vs ${nameB}`,
             items: [
-              { label: "Monthly payment", value: formatSignedDelta(cVsBDeltas!.monthlyPaymentDelta) },
-              { label: "Total cost over time", value: formatSignedDelta(cVsBDeltas!.totalCostDelta) },
-              { label: "Total interest", value: formatSignedDelta(cVsBDeltas!.totalInterestDelta) },
+              { label: "Monthly payment", value: formatDollarFirstDelta(cVsBDeltas!.monthlyPaymentDelta, cVsBDeltas!.monthlyPaymentPercentDelta, "/mo") },
+              { label: "Total cost over time", value: formatDollarFirstDelta(cVsBDeltas!.totalCostDelta, cVsBDeltas!.totalCostPercentDelta) },
+              { label: "Total interest", value: formatDollarFirstDelta(cVsBDeltas!.totalInterestDelta, cVsBDeltas!.totalInterestPercentDelta) },
               { label: "Interest rate (assumed)", value: formatSignedRateDelta(cVsBDeltas!.interestRateDelta) },
               { label: "Loan size vs home value", value: formatLtvDelta(cVsBDeltas!.ltvDelta) },
             ],
@@ -509,9 +544,9 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
         title: "How the Options Compare",
         type: "key-diff",
         items: [
-          { label: "Monthly payment", value: formatSignedDelta(aVsBDeltas.monthlyPaymentDelta) },
-          { label: "Total cost over time", value: formatSignedDelta(aVsBDeltas.totalCostDelta) },
-          { label: "Total interest", value: formatSignedDelta(aVsBDeltas.totalInterestDelta) },
+          { label: "Monthly payment", value: formatDollarFirstDelta(aVsBDeltas.monthlyPaymentDelta, aVsBDeltas.monthlyPaymentPercentDelta, "/mo") },
+          { label: "Total cost over time", value: formatDollarFirstDelta(aVsBDeltas.totalCostDelta, aVsBDeltas.totalCostPercentDelta) },
+          { label: "Total interest", value: formatDollarFirstDelta(aVsBDeltas.totalInterestDelta, aVsBDeltas.totalInterestPercentDelta) },
           { label: "Interest rate (assumed)", value: formatSignedRateDelta(aVsBDeltas.interestRateDelta) },
           { label: "Loan size vs home value", value: formatLtvDelta(aVsBDeltas.ltvDelta) },
         ],

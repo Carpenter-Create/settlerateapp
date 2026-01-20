@@ -28,6 +28,10 @@ export interface ComparisonDeltas {
   totalInterestDelta: number | null;     // Percentage
   interestRateDelta: number | null;      // Basis points
   ltvDelta: number | null;               // Absolute percentage points
+  // Dollar amounts for dollar-first display
+  monthlyPaymentDollarDelta: number | null;
+  totalCostDollarDelta: number | null;
+  totalInterestDollarDelta: number | null;
 }
 
 export interface ThreeWayDeltas {
@@ -52,8 +56,11 @@ export interface LowestCostResult {
 /**
  * Determine lowest-cost scenario using tie-breaker logic:
  * 1. Lowest Total Cost (primary)
- * 2. Lowest Monthly Payment (tie-breaker)
- * 3. Lowest Total Interest (second tie-breaker)
+ * 2. Lowest Total Interest (first tie-breaker)
+ * 3. Lowest Monthly Payment (second tie-breaker)
+ * 4. Lowest LTV (third tie-breaker)
+ * 
+ * This logic is deterministic and documented.
  */
 export function determineLowestCost(
   scenarioA: ScenarioData,
@@ -69,19 +76,23 @@ export function determineLowestCost(
     scenarios.push({ label: "C", data: scenarioC });
   }
 
-  // Sort by total cost, then monthly, then interest
+  // Sort by: total cost → total interest → monthly payment → LTV
   scenarios.sort((a, b) => {
     const costA = a.data.results.totalCost ?? Infinity;
     const costB = b.data.results.totalCost ?? Infinity;
     if (costA !== costB) return costA - costB;
     
+    const interestA = a.data.results.totalInterest ?? Infinity;
+    const interestB = b.data.results.totalInterest ?? Infinity;
+    if (interestA !== interestB) return interestA - interestB;
+    
     const monthlyA = a.data.results.monthlyTotal ?? Infinity;
     const monthlyB = b.data.results.monthlyTotal ?? Infinity;
     if (monthlyA !== monthlyB) return monthlyA - monthlyB;
     
-    const interestA = a.data.results.totalInterest ?? Infinity;
-    const interestB = b.data.results.totalInterest ?? Infinity;
-    return interestA - interestB;
+    const ltvA = a.data.results.ltvRatio ?? Infinity;
+    const ltvB = b.data.results.ltvRatio ?? Infinity;
+    return ltvA - ltvB;
   });
 
   const winner = scenarios[0];
@@ -114,6 +125,12 @@ export function calculateDeltas(a: ScenarioData, b: ScenarioData): ComparisonDel
   const aLtv = a.results.ltvRatio ?? 0;
   const bLtv = b.results.ltvRatio ?? 0;
 
+  // Calculate dollar deltas (independent per metric)
+  const monthlyDollarDelta = aMonthly != null && bMonthly != null ? aMonthly - bMonthly : null;
+  const totalCostDollarDelta = aTotalCost != null && bTotalCost != null ? aTotalCost - bTotalCost : null;
+  const totalInterestDollarDelta = aTotalInterest != null && bTotalInterest != null ? aTotalInterest - bTotalInterest : null;
+
+  // Calculate percentage deltas (independent per metric - never reuse across categories)
   return {
     monthlyPaymentDelta: bMonthly && bMonthly > 0 && aMonthly != null
       ? ((aMonthly - bMonthly) / bMonthly) * 100
@@ -121,11 +138,15 @@ export function calculateDeltas(a: ScenarioData, b: ScenarioData): ComparisonDel
     totalCostDelta: bTotalCost && bTotalCost > 0 && aTotalCost != null
       ? ((aTotalCost - bTotalCost) / bTotalCost) * 100
       : null,
-    totalInterestDelta: bTotalInterest && bTotalInterest > 0
+    totalInterestDelta: bTotalInterest && bTotalInterest > 0 && aTotalInterest != null
       ? ((aTotalInterest - bTotalInterest) / bTotalInterest) * 100
       : null,
     interestRateDelta: (aRate - bRate) * 100, // Convert to basis points
     ltvDelta: aLtv - bLtv, // Absolute percentage points
+    // Dollar amounts for dollar-first display
+    monthlyPaymentDollarDelta: monthlyDollarDelta,
+    totalCostDollarDelta: totalCostDollarDelta,
+    totalInterestDollarDelta: totalInterestDollarDelta,
   };
 }
 
@@ -162,6 +183,11 @@ export function calculateDeltasVsWinner(
   const sLtv = scenario.results.ltvRatio ?? 0;
   const wLtv = winner.results.ltvRatio ?? 0;
 
+  // Calculate dollar deltas
+  const monthlyDollarDelta = sMonthly != null && wMonthly != null ? sMonthly - wMonthly : null;
+  const totalCostDollarDelta = sTotalCost != null && wTotalCost != null ? sTotalCost - wTotalCost : null;
+  const totalInterestDollarDelta = sTotalInterest != null && wTotalInterest != null ? sTotalInterest - wTotalInterest : null;
+
   return {
     monthlyPaymentDelta: wMonthly && wMonthly > 0 && sMonthly != null
       ? ((sMonthly - wMonthly) / wMonthly) * 100
@@ -169,17 +195,53 @@ export function calculateDeltasVsWinner(
     totalCostDelta: wTotalCost && wTotalCost > 0 && sTotalCost != null
       ? ((sTotalCost - wTotalCost) / wTotalCost) * 100
       : null,
-    totalInterestDelta: wTotalInterest && wTotalInterest > 0
+    totalInterestDelta: wTotalInterest && wTotalInterest > 0 && sTotalInterest != null
       ? ((sTotalInterest - wTotalInterest) / wTotalInterest) * 100
       : null,
     interestRateDelta: (sRate - wRate) * 100,
     ltvDelta: sLtv - wLtv,
+    monthlyPaymentDollarDelta: monthlyDollarDelta,
+    totalCostDollarDelta: totalCostDollarDelta,
+    totalInterestDollarDelta: totalInterestDollarDelta,
   };
 }
 
 // ============================================================================
 // FORMATTING
 // ============================================================================
+
+/**
+ * Format currency for display (dollar-first display standard)
+ */
+export function formatDeltaCurrency(value: number): string {
+  const absValue = Math.abs(value);
+  if (absValue >= 1000) {
+    return `$${(absValue / 1000).toFixed(absValue >= 10000 ? 0 : 1)}k`;
+  }
+  return `$${Math.round(absValue).toLocaleString()}`;
+}
+
+/**
+ * Format signed currency delta
+ */
+export function formatSignedCurrencyDelta(value: number | null): string {
+  if (value === null) return "—";
+  const sign = value > 0 ? "+" : "-";
+  return `${sign}${formatDeltaCurrency(value)}`;
+}
+
+/**
+ * Format dollar-first delta display (dollars first, percentage second)
+ * Example: "+$245/mo (+8.2%)"
+ */
+export function formatDollarFirstDelta(dollarDelta: number | null, percentDelta: number | null, suffix = ""): string {
+  if (dollarDelta === null || percentDelta === null) return "—";
+  const dollarSign = dollarDelta > 0 ? "+" : dollarDelta < 0 ? "-" : "";
+  const percentSign = percentDelta > 0 ? "+" : "";
+  const dollarStr = `${dollarSign}$${Math.abs(Math.round(dollarDelta)).toLocaleString()}${suffix}`;
+  const percentStr = `${percentSign}${formatDeltaPercent(percentDelta)}`;
+  return `${dollarStr} (${percentStr})`;
+}
 
 /**
  * Format a percentage with appropriate precision:
@@ -352,49 +414,64 @@ export function generateSummaryCopy(
       `Under these assumptions, ${winnerName} is the least expensive option overall.`
     );
 
-    // Line 2: Explain why this matters (in plain terms)
-    if (otherDeltas.totalCostDelta !== null && Math.abs(otherDeltas.totalCostDelta) >= 0.5) {
-      const costDiff = Math.abs(otherDeltas.totalCostDelta);
-      const costWord = costDiff >= 10 ? "meaningfully" : "somewhat";
+    // Line 2: Explain why using dollars first, percentages second
+    if (otherDeltas.totalCostDollarDelta !== null && otherDeltas.totalCostDelta !== null) {
+      const dollarDiff = Math.abs(otherDeltas.totalCostDollarDelta);
+      const percentDiff = Math.abs(otherDeltas.totalCostDelta);
       
-      // Check if monthly payments are similar despite total cost difference
-      const monthlyDiff = Math.abs(otherDeltas.monthlyPaymentDelta ?? 0);
-      
-      if (monthlyDiff < 3 && costDiff >= 5) {
+      if (dollarDiff >= 1000) {
+        const dollarStr = dollarDiff >= 1000 
+          ? `$${Math.round(dollarDiff).toLocaleString()}`
+          : `$${Math.round(dollarDiff)}`;
+        
         sentences.push(
-          `Compared to ${otherName}, it results in ${costWord} lower total costs over the life of the loan, even though the monthly payments may look similar at first.`
-        );
-      } else {
-        sentences.push(
-          `Compared to ${otherName}, it results in about ${formatDeltaPercent(costDiff)} lower total costs over the life of the loan.`
+          `Compared to ${otherName}, it saves about ${dollarStr} over the life of the loan (${formatDeltaPercent(percentDiff)} less).`
         );
       }
     }
 
-    // Line 3: Explain drivers in everyday terms
+    // Line 3: Note when assumptions are held constant
+    const winnerRate = winnerData.inputs.shared?.interestRate;
+    const otherRate = otherData.inputs.shared?.interestRate;
+    const winnerTerm = winnerData.inputs.shared?.loanTerm;
+    const otherTerm = otherData.inputs.shared?.loanTerm;
+    
+    const sameRate = winnerRate === otherRate;
+    const sameTerm = winnerTerm === otherTerm;
+    
+    if (sameRate && sameTerm && winnerRate && winnerTerm) {
+      sentences.push(
+        `Both scenarios use the same assumed rate (${winnerRate}%) and term (${winnerTerm} years).`
+      );
+    } else if (sameRate && winnerRate) {
+      sentences.push(
+        `Both scenarios use the same assumed rate (${winnerRate}%).`
+      );
+    }
+
+    // Line 4: Explain drivers in everyday terms
     const driverExplanations: string[] = [];
     
     // Interest rate explanation
     if (otherDeltas.interestRateDelta !== null && Math.abs(otherDeltas.interestRateDelta) >= 5) {
       const rateDiff = Math.abs(otherDeltas.interestRateDelta / 100);
       const rateDirection = otherDeltas.interestRateDelta > 0 ? "higher" : "lower";
-      driverExplanations.push(`a ${rateDirection} interest rate (about ${rateDiff.toFixed(2)}% ${rateDirection})`);
+      driverExplanations.push(`a ${rateDirection} interest rate (about ${rateDiff.toFixed(2)}%)`);
     }
     
     // LTV explanation (in plain terms)
     if (otherDeltas.ltvDelta !== null && Math.abs(otherDeltas.ltvDelta) >= 2) {
-      const ltvDiff = Math.abs(otherDeltas.ltvDelta);
       const ltvDirection = otherDeltas.ltvDelta > 0 ? "more" : "less";
       driverExplanations.push(`${ltvDirection} borrowed relative to the home's value`);
     }
 
-    if (driverExplanations.length > 0) {
+    if (driverExplanations.length > 0 && !sameRate) {
       const driversText = driverExplanations.length === 1
         ? driverExplanations[0]
         : `${driverExplanations.slice(0, -1).join(", ")} and ${driverExplanations[driverExplanations.length - 1]}`;
       
       sentences.push(
-        `This outcome is driven primarily by ${driversText}, which reduces long-term interest.`
+        `This outcome is driven primarily by ${driversText}.`
       );
     }
 
