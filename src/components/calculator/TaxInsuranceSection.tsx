@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronUp, Sparkles, Info } from "lucide-react";
+import { ChevronDown, ChevronUp, Info, Pencil, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -19,6 +19,17 @@ interface TaxInsuranceSectionProps {
   onBatchUpdate: (updates: Partial<MortgageInputs>) => void;
 }
 
+/**
+ * TaxInsuranceSection - Single source of truth for taxes & insurance inputs
+ * 
+ * Mode-based rendering:
+ * - 'estimated': ZIP input + auto-filled values (read-only display with Edit link)
+ * - 'manual': Direct editable fields
+ * 
+ * IMPORTANT: This component renders ONCE in ScenarioEditor. 
+ * The GuidedStart wizard has its own ZIP input for initial setup,
+ * which pre-populates these same canonical fields.
+ */
 export function TaxInsuranceSection({
   inputs,
   ltvRatio,
@@ -29,6 +40,9 @@ export function TaxInsuranceSection({
   const [zipInput, setZipInput] = useState(shared.zipCode ?? "");
 
   const requiresPMI = ltvRatio > 80;
+
+  // Determine current mode based on state
+  const isEstimateMode = shared.usedZipEstimate && shared.zipCode;
 
   const updateShared = (updates: Partial<SharedInputs>) => {
     onBatchUpdate({
@@ -54,7 +68,7 @@ export function TaxInsuranceSection({
     }
   }, [shared, requiresPMI]);
 
-  const handleUseZipEstimate = useCallback(() => {
+  const handleApplyZipEstimate = useCallback(() => {
     if (!zipInput) {
       toast.error("Please enter a ZIP code");
       return;
@@ -88,8 +102,27 @@ export function TaxInsuranceSection({
     });
   }, [zipInput, shared, requiresPMI]);
 
+  const handleSwitchToManual = useCallback(() => {
+    // Switch to manual mode - keep values but clear the estimate flag
+    updateShared({ usedZipEstimate: false });
+  }, [shared]);
+
+  const handleSwitchToEstimate = useCallback(() => {
+    // Switch back to estimate mode - reapply ZIP estimate if available
+    if (shared.zipCode && isValidZipCode(shared.zipCode)) {
+      const estimate = getZipEstimate(shared.zipCode);
+      updateShared({
+        usedZipEstimate: true,
+        propertyTaxRate: estimate.propertyTaxRate,
+        propertyTaxMode: "rate",
+        homeInsuranceMonthly: estimate.homeInsuranceMonthly,
+        pmiMonthly: requiresPMI ? estimate.pmiMonthly : 0,
+      });
+      toast.success("Estimates restored");
+    }
+  }, [shared, requiresPMI]);
+
   const handlePropertyTaxModeChange = useCallback((mode: "rate" | "annual") => {
-    // Clear the other value when switching
     if (mode === "rate") {
       updateShared({ propertyTaxMode: mode, propertyTaxAnnual: null });
     } else {
@@ -97,9 +130,11 @@ export function TaxInsuranceSection({
     }
   }, [shared]);
 
-  const handleClearEstimates = useCallback(() => {
-    updateShared({ usedZipEstimate: false });
-  }, [shared]);
+  // Calculate display values
+  const displayPropertyTax = shared.propertyTaxMode === "rate" 
+    ? shared.propertyTaxRate 
+    : shared.propertyTaxAnnual;
+  const displayInsurance = shared.homeInsuranceMonthly;
 
   return (
     <div className="space-y-4">
@@ -138,164 +173,198 @@ export function TaxInsuranceSection({
       {/* Expanded Content */}
       {isExpanded && (
         <div className="space-y-5 animate-slide-up">
-          {/* ZIP Estimate Helper */}
-          <div className="rounded-lg bg-muted/50 p-4 space-y-3">
-            <div className="flex items-start gap-2">
-              <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-              <p className="text-xs text-muted-foreground">
-                ZIP code enables regional estimates. Values are editable.
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Input
-                type="text"
-                inputMode="numeric"
-                placeholder="ZIP code"
-                value={zipInput}
-                onChange={(e) => setZipInput(e.target.value.replace(/\D/g, "").slice(0, 5))}
-                className="w-full sm:w-32"
-                maxLength={5}
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={handleUseZipEstimate}
-                className="gap-2 w-full sm:w-auto"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Apply ZIP estimate
-              </Button>
-            </div>
-          </div>
-
-          {/* Estimate Badge Notice */}
-          {shared.usedZipEstimate && (
-            <div className="flex items-center justify-between gap-2 rounded-md bg-accent/50 px-3 py-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-xs font-normal">
-                  Estimate
-                </Badge>
-                <span className="text-xs text-accent-foreground">
-                  Based on regional averages. Replace with actual values when known.
-                </span>
+          {/* Mode: Estimated (ZIP-based) */}
+          {isEstimateMode ? (
+            <div className="space-y-4">
+              {/* Estimate Summary Row */}
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs font-normal shrink-0">
+                        ZIP {shared.zipCode}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        Regional estimates
+                      </span>
+                    </div>
+                    <div className="grid gap-1.5 text-sm">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-muted-foreground">Property tax</span>
+                        <span className="font-mono tabular-nums">
+                          {shared.propertyTaxMode === "rate" 
+                            ? `${(shared.propertyTaxRate ?? 0).toFixed(2)}%` 
+                            : `$${(shared.propertyTaxAnnual ?? 0).toLocaleString()}/yr`}
+                        </span>
+                      </div>
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-muted-foreground">Home insurance</span>
+                        <span className="font-mono tabular-nums">
+                          ${(shared.homeInsuranceMonthly ?? 0).toLocaleString()}/mo
+                        </span>
+                      </div>
+                      {shared.hoaMonthly !== null && shared.hoaMonthly > 0 && (
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-muted-foreground">HOA</span>
+                          <span className="font-mono tabular-nums">
+                            ${shared.hoaMonthly.toLocaleString()}/mo
+                          </span>
+                        </div>
+                      )}
+                      {requiresPMI && shared.pmiMonthly !== null && shared.pmiMonthly > 0 && (
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-muted-foreground">PMI</span>
+                          <span className="font-mono tabular-nums">
+                            ${shared.pmiMonthly.toLocaleString()}/mo
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSwitchToManual}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    Edit
+                  </button>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={handleClearEstimates}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Clear
-              </button>
+              
+              {/* HOA - always editable even in estimate mode */}
+              <InputField label="HOA dues" description="Monthly assessment" optional>
+                <CurrencyInput
+                  value={shared.hoaMonthly ?? 0}
+                  onChange={(v) => updateShared({ hoaMonthly: v })}
+                  min={0}
+                />
+              </InputField>
             </div>
-          )}
+          ) : (
+            /* Mode: Manual Entry */
+            <div className="space-y-5">
+              {/* ZIP Estimate Helper - only show if no ZIP applied yet */}
+              {!shared.zipCode && (
+                <div className="rounded-lg bg-muted/50 p-4 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                    <p className="text-xs text-muted-foreground">
+                      Enter ZIP for regional estimates, or enter values manually below.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="ZIP code"
+                      value={zipInput}
+                      onChange={(e) => setZipInput(e.target.value.replace(/\D/g, "").slice(0, 5))}
+                      className="w-full sm:w-32"
+                      maxLength={5}
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleApplyZipEstimate}
+                      className="w-full sm:w-auto"
+                    >
+                      Apply estimate
+                    </Button>
+                  </div>
+                </div>
+              )}
 
-          {/* Property Tax */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                Estimated property tax
-                {shared.usedZipEstimate && (
-                  <Badge variant="outline" className="text-[10px] font-normal">
-                    Est
-                  </Badge>
-                )}
-              </Label>
-              <div className="flex rounded-md border border-border bg-background p-0.5">
+              {/* Restore estimate option - show if user switched from estimate to manual */}
+              {shared.zipCode && !shared.usedZipEstimate && (
                 <button
                   type="button"
-                  onClick={() => handlePropertyTaxModeChange("rate")}
-                  className={cn(
-                    "px-3 py-1 text-xs font-medium rounded transition-colors",
-                    shared.propertyTaxMode === "rate"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
+                  onClick={handleSwitchToEstimate}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  % of value
+                  <Undo2 className="h-3 w-3" />
+                  Restore ZIP {shared.zipCode} estimates
                 </button>
-                <button
-                  type="button"
-                  onClick={() => handlePropertyTaxModeChange("annual")}
-                  className={cn(
-                    "px-3 py-1 text-xs font-medium rounded transition-colors",
-                    shared.propertyTaxMode === "annual"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Annual $
-                </button>
-              </div>
-            </div>
-            {shared.propertyTaxMode === "rate" ? (
-              <PercentInput
-                value={shared.propertyTaxRate ?? 0}
-                onChange={(v) => updateShared({ propertyTaxRate: v })}
-                min={0}
-                max={10}
-                step={0.01}
-              />
-            ) : (
-              <CurrencyInput
-                value={shared.propertyTaxAnnual ?? 0}
-                onChange={(v) => updateShared({ propertyTaxAnnual: v })}
-                min={0}
-              />
-            )}
-          </div>
+              )}
 
-          {/* Home Insurance */}
-          <InputField
-            label={
-              <span className="flex items-center gap-2">
-                Estimated home insurance
-                {shared.usedZipEstimate && (
-                  <Badge variant="outline" className="text-[10px] font-normal">
-                    Est
-                  </Badge>
+              {/* Property Tax */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Property tax</Label>
+                  <div className="flex rounded-md border border-border bg-background p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => handlePropertyTaxModeChange("rate")}
+                      className={cn(
+                        "px-3 py-1 text-xs font-medium rounded transition-colors",
+                        shared.propertyTaxMode === "rate"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      % of value
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePropertyTaxModeChange("annual")}
+                      className={cn(
+                        "px-3 py-1 text-xs font-medium rounded transition-colors",
+                        shared.propertyTaxMode === "annual"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      Annual $
+                    </button>
+                  </div>
+                </div>
+                {shared.propertyTaxMode === "rate" ? (
+                  <PercentInput
+                    value={shared.propertyTaxRate ?? 0}
+                    onChange={(v) => updateShared({ propertyTaxRate: v })}
+                    min={0}
+                    max={10}
+                    step={0.01}
+                  />
+                ) : (
+                  <CurrencyInput
+                    value={shared.propertyTaxAnnual ?? 0}
+                    onChange={(v) => updateShared({ propertyTaxAnnual: v })}
+                    min={0}
+                  />
                 )}
-              </span>
-            }
-            description="Monthly premium"
-          >
-            <CurrencyInput
-              value={shared.homeInsuranceMonthly ?? 0}
-              onChange={(v) => updateShared({ homeInsuranceMonthly: v })}
-              min={0}
-            />
-          </InputField>
+              </div>
 
-          {/* HOA */}
-          <InputField label="HOA dues" description="Monthly assessment" optional>
-            <CurrencyInput
-              value={shared.hoaMonthly ?? 0}
-              onChange={(v) => updateShared({ hoaMonthly: v })}
-              min={0}
-            />
-          </InputField>
+              {/* Home Insurance */}
+              <InputField label="Home insurance" description="Monthly premium">
+                <CurrencyInput
+                  value={shared.homeInsuranceMonthly ?? 0}
+                  onChange={(v) => updateShared({ homeInsuranceMonthly: v })}
+                  min={0}
+                />
+              </InputField>
 
-          {/* PMI - only show if LTV > 80% */}
-          {requiresPMI && (
-            <InputField
-              label={
-                <span className="flex items-center gap-2">
-                  Estimated PMI
-                  {shared.usedZipEstimate && (
-                    <Badge variant="outline" className="text-[10px] font-normal">
-                      Est
-                    </Badge>
-                  )}
-                </span>
-              }
-              description="Monthly mortgage insurance premium"
-            >
-              <CurrencyInput
-                value={shared.pmiMonthly ?? 0}
-                onChange={(v) => updateShared({ pmiMonthly: v })}
-                min={0}
-              />
-            </InputField>
+              {/* HOA */}
+              <InputField label="HOA dues" description="Monthly assessment" optional>
+                <CurrencyInput
+                  value={shared.hoaMonthly ?? 0}
+                  onChange={(v) => updateShared({ hoaMonthly: v })}
+                  min={0}
+                />
+              </InputField>
+
+              {/* PMI - only show if LTV > 80% */}
+              {requiresPMI && (
+                <InputField label="PMI" description="Monthly mortgage insurance premium">
+                  <CurrencyInput
+                    value={shared.pmiMonthly ?? 0}
+                    onChange={(v) => updateShared({ pmiMonthly: v })}
+                    min={0}
+                  />
+                </InputField>
+              )}
+            </div>
           )}
         </div>
       )}
