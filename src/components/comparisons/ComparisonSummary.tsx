@@ -67,15 +67,18 @@ function MobileMetricRow({ label, value }: MetricItemProps) {
 /**
  * Render key differences for a single comparison pair
  * Using dollar-first display: dollars first, percentages second
+ * Includes "Why" explanation when rate/term are same
  */
 function KeyDifferencesBlock({ 
   deltas, 
   label,
-  showLabel = false 
+  showLabel = false,
+  sameRateExplanation = false,
 }: { 
   deltas: ComparisonDeltas; 
   label?: string;
   showLabel?: boolean;
+  sameRateExplanation?: boolean;
 }) {
   return (
     <div>
@@ -132,6 +135,13 @@ function KeyDifferencesBlock({
           value={formatLtvDelta(deltas.ltvDelta)} 
         />
       </div>
+      
+      {/* "Why" explanation for same rate comparisons */}
+      {sameRateExplanation && Math.abs(deltas.interestRateDelta ?? 0) < 1 && (
+        <div className="mt-2 text-xs text-muted-foreground/80 italic">
+          Why: {deltas.loanAmountDelta && deltas.loanAmountDelta > 0 ? "larger" : "smaller"} loan balance at the same interest rate
+        </div>
+      )}
     </div>
   );
 }
