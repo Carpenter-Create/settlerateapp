@@ -3,6 +3,7 @@
  * 
  * Input form for Loan Assumption scenarios.
  * Institutional, restrained UI following the Mercury-leaning standard.
+ * Supports advisor rate locking for multiple rate fields.
  */
 
 import { useState, useCallback } from "react";
@@ -16,11 +17,15 @@ import {
   DEFAULT_ASSUMED_LOAN_INPUTS,
   DEFAULT_GAP_INPUTS
 } from "@/lib/assumption";
-import { RateMeta, DEFAULT_RATE_META } from "@/lib/rateMeta";
+import { RateMeta, DEFAULT_RATE_META, isRateLocked } from "@/lib/rateMeta";
+import { useCapabilities } from "@/hooks/useCapabilities";
+import { useAuth } from "@/contexts/AuthContext";
 import { CurrencyInput } from "./CurrencyInput";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
 import { RateSourceSelector } from "./RateSourceSelector";
+import { AdvisorRateLockPanel } from "./AdvisorRateLockPanel";
+import { LockedRateIndicator } from "./LockedRateIndicator";
 import { ChevronDown, ChevronUp, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +45,15 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
   const assumed = assumption.assumed ?? DEFAULT_ASSUMED_LOAN_INPUTS;
   const gap = assumption.gap ?? DEFAULT_GAP_INPUTS;
   const rateMeta = inputs.rateMeta ?? DEFAULT_RATE_META;
+  
+  const { user } = useAuth();
+  const { canUseAdvisor } = useCapabilities();
+  
+  // Check if rates are locked
+  const assumedRateLocked = isRateLocked(rateMeta, "assumption.assumed_apr");
+  const gapSecondRateLocked = isRateLocked(rateMeta, "assumption.gap_second_apr");
+  const gapHelocRateLocked = isRateLocked(rateMeta, "assumption.gap_heloc_apr");
+  const canEditLockedRates = canUseAdvisor;
   
   const [showEscrow, setShowEscrow] = useState(
     assumed.monthlyPmi > 0 || assumed.monthlyEscrow > 0
@@ -139,8 +153,12 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
               min={0}
               max={15}
               step={0.125}
+              disabled={assumedRateLocked && !canEditLockedRates}
             />
           </InputField>
+          {assumedRateLocked && !canEditLockedRates && (
+            <LockedRateIndicator />
+          )}
           <RateSourceSelector
             rateSourceType="user_entered"
             rateSourceNote={null}
@@ -148,9 +166,20 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
             rateKey="assumption.assumed_apr"
             rateMeta={rateMeta}
             onUpdateRateMeta={updateRateMeta}
+            disabled={assumedRateLocked && !canEditLockedRates}
           />
         </div>
       </div>
+      
+      {/* Advisor rate locking panel for assumption */}
+      {canUseAdvisor && user?.id && (
+        <AdvisorRateLockPanel
+          rateMeta={rateMeta}
+          onUpdateRateMeta={updateRateMeta}
+          advisorUserId={user.id}
+          scenarioType="assumption"
+        />
+      )}
 
       <div className="grid gap-5 md:grid-cols-2">
         <InputField 
@@ -279,8 +308,12 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
                 min={0}
                 max={20}
                 step={0.125}
+                disabled={gapSecondRateLocked && !canEditLockedRates}
               />
             </InputField>
+            {gapSecondRateLocked && !canEditLockedRates && (
+              <LockedRateIndicator />
+            )}
             <RateSourceSelector
               rateSourceType="user_entered"
               rateSourceNote={null}
@@ -288,6 +321,7 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
               rateKey="assumption.gap_second_apr"
               rateMeta={rateMeta}
               onUpdateRateMeta={updateRateMeta}
+              disabled={gapSecondRateLocked && !canEditLockedRates}
             />
           </div>
 
@@ -325,8 +359,12 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
                 min={0}
                 max={20}
                 step={0.125}
+                disabled={gapHelocRateLocked && !canEditLockedRates}
               />
             </InputField>
+            {gapHelocRateLocked && !canEditLockedRates && (
+              <LockedRateIndicator />
+            )}
             <RateSourceSelector
               rateSourceType="user_entered"
               rateSourceNote={null}
@@ -334,6 +372,7 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
               rateKey="assumption.gap_heloc_apr"
               rateMeta={rateMeta}
               onUpdateRateMeta={updateRateMeta}
+              disabled={gapHelocRateLocked && !canEditLockedRates}
             />
           </div>
 
