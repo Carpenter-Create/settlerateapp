@@ -66,8 +66,10 @@ const BRAND = {
 // TYPES
 // ============================================================================
 
+type ScenarioType = "purchase" | "refinance" | "heloc" | "assumption";
+
 interface ScenarioInputs {
-  mode: "purchase" | "refinance";
+  mode: ScenarioType;
   shared: {
     loanTerm: number;
     interestRate: number;
@@ -83,6 +85,25 @@ interface ScenarioInputs {
     currentLoanBalance: number;
     estimatedHomeValue?: number;
   };
+  heloc?: {
+    creditLimit: number;
+    currentBalance: number;
+    apr: number;
+    drawMonths: number;
+    repayMonths: number;
+  };
+  assumption?: {
+    purchasePrice: number;
+    downPaymentCash: number;
+    assumed: {
+      balance: number;
+      apr: number;
+      remainingMonths: number;
+    };
+    gap: {
+      method: "cash" | "second_loan" | "heloc";
+    };
+  };
 }
 
 interface ScenarioResults {
@@ -97,6 +118,13 @@ interface ScenarioResults {
   totalInterest: number;
   ltvRatio: number;
   payoffMonths: number;
+  // HELOC-specific
+  paymentDrawAvg?: number;
+  paymentRepay?: number;
+  // Assumption-specific
+  assumedPaymentPi?: number;
+  gapPayment?: number;
+  gapAmount?: number;
 }
 
 interface ScenarioData {
@@ -158,9 +186,11 @@ function formatPercent(value: number | undefined | null): string {
   return `${value.toFixed(decimals)}%`;
 }
 
-const TRANSACTION_TYPE_LABELS: Record<string, string> = {
+const TRANSACTION_TYPE_LABELS: Record<ScenarioType, string> = {
   purchase: "Purchase",
   refinance: "Refinance",
+  heloc: "HELOC",
+  assumption: "Assumption",
 };
 
 function calculateDownPaymentAmount(
@@ -269,6 +299,20 @@ function determineLowestCost(scenarios: { name: string; data: ScenarioData }[]):
 }
 
 /**
+ * Check if a scenario is a HELOC (for risk disclosure)
+ */
+function isHelocScenario(scenario: ScenarioData): boolean {
+  return scenario.inputs?.mode === "heloc";
+}
+
+/**
+ * Check if a scenario is a Loan Assumption (for disclosure)
+ */
+function isAssumptionScenario(scenario: ScenarioData): boolean {
+  return scenario.inputs?.mode === "assumption";
+}
+
+/**
  * Generate plain-English summary text for 2 scenarios (homeowner-friendly)
  */
 function generateSummaryText(a: ScenarioData, b: ScenarioData): string {
@@ -303,10 +347,22 @@ function generateSummaryText(a: ScenarioData, b: ScenarioData): string {
   const rateDiff = (otherRate - winnerRate) * 100;
   
   if (Math.abs(rateDiff) >= 5) {
-    summary += `This is driven primarily by a lower interest rate (about ${Math.abs(rateDiff / 100).toFixed(2)}% lower), which reduces long-term interest.`;
+    summary += `This is driven primarily by a lower interest rate (about ${Math.abs(rateDiff / 100).toFixed(2)}% lower), which reduces long-term interest. `;
   }
   
-  return summary;
+  // HELOC variable-rate risk disclosure
+  if (isHelocScenario(winner.data)) {
+    summary += `Note: HELOC payments are typically lower early but may increase over time due to variable rates. `;
+  } else if (isHelocScenario(other.data)) {
+    summary += `One scenario involves a HELOC, which may have variable rates that change over time. `;
+  }
+  
+  // Loan Assumption disclosure
+  if (isAssumptionScenario(a) || isAssumptionScenario(b)) {
+    summary += `Loan assumption scenarios combine the assumed loan with gap financing; total payments reflect both.`;
+  }
+  
+  return summary.trim();
 }
 
 /**
@@ -350,10 +406,28 @@ function generateThreeWaySummaryText(a: ScenarioData, b: ScenarioData, c: Scenar
   const rateDiff = (avgOtherRate - winnerRate) * 100;
   
   if (Math.abs(rateDiff) >= 5) {
-    summary += `This is driven primarily by a lower interest rate (about ${Math.abs(rateDiff / 100).toFixed(2)}% lower), which reduces long-term interest.`;
+    summary += `This is driven primarily by a lower interest rate (about ${Math.abs(rateDiff / 100).toFixed(2)}% lower), which reduces long-term interest. `;
   }
   
-  return summary;
+  // HELOC variable-rate risk disclosure
+  const allScenarios = [a, b, c];
+  const hasHelocScenario = allScenarios.some(s => isHelocScenario(s));
+  
+  if (hasHelocScenario) {
+    if (isHelocScenario(winner.data)) {
+      summary += `Note: HELOC payments are typically lower early but may increase over time due to variable rates. `;
+    } else {
+      summary += `One or more scenarios involve a HELOC, which may have variable rates that change over time. `;
+    }
+  }
+  
+  // Loan Assumption disclosure
+  const hasAssumption = allScenarios.some(s => isAssumptionScenario(s));
+  if (hasAssumption) {
+    summary += `Loan assumption scenarios combine the assumed loan with gap financing; total payments reflect both.`;
+  }
+  
+  return summary.trim();
 }
 
 // ============================================================================
