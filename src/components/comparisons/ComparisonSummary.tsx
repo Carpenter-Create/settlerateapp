@@ -85,8 +85,8 @@ function KeyDifferencesBlock({
         </div>
       )}
       
-      {/* Desktop: responsive grid that wraps on medium screens */}
-      <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-5 sm:gap-4 lg:gap-6">
+      {/* Desktop: responsive auto-fit grid that reflows at all breakpoints */}
+      <div className="hidden sm:grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-4 lg:gap-6">
         <DesktopMetricItem 
           label="Monthly payment" 
           value={formatSignedDelta(deltas.monthlyPaymentDelta)} 
@@ -171,8 +171,8 @@ export function ComparisonSummary({ scenarioA, scenarioB, scenarioC }: Compariso
   const nameC = scenarioC?.name || "Scenario C";
 
   return (
-    <div className="relative border-l-2 border-border/30 bg-muted/20 rounded-r-lg overflow-hidden w-full">
-      <div className="py-5 px-4 sm:py-6 sm:px-6 lg:px-8">
+    <div className="relative border-l-2 border-border/30 bg-muted/20 rounded-r-lg overflow-hidden w-full max-w-full">
+      <div className="py-5 px-4 sm:py-6 sm:px-6 lg:px-8 overflow-hidden">
         {/* Label */}
         <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-3">
           Comparison summary

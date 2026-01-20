@@ -630,7 +630,7 @@ export default function ComparisonDetail() {
             </Button>
             
             {/* Title - brand serif, proper wrapping, no clipping */}
-            <h1 className="font-serif text-xl font-normal tracking-tight leading-snug">
+            <h1 className="font-serif text-xl font-normal tracking-tight leading-snug max-w-full [overflow-wrap:anywhere] [word-break:break-word]">
               <InlineEditableName
                 value={localName || validComparison.name}
                 onSave={handleRename}
@@ -713,7 +713,7 @@ export default function ComparisonDetail() {
               Comparisons
             </Button>
             {/* Title - brand serif for page headings, proper wrapping */}
-            <h1 className="font-serif text-xl sm:text-2xl font-normal tracking-tight pb-2">
+            <h1 className="font-serif text-xl sm:text-2xl font-normal tracking-tight pb-2 max-w-full [overflow-wrap:anywhere] [word-break:break-word]">
               <InlineEditableName
                 value={localName || validComparison.name}
                 onSave={handleRename}
