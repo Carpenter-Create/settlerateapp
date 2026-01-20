@@ -17,8 +17,9 @@ import { useState, useCallback, useMemo } from "react";
 import { MortgageInputs, MortgageResults, ScenarioType, SharedInputs, DEFAULT_INPUTS, calculateLoanAmount, isMortgageType } from "@/lib/mortgage";
 import { calculateHeloc, DEFAULT_HELOC_INPUTS } from "@/lib/heloc";
 import { calculateAssumption, DEFAULT_ASSUMPTION_INPUTS } from "@/lib/assumption";
-import { RateMeta, DEFAULT_RATE_META } from "@/lib/rateMeta";
+import { RateMeta, DEFAULT_RATE_META, isRateLocked } from "@/lib/rateMeta";
 import { Scenario, SaveStatus } from "@/hooks/useScenarios";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
 import { LoanTermInput } from "./LoanTermInput";
@@ -35,6 +36,8 @@ import { MethodologyPanel } from "./MethodologyPanel";
 import { AmortizationTable } from "./AmortizationTable";
 import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import { RateSourceSelector } from "./RateSourceSelector";
+import { AdvisorRateLockPanel } from "./AdvisorRateLockPanel";
+import { LockedRateIndicator } from "./LockedRateIndicator";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "./CurrencyInput";
 import { Input } from "@/components/ui/input";
@@ -105,7 +108,14 @@ export function ScenarioEditor({
   const [saveAsName, setSaveAsName] = useState("");
 
   const { user } = useAuth();
+  const { isAdvisor, canUseAdvisor } = useCapabilities();
   const rateMeta = inputs.rateMeta ?? DEFAULT_RATE_META;
+
+  // Check if the mortgage rate is locked (for purchase/refinance)
+  const mortgageRateLocked = isRateLocked(rateMeta, "mortgage.apr");
+  
+  // Clients cannot edit locked rates (only advisors can)
+  const canEditLockedRates = canUseAdvisor;
 
   // Helper to update shared inputs
   const updateShared = useCallback((updates: Partial<SharedInputs>) => {
@@ -260,8 +270,12 @@ export function ScenarioEditor({
                           min={0}
                           max={25}
                           step={0.125}
+                          disabled={mortgageRateLocked && !canEditLockedRates}
                         />
                       </InputField>
+                      {mortgageRateLocked && !canEditLockedRates && (
+                        <LockedRateIndicator />
+                      )}
                       <RateSourceSelector
                         rateSourceType={inputs.shared.rateSourceType}
                         rateSourceNote={inputs.shared.rateSourceNote}
@@ -269,6 +283,7 @@ export function ScenarioEditor({
                         rateKey="mortgage.apr"
                         rateMeta={rateMeta}
                         onUpdateRateMeta={updateRateMeta}
+                        disabled={mortgageRateLocked && !canEditLockedRates}
                       />
                     </div>
 
@@ -278,6 +293,16 @@ export function ScenarioEditor({
                       label={inputs.mode === "purchase" ? "Loan term" : "New loan term"}
                     />
                   </div>
+                  
+                  {/* Advisor rate locking panel */}
+                  {canUseAdvisor && user?.id && (
+                    <AdvisorRateLockPanel
+                      rateMeta={rateMeta}
+                      onUpdateRateMeta={updateRateMeta}
+                      advisorUserId={user.id}
+                      scenarioType={inputs.mode}
+                    />
+                  )}
                 </>
               )}
 

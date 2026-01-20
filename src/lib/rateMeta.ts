@@ -1,11 +1,11 @@
 /**
  * Rate Metadata Types
  * 
- * Centralized types for rate source tracking.
+ * Centralized types for rate source tracking and advisor locking.
  * Used across purchase, refinance, HELOC, and assumption scenarios.
  * 
- * NOTE: Rate locking has been removed. Rates are always editable.
- * Rate source metadata is informational only.
+ * Rate locking allows advisors to set and lock rate inputs so clients
+ * cannot modify them. This is governance, not paywall logic.
  */
 
 import { RateSourceType, RATE_SOURCE_LABELS } from "./mortgage";
@@ -35,19 +35,26 @@ export const RATE_KEY_LABELS: Record<RateKey, string> = {
 } as const;
 
 /**
- * Source metadata for a single rate (informational only)
+ * Source metadata for a single rate, including lock state
  */
 export interface RateSourceMeta {
   sourceType: RateSourceType;
   sourceNote: string | null;
+  // Lock state - when locked, only advisors can edit
+  locked: boolean;
+  lockedBy: string | null; // user_id of advisor who locked
+  lockedAt: string | null; // ISO timestamp
 }
 
 /**
- * Default rate source metadata
+ * Default rate source metadata (unlocked, user-entered)
  */
 export const DEFAULT_RATE_SOURCE_META: RateSourceMeta = {
   sourceType: "user_entered",
   sourceNote: null,
+  locked: false,
+  lockedBy: null,
+  lockedAt: null,
 };
 
 /**
@@ -103,4 +110,142 @@ export function setComponentRateSource(
       },
     },
   };
+}
+
+/**
+ * Lock a rate field (advisor-only action)
+ */
+export function lockRateField(
+  rateMeta: RateMeta | undefined,
+  rateKey: RateKey,
+  advisorUserId: string
+): RateMeta {
+  return setComponentRateSource(rateMeta, rateKey, {
+    locked: true,
+    lockedBy: advisorUserId,
+    lockedAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * Unlock a rate field (advisor-only action)
+ */
+export function unlockRateField(
+  rateMeta: RateMeta | undefined,
+  rateKey: RateKey
+): RateMeta {
+  return setComponentRateSource(rateMeta, rateKey, {
+    locked: false,
+    lockedBy: null,
+    lockedAt: null,
+  });
+}
+
+/**
+ * Lock all rate fields in the scenario (advisor-only action)
+ */
+export function lockAllRates(
+  rateMeta: RateMeta | undefined,
+  advisorUserId: string
+): RateMeta {
+  const current = rateMeta ?? { ...DEFAULT_RATE_META, components: {} };
+  
+  return {
+    global: {
+      ...current.global,
+      locked: true,
+      lockedBy: advisorUserId,
+      lockedAt: new Date().toISOString(),
+    },
+    components: current.components,
+  };
+}
+
+/**
+ * Unlock all rate fields in the scenario (advisor-only action)
+ */
+export function unlockAllRates(
+  rateMeta: RateMeta | undefined
+): RateMeta {
+  const current = rateMeta ?? { ...DEFAULT_RATE_META, components: {} };
+  
+  // Unlock global
+  const newGlobal: RateSourceMeta = {
+    ...current.global,
+    locked: false,
+    lockedBy: null,
+    lockedAt: null,
+  };
+  
+  // Unlock all components
+  const newComponents: Partial<Record<RateKey, RateSourceMeta>> = {};
+  for (const key of Object.keys(current.components) as RateKey[]) {
+    const comp = current.components[key];
+    if (comp) {
+      newComponents[key] = {
+        ...comp,
+        locked: false,
+        lockedBy: null,
+        lockedAt: null,
+      };
+    }
+  }
+  
+  return {
+    global: newGlobal,
+    components: newComponents,
+  };
+}
+
+/**
+ * Check if a rate field is locked
+ */
+export function isRateLocked(
+  rateMeta: RateMeta | undefined,
+  rateKey: RateKey
+): boolean {
+  const source = getEffectiveRateSource(rateMeta, rateKey);
+  return source.locked;
+}
+
+/**
+ * Check if any rate field is locked
+ */
+export function hasAnyLockedRate(rateMeta: RateMeta | undefined): boolean {
+  if (!rateMeta) return false;
+  
+  // Check global lock
+  if (rateMeta.global.locked) return true;
+  
+  // Check component locks
+  for (const key of Object.keys(rateMeta.components) as RateKey[]) {
+    const comp = rateMeta.components[key];
+    if (comp?.locked) return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Get all locked rate keys
+ */
+export function getLockedRateKeys(rateMeta: RateMeta | undefined): RateKey[] {
+  if (!rateMeta) return [];
+  
+  const locked: RateKey[] = [];
+  const allKeys: RateKey[] = [
+    "mortgage.apr",
+    "heloc.apr",
+    "assumption.assumed_apr",
+    "assumption.gap_second_apr",
+    "assumption.gap_heloc_apr",
+  ];
+  
+  for (const key of allKeys) {
+    if (isRateLocked(rateMeta, key)) {
+      locked.push(key);
+    }
+  }
+  
+  return locked;
 }

@@ -3,16 +3,21 @@
  * 
  * Input form for Home Equity Line of Credit scenarios.
  * Institutional, restrained UI following the Mercury-leaning standard.
+ * Supports advisor rate locking.
  */
 
 import { useState, useCallback } from "react";
 import { MortgageInputs } from "@/lib/mortgage";
 import { HelocInputs, DEFAULT_HELOC_INPUTS } from "@/lib/heloc";
-import { RateMeta, DEFAULT_RATE_META } from "@/lib/rateMeta";
+import { RateMeta, DEFAULT_RATE_META, isRateLocked } from "@/lib/rateMeta";
+import { useCapabilities } from "@/hooks/useCapabilities";
+import { useAuth } from "@/contexts/AuthContext";
 import { CurrencyInput } from "./CurrencyInput";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
 import { RateSourceSelector } from "./RateSourceSelector";
+import { AdvisorRateLockPanel } from "./AdvisorRateLockPanel";
+import { LockedRateIndicator } from "./LockedRateIndicator";
 import { ChevronDown, ChevronUp, Info } from "lucide-react";
 
 interface HelocInputsPanelProps {
@@ -23,6 +28,13 @@ interface HelocInputsPanelProps {
 export function HelocInputsPanel({ inputs, onBatchUpdate }: HelocInputsPanelProps) {
   const heloc = inputs.heloc ?? DEFAULT_HELOC_INPUTS;
   const rateMeta = inputs.rateMeta ?? DEFAULT_RATE_META;
+  
+  const { user } = useAuth();
+  const { canUseAdvisor } = useCapabilities();
+  
+  // Check if HELOC rate is locked
+  const helocRateLocked = isRateLocked(rateMeta, "heloc.apr");
+  const canEditLockedRates = canUseAdvisor;
   
   const [showAdvanced, setShowAdvanced] = useState(
     heloc.annualFee > 0 || heloc.closingCosts > 0 || heloc.monthlyDraw > 0
@@ -87,8 +99,12 @@ export function HelocInputsPanel({ inputs, onBatchUpdate }: HelocInputsPanelProp
               min={0}
               max={25}
               step={0.125}
+              disabled={helocRateLocked && !canEditLockedRates}
             />
           </InputField>
+          {helocRateLocked && !canEditLockedRates && (
+            <LockedRateIndicator />
+          )}
           <RateSourceSelector
             rateSourceType="user_entered"
             rateSourceNote={null}
@@ -96,9 +112,20 @@ export function HelocInputsPanel({ inputs, onBatchUpdate }: HelocInputsPanelProp
             rateKey="heloc.apr"
             rateMeta={rateMeta}
             onUpdateRateMeta={updateRateMeta}
+            disabled={helocRateLocked && !canEditLockedRates}
           />
         </div>
       </div>
+
+      {/* Advisor rate locking panel */}
+      {canUseAdvisor && user?.id && (
+        <AdvisorRateLockPanel
+          rateMeta={rateMeta}
+          onUpdateRateMeta={updateRateMeta}
+          advisorUserId={user.id}
+          scenarioType="heloc"
+        />
+      )}
 
       {/* Term inputs */}
       <div className="grid gap-5 md:grid-cols-2">
