@@ -21,7 +21,7 @@ import {
   determinePattern,
   generateSummaryCopy,
   generateThreeWaySummaryCopy,
-  formatSignedDelta,
+  formatDollarFirstDelta,
   formatSignedBasisPoints,
   formatLtvDelta,
   determineLowestCost,
@@ -66,7 +66,7 @@ function MobileMetricRow({ label, value }: MetricItemProps) {
 
 /**
  * Render key differences for a single comparison pair
- * Using plain-English labels that homeowners can understand
+ * Using dollar-first display: dollars first, percentages second
  */
 function KeyDifferencesBlock({ 
   deltas, 
@@ -89,15 +89,15 @@ function KeyDifferencesBlock({
       <div className="hidden sm:grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-4 lg:gap-6">
         <DesktopMetricItem 
           label="Monthly payment" 
-          value={formatSignedDelta(deltas.monthlyPaymentDelta)} 
+          value={formatDollarFirstDelta(deltas.monthlyPaymentDollarDelta, deltas.monthlyPaymentDelta, "/mo")} 
         />
         <DesktopMetricItem 
           label="Total cost over time" 
-          value={formatSignedDelta(deltas.totalCostDelta)} 
+          value={formatDollarFirstDelta(deltas.totalCostDollarDelta, deltas.totalCostDelta)} 
         />
         <DesktopMetricItem 
           label="Total interest" 
-          value={formatSignedDelta(deltas.totalInterestDelta)} 
+          value={formatDollarFirstDelta(deltas.totalInterestDollarDelta, deltas.totalInterestDelta)} 
         />
         <DesktopMetricItem 
           label="Interest rate (assumed)" 
@@ -113,15 +113,15 @@ function KeyDifferencesBlock({
       <div className="sm:hidden">
         <MobileMetricRow 
           label="Monthly payment" 
-          value={formatSignedDelta(deltas.monthlyPaymentDelta)} 
+          value={formatDollarFirstDelta(deltas.monthlyPaymentDollarDelta, deltas.monthlyPaymentDelta, "/mo")} 
         />
         <MobileMetricRow 
           label="Total cost over time" 
-          value={formatSignedDelta(deltas.totalCostDelta)} 
+          value={formatDollarFirstDelta(deltas.totalCostDollarDelta, deltas.totalCostDelta)} 
         />
         <MobileMetricRow 
           label="Total interest" 
-          value={formatSignedDelta(deltas.totalInterestDelta)} 
+          value={formatDollarFirstDelta(deltas.totalInterestDollarDelta, deltas.totalInterestDelta)} 
         />
         <MobileMetricRow 
           label="Interest rate (assumed)" 
@@ -216,10 +216,9 @@ export function ComparisonSummary({ scenarioA, scenarioB, scenarioC }: Compariso
             <KeyDifferencesBlock deltas={aVsB} />
           )}
           
-          {/* Footnote explaining the comparison */}
-          <div className="mt-5 text-[11px] text-muted-foreground/70 leading-relaxed space-y-1 max-w-[720px]">
-            <p>Percentages compare each option to the others using the same assumptions.</p>
-            <p>Rates shown are inputs provided by the user or advisor and are not lender quotes.</p>
+          {/* Single quiet disclosure */}
+          <div className="mt-5 text-[11px] text-muted-foreground/70 leading-relaxed max-w-[720px]">
+            <p>Results are modeled estimates based on user-provided inputs and are not financial advice.</p>
           </div>
         </div>
       </div>

@@ -30,7 +30,7 @@ import {
   calculateThreeWayDeltas,
   generateSummaryText,
   generateThreeWaySummaryText,
-  formatSignedDelta,
+  formatDollarFirstDelta,
   formatSignedBasisPoints,
   formatLtvDelta,
 } from "@/lib/comparisonSummary";
@@ -664,40 +664,40 @@ export function buildComparisonLayout(
 
   const keyDiffSection: ExportSection = hasScenarioC
     ? {
-        title: "Key Differences",
+        title: "How the Options Compare",
         type: "key-diff-groups",
         groups: [
           {
             label: `${nameA} vs ${nameB}`,
             items: [
-              { label: "Monthly payment", value: formatSignedDelta(aVsB.monthlyPaymentDelta) },
-              { label: "Total cost", value: formatSignedDelta(aVsB.totalCostDelta) },
-              { label: "Total interest", value: formatSignedDelta(aVsB.totalInterestDelta) },
-              { label: "Interest rate", value: formatSignedBasisPoints(aVsB.interestRateDelta) },
-              { label: "LTV", value: formatLtvDelta(aVsB.ltvDelta) },
+              { label: "Monthly payment", value: formatDollarFirstDelta(aVsB.monthlyPaymentDollarDelta, aVsB.monthlyPaymentDelta, "/mo") },
+              { label: "Total cost", value: formatDollarFirstDelta(aVsB.totalCostDollarDelta, aVsB.totalCostDelta) },
+              { label: "Total interest", value: formatDollarFirstDelta(aVsB.totalInterestDollarDelta, aVsB.totalInterestDelta) },
+              { label: "Interest rate (assumed)", value: formatSignedBasisPoints(aVsB.interestRateDelta) },
+              { label: "Loan size vs home value", value: formatLtvDelta(aVsB.ltvDelta) },
             ],
           },
           {
             label: `${nameC} vs ${nameB}`,
             items: [
-              { label: "Monthly payment", value: formatSignedDelta(cVsB!.monthlyPaymentDelta) },
-              { label: "Total cost", value: formatSignedDelta(cVsB!.totalCostDelta) },
-              { label: "Total interest", value: formatSignedDelta(cVsB!.totalInterestDelta) },
-              { label: "Interest rate", value: formatSignedBasisPoints(cVsB!.interestRateDelta) },
-              { label: "LTV", value: formatLtvDelta(cVsB!.ltvDelta) },
+              { label: "Monthly payment", value: formatDollarFirstDelta(cVsB!.monthlyPaymentDollarDelta, cVsB!.monthlyPaymentDelta, "/mo") },
+              { label: "Total cost", value: formatDollarFirstDelta(cVsB!.totalCostDollarDelta, cVsB!.totalCostDelta) },
+              { label: "Total interest", value: formatDollarFirstDelta(cVsB!.totalInterestDollarDelta, cVsB!.totalInterestDelta) },
+              { label: "Interest rate (assumed)", value: formatSignedBasisPoints(cVsB!.interestRateDelta) },
+              { label: "Loan size vs home value", value: formatLtvDelta(cVsB!.ltvDelta) },
             ],
           },
         ],
       }
     : {
-        title: "Key Differences",
+        title: "How the Options Compare",
         type: "key-diff",
         items: [
-          { label: "Monthly payment", value: formatSignedDelta(aVsB.monthlyPaymentDelta) },
-          { label: "Total cost", value: formatSignedDelta(aVsB.totalCostDelta) },
-          { label: "Total interest", value: formatSignedDelta(aVsB.totalInterestDelta) },
-          { label: "Interest rate", value: formatSignedBasisPoints(aVsB.interestRateDelta) },
-          { label: "LTV", value: formatLtvDelta(aVsB.ltvDelta) },
+          { label: "Monthly payment", value: formatDollarFirstDelta(aVsB.monthlyPaymentDollarDelta, aVsB.monthlyPaymentDelta, "/mo") },
+          { label: "Total cost", value: formatDollarFirstDelta(aVsB.totalCostDollarDelta, aVsB.totalCostDelta) },
+          { label: "Total interest", value: formatDollarFirstDelta(aVsB.totalInterestDollarDelta, aVsB.totalInterestDelta) },
+          { label: "Interest rate (assumed)", value: formatSignedBasisPoints(aVsB.interestRateDelta) },
+          { label: "Loan size vs home value", value: formatLtvDelta(aVsB.ltvDelta) },
         ],
       };
 
