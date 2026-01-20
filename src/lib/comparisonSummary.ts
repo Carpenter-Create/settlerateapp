@@ -475,6 +475,28 @@ export function generateSummaryCopy(
       );
     }
 
+    // HELOC variable-rate risk disclosure (if winner or other scenario is HELOC)
+    const hasHelocScenario = isHelocScenario(scenarioA) || isHelocScenario(scenarioB);
+    if (hasHelocScenario) {
+      if (isHelocScenario(winnerData)) {
+        sentences.push(
+          `Note: HELOC payments are typically lower early but may increase over time due to variable rates.`
+        );
+      } else if (isHelocScenario(otherData)) {
+        sentences.push(
+          `One scenario involves a HELOC, which may have variable rates that change over time.`
+        );
+      }
+    }
+
+    // Loan Assumption disclosure (if any scenario is assumption)
+    const hasAssumption = isAssumptionScenario(scenarioA) || isAssumptionScenario(scenarioB);
+    if (hasAssumption) {
+      sentences.push(
+        `Loan assumption scenarios combine the assumed loan with gap financing; total payments reflect both.`
+      );
+    }
+
     return sentences;
   }
 
@@ -499,6 +521,24 @@ export function generateSummaryCopy(
   }
 
   return sentences;
+}
+
+/**
+ * Generate plain-English decision statement for 3-scenario comparison
+ * Homeowner-friendly, institutional, compliant, non-advisory
+ */
+/**
+ * Check if a scenario is a HELOC (for risk disclosure)
+ */
+function isHelocScenario(scenario: ScenarioData): boolean {
+  return scenario.inputs.mode === "heloc";
+}
+
+/**
+ * Check if a scenario is a Loan Assumption (for disclosure)
+ */
+function isAssumptionScenario(scenario: ScenarioData): boolean {
+  return scenario.inputs.mode === "assumption";
 }
 
 /**
@@ -617,6 +657,30 @@ export function generateThreeWaySummaryCopy(
       
       sentences.push(
         `This is driven primarily by ${driversText}, which reduces long-term interest.`
+      );
+    }
+
+    // HELOC variable-rate risk disclosure (if winner or any scenario is HELOC)
+    const allScenarios = [scenarioA, scenarioB, scenarioC];
+    const hasHelocScenario = allScenarios.some(s => isHelocScenario(s));
+    
+    if (hasHelocScenario) {
+      if (isHelocScenario(winnerData)) {
+        sentences.push(
+          `Note: HELOC payments are typically lower early but may increase over time due to variable rates.`
+        );
+      } else {
+        sentences.push(
+          `One or more scenarios involve a HELOC, which may have variable rates that change over time.`
+        );
+      }
+    }
+
+    // Loan Assumption disclosure (if any scenario is assumption)
+    const hasAssumption = allScenarios.some(s => isAssumptionScenario(s));
+    if (hasAssumption) {
+      sentences.push(
+        `Loan assumption scenarios combine the assumed loan with gap financing; total payments reflect both.`
       );
     }
 
