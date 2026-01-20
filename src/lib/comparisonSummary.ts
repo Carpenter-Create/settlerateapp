@@ -9,11 +9,11 @@
  * 
  * LANGUAGE GUARDRAILS (PLAIN-ENGLISH, HOMEOWNER-FRIENDLY):
  * - Lead with clear outcome: "Under these assumptions, X is the least expensive option overall."
- * - Explain WHY in everyday terms: "lower interest rate" not "basis points"
- * - Use "percentage points" not "pp" when spelled out
+ * - Explain WHY using cause-and-effect: "borrowing more increases both monthly payment and total cost"
+ * - Use dollars first, percentages second: "$245/mo (+8.2%)"
  * - Use "least expensive" or "lower cost" — never "best" or "recommended"
  * - Keep summaries to 2-3 short paragraphs max
- * - If basis points are shown, include the percentage first: "0.25% (25 basis points)"
+ * - Include "rule of thumb" for cost per dollar borrowed when rate/term are identical
  */
 
 import type { ScenarioData } from "@/lib/scenarioContract";
@@ -32,6 +32,8 @@ export interface ComparisonDeltas {
   monthlyPaymentDollarDelta: number | null;
   totalCostDollarDelta: number | null;
   totalInterestDollarDelta: number | null;
+  // Principal difference for loan size comparisons
+  loanAmountDelta: number | null;
 }
 
 export interface ThreeWayDeltas {
@@ -39,7 +41,35 @@ export interface ThreeWayDeltas {
   cVsB: ComparisonDeltas | null;
 }
 
-export type ComparisonPattern = "tradeoff" | "cost_efficient" | "minimal_difference" | "insufficient_data";
+export type ComparisonPattern = "tradeoff" | "cost_efficient" | "minimal_difference" | "insufficient_data" | "same_rate_different_size";
+
+// ============================================================================
+// SCENARIO ANALYSIS HELPERS
+// ============================================================================
+
+/**
+ * Check if two scenarios have the same rate and term (for cash-out comparisons)
+ */
+export function haveSameRateAndTerm(a: ScenarioData, b: ScenarioData): boolean {
+  const aRate = a.inputs.shared?.interestRate ?? 0;
+  const bRate = b.inputs.shared?.interestRate ?? 0;
+  const aTerm = a.inputs.shared?.loanTerm ?? 0;
+  const bTerm = b.inputs.shared?.loanTerm ?? 0;
+  
+  return Math.abs(aRate - bRate) < 0.001 && aTerm === bTerm;
+}
+
+/**
+ * Calculate cost per dollar borrowed over full term
+ * Useful for "rule of thumb" explanations
+ */
+export function calculateCostPerDollarBorrowed(
+  loanAmountDiff: number,
+  totalCostDiff: number
+): number {
+  if (loanAmountDiff === 0) return 0;
+  return totalCostDiff / loanAmountDiff;
+}
 
 // ============================================================================
 // LOWEST COST DETERMINATION
@@ -51,6 +81,7 @@ export interface LowestCostResult {
   totalCost: number;
   monthlyPayment: number;
   totalInterest: number;
+  loanAmount: number;
 }
 
 /**
@@ -102,6 +133,7 @@ export function determineLowestCost(
     totalCost: winner.data.results.totalCost ?? 0,
     monthlyPayment: winner.data.results.monthlyTotal ?? 0,
     totalInterest: winner.data.results.totalInterest ?? 0,
+    loanAmount: winner.data.results.loanAmount ?? 0,
   };
 }
 
@@ -124,11 +156,14 @@ export function calculateDeltas(a: ScenarioData, b: ScenarioData): ComparisonDel
   const bRate = b.inputs.shared?.interestRate ?? 0;
   const aLtv = a.results.ltvRatio ?? 0;
   const bLtv = b.results.ltvRatio ?? 0;
+  const aLoanAmount = a.results.loanAmount ?? 0;
+  const bLoanAmount = b.results.loanAmount ?? 0;
 
   // Calculate dollar deltas (independent per metric)
   const monthlyDollarDelta = aMonthly != null && bMonthly != null ? aMonthly - bMonthly : null;
   const totalCostDollarDelta = aTotalCost != null && bTotalCost != null ? aTotalCost - bTotalCost : null;
   const totalInterestDollarDelta = aTotalInterest != null && bTotalInterest != null ? aTotalInterest - bTotalInterest : null;
+  const loanAmountDelta = aLoanAmount - bLoanAmount;
 
   // Calculate percentage deltas (independent per metric - never reuse across categories)
   return {
@@ -147,6 +182,7 @@ export function calculateDeltas(a: ScenarioData, b: ScenarioData): ComparisonDel
     monthlyPaymentDollarDelta: monthlyDollarDelta,
     totalCostDollarDelta: totalCostDollarDelta,
     totalInterestDollarDelta: totalInterestDollarDelta,
+    loanAmountDelta: loanAmountDelta,
   };
 }
 
@@ -182,11 +218,14 @@ export function calculateDeltasVsWinner(
   const wRate = winner.inputs.shared?.interestRate ?? 0;
   const sLtv = scenario.results.ltvRatio ?? 0;
   const wLtv = winner.results.ltvRatio ?? 0;
+  const sLoanAmount = scenario.results.loanAmount ?? 0;
+  const wLoanAmount = winner.results.loanAmount ?? 0;
 
   // Calculate dollar deltas
   const monthlyDollarDelta = sMonthly != null && wMonthly != null ? sMonthly - wMonthly : null;
   const totalCostDollarDelta = sTotalCost != null && wTotalCost != null ? sTotalCost - wTotalCost : null;
   const totalInterestDollarDelta = sTotalInterest != null && wTotalInterest != null ? sTotalInterest - wTotalInterest : null;
+  const loanAmountDelta = sLoanAmount - wLoanAmount;
 
   return {
     monthlyPaymentDelta: wMonthly && wMonthly > 0 && sMonthly != null
@@ -203,6 +242,7 @@ export function calculateDeltasVsWinner(
     monthlyPaymentDollarDelta: monthlyDollarDelta,
     totalCostDollarDelta: totalCostDollarDelta,
     totalInterestDollarDelta: totalInterestDollarDelta,
+    loanAmountDelta: loanAmountDelta,
   };
 }
 
@@ -335,14 +375,25 @@ export function formatSignedBasisPoints(bps: number | null): string {
 // ============================================================================
 
 /**
- * Determine the comparison pattern based on deltas
+ * Determine the comparison pattern based on deltas and scenario data
  */
-export function determinePattern(deltas: ComparisonDeltas): ComparisonPattern {
-  const { monthlyPaymentDelta, totalCostDelta, totalInterestDelta } = deltas;
+export function determinePattern(
+  deltas: ComparisonDeltas,
+  scenarioA?: ScenarioData,
+  scenarioB?: ScenarioData
+): ComparisonPattern {
+  const { monthlyPaymentDelta, totalCostDelta, totalInterestDelta, loanAmountDelta } = deltas;
 
   // Check for insufficient data
   if (monthlyPaymentDelta === null || totalCostDelta === null) {
     return "insufficient_data";
+  }
+
+  // Check for same rate/term with different loan sizes (cash-out pattern)
+  if (scenarioA && scenarioB && haveSameRateAndTerm(scenarioA, scenarioB)) {
+    if (loanAmountDelta !== null && Math.abs(loanAmountDelta) > 1000) {
+      return "same_rate_different_size";
+    }
   }
 
   const absMonthly = Math.abs(monthlyPaymentDelta);
@@ -372,12 +423,77 @@ export function determinePattern(deltas: ComparisonDeltas): ComparisonPattern {
 // ============================================================================
 
 /**
+ * Format a dollar amount for display in prose
+ */
+function formatProseAmount(value: number): string {
+  const absValue = Math.abs(value);
+  return `$${Math.round(absValue).toLocaleString()}`;
+}
+
+/**
+ * Generate cash-out comparison summary when rate/term are identical
+ * Uses cause-and-effect language explaining why borrowing more costs more
+ */
+function generateSameRateDifferentSizeSummary(
+  scenarios: { name: string; data: ScenarioData; deltas: ComparisonDeltas }[],
+  winnerName: string,
+  winnerData: ScenarioData,
+  term: number
+): string[] {
+  const sentences: string[] = [];
+  
+  // Line 1: Clear outcome
+  sentences.push(
+    `Under these assumptions, ${winnerName} is the least expensive option overall.`
+  );
+  
+  // Line 2: Cause-and-effect explanation
+  // Calculate the cost per dollar borrowed
+  const otherScenarios = scenarios.filter(s => s.data !== winnerData);
+  
+  if (otherScenarios.length > 0) {
+    const firstOther = otherScenarios[0];
+    const loanDiff = Math.abs(firstOther.deltas.loanAmountDelta ?? 0);
+    const costDiff = Math.abs(firstOther.deltas.totalCostDollarDelta ?? 0);
+    const monthlyDiff = Math.abs(firstOther.deltas.monthlyPaymentDollarDelta ?? 0);
+    
+    if (loanDiff > 0 && costDiff > 0) {
+      sentences.push(
+        `Although each option uses the same interest rate, borrowing more increases both the monthly payment and the total cost over time. Every additional ${formatProseAmount(loanDiff)} borrowed increases the monthly payment by about ${formatProseAmount(monthlyDiff)} and increases the total cost over ${term} years by roughly ${formatProseAmount(costDiff)}.`
+      );
+    }
+  }
+  
+  // Line 3: List out other scenarios' extra costs
+  if (otherScenarios.length > 0) {
+    const costLines: string[] = [];
+    for (const other of otherScenarios) {
+      const extraCost = Math.abs(other.deltas.totalCostDollarDelta ?? 0);
+      if (extraCost > 0) {
+        costLines.push(`The ${other.name} costs about ${formatProseAmount(extraCost)} more over the life of the loan than the lowest option.`);
+      }
+    }
+    
+    if (costLines.length > 0) {
+      sentences.push(`As a result: ${costLines.join(" ")}`);
+    }
+  }
+  
+  // Line 4: Conclusion
+  sentences.push(
+    `If minimizing long-term cost is the priority, ${winnerName} is the most financially efficient choice.`
+  );
+  
+  return sentences;
+}
+
+/**
  * Generate plain-English decision statement for 2 scenarios
  * Homeowner-friendly, institutional, compliant, non-advisory
  * 
  * Format:
  * 1. Clear outcome: "Under these assumptions, X is the least expensive option overall."
- * 2. Why it matters: "Compared to Y, it results in meaningfully lower total costs..."
+ * 2. Why it matters: Dollars first, cause-and-effect explanation
  * 3. Drivers in everyday terms: "This is driven by a lower interest rate..."
  */
 export function generateSummaryCopy(
@@ -406,9 +522,30 @@ export function generateSummaryCopy(
     const winnerData = lowestCost.lowestCostScenario === "A" ? scenarioA : scenarioB;
     const otherData = lowestCost.lowestCostScenario === "A" ? scenarioB : scenarioA;
     
-    // Calculate percentage differences
+    // Calculate deltas relative to winner
     const otherDeltas = calculateDeltasVsWinner(otherData, winnerData);
     
+    // Get rate and term info
+    const winnerRate = winnerData.inputs.shared?.interestRate ?? 0;
+    const otherRate = otherData.inputs.shared?.interestRate ?? 0;
+    const winnerTerm = winnerData.inputs.shared?.loanTerm ?? 30;
+    const otherTerm = otherData.inputs.shared?.loanTerm ?? 30;
+    
+    const sameRate = Math.abs(winnerRate - otherRate) < 0.001;
+    const sameTerm = winnerTerm === otherTerm;
+    
+    // Check if this is a same-rate-different-size pattern (cash-out comparison)
+    if (pattern === "same_rate_different_size" || (sameRate && sameTerm && Math.abs(otherDeltas.loanAmountDelta ?? 0) > 1000)) {
+      // Use specialized cash-out comparison language
+      return generateSameRateDifferentSizeSummary(
+        [{ name: otherName, data: otherData, deltas: otherDeltas }],
+        winnerName,
+        winnerData,
+        winnerTerm
+      );
+    }
+    
+    // Standard comparison flow
     // Line 1: Clear outcome statement
     sentences.push(
       `Under these assumptions, ${winnerName} is the least expensive option overall.`
@@ -420,25 +557,13 @@ export function generateSummaryCopy(
       const percentDiff = Math.abs(otherDeltas.totalCostDelta);
       
       if (dollarDiff >= 1000) {
-        const dollarStr = dollarDiff >= 1000 
-          ? `$${Math.round(dollarDiff).toLocaleString()}`
-          : `$${Math.round(dollarDiff)}`;
-        
         sentences.push(
-          `Compared to ${otherName}, it saves about ${dollarStr} over the life of the loan (${formatDeltaPercent(percentDiff)} less).`
+          `Compared to ${otherName}, it saves about ${formatProseAmount(dollarDiff)} over the life of the loan (${formatDeltaPercent(percentDiff)} less).`
         );
       }
     }
 
     // Line 3: Note when assumptions are held constant
-    const winnerRate = winnerData.inputs.shared?.interestRate;
-    const otherRate = otherData.inputs.shared?.interestRate;
-    const winnerTerm = winnerData.inputs.shared?.loanTerm;
-    const otherTerm = otherData.inputs.shared?.loanTerm;
-    
-    const sameRate = winnerRate === otherRate;
-    const sameTerm = winnerTerm === otherTerm;
-    
     if (sameRate && sameTerm && winnerRate && winnerTerm) {
       sentences.push(
         `Both scenarios use the same assumed rate (${winnerRate}%) and term (${winnerTerm} years).`
@@ -459,8 +584,11 @@ export function generateSummaryCopy(
       driverExplanations.push(`a ${rateDirection} interest rate (about ${rateDiff.toFixed(2)}%)`);
     }
     
-    // LTV explanation (in plain terms)
-    if (otherDeltas.ltvDelta !== null && Math.abs(otherDeltas.ltvDelta) >= 2) {
+    // LTV / loan size explanation (in plain terms)
+    if (otherDeltas.loanAmountDelta !== null && Math.abs(otherDeltas.loanAmountDelta) >= 5000) {
+      const loanDirection = otherDeltas.loanAmountDelta > 0 ? "more" : "less";
+      driverExplanations.push(`${loanDirection} borrowed (${formatProseAmount(Math.abs(otherDeltas.loanAmountDelta))} difference in loan size)`);
+    } else if (otherDeltas.ltvDelta !== null && Math.abs(otherDeltas.ltvDelta) >= 2) {
       const ltvDirection = otherDeltas.ltvDelta > 0 ? "more" : "less";
       driverExplanations.push(`${ltvDirection} borrowed relative to the home's value`);
     }
@@ -600,25 +728,50 @@ export function generateThreeWaySummaryCopy(
       });
     }
 
+    // Check if all scenarios have same rate and term (cash-out pattern for 3 scenarios)
+    const allScenarios = [scenarioA, scenarioB, scenarioC];
+    const rates = allScenarios.map(s => s.inputs.shared?.interestRate ?? 0);
+    const terms = allScenarios.map(s => s.inputs.shared?.loanTerm ?? 30);
+    const sameRateAndTerm = rates.every(r => Math.abs(r - rates[0]) < 0.001) && 
+                            terms.every(t => t === terms[0]);
+    
+    // Check if there are significant loan amount differences
+    const hasLoanSizeDifferences = others.some(o => 
+      o.deltas.loanAmountDelta !== null && Math.abs(o.deltas.loanAmountDelta) > 1000
+    );
+    
+    if (sameRateAndTerm && hasLoanSizeDifferences) {
+      // Use specialized cash-out comparison language for 3 scenarios
+      return generateSameRateDifferentSizeSummary(
+        others,
+        winnerName,
+        winnerData,
+        terms[0]
+      );
+    }
+
+    // Standard 3-scenario comparison flow
     // Line 1: Clear outcome statement
     sentences.push(
       `Under these assumptions, ${winnerName} is the least expensive option overall.`
     );
 
-    // Line 2: Explain what this means in plain terms
+    // Line 2: Explain with dollars first, then percentages
     const significantOthers = others.filter(o => 
-      o.deltas.totalCostDelta !== null && Math.abs(o.deltas.totalCostDelta) >= 3
+      o.deltas.totalCostDollarDelta !== null && Math.abs(o.deltas.totalCostDollarDelta) >= 1000
     );
     
     if (significantOthers.length > 0) {
-      const comparisons = significantOthers.map(o => {
-        const costDiff = Math.abs(o.deltas.totalCostDelta!);
-        return `about ${formatDeltaPercent(costDiff)} lower than ${o.name}`;
-      });
+      const costLines: string[] = [];
+      for (const other of significantOthers) {
+        const dollarDiff = Math.abs(other.deltas.totalCostDollarDelta ?? 0);
+        const percentDiff = Math.abs(other.deltas.totalCostDelta ?? 0);
+        costLines.push(`about $${Math.round(dollarDiff).toLocaleString()} (${formatDeltaPercent(percentDiff)}) more than ${other.name}`);
+      }
       
-      const comparisonText = comparisons.length === 1 
-        ? comparisons[0]
-        : `${comparisons[0]} and ${comparisons[1]}`;
+      const comparisonText = costLines.length === 1 
+        ? costLines[0]
+        : `${costLines[0]} and ${costLines[1]}`;
       
       sentences.push(
         `Its total cost over the life of the loan is ${comparisonText}.`
@@ -627,18 +780,12 @@ export function generateThreeWaySummaryCopy(
 
     // Line 3: Explain drivers in everyday terms
     const winnerRate = winnerData.inputs.shared?.interestRate ?? 0;
-    const winnerLtv = winnerData.results.ltvRatio ?? 0;
     
     const avgOtherRate = others.reduce((sum, o) => 
       sum + (o.data.inputs.shared?.interestRate ?? 0), 0
     ) / others.length;
     
-    const avgOtherLtv = others.reduce((sum, o) => 
-      sum + (o.data.results.ltvRatio ?? 0), 0
-    ) / others.length;
-    
     const rateDiff = (avgOtherRate - winnerRate) * 100;
-    const ltvDiff = avgOtherLtv - winnerLtv;
     
     const driverExplanations: string[] = [];
     
@@ -646,8 +793,13 @@ export function generateThreeWaySummaryCopy(
       driverExplanations.push(`a lower interest rate (about ${Math.abs(rateDiff / 100).toFixed(2)}% lower)`);
     }
     
-    if (Math.abs(ltvDiff) >= 2) {
-      driverExplanations.push(`less borrowed relative to the home's value`);
+    // Loan size explanation
+    const avgLoanDiff = others.reduce((sum, o) => 
+      sum + Math.abs(o.deltas.loanAmountDelta ?? 0), 0
+    ) / others.length;
+    
+    if (avgLoanDiff >= 5000) {
+      driverExplanations.push(`a smaller loan amount`);
     }
 
     if (driverExplanations.length > 0) {
@@ -661,7 +813,6 @@ export function generateThreeWaySummaryCopy(
     }
 
     // HELOC variable-rate risk disclosure (if winner or any scenario is HELOC)
-    const allScenarios = [scenarioA, scenarioB, scenarioC];
     const hasHelocScenario = allScenarios.some(s => isHelocScenario(s));
     
     if (hasHelocScenario) {
