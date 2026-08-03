@@ -17,9 +17,3 @@ describe("assumption.benchmark — active regression", () => {
     assertWithinTolerance(results.ltvRatio, expected.ltvRatio as number);
   });
 });
-
-describe("assumption.benchmark — pending v2.0.0", () => {
-  it.todo(
-    "BM-A02 calculateScenario dispatch — DEF-001 — Phase 2: persistence and comparison must use calculateAssumption results"
-  );
-});

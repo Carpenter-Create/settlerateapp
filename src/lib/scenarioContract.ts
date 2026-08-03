@@ -112,7 +112,7 @@ export function createScenarioData(
     sourceScenarioId,
     inputs: structuredClone(inputs),
     assumptions,
-    results: calculateMortgage(inputs),
+    results: calculateMortgage(inputs, assumptions),
     calculatorVersion: CALCULATOR_VERSION,
     schemaVersion: LATEST_SCHEMA_VERSION,
   };
@@ -144,7 +144,7 @@ export function duplicateScenarioData(
   const clonedAssumptions: ScenarioAssumptions = structuredClone(original.assumptions);
   
   // Recompute results to ensure no shared references in amortization schedule
-  const freshResults = calculateMortgage(clonedInputs);
+  const freshResults = calculateMortgage(clonedInputs, clonedAssumptions);
   
   return {
     id: generateScenarioId(),
@@ -172,7 +172,7 @@ export function updateScenarioInputs(
   return {
     ...scenario,
     inputs: structuredClone(newInputs),
-    results: calculateMortgage(newInputs),
+    results: calculateMortgage(newInputs, scenario.assumptions),
     updatedAt: new Date(),
   };
 }
@@ -216,7 +216,7 @@ export function validateScenarioIntegrity(scenario: ScenarioData): IntegrityChec
   }
   
   // Recompute and compare key results
-  const recomputed = calculateMortgage(scenario.inputs);
+  const recomputed = calculateMortgage(scenario.inputs, scenario.assumptions);
   
   const tolerance = 0.01; // Allow for floating point variance
   

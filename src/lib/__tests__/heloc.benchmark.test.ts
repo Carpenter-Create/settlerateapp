@@ -16,12 +16,9 @@ describe("heloc.benchmark — active regression", () => {
   });
 });
 
-describe("heloc.benchmark — pending v2.0.0", () => {
-  it.todo(
-    "BM-H04 interest-only-only remediation scope — DEF-010 — Phase 2: enforce interestOnlyDraw=true in UI; reject or hide non-IO draw option"
-  );
-
-  it.todo(
-    "BM-H02 financingCostOverHorizon via calculateScenario dispatch — DEF-001 — Phase 2: scenario save/load must use calculateHeloc, not calculateMortgage"
-  );
+describe("heloc.benchmark — remediation scope", () => {
+  it("BM-H04 rejects unsupported amortizing draw periods", () => {
+    const inputs = { ...(bmH02.inputs as HelocInputs), interestOnlyDraw: false };
+    expect(() => calculateHeloc(inputs)).toThrow(/interestOnlyDraw must be true/);
+  });
 });

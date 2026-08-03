@@ -5,7 +5,13 @@
  * Provides a unified results interface for comparisons.
  */
 
-import { MortgageInputs, MortgageResults, calculateMortgage, ScenarioType } from "./mortgage";
+import {
+  MortgageInputs,
+  MortgageResults,
+  MortgageCalculationAssumptions,
+  calculateMortgage,
+  ScenarioType,
+} from "./mortgage";
 import { HelocInputs, HelocResults, calculateHeloc, DEFAULT_HELOC_INPUTS } from "./heloc";
 import { AssumptionInputs, AssumptionResults, calculateAssumption, DEFAULT_ASSUMPTION_INPUTS } from "./assumption";
 
@@ -28,6 +34,18 @@ export interface UnifiedResults {
   
   /** Total cost (principal + interest + fees) */
   totalCost: number;
+
+  /** Borrowing costs over the modeled decision horizon; excludes principal. */
+  financingCostOverHorizon: number;
+
+  /** Principal repaid over the modeled decision horizon. */
+  principalReductionOverHorizon: number;
+
+  /** Type-appropriate all-in monthly housing cash flow. */
+  allInMonthlyHousingPayment: number;
+
+  /** Modeled decision horizon in months. */
+  decisionHorizonMonths: number;
   
   /** Interest rate or APR (for comparison) */
   rateForComparison: number;
@@ -52,17 +70,24 @@ export interface UnifiedResults {
 /**
  * Calculate scenario based on type and return unified results
  */
-export function calculateScenario(inputs: MortgageInputs): UnifiedResults {
+export function calculateScenario(
+  inputs: MortgageInputs,
+  assumptions?: MortgageCalculationAssumptions
+): UnifiedResults {
   switch (inputs.mode) {
     case "purchase":
     case "refinance": {
-      const results = calculateMortgage(inputs);
+      const results = calculateMortgage(inputs, assumptions);
       return {
         type: inputs.mode,
         monthlyPaymentPrimary: results.monthlyPrincipalInterest,
         monthlyTotal: results.monthlyTotal,
         totalInterest: results.totalInterest,
         totalCost: results.totalCost,
+        financingCostOverHorizon: results.financingCostOverHorizon,
+        principalReductionOverHorizon: results.principalReductionOverHorizon,
+        allInMonthlyHousingPayment: results.allInMonthlyHousingPayment,
+        decisionHorizonMonths: results.decisionHorizonMonths,
         rateForComparison: inputs.shared.interestRate,
         ltvRatio: results.ltvRatio,
         payoffMonths: results.payoffMonths,
@@ -80,6 +105,10 @@ export function calculateScenario(inputs: MortgageInputs): UnifiedResults {
         monthlyTotal: results.paymentRepay,
         totalInterest: results.interestTotal,
         totalCost: results.costTotal,
+        financingCostOverHorizon: results.costTotal,
+        principalReductionOverHorizon: results.balanceEndDraw,
+        allInMonthlyHousingPayment: results.paymentRepay,
+        decisionHorizonMonths: results.timelineMonthsTotal,
         rateForComparison: helocInputs.apr,
         ltvRatio: null, // HELOC doesn't have traditional LTV
         payoffMonths: results.timelineMonthsTotal,
@@ -91,12 +120,17 @@ export function calculateScenario(inputs: MortgageInputs): UnifiedResults {
     case "assumption": {
       const assumptionInputs = inputs.assumption ?? DEFAULT_ASSUMPTION_INPUTS;
       const results = calculateAssumption(assumptionInputs);
+      const financedGapPrincipal = assumptionInputs.gap.method === "cash" ? 0 : results.gapAmount;
       return {
         type: "assumption",
         monthlyPaymentPrimary: results.paymentTotal,
         monthlyTotal: results.paymentTotal,
         totalInterest: results.interestTotal,
         totalCost: results.costTotal,
+        financingCostOverHorizon: results.costTotal,
+        principalReductionOverHorizon: assumptionInputs.assumed.balance + financedGapPrincipal,
+        allInMonthlyHousingPayment: results.paymentTotal,
+        decisionHorizonMonths: assumptionInputs.assumed.remainingMonths,
         rateForComparison: assumptionInputs.assumed.apr,
         ltvRatio: results.ltvRatio,
         payoffMonths: assumptionInputs.assumed.remainingMonths,
