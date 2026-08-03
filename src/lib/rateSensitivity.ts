@@ -122,7 +122,7 @@ export function generateRateSensitivityNarrative(
       },
     };
 
-    const adjustedResults = calculateMortgage(adjustedInputs);
+    const adjustedResults = calculateMortgage(adjustedInputs, scenario.assumptions);
     
     return {
       id: scenario.id,
@@ -210,7 +210,7 @@ export function generateRefiRateSensitivity(
       },
     };
 
-    const adjustedResults = calculateMortgage(adjustedInputs);
+    const adjustedResults = calculateMortgage(adjustedInputs, scenario.assumptions);
 
     return {
       rateAdjustment: adj,

@@ -6,9 +6,10 @@ import bmP01 from "./fixtures/BM-P01.json";
 import { calculateMortgage, type MortgageInputs } from "@/lib/mortgage";
 import {
   calculateRefinanceBreakEven,
+  generateRateSensitivityNarrative,
   generateRefiRateSensitivity,
 } from "@/lib/rateSensitivity";
-import { createScenarioData } from "@/lib/scenarioContract";
+import { createScenarioData, duplicateScenarioData } from "@/lib/scenarioContract";
 import bmP03 from "./fixtures/BM-P03.json";
 import bmR04 from "./fixtures/BM-R04.json";
 import bmR05 from "./fixtures/BM-R05.json";
@@ -93,5 +94,61 @@ describe("financingCost.composition — pending break-even behavior", () => {
   it("does not calculate break-even when monthly savings are non-positive", () => {
     const inputs = bmR04.inputs as unknown as MortgageInputs;
     expect(calculateRefinanceBreakEven(inputs, 3000)).toBeNull();
+  });
+});
+
+describe("rate sensitivity — frozen scenario assumptions", () => {
+  it("uses the frozen PMI threshold for comparison sensitivity", () => {
+    const inputs: MortgageInputs = {
+      ...(bmP01.inputs as MortgageInputs),
+      shared: {
+        ...(bmP01.inputs as MortgageInputs).shared,
+        includeEstimates: true,
+        pmiMonthly: 150,
+      },
+    };
+    const scenario = createScenarioData("Frozen threshold", inputs);
+    scenario.assumptions.pmiRemovalThreshold = 79;
+    scenario.results = calculateMortgage(inputs, scenario.assumptions);
+    const duplicate = duplicateScenarioData(scenario);
+
+    const sensitivity = generateRateSensitivityNarrative([scenario, duplicate], 0);
+
+    expect(scenario.results.monthlyPMI).toBe(150);
+    expect(sensitivity.paymentChangeRange).toEqual({ min: 0, max: 0 });
+  });
+
+  it("uses the frozen PMI threshold for refinance sensitivity points", () => {
+    const base = bmP01.inputs as MortgageInputs;
+    const inputs: MortgageInputs = {
+      ...base,
+      mode: "refinance",
+      refinance: {
+        ...base.refinance,
+        currentLoanBalance: 320000,
+        estimatedHomeValue: 400000,
+      },
+      shared: {
+        ...base.shared,
+        includeEstimates: true,
+        pmiMonthly: 150,
+      },
+    };
+    const scenario = createScenarioData("Frozen refinance threshold", inputs);
+    scenario.assumptions.pmiRemovalThreshold = 79;
+    scenario.results = calculateMortgage(inputs, scenario.assumptions);
+
+    const sensitivity = generateRefiRateSensitivity(scenario);
+    const quarterPoint = sensitivity.points.find((point) => point.rateAdjustment === -0.25);
+    const expected = calculateMortgage(
+      {
+        ...inputs,
+        shared: { ...inputs.shared, interestRate: inputs.shared.interestRate - 0.25 },
+      },
+      scenario.assumptions
+    );
+
+    expect(scenario.results.monthlyPMI).toBe(150);
+    expect(quarterPoint?.monthlyPayment).toBeCloseTo(expected.monthlyTotal, 8);
   });
 });
