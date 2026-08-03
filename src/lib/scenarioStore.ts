@@ -105,7 +105,7 @@ function clearFallbackStorage(): void {
 /**
  * Generate a stable client ID for deduplication across migrations
  */
-function ensureClientId(inputs: MortgageInputs): MortgageInputs {
+export function ensureClientId(inputs: MortgageInputs): MortgageInputs {
   const inputsAny = inputs as unknown as Record<string, unknown>;
   if (inputsAny.client_id) {
     return inputs;
@@ -120,14 +120,14 @@ function ensureClientId(inputs: MortgageInputs): MortgageInputs {
  * Convert ScenarioData to Supabase row format
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toSupabaseRow(scenario: ScenarioData, userId: string): any {
+export function toSupabaseRow(scenario: ScenarioData, userId: string): any {
   const inputsWithClientId = ensureClientId(scenario.inputs);
   return {
     user_id: userId,
     name: scenario.name,
     scenario_type: inputsWithClientId.mode || "purchase",
     schema_version: scenario.schemaVersion,
-    inputs: inputsWithClientId as unknown,
+    inputs: serializeInputsForSupabase(inputsWithClientId),
     derived: {
       assumptions: scenario.assumptions,
       sourceScenarioId: scenario.sourceScenarioId,

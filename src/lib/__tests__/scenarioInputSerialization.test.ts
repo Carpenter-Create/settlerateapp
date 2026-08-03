@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import type { MortgageInputs } from "@/lib/mortgage";
 import { DEFAULT_HELOC_INPUTS } from "@/lib/heloc";
 import { DEFAULT_ASSUMPTION_INPUTS } from "@/lib/assumption";
@@ -6,8 +6,14 @@ import {
   serializeInputsForSupabase,
   deserializeInputsFromSupabase,
 } from "@/lib/scenarioInputSerialization";
+import { createScenarioData } from "@/lib/scenarioContract";
+import { toSupabaseRow, ensureClientId } from "@/lib/scenarioStore";
 import bmP01 from "./fixtures/BM-P01.json";
 import bmR01 from "./fixtures/BM-R01.json";
+
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: {},
+}));
 
 function roundTrip(inputs: MortgageInputs): MortgageInputs {
   return deserializeInputsFromSupabase(serializeInputsForSupabase(inputs));
@@ -167,5 +173,39 @@ describe("serializeInputsForSupabase — persistence round-trip", () => {
     expect(restored.heloc).toBeUndefined();
     expect(restored.assumption).toBeUndefined();
     expect(restored.rateMeta).toBeUndefined();
+  });
+
+  it("produces identical JSON for create and update Supabase persistence paths", () => {
+    const purchaseInputs = {
+      ...(bmP01.inputs as MortgageInputs),
+      client_id: "test-client-purchase",
+    } as MortgageInputs;
+    const helocInputs = {
+      mode: "heloc" as const,
+      purchase: purchaseInputs.purchase,
+      refinance: purchaseInputs.refinance,
+      shared: purchaseInputs.shared,
+      heloc: {
+        ...DEFAULT_HELOC_INPUTS,
+        drawMonths: 120,
+        drawMonthsUsed: 60,
+        monthlyDraw: 1000,
+      },
+      client_id: "test-client-heloc",
+    } as MortgageInputs;
+
+    const purchaseScenario = createScenarioData("Purchase", purchaseInputs, "user-1");
+    const createPayload = toSupabaseRow(purchaseScenario, "user-1").inputs;
+    const updatePayload = serializeInputsForSupabase(ensureClientId(purchaseInputs));
+    // Create must serialize (clone) rather than persist the live inputs object.
+    expect(createPayload).not.toBe(purchaseScenario.inputs);
+    expect(createPayload).toEqual(updatePayload);
+
+    const helocScenario = createScenarioData("HELOC", helocInputs, "user-1");
+    const helocCreate = toSupabaseRow(helocScenario, "user-1").inputs;
+    const helocUpdate = serializeInputsForSupabase(ensureClientId(helocInputs));
+    expect(helocCreate).not.toBe(helocScenario.inputs);
+    expect(helocCreate).toEqual(helocUpdate);
+    expect((helocCreate as Record<string, unknown>).mode).toBe("heloc");
   });
 });
