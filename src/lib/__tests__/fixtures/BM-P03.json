@@ -1,0 +1,69 @@
+{
+  "id": "BM-P03",
+  "description": "PMI boundary at 80% LTV — 19% down requires PMI, 20% down does not",
+  "scenarioType": "purchase",
+  "status": "active",
+  "calculatorVersionTarget": "2.0.0",
+  "variants": {
+    "highLtv": {
+      "downPayment": 19,
+      "loanAmount": 364500,
+      "ltvRatio": 81,
+      "requiresPMI": true,
+      "monthlyPMI": 150,
+      "totalInterest": 464899.66,
+      "mortgageInsuranceOverHorizon": 54000
+    },
+    "atThreshold": {
+      "downPayment": 20,
+      "loanAmount": 360000,
+      "ltvRatio": 80,
+      "requiresPMI": false,
+      "monthlyPMI": 0,
+      "totalInterest": 459160.16,
+      "mortgageInsuranceOverHorizon": 0
+    }
+  },
+  "inputsBase": {
+    "mode": "purchase",
+    "purchase": {
+      "purchasePrice": 450000,
+      "downPaymentType": "percent"
+    },
+    "refinance": {
+      "currentLoanBalance": 300000,
+      "cashOutAmount": 0,
+      "closingCosts": 0,
+      "financeClosingCosts": false,
+      "estimatedHomeValue": 400000
+    },
+    "shared": {
+      "interestRate": 6.5,
+      "loanTerm": 30,
+      "rateSourceType": "user_entered",
+      "rateSourceNote": null,
+      "includeEstimates": true,
+      "zipCode": null,
+      "usedZipEstimate": false,
+      "propertyTaxMode": "rate",
+      "propertyTaxRate": null,
+      "propertyTaxAnnual": null,
+      "homeInsuranceMonthly": null,
+      "hoaMonthly": null,
+      "pmiMonthly": 150,
+      "extraMonthlyPayment": 0,
+      "oneTimePrincipalPayment": null
+    }
+  },
+  "expected": {},
+  "tolerance": { "monetary": 0.01 },
+  "verification": {
+    "script": "scripts/verify-benchmarks.mjs",
+    "method": "LTV = loan/purchasePrice; interest via standard amortization; PMI amount is fixture input (not formula-derived)",
+    "verificationDate": "2026-08-03",
+    "tolerance": { "monetary": 0.01 },
+    "productionCalculatorUsed": false
+  },
+  "defectIds": ["DEF-008"],
+  "currentBehaviorNotes": "Active tests assert requiresPMI and monthlyPMI for v1.0.0. financingCostOverHorizon including MI is pending-v2 (BM-P03-v2)."
+}

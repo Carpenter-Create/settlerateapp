@@ -1,0 +1,31 @@
+{
+  "id": "BM-R05",
+  "description": "Break-even omitted when current-loan inputs are absent",
+  "scenarioType": "refinance",
+  "status": "pending-v2",
+  "calculatorVersionTarget": "2.0.0",
+  "inputs": {
+    "mode": "refinance",
+    "refinance": {
+      "currentLoanBalance": 300000,
+      "closingCosts": 6000,
+      "financeClosingCosts": false
+    },
+    "shared": {
+      "interestRate": 6.5,
+      "loanTerm": 30
+    }
+  },
+  "expected": {
+    "breakEvenMonths": null,
+    "narrativeContainsBreakEven": false
+  },
+  "tolerance": {},
+  "verification": {
+    "method": "Founder-approved rule: no break-even without currentInterestRate and currentRemainingTermMonths",
+    "verificationDate": "2026-08-03"
+  },
+  "defectIds": ["DEF-009"],
+  "remediationPhase": "Phase 2",
+  "currentBehaviorNotes": "v1.0.0 generateRefiRateSensitivity returns breakEvenMonths using synthetic baseRate+1.0 when closingCosts > 0."
+}

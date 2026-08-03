@@ -8,6 +8,7 @@
 import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface SavedComparison {
@@ -151,7 +152,7 @@ export function useComparisons() {
         throw new Error("Must be authenticated to update comparisons");
       }
 
-      const updates: Record<string, string | null> = {
+      const updates: Database["public"]["Tables"]["user_comparisons"]["Update"] = {
         updated_at: new Date().toISOString(),
       };
 

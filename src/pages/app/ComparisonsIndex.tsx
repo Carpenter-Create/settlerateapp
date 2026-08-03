@@ -400,12 +400,8 @@ export default function ComparisonsIndex() {
   // Rename handler
   const handleRename = useCallback(async (newName: string) => {
     if (!comparisonToRename) return;
-    try {
-      await renameComparison({ id: comparisonToRename.id, name: newName });
-      toast.success("Comparison renamed.");
-    } catch (error) {
-      throw error; // Let dialog handle the error
-    }
+    await renameComparison({ id: comparisonToRename.id, name: newName });
+    toast.success("Comparison renamed.");
   }, [comparisonToRename, renameComparison]);
 
   // Sort scenarios by updated_at desc

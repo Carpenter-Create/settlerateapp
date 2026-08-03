@@ -1,0 +1,68 @@
+{
+  "id": "BM-P01",
+  "description": "Standard 30-year fixed purchase at 6.5% with 20% down, no escrow",
+  "scenarioType": "purchase",
+  "status": "active",
+  "calculatorVersionTarget": "2.0.0",
+  "inputs": {
+    "mode": "purchase",
+    "purchase": {
+      "purchasePrice": 450000,
+      "downPayment": 20,
+      "downPaymentType": "percent"
+    },
+    "refinance": {
+      "currentLoanBalance": 300000,
+      "cashOutAmount": 0,
+      "closingCosts": 0,
+      "financeClosingCosts": false,
+      "estimatedHomeValue": 400000
+    },
+    "shared": {
+      "interestRate": 6.5,
+      "loanTerm": 30,
+      "rateSourceType": "user_entered",
+      "rateSourceNote": null,
+      "includeEstimates": false,
+      "zipCode": null,
+      "usedZipEstimate": false,
+      "propertyTaxMode": "rate",
+      "propertyTaxRate": null,
+      "propertyTaxAnnual": null,
+      "homeInsuranceMonthly": null,
+      "hoaMonthly": null,
+      "pmiMonthly": null,
+      "extraMonthlyPayment": 0,
+      "oneTimePrincipalPayment": null
+    }
+  },
+  "expected": {
+    "loanAmount": 360000,
+    "monthlyPrincipalInterest": 2275.44,
+    "totalInterest": 459160.16,
+    "payoffMonths": 360,
+    "ltvRatio": 80,
+    "requiresPMI": false,
+    "financingCostOverHorizon": 459160.16,
+    "principalReductionOverHorizon": 360000
+  },
+  "financingCostComponents": {
+    "interest": 459160.16,
+    "excludesPrincipal": true
+  },
+  "tolerance": { "monetary": 0.01, "months": 0 },
+  "verification": {
+    "script": "scripts/verify-benchmarks.mjs",
+    "method": "Standard fixed-rate amortization: P&I = L·r(1+r)^n / ((1+r)^n − 1); total interest = n·P&I − L",
+    "verificationDate": "2026-08-03",
+    "tolerance": { "monetary": 0.01, "months": 0 },
+    "productionCalculatorUsed": false,
+    "intermediates": {
+      "monthlyRate": 0.005416666666666667,
+      "termMonths": 360,
+      "loanAmount": 360000
+    }
+  },
+  "defectIds": [],
+  "currentBehaviorNotes": "v1.0.0 calculateMortgage matches P&I and totalInterest for purchase. totalCost equals principal+interest (not financing-cost semantics). financingCostOverHorizon pending-v2 metric."
+}

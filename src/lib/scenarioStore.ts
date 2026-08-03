@@ -19,6 +19,8 @@ import {
   needsMigration,
 } from "@/lib/scenarioMigrations";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+import { serializeInputsForSupabase } from "@/lib/scenarioInputSerialization";
 import { User } from "@supabase/supabase-js";
 
 const STORAGE_KEY = "settlerate_scenarios_fallback";
@@ -295,8 +297,7 @@ export class ScenarioStore {
   }>): Promise<void> {
     if (!this.currentUser) throw new Error("Not authenticated");
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updatePayload: Record<string, any> = {};
+    const updatePayload: Database["public"]["Tables"]["scenarios"]["Update"] = {};
     
     if (updates.name !== undefined) {
       updatePayload.name = updates.name;
@@ -304,7 +305,7 @@ export class ScenarioStore {
     
     if (updates.inputs !== undefined) {
       const inputsWithClientId = ensureClientId(updates.inputs);
-      updatePayload.inputs = inputsWithClientId;
+      updatePayload.inputs = serializeInputsForSupabase(inputsWithClientId);
       updatePayload.scenario_type = inputsWithClientId.mode || "purchase";
     }
 

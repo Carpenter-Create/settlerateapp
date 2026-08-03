@@ -1,0 +1,27 @@
+{
+  "id": "BM-P06",
+  "description": "Financing cost composition excludes principal; includes interest and defined borrowing costs only",
+  "scenarioType": "purchase",
+  "status": "pending-v2",
+  "calculatorVersionTarget": "2.0.0",
+  "referenceBenchmark": "BM-P03",
+  "expected": {
+    "financingCostOverHorizon": 518899.66,
+    "principalReductionOverHorizon": 364500,
+    "loanAmountPlusInterestMustNotEqualFinancingCostLabel": true
+  },
+  "financingCostComponents": {
+    "interest": 464899.66,
+    "mortgageInsurance": 54000,
+    "fees": 0,
+    "excludesPrincipal": true
+  },
+  "tolerance": { "monetary": 0.01 },
+  "verification": {
+    "method": "BM-P03 high-LTV variant: financing cost = totalInterest (464899.66) + MI premiums (150×360 = 54000); principal 364500 reported separately",
+    "verificationDate": "2026-08-03"
+  },
+  "defectIds": ["DEF-001"],
+  "remediationPhase": "Phase 2",
+  "currentBehaviorNotes": "v1.0.0 totalCost = loanAmount + totalInterest which incorrectly includes principal in 'cost' semantics."
+}

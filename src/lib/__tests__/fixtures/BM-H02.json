@@ -1,0 +1,45 @@
+{
+  "id": "BM-H02",
+  "description": "HELOC interest-only draws capped at credit limit",
+  "scenarioType": "heloc",
+  "status": "active",
+  "calculatorVersionTarget": "2.0.0",
+  "inputs": {
+    "creditLimit": 50000,
+    "currentBalance": 0,
+    "apr": 8.5,
+    "drawMonths": 120,
+    "repayMonths": 240,
+    "monthlyDraw": 1000,
+    "drawMonthsUsed": 120,
+    "annualFee": 0,
+    "closingCosts": 0,
+    "interestOnlyDraw": true
+  },
+  "expected": {
+    "balanceEndDraw": 50000,
+    "paymentRepay": 433.91,
+    "interestTotal": 33822.92,
+    "repayInterestTotal": 54138.79,
+    "financingCostOverHorizon": 87961.71,
+    "timelineMonthsTotal": 360
+  },
+  "financingCostComponents": {
+    "interest": 87961.71,
+    "fees": 0,
+    "excludesPrincipal": true
+  },
+  "tolerance": { "monetary": 0.01 },
+  "verification": {
+    "script": "scripts/verify-benchmarks.mjs",
+    "method": "120 monthly draws of 1000 capped at 50000; draw interest sum month-by-month; repay interest = 240×paymentRepay − 50000",
+    "verificationDate": "2026-08-03",
+    "tolerance": { "monetary": 0.01 },
+    "productionCalculatorUsed": false,
+    "intermediates": {
+      "drawInterest": 33822.92,
+      "monthlyRate": 0.007083333333333333
+    }
+  },
+  "currentBehaviorNotes": "calculateHeloc in heloc.ts is correct; calculateScenario dispatch is pending-v2."
+}

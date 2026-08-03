@@ -1,0 +1,37 @@
+{
+  "id": "BM-R04",
+  "description": "Refinance break-even computed with explicit current-loan inputs",
+  "scenarioType": "refinance",
+  "status": "pending-v2",
+  "calculatorVersionTarget": "2.0.0",
+  "inputs": {
+    "mode": "refinance",
+    "refinance": {
+      "currentLoanBalance": 300000,
+      "cashOutAmount": 0,
+      "closingCosts": 6000,
+      "financeClosingCosts": false,
+      "estimatedHomeValue": 400000,
+      "currentInterestRate": 7.5,
+      "currentRemainingTermMonths": 300
+    },
+    "shared": {
+      "interestRate": 6.5,
+      "loanTerm": 30
+    }
+  },
+  "expected": {
+    "currentMonthlyPI": 2216.97,
+    "newMonthlyPI": 1896.2,
+    "monthlySavings": 320.77,
+    "breakEvenMonths": 19
+  },
+  "tolerance": { "monetary": 0.01, "months": 0 },
+  "verification": {
+    "method": "currentPI = PMT(300000, 7.5%/12, 300); newPI = PMT(300000, 6.5%/12, 360); breakEven = ceil(6000 / (currentPI − newPI))",
+    "verificationDate": "2026-08-03"
+  },
+  "defectIds": ["DEF-009"],
+  "remediationPhase": "Phase 2",
+  "currentBehaviorNotes": "currentInterestRate and currentRemainingTermMonths not yet in RefinanceInputs type."
+}

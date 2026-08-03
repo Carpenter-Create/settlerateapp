@@ -1,0 +1,22 @@
+{
+  "id": "BM-V01",
+  "description": "Original calculator snapshot preserved after lazy recompute on version bump",
+  "scenarioType": "versioning",
+  "status": "specification-only",
+  "calculatorVersionTarget": "2.0.0",
+  "expected": {
+    "originalCalculatorVersion": "1.0.0",
+    "originalSnapshotImmutable": true,
+    "activeCalculatorVersion": "2.0.0",
+    "activeSnapshotUpdatedOnOpen": true,
+    "calculatedAtIsRecordMetadata": true,
+    "amortizationScheduleNotPersistedByDefault": true
+  },
+  "verification": {
+    "method": "Founder-approved persistence contract; implementation deferred to Phase 3",
+    "verificationDate": "2026-08-03"
+  },
+  "defectIds": ["DEF-001"],
+  "remediationPhase": "Phase 3",
+  "currentBehaviorNotes": "scenarioStore overwrites results via calculateMortgage on load; no dual snapshot history."
+}

@@ -174,12 +174,13 @@ export function calculateAssumption(inputs: AssumptionInputs): AssumptionResults
         gapInterest = 0;
         break;
         
-      case "second_loan":
+      case "second_loan": {
         const loanMonthlyRate = gap.loanApr / 100 / 12;
         gapPayment = calculateAmortizedPayment(gapAmount, loanMonthlyRate, gap.loanTermMonths);
         gapInterest = calculateTotalInterest(gapAmount, gapPayment, gap.loanTermMonths);
         gapTermMonths = gap.loanTermMonths;
         break;
+      }
         
       case "heloc":
         if (gap.helocInterestOnly) {
