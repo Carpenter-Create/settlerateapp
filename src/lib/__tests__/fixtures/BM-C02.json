@@ -1,0 +1,18 @@
+{
+  "id": "BM-C02",
+  "description": "All-in monthly housing payment is secondary and must not determine comparison winner",
+  "scenarioType": "cross-type",
+  "status": "pending-v2",
+  "calculatorVersionTarget": "2.0.0",
+  "expected": {
+    "winnerDeterminedBy": "financingCostOverHorizon",
+    "secondaryMetric": "allInMonthlyHousingPayment"
+  },
+  "verification": {
+    "method": "Founder-approved comparison hierarchy documented in FINANCIAL_METHODOLOGY.md",
+    "verificationDate": "2026-08-03"
+  },
+  "defectIds": ["DEF-003"],
+  "remediationPhase": "Phase 5",
+  "currentBehaviorNotes": "comparisonSummary determineLowestCost uses totalCost (principal+interest) today."
+}

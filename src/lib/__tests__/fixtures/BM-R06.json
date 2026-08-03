@@ -1,0 +1,17 @@
+{
+  "id": "BM-R06",
+  "description": "Break-even must not use synthetic current rate (new rate plus 1%)",
+  "scenarioType": "refinance",
+  "status": "pending-v2",
+  "calculatorVersionTarget": "2.0.0",
+  "expected": {
+    "usesSyntheticCurrentRate": false
+  },
+  "verification": {
+    "method": "Code inspection target: rateSensitivity.ts must not derive current rate from baseRate + 1.0",
+    "verificationDate": "2026-08-03"
+  },
+  "defectIds": ["DEF-009"],
+  "remediationPhase": "Phase 2",
+  "currentBehaviorNotes": "v1.0.0 uses estimatedCurrentRate = baseRate + 1.0 at rateSensitivity.ts line ~190."
+}

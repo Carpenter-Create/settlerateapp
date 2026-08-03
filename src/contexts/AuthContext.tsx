@@ -102,9 +102,10 @@ async function migrateAnonymousScenarios(
     }
 
     return { success: true, migratedCount: scenariosToMigrate.length };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Migration error:", e);
-    return { success: false, migratedCount: 0, error: e.message };
+    const message = e instanceof Error ? e.message : "Unknown migration error";
+    return { success: false, migratedCount: 0, error: message };
   }
 }
 

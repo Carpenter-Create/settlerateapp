@@ -799,7 +799,7 @@ export function generateHTMLFromLayout(layout: ExportLayoutData): string {
           </section>
         `;
       
-      case "comparison-table":
+      case "comparison-table": {
         const colCount = section.columns?.length || 3;
         const colClass = colCount === 4 ? "cols-4" : "cols-3";
         return `
@@ -827,6 +827,7 @@ export function generateHTMLFromLayout(layout: ExportLayoutData): string {
             </div>
           </section>
         `;
+      }
       
       case "key-diff":
         return `

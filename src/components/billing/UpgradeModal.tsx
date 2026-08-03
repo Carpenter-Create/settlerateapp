@@ -84,7 +84,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
 
       // Redirect to Stripe Checkout
       window.location.href = url;
-    } catch (error: any) {
+    } catch {
       toast("Unable to process request.", { description: "Please try again." });
       setIsLoading(false);
     }

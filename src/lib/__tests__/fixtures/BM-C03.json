@@ -1,0 +1,19 @@
+{
+  "id": "BM-C03",
+  "description": "Principal reduction reported separately from financing cost",
+  "scenarioType": "cross-type",
+  "status": "pending-v2",
+  "calculatorVersionTarget": "2.0.0",
+  "referenceBenchmark": "BM-P01",
+  "expected": {
+    "principalReductionOverHorizon": 360000,
+    "financingCostExcludesPrincipal": true
+  },
+  "verification": {
+    "method": "BM-P01: principal reduction equals loan amount; financing cost equals interest only",
+    "verificationDate": "2026-08-03"
+  },
+  "defectIds": ["DEF-001"],
+  "remediationPhase": "Phase 2",
+  "currentBehaviorNotes": "No principalReductionOverHorizon field in v1.0.0 results."
+}

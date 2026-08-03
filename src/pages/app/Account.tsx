@@ -78,7 +78,7 @@ export default function Account() {
       if (data.url) {
         window.location.href = data.url;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Billing portal error:", error);
       toast("Unable to open billing portal.", { description: "Please try again." });
       setPortalLoading(false);

@@ -177,7 +177,7 @@ function migrate_v0_to_v1(raw: Record<string, unknown>): MigrationOutcome {
   
   // B) Ensure mode exists and inputs are in namespaced structure
   
-  let inputs = scenario.inputs as Record<string, unknown> | undefined;
+  const inputs = scenario.inputs as Record<string, unknown> | undefined;
   
   if (!inputs || typeof inputs !== "object") {
     // No inputs at all - create defaults

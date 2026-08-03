@@ -1,0 +1,66 @@
+{
+  "id": "BM-P05",
+  "description": "One-time principal payment applied at loan origination (month 1)",
+  "scenarioType": "purchase",
+  "status": "pending-v2",
+  "calculatorVersionTarget": "2.0.0",
+  "inputs": {
+    "mode": "purchase",
+    "purchase": {
+      "purchasePrice": 450000,
+      "downPayment": 20,
+      "downPaymentType": "percent"
+    },
+    "refinance": {
+      "currentLoanBalance": 300000,
+      "cashOutAmount": 0,
+      "closingCosts": 0,
+      "financeClosingCosts": false,
+      "estimatedHomeValue": 400000
+    },
+    "shared": {
+      "interestRate": 6.5,
+      "loanTerm": 30,
+      "rateSourceType": "user_entered",
+      "rateSourceNote": null,
+      "includeEstimates": false,
+      "zipCode": null,
+      "usedZipEstimate": false,
+      "propertyTaxMode": "rate",
+      "propertyTaxRate": null,
+      "propertyTaxAnnual": null,
+      "homeInsuranceMonthly": null,
+      "hoaMonthly": null,
+      "pmiMonthly": null,
+      "extraMonthlyPayment": 0,
+      "oneTimePrincipalPayment": 10000
+    }
+  },
+  "expected": {
+    "openingBalanceAfterLumpSum": 350000,
+    "totalInterest": 404312.79,
+    "payoffMonths": 332,
+    "financingCostOverHorizon": 404312.79,
+    "principalReductionOverHorizon": 360000
+  },
+  "financingCostComponents": {
+    "interest": 404312.79,
+    "excludesPrincipal": true
+  },
+  "tolerance": { "monetary": 0.01, "months": 0 },
+  "verification": {
+    "script": null,
+    "method": "Opening balance 360000−10000; amortization loop with scheduled P&I (pending addition to verify:benchmarks in Phase 2)",
+    "verificationDate": "2026-08-03",
+    "tolerance": { "monetary": 0.01, "months": 0 },
+    "productionCalculatorUsed": false,
+    "independentlyVerified": false,
+    "intermediates": {
+      "scheduledPI": 2275.44,
+      "lumpSum": 10000
+    }
+  },
+  "defectIds": ["DEF-007"],
+  "remediationPhase": "Phase 2",
+  "currentBehaviorNotes": "v1.0.0 ignores oneTimePrincipalPayment; results match BM-P01 without lump sum."
+}

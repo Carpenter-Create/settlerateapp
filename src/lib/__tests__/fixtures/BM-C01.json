@@ -1,0 +1,19 @@
+{
+  "id": "BM-C01",
+  "description": "Cross-type comparison normalization uses financing cost as primary metric",
+  "scenarioType": "cross-type",
+  "status": "pending-v2",
+  "calculatorVersionTarget": "2.0.0",
+  "scenarios": ["BM-P01", "BM-H02", "BM-A02"],
+  "expected": {
+    "primaryRankingMetric": "financingCostOverHorizon",
+    "lowestFinancingCostId": "BM-P01"
+  },
+  "verification": {
+    "method": "Independent financing costs: P01≈459160, H02≈87962, A02≈136290; purchase lowest",
+    "verificationDate": "2026-08-03"
+  },
+  "defectIds": ["DEF-001", "DEF-003"],
+  "remediationPhase": "Phase 5",
+  "currentBehaviorNotes": "calculateScenario exists but persistence/comparison layers use calculateMortgage results."
+}

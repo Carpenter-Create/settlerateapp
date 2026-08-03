@@ -1105,7 +1105,14 @@ Deno.serve(async (req: Request) => {
 // DATA BUILDER HELPER
 // ============================================================================
 
-function buildScenarioData(s: any): ScenarioData {
+interface ScenarioRow {
+  id: string;
+  name?: string;
+  inputs?: ScenarioInputs;
+  derived?: ScenarioResults;
+}
+
+function buildScenarioData(s: ScenarioRow): ScenarioData {
   const inputs = (s.inputs || {}) as ScenarioInputs;
   const derived = (s.derived || {}) as ScenarioResults;
   return {

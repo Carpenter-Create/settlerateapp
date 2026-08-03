@@ -41,6 +41,10 @@ interface FieldErrors {
   general?: string;
 }
 
+interface AuthLocationState {
+  from?: { pathname?: string };
+}
+
 export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -64,7 +68,7 @@ export default function Auth() {
   // Redirect if already authenticated (non-anonymous)
   useEffect(() => {
     if (!isLoading && user && !isAnonymous) {
-      const from = (location.state as any)?.from?.pathname || "/app/scenarios";
+      const from = (location.state as AuthLocationState | null)?.from?.pathname || "/app/scenarios";
       navigate(from, { replace: true });
     }
   }, [user, isLoading, isAnonymous, navigate, location]);

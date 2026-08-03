@@ -59,7 +59,7 @@ export default function AppSettings() {
       await signOut();
       toast("Signed out. Contact support to complete account deletion.");
       navigate("/");
-    } catch (error: any) {
+    } catch {
       toast("Delete unsuccessful. Try again.");
     } finally {
       setIsDeleting(false);

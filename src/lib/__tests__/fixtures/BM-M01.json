@@ -1,0 +1,49 @@
+{
+  "id": "BM-M01",
+  "description": "Legacy flat input migration preserves user values and produces canonical structure",
+  "scenarioType": "migration",
+  "status": "active",
+  "calculatorVersionTarget": "2.0.0",
+  "legacyRaw": {
+    "id": "scenario_test_legacy_001",
+    "name": "Legacy purchase",
+    "inputs": {
+      "scenarioType": "purchase",
+      "purchasePrice": 400000,
+      "downPayment": 15,
+      "downPaymentType": "percent",
+      "currentLoanBalance": 250000,
+      "cashOutAmount": 0,
+      "closingCosts": 0,
+      "financeClosingCosts": false,
+      "interestRate": 7.0,
+      "loanTerm": 30,
+      "includeEstimates": false,
+      "zipCode": null,
+      "usedZipEstimate": false,
+      "propertyTaxMode": "rate",
+      "propertyTaxRate": null,
+      "propertyTaxAnnual": null,
+      "homeInsuranceMonthly": null,
+      "hoaMonthly": null,
+      "pmiMonthly": null,
+      "estimatedHomeValue": null,
+      "extraMonthlyPayment": 0,
+      "oneTimePrincipalPayment": null
+    }
+  },
+  "expected": {
+    "schemaVersion": 1,
+    "mode": "purchase",
+    "purchasePrice": 400000,
+    "downPayment": 15,
+    "interestRate": 7.0,
+    "loanTerm": 30
+  },
+  "tolerance": {},
+  "verification": {
+    "method": "migrateScenario pipeline v0→v1; legacy flat inputs nested under inputs key; field preservation inspection",
+    "verificationDate": "2026-08-03"
+  },
+  "currentBehaviorNotes": "Migration pipeline expects legacy flat fields under scenario.inputs, not at scenario root."
+}

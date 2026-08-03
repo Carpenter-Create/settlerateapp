@@ -1,0 +1,60 @@
+{
+  "id": "BM-R01",
+  "description": "Rate-and-term refinance with no cash-out and closing costs paid upfront",
+  "scenarioType": "refinance",
+  "status": "active",
+  "calculatorVersionTarget": "2.0.0",
+  "inputs": {
+    "mode": "refinance",
+    "purchase": {
+      "purchasePrice": 450000,
+      "downPayment": 20,
+      "downPaymentType": "percent"
+    },
+    "refinance": {
+      "currentLoanBalance": 300000,
+      "cashOutAmount": 0,
+      "closingCosts": 6000,
+      "financeClosingCosts": false,
+      "estimatedHomeValue": 400000
+    },
+    "shared": {
+      "interestRate": 6.5,
+      "loanTerm": 30,
+      "rateSourceType": "user_entered",
+      "rateSourceNote": null,
+      "includeEstimates": false,
+      "zipCode": null,
+      "usedZipEstimate": false,
+      "propertyTaxMode": "rate",
+      "propertyTaxRate": null,
+      "propertyTaxAnnual": null,
+      "homeInsuranceMonthly": null,
+      "hoaMonthly": null,
+      "pmiMonthly": null,
+      "extraMonthlyPayment": 0,
+      "oneTimePrincipalPayment": null
+    }
+  },
+  "expected": {
+    "loanAmount": 300000,
+    "monthlyPrincipalInterest": 1896.2,
+    "totalInterest": 382633.47,
+    "ltvRatio": 75,
+    "financingCostOverHorizon": 382633.47,
+    "principalReductionOverHorizon": 300000
+  },
+  "financingCostComponents": {
+    "interest": 382633.47,
+    "excludesPrincipal": true
+  },
+  "tolerance": { "monetary": 0.01 },
+  "verification": {
+    "script": "scripts/verify-benchmarks.mjs",
+    "method": "Loan amount = current balance only; standard amortization at 6.5% / 30 years",
+    "verificationDate": "2026-08-03",
+    "tolerance": { "monetary": 0.01 },
+    "productionCalculatorUsed": false
+  },
+  "currentBehaviorNotes": "v1.0.0 calculateMortgage refinance mode matches for rate-and-term."
+}

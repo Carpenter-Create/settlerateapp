@@ -1,0 +1,52 @@
+{
+  "id": "BM-A02",
+  "description": "Loan assumption with second-loan gap financing",
+  "scenarioType": "assumption",
+  "status": "active",
+  "calculatorVersionTarget": "2.0.0",
+  "inputs": {
+    "purchasePrice": 350000,
+    "downPaymentCash": 50000,
+    "assumed": {
+      "balance": 200000,
+      "apr": 3.5,
+      "remainingMonths": 300,
+      "monthlyPmi": 0,
+      "monthlyEscrow": 0
+    },
+    "gap": {
+      "amount": 0,
+      "method": "second_loan",
+      "loanApr": 7.5,
+      "loanTermMonths": 180,
+      "helocApr": 8.5,
+      "helocInterestOnly": true,
+      "helocRepayMonths": 60
+    },
+    "assumptionFees": 0
+  },
+  "expected": {
+    "gapAmount": 100000,
+    "assumedPaymentPi": 1001.25,
+    "gapPayment": 927.01,
+    "paymentTotal": 1928.26,
+    "assumedInterestTotal": 100374.14,
+    "gapInterestTotal": 66862.22,
+    "financingCostOverHorizon": 167236.36,
+    "ltvRatio": 57.14
+  },
+  "financingCostComponents": {
+    "interest": 167236.36,
+    "fees": 0,
+    "excludesPrincipal": true
+  },
+  "tolerance": { "monetary": 0.01 },
+  "verification": {
+    "script": "scripts/verify-benchmarks.mjs",
+    "method": "gap = 350000−200000−50000; assumed PMT(200000, 3.5%/12, 300); gap PMT(100000, 7.5%/12, 180); LTV = assumed.balance/purchasePrice",
+    "verificationDate": "2026-08-03",
+    "tolerance": { "monetary": 0.01 },
+    "productionCalculatorUsed": false
+  },
+  "currentBehaviorNotes": "calculateAssumption in assumption.ts is correct; scenarioStore dispatch via calculateMortgage is pending-v2."
+}
