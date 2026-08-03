@@ -32,7 +32,7 @@
   "tolerance": { "monetary": 0.01 },
   "verification": {
     "script": "scripts/verify-benchmarks.mjs",
-    "method": "120 monthly draws of 1000 capped at 50000; draw interest sum month-by-month; repay interest = 240×paymentRepay − 50000",
+    "method": "Active draws for min(drawMonthsUsed, drawMonths); IO interest through full drawMonths; repay interest = repayMonths×paymentRepay − balanceEndDraw",
     "verificationDate": "2026-08-03",
     "tolerance": { "monetary": 0.01 },
     "productionCalculatorUsed": false,
