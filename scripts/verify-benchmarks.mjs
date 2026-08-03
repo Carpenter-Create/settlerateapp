@@ -144,24 +144,42 @@ function verifyBmH02() {
   const fixture = loadFixture("BM-H02");
   const tol = fixture.tolerance.monetary ?? DEFAULT_MONETARY_TOLERANCE;
   const inputs = fixture.inputs;
-  const creditLimit = inputs.creditLimit;
-  const monthlyDraw = inputs.monthlyDraw;
-  const drawMonths = inputs.drawMonthsUsed;
-  const monthlyRate = inputs.apr / 100 / 12;
-  const repayMonths = inputs.repayMonths;
+  const {
+    creditLimit,
+    currentBalance,
+    apr,
+    drawMonths,
+    repayMonths,
+    monthlyDraw,
+    drawMonthsUsed,
+  } = inputs;
+  const monthlyRate = apr / 100 / 12;
 
-  let balance = inputs.currentBalance;
+  // Mirror calculateHeloc: active draws capped at min(drawMonthsUsed, drawMonths),
+  // then interest-only draw period continues through full drawMonths.
+  const effectiveDrawMonths = Math.min(drawMonthsUsed, drawMonths);
+
+  let balance = currentBalance;
   let drawInterest = 0;
-  for (let m = 0; m < drawMonths; m++) {
-    balance = Math.min(creditLimit, balance + monthlyDraw);
+
+  for (let month = 1; month <= effectiveDrawMonths; month++) {
+    if (monthlyDraw > 0) {
+      balance = Math.min(balance + monthlyDraw, creditLimit);
+    }
     drawInterest += balance * monthlyRate;
   }
 
-  const repayPi = amortizedPayment(balance, inputs.apr, repayMonths);
+  for (let month = effectiveDrawMonths + 1; month <= drawMonths; month++) {
+    drawInterest += balance * monthlyRate;
+  }
+
+  const repayPi = amortizedPayment(balance, apr, repayMonths);
   const repayInterest = repayPi * repayMonths - balance;
   const interestTotal = drawInterest + repayInterest;
 
   console.log("BM-H02 intermediates:", {
+    effectiveDrawMonths,
+    drawMonths,
     balanceEndDraw: balance,
     drawInterest: round2(drawInterest),
     paymentRepay: round2(repayPi),

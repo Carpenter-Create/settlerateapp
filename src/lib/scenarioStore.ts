@@ -127,7 +127,7 @@ function toSupabaseRow(scenario: ScenarioData, userId: string): any {
     name: scenario.name,
     scenario_type: inputsWithClientId.mode || "purchase",
     schema_version: scenario.schemaVersion,
-    inputs: inputsWithClientId as unknown,
+    inputs: serializeInputsForSupabase(inputsWithClientId),
     derived: {
       assumptions: scenario.assumptions,
       sourceScenarioId: scenario.sourceScenarioId,

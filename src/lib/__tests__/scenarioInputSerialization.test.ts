@@ -168,4 +168,29 @@ describe("serializeInputsForSupabase — persistence round-trip", () => {
     expect(restored.assumption).toBeUndefined();
     expect(restored.rateMeta).toBeUndefined();
   });
+
+  it("produces identical JSON for create and update Supabase persistence paths", () => {
+    const purchaseInputs = bmP01.inputs as MortgageInputs;
+    const helocInputs: MortgageInputs = {
+      mode: "heloc",
+      purchase: purchaseInputs.purchase,
+      refinance: purchaseInputs.refinance,
+      shared: purchaseInputs.shared,
+      heloc: {
+        ...DEFAULT_HELOC_INPUTS,
+        drawMonths: 120,
+        drawMonthsUsed: 60,
+        monthlyDraw: 1000,
+      },
+    };
+
+    const createPayload = serializeInputsForSupabase(purchaseInputs);
+    const updatePayload = serializeInputsForSupabase(purchaseInputs);
+    expect(createPayload).toEqual(updatePayload);
+
+    const helocCreate = serializeInputsForSupabase(helocInputs);
+    const helocUpdate = serializeInputsForSupabase(helocInputs);
+    expect(helocCreate).toEqual(helocUpdate);
+    expect((helocCreate as Record<string, unknown>).mode).toBe("heloc");
+  });
 });
