@@ -45,10 +45,12 @@ Do **not** define total cost as **loan principal + interest** for comparison pur
 - `calculateScenario()` maps these fields for purchase, refinance, HELOC, and assumption.
 - Legacy field `totalCost` remains `loanAmount + totalInterest` for compatibility; it is **not** the approved primary comparison metric.
 
-### Still deferred
+### Comparison winner (Phase 5 / DEF-003) — implemented
 
-- **Comparison winner logic (Phase 5 / DEF-003):** `comparisonSummary.determineLowestCost()` still ranks by `results.totalCost`.
-- **Exports:** see `docs/EXPORT_CONTRACT.md` (Phase 4) — financing cost / principal reduction are the primary export cost labels; comparison winner narrative remains Phase 5.
+- Canonical ranking uses `financingCostOverHorizon` under a shared decision horizon.
+- See `docs/COMPARISON_CONTRACT.md` for participant contract, tie tolerance ($1.00), horizon rules, and indeterminate outcomes.
+- `comparisonSummary.determineLowestCost()` is a legacy adapter over `determineComparisonWinner()`.
+- **Exports:** see `docs/EXPORT_CONTRACT.md` — comparison narrative consumes the canonical financing-cost winner.
 
 ---
 
@@ -152,7 +154,7 @@ Unified projection fields (from `calculateScenario()`):
 
 | Field | Role |
 |-------|------|
-| `financingCostOverHorizon` | Primary rank (**engine exposed**; UI winner deferred) |
+| `financingCostOverHorizon` | Primary rank (**engine + comparison winner**) |
 | `principalReductionOverHorizon` | Separate reporting (**engine exposed**) |
 | `allInMonthlyHousingPayment` | Secondary cash flow |
 | `monthlyPaymentPrimary` | Type-appropriate primary payment |
@@ -163,9 +165,7 @@ Unified projection fields (from `calculateScenario()`):
 
 **Phase 3 persistence:** save/load/create/update dispatch through `calculateScenario` with dual snapshots. See `docs/SCENARIO_PERSISTENCE.md`.
 
-**Still deferred:**
-
-- **Comparison UI winner (Phase 5 / DEF-003):** still uses `totalCost` ranking.
+**Phase 5 comparison:** UI and export winner logic use `docs/COMPARISON_CONTRACT.md` (shared horizon, $1.00 tie tolerance, null for unsupported metrics).
 
 ---
 
@@ -193,10 +193,8 @@ Amortization schedules: regenerate on demand when the active calculator version 
 
 ---
 
-## 13. Deferred scope (not part of Phase 3)
+## 13. Deferred scope (not part of Phase 5)
 
-- Comparison winner logic (`comparisonSummary`) — **Phase 5**
-- Export pipeline refactors
 - Entitlements / free-tier scenario save limits
 - Broad Supabase schema redesign
 - Income context (`IncomeContext` component)
@@ -209,6 +207,7 @@ Amortization schedules: regenerate on demand when the active calculator version 
 
 ## 14. Related documentation
 
+- `docs/COMPARISON_CONTRACT.md` — canonical comparison + winner contract
 - `docs/SCENARIO_PERSISTENCE.md` — dual-snapshot persistence contract
 - `docs/COPY_STANDARD.md` — comparison language (“least expensive”, not “best”)
 - `docs/ROLES_AND_ENTITLEMENTS.md` — entitlements (save limits deferred)
