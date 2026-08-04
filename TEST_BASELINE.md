@@ -5,7 +5,7 @@
 **Calculator version:** 2.0.0 (`CALCULATOR_VERSION` in `src/lib/calculatorVersion.ts`)  
 **Schema version:** 2 (dual-snapshot persistence shape)  
 **Baseline date:** 2026-08-03  
-**Status:** CI green on branch — lint (0 errors), typecheck, verify:benchmarks, test:run (**51 passed | 2 todo**), build all pass
+**Status:** CI green on branch — lint (0 errors), typecheck, verify:benchmarks, test:run (**52 passed | 2 todo**), build all pass
 
 ---
 
@@ -26,7 +26,7 @@ Reproducible script; does **not** import production calculator code.
 | BM-R05 | — | Omission rule asserted in Vitest | — | No |
 | BM-R06 | — | Source grep asserted in Vitest (no `baseRate + 1.0`) | — | No |
 | BM-M01 | — | Migration field check (non-monetary) | — | N/A |
-| BM-V01 | — | Dual-snapshot + lazy recompute asserted in Vitest | — | N/A |
+| BM-V01 | — | Dual-snapshot + explicit recompute asserted in Vitest | — | N/A |
 
 Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P01, P03, P05, R01, R04, H02, A02).
 
