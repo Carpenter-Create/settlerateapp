@@ -1,0 +1,38 @@
+---
+description: SettleRate benchmark-driven test and fixture requirements
+globs: src/lib/__tests__/**,scripts/verify-benchmarks.mjs,src/lib/__tests__/fixtures/**
+alwaysApply: false
+---
+
+# Benchmark-Driven Implementation
+
+Status matrix: `TEST_BASELINE.md`. Fixtures: `src/lib/__tests__/fixtures/BM-*.json`.
+
+## Every financial task must
+
+1. Identify applicable **DEF-*** defect(s)
+2. Identify applicable **BM-*** benchmark(s)
+3. Activate or add necessary tests (`it.todo` → active when implementing)
+4. Extend `verify-benchmarks.mjs` when fixture claims independent verification
+5. Preserve unrelated **active** benchmarks
+6. Document intentional expected-value changes in fixture metadata or `TEST_BASELINE.md`
+
+## Test integrity
+
+- Do not weaken assertions for green CI
+- Do not delete active regression tests without founder approval
+- Defect-documentation tests remain until target behavior ships
+- Specification-only fixtures (BM-V01, BM-H04 UI contract) are not monetary regressions
+
+## Verification labels (TEST_BASELINE)
+
+| Label | Meaning |
+|-------|---------|
+| Active regression | Must pass every CI run |
+| Pending v2.0.0 | `it.todo` until Phase 2 implements DEF fix |
+| Defect documentation | Documents incorrect v1 behavior until fixed |
+| Specification-only | Contract placeholder; no production assertion yet |
+
+## Parity tests
+
+Persistence serialization tests must exercise actual create/update paths, not only double-call the same serializer.
