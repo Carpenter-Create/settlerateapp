@@ -10,6 +10,7 @@ import {
   extractInvoiceSubscriptionId,
   extractSubscriptionPeriodEnd,
   mapSubscriptionToBillingSnapshot,
+  resolveSubscriptionBillingSnapshot,
 } from "../_shared/stripeBillingSnapshot.ts";
 
 const corsHeaders = {
@@ -242,8 +243,10 @@ serve(async (req) => {
       const eventSubscription = event.data.object as Stripe.Subscription;
       if (eventSubscription.id) {
         try {
-          const subscription = await stripe.subscriptions.retrieve(eventSubscription.id);
-          const snapshot = mapSubscriptionToBillingSnapshot(subscription);
+          const snapshot = await resolveSubscriptionBillingSnapshot(
+            eventSubscription,
+            stripe.subscriptions.retrieve.bind(stripe.subscriptions)
+          );
           stripeCustomerId = snapshot.stripeCustomerId;
           subscriptionStatus = snapshot.subscriptionStatus;
           subscriptionId = snapshot.subscriptionId;
@@ -251,7 +254,7 @@ serve(async (req) => {
           cancelAtPeriodEnd = snapshot.cancelAtPeriodEnd;
           priceId = snapshot.priceId;
           productId = snapshot.productId;
-          metadataUserId = (subscription.metadata?.user_id as string) || null;
+          metadataUserId = (eventSubscription.metadata?.user_id as string) || null;
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
           await releaseClaim();

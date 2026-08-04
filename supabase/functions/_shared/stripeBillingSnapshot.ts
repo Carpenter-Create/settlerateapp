@@ -82,6 +82,18 @@ export function mapSubscriptionToBillingSnapshot(
 }
 
 /**
+ * Retrieves the authoritative Subscription state before mapping billing fields.
+ * Webhook event objects are delivery-time snapshots and can be stale.
+ */
+export async function resolveSubscriptionBillingSnapshot(
+  eventSubscription: { id: string } & StripeSubscriptionLike,
+  retrieve: (subscriptionId: string) => Promise<StripeSubscriptionLike>
+): Promise<StripeSubscriptionBillingSnapshot> {
+  const retrievedSubscription = await retrieve(eventSubscription.id);
+  return mapSubscriptionToBillingSnapshot(retrievedSubscription);
+}
+
+/**
  * Prefer item-level period end (Basil/Dahlia); fall back to top-level for older payloads.
  * Returns null when items are missing and no legacy field is present.
  */

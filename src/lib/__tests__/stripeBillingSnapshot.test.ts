@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   PROFESSIONAL_PRICE_IDS,
   evaluateEntitlement,
@@ -7,7 +7,7 @@ import {
   extractInvoiceSubscriptionId,
   extractSubscriptionPeriodEnd,
   extractSubscriptionPeriodStart,
-  mapSubscriptionToBillingSnapshot,
+  resolveSubscriptionBillingSnapshot,
 } from "@/lib/stripeBillingSnapshot";
 
 const proMonthlyPrice = PROFESSIONAL_PRICE_IDS[0];
@@ -170,7 +170,7 @@ describe("stripeBillingSnapshot — invoice subscription mapping", () => {
 });
 
 describe("stripeBillingSnapshot — retrieved subscription authority", () => {
-  it("maps billing fields from the retrieved subscription, not a stale active event snapshot", () => {
+  it("retrieves and maps the current subscription instead of a stale active event snapshot", async () => {
     const staleEventSubscription = {
       id: "sub_current",
       customer: "cus_current",
@@ -200,10 +200,14 @@ describe("stripeBillingSnapshot — retrieved subscription authority", () => {
       },
     };
 
-    const staleSnapshot = mapSubscriptionToBillingSnapshot(staleEventSubscription);
-    const billingSnapshot = mapSubscriptionToBillingSnapshot(retrievedSubscription);
+    const retrieve = vi.fn().mockResolvedValue(retrievedSubscription);
+    const billingSnapshot = await resolveSubscriptionBillingSnapshot(
+      staleEventSubscription,
+      retrieve
+    );
 
-    expect(staleSnapshot.subscriptionStatus).toBe("active");
+    expect(retrieve).toHaveBeenCalledOnce();
+    expect(retrieve).toHaveBeenCalledWith("sub_current");
     expect(billingSnapshot).toMatchObject({
       subscriptionId: "sub_current",
       stripeCustomerId: "cus_current",
