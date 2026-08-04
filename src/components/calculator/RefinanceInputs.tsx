@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MortgageInputs, RefinanceInputs as RefinanceInputsType } from "@/lib/mortgage";
+import { coerceOptionalInterestRate } from "@/lib/coerceOptionalInterestRate";
 import { CurrencyInput } from "./CurrencyInput";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
@@ -119,7 +120,9 @@ export function RefinanceInputs({ inputs, onBatchUpdate }: RefinanceInputsProps)
             >
               <PercentInput
                 value={refinance.currentInterestRate ?? 0}
-                onChange={(v) => updateRefinance({ currentInterestRate: v || null })}
+                onChange={(v) =>
+                  updateRefinance({ currentInterestRate: coerceOptionalInterestRate(v) })
+                }
                 min={0}
                 max={25}
                 step={0.125}
