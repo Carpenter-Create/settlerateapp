@@ -161,9 +161,10 @@ Unified projection fields (from `calculateScenario()`):
 
 **Note:** `calculateScenario()` dispatches correctly for HELOC/assumption and exposes financing fields.
 
+**Phase 3 persistence:** save/load/create/update dispatch through `calculateScenario` with dual snapshots. See `docs/SCENARIO_PERSISTENCE.md`.
+
 **Still deferred:**
 
-- **Persistence dispatch (Phase 3 / DEF-001):** save/load still call `calculateMortgage` for all modes (mortgage-shaped stored results).
 - **Comparison UI winner (Phase 5 / DEF-003):** still uses `totalCost` ranking.
 
 ---
@@ -173,33 +174,31 @@ Unified projection fields (from `calculateScenario()`):
 | Version | Meaning |
 |---------|---------|
 | `1.0.0` | Historical production baseline before Phase 2 semantics |
-| `2.0.0` | **Current** (`CALCULATOR_VERSION` in `src/lib/scenarioContract.ts`) — financing cost metrics, one-time principal, applied assumptions, refinance break-even, HELOC IO enforcement |
+| `2.0.0` | **Current** (`CALCULATOR_VERSION` in `src/lib/calculatorVersion.ts`, re-exported from `scenarioContract.ts`) — financing cost metrics, one-time principal, applied assumptions, refinance break-even, HELOC IO enforcement |
 
-### Persistence target (Phase 3 — not implemented)
+### Persistence contract (Phase 3 — implemented)
 
-Persist:
+Persist (see `docs/SCENARIO_PERSISTENCE.md`):
 
-- `inputs`, `assumptions`, `schemaVersion`
+- `inputs`, `assumptions`, `schemaVersion` (**2**)
 - `originalCalculatorVersion`, `activeCalculatorVersion`
 - `originalSnapshot`, `activeSnapshot` (summary only — **no** full amortization schedule by default)
 - `calculatedAt` as **record metadata**, not inside deterministic result objects
 
-**Lazy recompute on open:** preserve original snapshot; update active snapshot when calculator version advances. Do not silently overwrite historical records.
+Stored in the existing Supabase JSON `derived` column — **no** Postgres DDL migration in Phase 3.
 
-Amortization schedules: regenerate on demand; frozen exports may embed immutable schedules.
+**Hydration:** restore `originalSnapshot` and `activeSnapshot` exactly as persisted. Opening a scenario does **not** silently recalculate when `CALCULATOR_VERSION` advances; expose `recalculationAvailable` instead. Explicit recalculation updates **active only**, preserves original, and persists immediately.
 
-Phase 2 does **not** implement dual-snapshot persistence, automatic historical recomputation, or Supabase schema changes.
+Amortization schedules: regenerate on demand when the active calculator version matches the running calculator; frozen exports may embed immutable schedules.
 
 ---
 
-## 13. Deferred scope (not part of Phase 2)
+## 13. Deferred scope (not part of Phase 3)
 
 - Comparison winner logic (`comparisonSummary`) — **Phase 5**
-- `calculateScenario` persistence dispatch — **Phase 3**
-- Original/active snapshot persistence (BM-V01) — **Phase 3**
 - Export pipeline refactors
 - Entitlements / free-tier scenario save limits
-- Supabase schema changes
+- Broad Supabase schema redesign
 - Income context (`IncomeContext` component)
 - HELOC amortizing-draw behavior
 - AWS / Cloudflare / Next.js migration
@@ -210,6 +209,7 @@ Phase 2 does **not** implement dual-snapshot persistence, automatic historical r
 
 ## 14. Related documentation
 
+- `docs/SCENARIO_PERSISTENCE.md` — dual-snapshot persistence contract
 - `docs/COPY_STANDARD.md` — comparison language (“least expensive”, not “best”)
 - `docs/ROLES_AND_ENTITLEMENTS.md` — entitlements (save limits deferred)
 - `TEST_BASELINE.md` — benchmark status matrix

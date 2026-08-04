@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from "react";
-import { MortgageInputs, calculateMortgage, DEFAULT_INPUTS } from "@/lib/mortgage";
+import { MortgageInputs, DEFAULT_INPUTS } from "@/lib/mortgage";
 import {
   ScenarioData,
 } from "@/lib/scenarioContract";
+import { calculateScenario } from "@/lib/scenarioCalculator";
+import { projectUiResults } from "@/lib/scenarioPersistence";
 import { scenarioStore, StoreSnapshot } from "@/lib/scenarioStore";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -273,7 +275,12 @@ export function useActiveScenario(scenarioId: string | null) {
     }
   }, [activeScenario]);
 
-  const results = calculateMortgage(draftInputs, activeScenario?.assumptions);
+  const results = projectUiResults(
+    calculateScenario(draftInputs, {
+      pmiRemovalThreshold:
+        activeScenario?.assumptions.pmiRemovalThreshold ?? 80,
+    })
+  );
 
   return {
     inputs: draftInputs,

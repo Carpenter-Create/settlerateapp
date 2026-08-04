@@ -86,9 +86,3 @@ describe("scenarioCalculator.benchmark — v1.0.0 totalCost semantics on unified
     );
   });
 });
-
-describe("scenarioCalculator.benchmark — persistence layer defect (documented)", () => {
-  it.todo(
-    "DEF-001 scenarioStore/scenarioContract must use calculateScenario — Phase 3: save/load paths currently call calculateMortgage for all modes"
-  );
-});

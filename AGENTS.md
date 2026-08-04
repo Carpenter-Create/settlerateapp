@@ -26,9 +26,9 @@ Detailed agent rules: `.cursor/rules/`.
 
 ## Current phase
 
-**Phase 1 is complete on main. Confirm the current branch and repository state before assuming later-phase work has begun.** **Phase 2** is limited to approved financial-engine v2.0.0 corrections mapped to DEF-* defects and BM-* benchmarks in `TEST_BASELINE.md`.
+**Phase 1 and Phase 2 are complete on main.** Confirm the current branch and repository state before assuming later-phase work has begun. **Phase 3** (when authorized) is scenario persistence alignment: `calculateScenario` dispatch for all modes, dual-snapshot persistence (`originalSnapshot` / `activeSnapshot`), and BM-V01 / DEF-001 store paths — see `docs/SCENARIO_PERSISTENCE.md`.
 
-Do not begin Phase 3+ work (persistence dual-snapshot, schema changes, exports, entitlements, comparison winner refactors, infrastructure migration) unless explicitly authorized.
+Do not begin Phase 4+ work (exports, entitlements, comparison winner refactors, infrastructure migration) unless explicitly authorized.
 
 ## Required validation
 

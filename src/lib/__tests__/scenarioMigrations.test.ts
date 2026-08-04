@@ -22,9 +22,3 @@ describe("scenarioMigrations.benchmark — active regression", () => {
     expect(scenario.name).toBe(bmM01.legacyRaw.name);
   });
 });
-
-describe("scenarioMigrations.benchmark — specification-only", () => {
-  it.todo(
-    "BM-V01 original snapshot preserved after lazy recompute — DEF-001 — Phase 3: opening scenario at v1.0.0 must retain originalSnapshot when activeSnapshot updates to v2.0.0"
-  );
-});

@@ -5,24 +5,23 @@ alwaysApply: true
 
 # Phase Boundaries
 
-**Phase 1 complete.** **Phase 2** = approved financial-engine v2.0.0 corrections only (DEF-* + BM-* in `TEST_BASELINE.md`).
+**Phase 1–2 complete on main.** **Phase 3** (when authorized) = scenario persistence alignment (`calculateScenario` dispatch, dual snapshots, BM-V01 / DEF-001 store paths).
 
-## Allowed in Phase 2 (when task is authorized)
+## Allowed in Phase 3 (when task is authorized)
 
-- Calculator semantics per `docs/FINANCIAL_METHODOLOGY.md`
-- Activating pending benchmark tests; extending `scripts/verify-benchmarks.mjs`
-- Minimal UI inputs required by methodology (e.g., current-loan fields for break-even)
-- Regression tests and fixture updates tied to approved DEF/BM
+- Dual-snapshot persistence per `docs/SCENARIO_PERSISTENCE.md` and methodology §12
+- Making `calculateScenario` authoritative for save/load/create/update/recalculate
+- Client schema version / `derived` JSON shape changes without broad Postgres redesign
+- Activating Phase 3 benchmark tests; focused persistence regression tests
 
 ## Prohibited unless a later phase is explicitly authorized
 
 - AWS / Cloudflare migration
 - Route changes
 - Visual redesign or unapproved copy changes
-- Supabase schema/migration changes (Phase 3+)
+- Broad Supabase DDL redesign
 - Export, entitlement, or billing refactors
 - Cross-type comparison winner logic (`comparisonSummary`, Phase 5 / DEF-003)
-- Persistence dual-snapshot contract (Phase 3 / BM-V01)
 - Deferred methodology §13 items (income context, OAuth, free-tier limits, etc.)
 
 **Never begin the next phase automatically.**
