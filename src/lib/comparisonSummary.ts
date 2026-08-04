@@ -17,6 +17,12 @@
  */
 
 import type { ScenarioData } from "@/lib/scenarioContract";
+import type { CanonicalComparisonOptions } from "@/lib/comparisonContract";
+import {
+  determineComparisonWinner,
+  winnerLabelForScenarios,
+  type ComparisonWinnerResult,
+} from "@/lib/comparisonWinner";
 
 // ============================================================================
 // TYPES
@@ -24,13 +30,17 @@ import type { ScenarioData } from "@/lib/scenarioContract";
 
 export interface ComparisonDeltas {
   monthlyPaymentDelta: number | null;    // Percentage
-  totalCostDelta: number | null;         // Percentage
+  /** @deprecated Alias of financingCostDelta — kept for adapter consumers */
+  totalCostDelta: number | null;
+  financingCostDelta: number | null;
   totalInterestDelta: number | null;     // Percentage
   interestRateDelta: number | null;      // Basis points
   ltvDelta: number | null;               // Absolute percentage points
   // Dollar amounts for dollar-first display
   monthlyPaymentDollarDelta: number | null;
+  /** @deprecated Alias of financingCostDollarDelta */
   totalCostDollarDelta: number | null;
+  financingCostDollarDelta: number | null;
   totalInterestDollarDelta: number | null;
   // Principal difference for loan size comparisons
   loanAmountDelta: number | null;
@@ -72,68 +82,93 @@ export function calculateCostPerDollarBorrowed(
 }
 
 // ============================================================================
-// LOWEST COST DETERMINATION
+// LOWEST COST DETERMINATION (legacy adapter → canonical winner)
 // ============================================================================
 
 export interface LowestCostResult {
-  lowestCostScenario: "A" | "B" | "C";
-  lowestCostName: string;
+  lowestCostScenario: "A" | "B" | "C" | null;
+  lowestCostName: string | null;
+  financingCost: number | null;
+  /** @deprecated Use financingCost — legacy alias for adapter consumers */
   totalCost: number;
   monthlyPayment: number;
   totalInterest: number;
   loanAmount: number;
+  status: ComparisonWinnerResult["status"];
+  winnerResult: ComparisonWinnerResult;
+}
+
+function snapshotFinancingCost(scenario: ScenarioData): number | null {
+  const value = scenario.activeSnapshot?.summary?.financingCostOverHorizon;
+  return value == null || Number.isNaN(value) ? null : value;
+}
+
+function snapshotMonthly(scenario: ScenarioData): number | null {
+  const value = scenario.activeSnapshot?.summary?.allInMonthlyHousingPayment;
+  if (value != null && !Number.isNaN(value)) return value;
+  const legacy = scenario.results?.monthlyTotal;
+  return legacy == null || Number.isNaN(legacy) ? null : legacy;
+}
+
+function snapshotInterest(scenario: ScenarioData): number | null {
+  const value = scenario.activeSnapshot?.summary?.totalInterest;
+  if (value != null && !Number.isNaN(value)) return value;
+  const legacy = scenario.results?.totalInterest;
+  return legacy == null || Number.isNaN(legacy) ? null : legacy;
+}
+
+function snapshotPrincipalAmount(scenario: ScenarioData): number | null {
+  const value = scenario.activeSnapshot?.summary?.principalAmount;
+  if (value != null && !Number.isNaN(value)) return value;
+  const legacy = scenario.results?.loanAmount;
+  return legacy == null || Number.isNaN(legacy) ? null : legacy;
 }
 
 /**
- * Determine lowest-cost scenario using tie-breaker logic:
- * 1. Lowest Total Cost (primary)
- * 2. Lowest Total Interest (first tie-breaker)
- * 3. Lowest Monthly Payment (second tie-breaker)
- * 4. Lowest LTV (third tie-breaker)
- * 
- * This logic is deterministic and documented.
+ * Legacy adapter: routes through the canonical comparison winner (DEF-003).
+ * Primary metric is financingCostOverHorizon under a shared decision horizon.
+ * Does not break ties with monthly payment / LTV.
  */
 export function determineLowestCost(
   scenarioA: ScenarioData,
   scenarioB: ScenarioData,
-  scenarioC?: ScenarioData | null
+  scenarioC?: ScenarioData | null,
+  options: CanonicalComparisonOptions = {}
 ): LowestCostResult {
-  const scenarios: { label: "A" | "B" | "C"; data: ScenarioData }[] = [
-    { label: "A", data: scenarioA },
-    { label: "B", data: scenarioB },
-  ];
-  
-  if (scenarioC) {
-    scenarios.push({ label: "C", data: scenarioC });
-  }
+  const scenarios = [scenarioA, scenarioB, ...(scenarioC ? [scenarioC] : [])];
+  const winnerResult = determineComparisonWinner(scenarios, options);
+  const label = winnerLabelForScenarios(
+    winnerResult,
+    scenarioA,
+    scenarioB,
+    scenarioC
+  );
 
-  // Sort by: total cost → total interest → monthly payment → LTV
-  scenarios.sort((a, b) => {
-    const costA = a.data.results.totalCost ?? Infinity;
-    const costB = b.data.results.totalCost ?? Infinity;
-    if (costA !== costB) return costA - costB;
-    
-    const interestA = a.data.results.totalInterest ?? Infinity;
-    const interestB = b.data.results.totalInterest ?? Infinity;
-    if (interestA !== interestB) return interestA - interestB;
-    
-    const monthlyA = a.data.results.monthlyTotal ?? Infinity;
-    const monthlyB = b.data.results.monthlyTotal ?? Infinity;
-    if (monthlyA !== monthlyB) return monthlyA - monthlyB;
-    
-    const ltvA = a.data.results.ltvRatio ?? Infinity;
-    const ltvB = b.data.results.ltvRatio ?? Infinity;
-    return ltvA - ltvB;
-  });
+  const winnerData =
+    label === "A"
+      ? scenarioA
+      : label === "B"
+        ? scenarioB
+        : label === "C" && scenarioC
+          ? scenarioC
+          : null;
 
-  const winner = scenarios[0];
+  const financingCost = winnerData
+    ? snapshotFinancingCost(winnerData)
+    : null;
+
   return {
-    lowestCostScenario: winner.label,
-    lowestCostName: winner.data.name || `Scenario ${winner.label}`,
-    totalCost: winner.data.results.totalCost ?? 0,
-    monthlyPayment: winner.data.results.monthlyTotal ?? 0,
-    totalInterest: winner.data.results.totalInterest ?? 0,
-    loanAmount: winner.data.results.loanAmount ?? 0,
+    lowestCostScenario: label,
+    lowestCostName: winnerData
+      ? winnerData.name || `Scenario ${label}`
+      : null,
+    financingCost,
+    totalCost: financingCost ?? 0,
+    monthlyPayment: winnerData ? snapshotMonthly(winnerData) ?? 0 : 0,
+    totalInterest: winnerData ? snapshotInterest(winnerData) ?? 0 : 0,
+    loanAmount: winnerData ? snapshotPrincipalAmount(winnerData) ?? 0 : 0,
+    status: winnerResult.status,
+    winnerResult,
   };
 }
 
@@ -144,43 +179,56 @@ export function determineLowestCost(
 /**
  * Calculate percentage deltas between two scenarios
  * Baseline: Scenario B
+ * Cost deltas use financingCostOverHorizon from activeSnapshot (never legacy totalCost).
  */
 export function calculateDeltas(a: ScenarioData, b: ScenarioData): ComparisonDeltas {
-  const aMonthly = a.results.monthlyTotal;
-  const bMonthly = b.results.monthlyTotal;
-  const aTotalCost = a.results.totalCost;
-  const bTotalCost = b.results.totalCost;
-  const aTotalInterest = a.results.totalInterest;
-  const bTotalInterest = b.results.totalInterest;
-  const aRate = a.inputs.shared?.interestRate ?? 0;
-  const bRate = b.inputs.shared?.interestRate ?? 0;
-  const aLtv = a.results.ltvRatio ?? 0;
-  const bLtv = b.results.ltvRatio ?? 0;
-  const aLoanAmount = a.results.loanAmount ?? 0;
-  const bLoanAmount = b.results.loanAmount ?? 0;
+  const aMonthly = snapshotMonthly(a);
+  const bMonthly = snapshotMonthly(b);
+  const aFinancing = snapshotFinancingCost(a);
+  const bFinancing = snapshotFinancingCost(b);
+  const aTotalInterest = snapshotInterest(a);
+  const bTotalInterest = snapshotInterest(b);
+  const aRate = a.activeSnapshot?.summary?.rateForComparison
+    ?? a.inputs.shared?.interestRate
+    ?? 0;
+  const bRate = b.activeSnapshot?.summary?.rateForComparison
+    ?? b.inputs.shared?.interestRate
+    ?? 0;
+  const aLtv = a.activeSnapshot?.summary?.ltvRatio ?? a.results.ltvRatio ?? 0;
+  const bLtv = b.activeSnapshot?.summary?.ltvRatio ?? b.results.ltvRatio ?? 0;
+  const aLoanAmount = snapshotPrincipalAmount(a) ?? 0;
+  const bLoanAmount = snapshotPrincipalAmount(b) ?? 0;
 
-  // Calculate dollar deltas (independent per metric)
-  const monthlyDollarDelta = aMonthly != null && bMonthly != null ? aMonthly - bMonthly : null;
-  const totalCostDollarDelta = aTotalCost != null && bTotalCost != null ? aTotalCost - bTotalCost : null;
-  const totalInterestDollarDelta = aTotalInterest != null && bTotalInterest != null ? aTotalInterest - bTotalInterest : null;
+  const monthlyDollarDelta =
+    aMonthly != null && bMonthly != null ? aMonthly - bMonthly : null;
+  const financingCostDollarDelta =
+    aFinancing != null && bFinancing != null ? aFinancing - bFinancing : null;
+  const totalInterestDollarDelta =
+    aTotalInterest != null && bTotalInterest != null
+      ? aTotalInterest - bTotalInterest
+      : null;
   const loanAmountDelta = aLoanAmount - bLoanAmount;
+  const financingCostDelta =
+    bFinancing && bFinancing > 0 && aFinancing != null
+      ? ((aFinancing - bFinancing) / bFinancing) * 100
+      : null;
 
-  // Calculate percentage deltas (independent per metric - never reuse across categories)
   return {
-    monthlyPaymentDelta: bMonthly && bMonthly > 0 && aMonthly != null
-      ? ((aMonthly - bMonthly) / bMonthly) * 100
-      : null,
-    totalCostDelta: bTotalCost && bTotalCost > 0 && aTotalCost != null
-      ? ((aTotalCost - bTotalCost) / bTotalCost) * 100
-      : null,
-    totalInterestDelta: bTotalInterest && bTotalInterest > 0 && aTotalInterest != null
-      ? ((aTotalInterest - bTotalInterest) / bTotalInterest) * 100
-      : null,
-    interestRateDelta: (aRate - bRate) * 100, // Convert to basis points
-    ltvDelta: aLtv - bLtv, // Absolute percentage points
-    // Dollar amounts for dollar-first display
+    monthlyPaymentDelta:
+      bMonthly && bMonthly > 0 && aMonthly != null
+        ? ((aMonthly - bMonthly) / bMonthly) * 100
+        : null,
+    financingCostDelta,
+    totalCostDelta: financingCostDelta,
+    totalInterestDelta:
+      bTotalInterest && bTotalInterest > 0 && aTotalInterest != null
+        ? ((aTotalInterest - bTotalInterest) / bTotalInterest) * 100
+        : null,
+    interestRateDelta: (aRate - bRate) * 100,
+    ltvDelta: aLtv - bLtv,
     monthlyPaymentDollarDelta: monthlyDollarDelta,
-    totalCostDollarDelta: totalCostDollarDelta,
+    financingCostDollarDelta,
+    totalCostDollarDelta: financingCostDollarDelta,
     totalInterestDollarDelta: totalInterestDollarDelta,
     loanAmountDelta: loanAmountDelta,
   };
@@ -208,42 +256,7 @@ export function calculateDeltasVsWinner(
   scenario: ScenarioData,
   winner: ScenarioData
 ): ComparisonDeltas {
-  const sMonthly = scenario.results.monthlyTotal;
-  const wMonthly = winner.results.monthlyTotal;
-  const sTotalCost = scenario.results.totalCost;
-  const wTotalCost = winner.results.totalCost;
-  const sTotalInterest = scenario.results.totalInterest;
-  const wTotalInterest = winner.results.totalInterest;
-  const sRate = scenario.inputs.shared?.interestRate ?? 0;
-  const wRate = winner.inputs.shared?.interestRate ?? 0;
-  const sLtv = scenario.results.ltvRatio ?? 0;
-  const wLtv = winner.results.ltvRatio ?? 0;
-  const sLoanAmount = scenario.results.loanAmount ?? 0;
-  const wLoanAmount = winner.results.loanAmount ?? 0;
-
-  // Calculate dollar deltas
-  const monthlyDollarDelta = sMonthly != null && wMonthly != null ? sMonthly - wMonthly : null;
-  const totalCostDollarDelta = sTotalCost != null && wTotalCost != null ? sTotalCost - wTotalCost : null;
-  const totalInterestDollarDelta = sTotalInterest != null && wTotalInterest != null ? sTotalInterest - wTotalInterest : null;
-  const loanAmountDelta = sLoanAmount - wLoanAmount;
-
-  return {
-    monthlyPaymentDelta: wMonthly && wMonthly > 0 && sMonthly != null
-      ? ((sMonthly - wMonthly) / wMonthly) * 100
-      : null,
-    totalCostDelta: wTotalCost && wTotalCost > 0 && sTotalCost != null
-      ? ((sTotalCost - wTotalCost) / wTotalCost) * 100
-      : null,
-    totalInterestDelta: wTotalInterest && wTotalInterest > 0 && sTotalInterest != null
-      ? ((sTotalInterest - wTotalInterest) / wTotalInterest) * 100
-      : null,
-    interestRateDelta: (sRate - wRate) * 100,
-    ltvDelta: sLtv - wLtv,
-    monthlyPaymentDollarDelta: monthlyDollarDelta,
-    totalCostDollarDelta: totalCostDollarDelta,
-    totalInterestDollarDelta: totalInterestDollarDelta,
-    loanAmountDelta: loanAmountDelta,
-  };
+  return calculateDeltas(scenario, winner);
 }
 
 // ============================================================================
@@ -382,10 +395,17 @@ export function determinePattern(
   scenarioA?: ScenarioData,
   scenarioB?: ScenarioData
 ): ComparisonPattern {
-  const { monthlyPaymentDelta, totalCostDelta, totalInterestDelta, loanAmountDelta } = deltas;
+  const {
+    monthlyPaymentDelta,
+    financingCostDelta,
+    totalCostDelta,
+    totalInterestDelta,
+    loanAmountDelta,
+  } = deltas;
+  const costDelta = financingCostDelta ?? totalCostDelta;
 
   // Check for insufficient data
-  if (monthlyPaymentDelta === null || totalCostDelta === null) {
+  if (monthlyPaymentDelta === null || costDelta === null) {
     return "insufficient_data";
   }
 
@@ -397,7 +417,7 @@ export function determinePattern(
   }
 
   const absMonthly = Math.abs(monthlyPaymentDelta);
-  const absTotalCost = Math.abs(totalCostDelta);
+  const absTotalCost = Math.abs(costDelta);
   const absInterest = Math.abs(totalInterestDelta ?? 0);
 
   // Minimal difference: all key metrics < 3%
@@ -405,9 +425,9 @@ export function determinePattern(
     return "minimal_difference";
   }
 
-  // Tradeoff: monthly and total cost move in opposite directions
+  // Tradeoff: monthly and financing cost move in opposite directions
   // OR monthly and interest move in opposite directions
-  const monthlyVsCost = monthlyPaymentDelta * totalCostDelta < 0;
+  const monthlyVsCost = monthlyPaymentDelta * costDelta < 0;
   const monthlyVsInterest = totalInterestDelta !== null && monthlyPaymentDelta * totalInterestDelta < 0;
   
   if (monthlyVsCost || monthlyVsInterest) {
@@ -454,12 +474,12 @@ function generateSameRateDifferentSizeSummary(
   if (otherScenarios.length > 0) {
     const firstOther = otherScenarios[0];
     const loanDiff = Math.abs(firstOther.deltas.loanAmountDelta ?? 0);
-    const costDiff = Math.abs(firstOther.deltas.totalCostDollarDelta ?? 0);
+    const costDiff = Math.abs(firstOther.deltas.financingCostDollarDelta ?? 0);
     const monthlyDiff = Math.abs(firstOther.deltas.monthlyPaymentDollarDelta ?? 0);
     
     if (loanDiff > 0 && costDiff > 0) {
       sentences.push(
-        `Although each option uses the same interest rate, borrowing more increases both the monthly payment and the total cost over time. Every additional ${formatProseAmount(loanDiff)} borrowed increases the monthly payment by about ${formatProseAmount(monthlyDiff)} and increases the total cost over ${term} years by roughly ${formatProseAmount(costDiff)}.`
+        `Although each option uses the same interest rate, borrowing more increases both the monthly payment and financing cost over the modeled term. Every additional ${formatProseAmount(loanDiff)} borrowed increases the monthly payment by about ${formatProseAmount(monthlyDiff)} and increases financing cost over ${term} years by roughly ${formatProseAmount(costDiff)}.`
       );
     }
   }
@@ -468,9 +488,9 @@ function generateSameRateDifferentSizeSummary(
   if (otherScenarios.length > 0) {
     const costLines: string[] = [];
     for (const other of otherScenarios) {
-      const extraCost = Math.abs(other.deltas.totalCostDollarDelta ?? 0);
+      const extraCost = Math.abs(other.deltas.financingCostDollarDelta ?? 0);
       if (extraCost > 0) {
-        costLines.push(`The ${other.name} costs about ${formatProseAmount(extraCost)} more over the life of the loan than the lowest option.`);
+        costLines.push(`The ${other.name} has about ${formatProseAmount(extraCost)} higher financing cost over the modeled term than the lowest option.`);
       }
     }
     
@@ -512,9 +532,20 @@ export function generateSummaryCopy(
   const displayNameA = nameA || "Scenario A";
   const displayNameB = nameB || "Scenario B";
 
-  // Determine lowest cost if we have scenario data
+  // Determine lowest financing cost if we have scenario data
   if (scenarioA && scenarioB) {
     const lowestCost = determineLowestCost(scenarioA, scenarioB);
+
+    if (lowestCost.status !== "winner" || !lowestCost.lowestCostScenario || !lowestCost.lowestCostName) {
+      sentences.push(lowestCost.winnerResult.explanation);
+      if (lowestCost.winnerResult.staleScenarioIds.length > 0) {
+        sentences.push(
+          "One or more scenarios were calculated with a prior calculator version; comparison uses persisted values without recalculation."
+        );
+      }
+      return sentences;
+    }
+
     const winnerName = lowestCost.lowestCostName;
     const otherName = lowestCost.lowestCostScenario === "A" ? displayNameB : displayNameA;
     
@@ -552,13 +583,13 @@ export function generateSummaryCopy(
     );
 
     // Line 2: Explain why using dollars first, percentages second
-    if (otherDeltas.totalCostDollarDelta !== null && otherDeltas.totalCostDelta !== null) {
-      const dollarDiff = Math.abs(otherDeltas.totalCostDollarDelta);
-      const percentDiff = Math.abs(otherDeltas.totalCostDelta);
+    if (otherDeltas.financingCostDollarDelta !== null && otherDeltas.financingCostDelta !== null) {
+      const dollarDiff = Math.abs(otherDeltas.financingCostDollarDelta);
+      const percentDiff = Math.abs(otherDeltas.financingCostDelta);
       
       if (dollarDiff >= 1000) {
         sentences.push(
-          `Compared to ${otherName}, it saves about ${formatProseAmount(dollarDiff)} over the life of the loan (${formatDeltaPercent(percentDiff)} less).`
+          `Compared to ${otherName}, it has about ${formatProseAmount(dollarDiff)} lower financing cost over the modeled term (${formatDeltaPercent(percentDiff)} less).`
         );
       }
     }
@@ -631,20 +662,21 @@ export function generateSummaryCopy(
   // Fallback if no scenario data (legacy path)
   if (pattern === "minimal_difference") {
     sentences.push(
-      `The modeled outcomes differ by less than 3% across monthly payment and total cost.`
+      `The modeled outcomes differ by less than 3% across monthly payment and financing cost.`
     );
     return sentences;
   }
 
   // Generic fallback
-  const { monthlyPaymentDelta, totalCostDelta } = deltas;
+  const { monthlyPaymentDelta, financingCostDelta, totalCostDelta } = deltas;
+  const costDelta = financingCostDelta ?? totalCostDelta;
   
-  if (monthlyPaymentDelta !== null && totalCostDelta !== null) {
+  if (monthlyPaymentDelta !== null && costDelta !== null) {
     const monthlyDir = monthlyPaymentDelta > 0 ? "higher" : "lower";
-    const costDir = totalCostDelta > 0 ? "higher" : "lower";
+    const costDir = costDelta > 0 ? "higher" : "lower";
     
     sentences.push(
-      `${displayNameA} has ${formatDeltaPercent(Math.abs(monthlyPaymentDelta))} ${monthlyDir} monthly payments and ${formatDeltaPercent(Math.abs(totalCostDelta))} ${costDir} total costs compared to ${displayNameB}.`
+      `${displayNameA} has ${formatDeltaPercent(Math.abs(monthlyPaymentDelta))} ${monthlyDir} monthly payments and ${formatDeltaPercent(Math.abs(costDelta))} ${costDir} financing cost compared to ${displayNameB}.`
     );
   }
 
@@ -689,13 +721,39 @@ export function generateThreeWaySummaryCopy(
   const displayNameC = nameC || "Scenario C";
 
   // Check for insufficient data
-  if (threeWayDeltas.aVsB.monthlyPaymentDelta === null || threeWayDeltas.aVsB.totalCostDelta === null) {
+  if (
+    threeWayDeltas.aVsB.monthlyPaymentDelta === null ||
+    (threeWayDeltas.aVsB.financingCostDelta ?? threeWayDeltas.aVsB.totalCostDelta) === null
+  ) {
     return ["Comparison data is incomplete. Additional scenario inputs may be required."];
   }
 
-  // Determine lowest cost across all three
+  // Determine lowest financing cost across all three
   if (scenarioA && scenarioB && scenarioC) {
     const lowestCost = determineLowestCost(scenarioA, scenarioB, scenarioC);
+    const allScenarios = [scenarioA, scenarioB, scenarioC];
+
+    if (lowestCost.status !== "winner" || !lowestCost.lowestCostScenario || !lowestCost.lowestCostName) {
+      sentences.push(lowestCost.winnerResult.explanation);
+      if (lowestCost.winnerResult.excludedScenarioIds.length > 0) {
+        const excludedNames = lowestCost.winnerResult.excludedScenarioIds
+          .map((e) => {
+            const match = allScenarios.find((s) => s.id === e.scenarioId);
+            return match?.name || e.scenarioId;
+          })
+          .join(", ");
+        sentences.push(
+          `Excluded from the primary comparison: ${excludedNames} (common decision horizon required).`
+        );
+      }
+      if (lowestCost.winnerResult.staleScenarioIds.length > 0) {
+        sentences.push(
+          "One or more scenarios were calculated with a prior calculator version; comparison uses persisted values without recalculation."
+        );
+      }
+      return sentences;
+    }
+
     const winnerName = lowestCost.lowestCostName;
 
     // Get the winner scenario data
@@ -729,7 +787,6 @@ export function generateThreeWaySummaryCopy(
     }
 
     // Check if all scenarios have same rate and term (cash-out pattern for 3 scenarios)
-    const allScenarios = [scenarioA, scenarioB, scenarioC];
     const rates = allScenarios.map(s => s.inputs.shared?.interestRate ?? 0);
     const terms = allScenarios.map(s => s.inputs.shared?.loanTerm ?? 30);
     const sameRateAndTerm = rates.every(r => Math.abs(r - rates[0]) < 0.001) && 
@@ -758,15 +815,15 @@ export function generateThreeWaySummaryCopy(
 
     // Line 2: Explain with dollars first, then percentages
     const significantOthers = others.filter(o => 
-      o.deltas.totalCostDollarDelta !== null && Math.abs(o.deltas.totalCostDollarDelta) >= 1000
+      o.deltas.financingCostDollarDelta !== null && Math.abs(o.deltas.financingCostDollarDelta) >= 1000
     );
     
     if (significantOthers.length > 0) {
       const costLines: string[] = [];
       for (const other of significantOthers) {
-        const dollarDiff = Math.abs(other.deltas.totalCostDollarDelta ?? 0);
-        const percentDiff = Math.abs(other.deltas.totalCostDelta ?? 0);
-        costLines.push(`about $${Math.round(dollarDiff).toLocaleString()} (${formatDeltaPercent(percentDiff)}) more than ${other.name}`);
+        const dollarDiff = Math.abs(other.deltas.financingCostDollarDelta ?? 0);
+        const percentDiff = Math.abs(other.deltas.financingCostDelta ?? 0);
+        costLines.push(`about $${Math.round(dollarDiff).toLocaleString()} (${formatDeltaPercent(percentDiff)}) lower financing cost than ${other.name}`);
       }
       
       const comparisonText = costLines.length === 1 
@@ -774,7 +831,7 @@ export function generateThreeWaySummaryCopy(
         : `${costLines[0]} and ${costLines[1]}`;
       
       sentences.push(
-        `Its total cost over the life of the loan is ${comparisonText}.`
+        `Its financing cost over the modeled term is ${comparisonText}.`
       );
     }
 
@@ -840,22 +897,24 @@ export function generateThreeWaySummaryCopy(
 
   // Fallback without full scenario data
   const { aVsB, cVsB } = threeWayDeltas;
+  const aCost = aVsB.financingCostDelta ?? aVsB.totalCostDelta;
   
   // A vs B summary
   const aMonthlyDir = aVsB.monthlyPaymentDelta! > 0 ? "higher" : "lower";
-  const aCostDir = aVsB.totalCostDelta! > 0 ? "higher" : "lower";
+  const aCostDir = aCost! > 0 ? "higher" : "lower";
   
   sentences.push(
-    `Relative to ${displayNameB}, ${displayNameA} produces ${formatDeltaPercent(aVsB.monthlyPaymentDelta!)} ${aMonthlyDir} monthly payments and ${formatDeltaPercent(aVsB.totalCostDelta!)} ${aCostDir} total projected cost.`
+    `Relative to ${displayNameB}, ${displayNameA} produces ${formatDeltaPercent(aVsB.monthlyPaymentDelta!)} ${aMonthlyDir} monthly payments and ${formatDeltaPercent(aCost!)} ${aCostDir} financing cost.`
   );
 
   // C vs B summary
-  if (cVsB && cVsB.monthlyPaymentDelta !== null && cVsB.totalCostDelta !== null) {
+  const cCost = cVsB?.financingCostDelta ?? cVsB?.totalCostDelta ?? null;
+  if (cVsB && cVsB.monthlyPaymentDelta !== null && cCost !== null) {
     const cMonthlyDir = cVsB.monthlyPaymentDelta > 0 ? "higher" : "lower";
-    const cCostDir = cVsB.totalCostDelta > 0 ? "higher" : "lower";
+    const cCostDir = cCost > 0 ? "higher" : "lower";
     
     sentences.push(
-      `${displayNameC} results in ${formatDeltaPercent(cVsB.monthlyPaymentDelta)} ${cMonthlyDir} monthly payments and ${formatDeltaPercent(cVsB.totalCostDelta)} ${cCostDir} total cost compared to ${displayNameB}.`
+      `${displayNameC} results in ${formatDeltaPercent(cVsB.monthlyPaymentDelta)} ${cMonthlyDir} monthly payments and ${formatDeltaPercent(cCost)} ${cCostDir} financing cost compared to ${displayNameB}.`
     );
   }
 

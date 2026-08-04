@@ -24,7 +24,6 @@ import {
   formatDollarFirstDelta,
   formatSignedBasisPoints,
   formatLtvDelta,
-  determineLowestCost,
   ComparisonDeltas,
 } from "@/lib/comparisonSummary";
 
@@ -95,8 +94,11 @@ function KeyDifferencesBlock({
           value={formatDollarFirstDelta(deltas.monthlyPaymentDollarDelta, deltas.monthlyPaymentDelta, "/mo")} 
         />
         <DesktopMetricItem 
-          label="Total cost over time" 
-          value={formatDollarFirstDelta(deltas.totalCostDollarDelta, deltas.totalCostDelta)} 
+          label="Financing cost over modeled term" 
+          value={formatDollarFirstDelta(
+            deltas.financingCostDollarDelta ?? deltas.totalCostDollarDelta,
+            deltas.financingCostDelta ?? deltas.totalCostDelta
+          )} 
         />
         <DesktopMetricItem 
           label="Total interest" 
@@ -119,8 +121,11 @@ function KeyDifferencesBlock({
           value={formatDollarFirstDelta(deltas.monthlyPaymentDollarDelta, deltas.monthlyPaymentDelta, "/mo")} 
         />
         <MobileMetricRow 
-          label="Total cost over time" 
-          value={formatDollarFirstDelta(deltas.totalCostDollarDelta, deltas.totalCostDelta)} 
+          label="Financing cost over modeled term" 
+          value={formatDollarFirstDelta(
+            deltas.financingCostDollarDelta ?? deltas.totalCostDollarDelta,
+            deltas.financingCostDelta ?? deltas.totalCostDelta
+          )} 
         />
         <MobileMetricRow 
           label="Total interest" 
@@ -152,9 +157,6 @@ export function ComparisonSummary({ scenarioA, scenarioB, scenarioC }: Compariso
   // Calculate deltas
   const threeWayDeltas = calculateThreeWayDeltas(scenarioA, scenarioB, scenarioC);
   const { aVsB, cVsB } = threeWayDeltas;
-  
-  // Determine lowest cost for baseline label
-  const lowestCost = determineLowestCost(scenarioA, scenarioB, scenarioC);
   
   // Generate summary copy with scenario data for "Under these assumptions" format
   const summaryCopy = hasScenarioC

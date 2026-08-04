@@ -912,10 +912,10 @@ export function buildComparisonLayout(
                 ),
               },
               {
-                label: "Total cost (legacy)",
+                label: "Financing cost over modeled term",
                 value: formatDollarFirstDelta(
-                  aVsB.totalCostDollarDelta,
-                  aVsB.totalCostDelta
+                  aVsB.financingCostDollarDelta ?? aVsB.totalCostDollarDelta,
+                  aVsB.financingCostDelta ?? aVsB.totalCostDelta
                 ),
               },
               {
@@ -947,10 +947,10 @@ export function buildComparisonLayout(
                 ),
               },
               {
-                label: "Total cost (legacy)",
+                label: "Financing cost over modeled term",
                 value: formatDollarFirstDelta(
-                  cVsB!.totalCostDollarDelta,
-                  cVsB!.totalCostDelta
+                  cVsB!.financingCostDollarDelta ?? cVsB!.totalCostDollarDelta,
+                  cVsB!.financingCostDelta ?? cVsB!.totalCostDelta
                 ),
               },
               {
@@ -985,10 +985,10 @@ export function buildComparisonLayout(
             ),
           },
           {
-            label: "Total cost (legacy)",
+            label: "Financing cost over modeled term",
             value: formatDollarFirstDelta(
-              aVsB.totalCostDollarDelta,
-              aVsB.totalCostDelta
+              aVsB.financingCostDollarDelta ?? aVsB.totalCostDollarDelta,
+              aVsB.financingCostDelta ?? aVsB.totalCostDelta
             ),
           },
           {
@@ -1092,7 +1092,8 @@ export function buildComparisonLayout(
       "Comparison figures use each scenario's persisted activeSnapshot; exports do not recalculate.",
       "Financing cost excludes principal repayment; principal reduction is reported separately.",
       "All-in monthly housing payment is a secondary cash-flow metric.",
-      "Comparison summary narrative may still use legacy total-cost ranking until Phase 5 normalization.",
+      "Primary economic ranking uses financing cost over a shared decision horizon; principal repayment is excluded.",
+      "Scenarios with mismatched horizons or missing financing cost are excluded from the primary winner determination.",
       "Rates shown are assumed inputs, not lender quotes.",
       "No recommendation is implied by the order or presentation of scenarios.",
     ],

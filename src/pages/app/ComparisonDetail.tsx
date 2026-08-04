@@ -400,14 +400,22 @@ function MobileScenarioBlock({ scenario, label }: MobileScenarioBlockProps) {
       </MobileSection>
       
       {/* Long-term Cost */}
-      <MobileSection title="Long-term cost">
+      <MobileSection title="Cost over modeled term">
         <MobileMetricRow 
-          label="Total payments" 
-          value={scenario.results.totalCost ? formatCurrency(scenario.results.totalCost) : "—"} 
+          label="Financing cost" 
+          value={
+            scenario.activeSnapshot?.summary?.financingCostOverHorizon != null
+              ? formatCurrency(scenario.activeSnapshot.summary.financingCostOverHorizon)
+              : "—"
+          } 
         />
         <MobileMetricRow 
           label="Total interest" 
-          value={formatCurrency(scenario.results.totalInterest)} 
+          value={
+            scenario.activeSnapshot?.summary?.totalInterest != null
+              ? formatCurrency(scenario.activeSnapshot.summary.totalInterest)
+              : formatCurrency(scenario.results.totalInterest)
+          } 
         />
         <MobileMetricRow 
           label="Payoff date" 
@@ -821,19 +829,47 @@ export default function ComparisonDetail() {
           />
         </ComparisonSection>
 
-        {/* Section 3: Long-term Cost */}
-        <ComparisonSection title="Long-term cost">
+        {/* Section 3: Cost over modeled term */}
+        <ComparisonSection title="Cost over modeled term">
           <ComparisonRow 
-            label="Total payments" 
-            valueA={validScenarioA.results.totalCost ? formatCurrency(validScenarioA.results.totalCost) : null}
-            valueB={validScenarioB.results.totalCost ? formatCurrency(validScenarioB.results.totalCost) : null}
-            valueC={hasScenarioC ? (validScenarioC.results.totalCost ? formatCurrency(validScenarioC.results.totalCost) : null) : undefined}
+            label="Financing cost over modeled term" 
+            valueA={
+              validScenarioA.activeSnapshot?.summary?.financingCostOverHorizon != null
+                ? formatCurrency(validScenarioA.activeSnapshot.summary.financingCostOverHorizon)
+                : null
+            }
+            valueB={
+              validScenarioB.activeSnapshot?.summary?.financingCostOverHorizon != null
+                ? formatCurrency(validScenarioB.activeSnapshot.summary.financingCostOverHorizon)
+                : null
+            }
+            valueC={
+              hasScenarioC
+                ? (validScenarioC.activeSnapshot?.summary?.financingCostOverHorizon != null
+                    ? formatCurrency(validScenarioC.activeSnapshot.summary.financingCostOverHorizon)
+                    : null)
+                : undefined
+            }
           />
           <ComparisonRow 
             label="Total interest" 
-            valueA={formatCurrency(validScenarioA.results.totalInterest)}
-            valueB={formatCurrency(validScenarioB.results.totalInterest)}
-            valueC={hasScenarioC ? formatCurrency(validScenarioC.results.totalInterest) : undefined}
+            valueA={
+              validScenarioA.activeSnapshot?.summary?.totalInterest != null
+                ? formatCurrency(validScenarioA.activeSnapshot.summary.totalInterest)
+                : formatCurrency(validScenarioA.results.totalInterest)
+            }
+            valueB={
+              validScenarioB.activeSnapshot?.summary?.totalInterest != null
+                ? formatCurrency(validScenarioB.activeSnapshot.summary.totalInterest)
+                : formatCurrency(validScenarioB.results.totalInterest)
+            }
+            valueC={
+              hasScenarioC
+                ? (validScenarioC.activeSnapshot?.summary?.totalInterest != null
+                    ? formatCurrency(validScenarioC.activeSnapshot.summary.totalInterest)
+                    : formatCurrency(validScenarioC.results.totalInterest))
+                : undefined
+            }
           />
           <ComparisonRow 
             label="Payoff date" 
