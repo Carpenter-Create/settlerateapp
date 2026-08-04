@@ -24,6 +24,7 @@ import { ScenarioData } from "@/lib/scenarioContract";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
 import { ComparisonExportModal } from "@/components/export/ExportModal";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { resolveComparisonUpdateControl } from "@/lib/comparisonUpdateControl";
 import { ComparisonSummary } from "@/components/comparisons/ComparisonSummary";
 import { toast } from "sonner";
 
@@ -475,7 +476,18 @@ export default function ComparisonDetail() {
   const isMobile = useIsMobile();
   const { scenarios, isLoaded: scenariosLoaded } = useScenarios();
   const { getComparison, renameComparison, isLoaded: comparisonsLoaded } = useComparisons();
-  const { canExport, isLoading: capabilitiesLoading } = useCapabilities();
+  const {
+    canExport,
+    canUpdateComparison,
+    entitlementStatus,
+    isEntitlementPending,
+    isLoading: capabilitiesLoading,
+  } = useCapabilities();
+  const renameControl = resolveComparisonUpdateControl({
+    canUpdateComparison,
+    isEntitlementPending,
+    entitlementStatus,
+  });
 
   // Local state for the comparison name (for optimistic updates)
   const [localName, setLocalName] = useState<string | null>(null);
@@ -561,7 +573,7 @@ export default function ComparisonDetail() {
 
   // Rename handler
   const handleRename = useCallback(async (newName: string) => {
-    if (!id) return;
+    if (!renameControl.allowed || !id) return;
     try {
       await renameComparison({ id, name: newName });
       setLocalName(newName);
@@ -570,7 +582,7 @@ export default function ComparisonDetail() {
       toast.error("Unable to save name");
       throw error; // Re-throw so InlineEditableName knows to revert
     }
-  }, [id, renameComparison]);
+  }, [id, renameComparison, renameControl.allowed]);
 
   // ==========================================================================
   // RENDER STATES (NO OSCILLATION)
@@ -644,6 +656,7 @@ export default function ComparisonDetail() {
                 onSave={handleRename}
                 maxLength={80}
                 allowWrap
+                disabled={!renameControl.allowed}
               />
             </h1>
             
@@ -727,6 +740,7 @@ export default function ComparisonDetail() {
                 onSave={handleRename}
                 maxLength={80}
                 allowWrap
+                disabled={!renameControl.allowed}
               />
             </h1>
             <p className="text-sm text-muted-foreground">

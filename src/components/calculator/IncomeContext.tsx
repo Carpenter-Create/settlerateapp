@@ -22,11 +22,17 @@ import { X } from "lucide-react";
 interface IncomeContextProps {
   monthlyHousingPayment: number;
   onIncomeChange?: (grossMonthlyIncome: number | null) => void;
+  /** UI mirror of server income_context entitlement; default false. */
+  enabled?: boolean;
 }
 
 type IncomeType = "monthly" | "annual";
 
-export function IncomeContext({ monthlyHousingPayment, onIncomeChange }: IncomeContextProps) {
+export function IncomeContext({
+  monthlyHousingPayment,
+  onIncomeChange,
+  enabled = false,
+}: IncomeContextProps) {
   const [showInput, setShowInput] = useState(false);
   const [incomeValue, setIncomeValue] = useState<string>("");
   const [incomeType, setIncomeType] = useState<IncomeType>("annual");
@@ -60,6 +66,10 @@ export function IncomeContext({ monthlyHousingPayment, onIncomeChange }: IncomeC
   const percentOfIncome = savedIncome && savedIncome > 0
     ? Math.round((monthlyHousingPayment / savedIncome) * 100)
     : null;
+
+  if (!enabled) {
+    return null;
+  }
 
   if (!showInput && !savedIncome) {
     return (

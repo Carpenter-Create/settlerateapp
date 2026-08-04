@@ -1,0 +1,231 @@
+[
+  {
+    "label": "active professional",
+    "userId": "22222222-2222-2222-2222-222222222222",
+    "billing": {
+      "subscription_status": "active",
+      "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
+      "periodEndOffsetDays": 30,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "entitled",
+      "planCode": "professional",
+      "hasProfessionalAccess": true,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "trialing professional",
+    "userId": "22222222-2222-2222-2222-222222222222",
+    "billing": {
+      "subscription_status": "trialing",
+      "price_id": "price_1Sod513ppKk8xETzwcEPnT51",
+      "periodEndOffsetDays": 30,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "trial_entitled",
+      "planCode": "professional",
+      "hasProfessionalAccess": true,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "past_due read_only",
+    "userId": "33333333-3333-3333-3333-333333333333",
+    "billing": {
+      "subscription_status": "past_due",
+      "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
+      "periodEndOffsetDays": 30,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "read_only",
+      "planCode": "professional",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "unpaid read_only",
+    "userId": "33333333-3333-3333-3333-333333333333",
+    "billing": {
+      "subscription_status": "unpaid",
+      "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
+      "periodEndOffsetDays": 30,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "read_only",
+      "planCode": "professional",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "canceled free",
+    "userId": "11111111-1111-1111-1111-111111111111",
+    "billing": {
+      "subscription_status": "canceled",
+      "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
+      "periodEndOffsetDays": 30,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "free",
+      "planCode": "analytical",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "paused free",
+    "userId": "55555555-5555-5555-5555-555555555555",
+    "billing": {
+      "subscription_status": "paused",
+      "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
+      "periodEndOffsetDays": 30,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "free",
+      "planCode": "analytical",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "incomplete free",
+    "userId": "66666666-6666-6666-6666-666666666666",
+    "billing": {
+      "subscription_status": "incomplete",
+      "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
+      "periodEndOffsetDays": 30,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "free",
+      "planCode": "analytical",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "incomplete_expired free",
+    "userId": "77777777-7777-7777-7777-777777777777",
+    "billing": {
+      "subscription_status": "incomplete_expired",
+      "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
+      "periodEndOffsetDays": 30,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "free",
+      "planCode": "analytical",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "unknown price active maps free",
+    "userId": "88888888-8888-8888-8888-888888888888",
+    "billing": {
+      "subscription_status": "active",
+      "price_id": "price_unknown_not_allowlisted",
+      "periodEndOffsetDays": 30,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "free",
+      "planCode": "analytical",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "no billing row free",
+    "userId": "99999999-9999-9999-9999-999999999999",
+    "billing": null,
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "free",
+      "planCode": "analytical",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "advisor price active maps free",
+    "userId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "billing": {
+      "subscription_status": "active",
+      "price_id": "price_1Sod5F3ppKk8xETzl9EDOR6I",
+      "periodEndOffsetDays": 30,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "free",
+      "planCode": "analytical",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "null period end no grant",
+    "userId": "22222222-2222-2222-2222-222222222222",
+    "billing": {
+      "subscription_status": "active",
+      "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
+      "periodEndOffsetDays": null,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "free",
+      "planCode": "analytical",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "past period end no grant",
+    "userId": "22222222-2222-2222-2222-222222222222",
+    "billing": {
+      "subscription_status": "active",
+      "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
+      "periodEndOffsetDays": -30,
+      "cancel_at_period_end": true
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "free",
+      "planCode": "analytical",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": true
+    }
+  },
+  {
+    "label": "admin bypass",
+    "userId": "44444444-4444-4444-4444-444444444444",
+    "billing": null,
+    "isAdmin": true,
+    "expect": {
+      "entitlementStatus": "entitled",
+      "planCode": "professional",
+      "hasProfessionalAccess": true,
+      "cancelAtPeriodEnd": false,
+      "isAdminBypass": true
+    }
+  }
+]

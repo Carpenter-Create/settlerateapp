@@ -91,8 +91,14 @@ export type Database = {
       }
       billing: {
         Row: {
+          cancel_at_period_end: boolean
           current_period_end: string | null
+          entitlement_status: string | null
+          last_stripe_event_at: string | null
+          last_stripe_event_id: string | null
+          plan_code: string | null
           price_id: string | null
+          product_id: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_status: string | null
@@ -100,8 +106,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cancel_at_period_end?: boolean
           current_period_end?: string | null
+          entitlement_status?: string | null
+          last_stripe_event_at?: string | null
+          last_stripe_event_id?: string | null
+          plan_code?: string | null
           price_id?: string | null
+          product_id?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string | null
@@ -109,8 +121,14 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cancel_at_period_end?: boolean
           current_period_end?: string | null
+          entitlement_status?: string | null
+          last_stripe_event_at?: string | null
+          last_stripe_event_id?: string | null
+          plan_code?: string | null
           price_id?: string | null
+          product_id?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string | null
@@ -679,6 +697,40 @@ export type Database = {
       }
       generate_share_token: { Args: never; Returns: string }
       get_effective_tier: { Args: { target_user_id: string }; Returns: string }
+      evaluate_entitlement: { Args: { p_user_id: string }; Returns: Json }
+      feature_allowed: {
+        Args: {
+          p_user_id: string
+          p_feature: string
+          p_scenario_count?: number
+        }
+        Returns: boolean
+      }
+      assert_feature_allowed: { Args: { p_feature: string }; Returns: Json }
+      claim_stripe_webhook_event: {
+        Args: {
+          p_event_id: string
+          p_event_type: string
+          p_stripe_customer_id?: string
+          p_app_user_id?: string
+          p_action_taken?: string
+          p_details?: Json
+        }
+        Returns: boolean
+      }
+      log_admin_entitlement_bypass: {
+        Args: {
+          p_user_id: string
+          p_source: string
+          p_feature?: string
+          p_details?: Json
+        }
+        Returns: undefined
+      }
+      release_stripe_webhook_event: {
+        Args: { p_event_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

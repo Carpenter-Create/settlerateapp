@@ -9,21 +9,38 @@ import { UpgradeModal } from "@/components/billing/UpgradeModal";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  accountAccessConditionLabel,
+  accountPlanBadgeVariant,
+  accountPlanDescription,
+  planLabelFromCode,
+} from "@/lib/accountPlanDisplay";
 
 export default function Account() {
   const { user } = useAuth();
-  const { isPro, subscriptionEnd, refresh, isLoading } = useSubscription();
-  const { isAdmin, realIsAdmin, isSimulating, isLoading: capabilitiesLoading } = useCapabilities();
+  const {
+    isPro,
+    subscriptionEnd,
+    refresh,
+    isLoading,
+    cancelAtPeriodEnd,
+    entitlementStatus,
+    planCode,
+  } = useSubscription();
+  const planLabel = planLabelFromCode(planCode);
+  const accessCondition = accountAccessConditionLabel(entitlementStatus);
+  const planDescription = accountPlanDescription(planCode, entitlementStatus);
+  const { isAdmin, realIsAdmin, isLoading: capabilitiesLoading } = useCapabilities();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [billingError, setBillingError] = useState<"NO_STRIPE_CUSTOMER" | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Handle subscription success redirect
+  // Success URL never grants entitlement — refresh from verified billing state
   useEffect(() => {
     if (searchParams.get("subscription") === "success") {
-      toast("Subscription activated.", {
-        description: "Professional Access is now enabled.",
+      toast("Checkout completed.", {
+        description: "Access updates when Stripe confirms your subscription.",
       });
       refresh();
       setSearchParams({}, { replace: true });
@@ -40,7 +57,6 @@ export default function Account() {
   };
 
   const handleManageBilling = async () => {
-    // Never attempt billing portal for real admins (even when simulating)
     if (realIsAdmin) return;
 
     setBillingError(null);
@@ -145,10 +161,18 @@ export default function Account() {
         </p>
       </div>
 
-      {/* Simulation indicator */}
-      {isSimulating && (
+      {entitlementStatus === "read_only" && (
         <div className="rounded-sm border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-          Viewing as standard user. Billing UI is simulated.
+          Billing is past due. Existing scenarios remain readable and deletable.
+          Creating, editing, comparisons, exports, and shares are paused until
+          payment succeeds.
+        </div>
+      )}
+
+      {entitlementStatus === "trial_entitled" && (
+        <div className="rounded-sm border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+          Professional trial is active
+          {subscriptionEnd ? ` through ${formatDate(subscriptionEnd)}` : ""}.
         </div>
       )}
 
@@ -160,22 +184,25 @@ export default function Account() {
               <CreditCard className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-medium">Current Plan</h3>
-                <Badge variant={isPro ? "default" : "secondary"}>
-                  {isPro ? "Professional" : "Analytical"}
-                </Badge>
+                <Badge variant={accountPlanBadgeVariant(planCode)}>{planLabel}</Badge>
+                {accessCondition && (
+                  <Badge variant="secondary">{accessCondition}</Badge>
+                )}
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {isPro
-                  ? "Full access including exports, saved scenarios, and income-context views."
-                  : "Core mortgage modeling. Upgrade for extended features."}
-              </p>
+              <p className="mt-1 text-sm text-muted-foreground">{planDescription}</p>
 
-              {isPro && subscriptionEnd && !isSimulating && (
+              {planCode === "professional" && subscriptionEnd && (
                 <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  Renews on {formatDate(subscriptionEnd)}
+                  {entitlementStatus === "read_only"
+                    ? `Period ends ${formatDate(subscriptionEnd)}`
+                    : cancelAtPeriodEnd
+                      ? `Access continues through ${formatDate(subscriptionEnd)} (cancellation scheduled)`
+                      : entitlementStatus === "trial_entitled"
+                        ? `Trial ends ${formatDate(subscriptionEnd)}`
+                        : `Renews on ${formatDate(subscriptionEnd)}`}
                 </div>
               )}
             </div>
@@ -199,23 +226,22 @@ export default function Account() {
           )}
 
           <div className="flex flex-wrap gap-3">
-            {isPro ? (
-              <Button 
-                variant="outline" 
+            {isPro || entitlementStatus === "read_only" ? (
+              <Button
+                variant="outline"
                 className="rounded-sm"
                 onClick={handleManageBilling}
-                disabled={portalLoading || isSimulating}
+                disabled={portalLoading}
               >
                 <ExternalLink className="mr-2 h-4 w-4" />
-                {isSimulating ? "Manage billing (simulated)" : portalLoading ? "Opening…" : "Manage billing"}
+                {portalLoading ? "Opening…" : "Manage billing"}
               </Button>
             ) : (
-              <Button 
+              <Button
                 className="rounded-sm"
                 onClick={() => setShowUpgradeModal(true)}
-                disabled={isSimulating}
               >
-                {isSimulating ? "Upgrade (simulated)" : "Upgrade to Professional Access"}
+                Upgrade to Professional Access
               </Button>
             )}
           </div>
@@ -223,17 +249,17 @@ export default function Account() {
       </div>
 
       {/* Pro feature preview - only for non-pro users */}
-      {!isPro && (
+      {!isPro && entitlementStatus !== "read_only" && (
         <div className="border border-dashed border-border rounded-sm p-6">
           <h3 className="font-medium">Professional Access includes</h3>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
-              Unlimited scenario modeling
+              Unlimited saved scenarios
             </li>
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
-              Saved scenarios and revisions
+              Saved comparisons
             </li>
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
@@ -241,7 +267,7 @@ export default function Account() {
             </li>
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
-              Advisor- and lender-ready outputs
+              Share and export functionality
             </li>
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
@@ -252,9 +278,8 @@ export default function Account() {
             variant="outline"
             className="mt-6 rounded-sm"
             onClick={() => setShowUpgradeModal(true)}
-            disabled={isSimulating}
           >
-            {isSimulating ? "View options (simulated)" : "View upgrade options"}
+            View upgrade options
           </Button>
         </div>
       )}

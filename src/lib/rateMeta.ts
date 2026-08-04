@@ -1,11 +1,11 @@
 /**
  * Rate Metadata Types
  * 
- * Centralized types for rate source tracking and advisor locking.
+ * Centralized types for rate source tracking and admin rate locking.
  * Used across purchase, refinance, HELOC, and assumption scenarios.
- * 
- * Rate locking allows advisors to set and lock rate inputs so clients
- * cannot modify them. This is governance, not paywall logic.
+ *
+ * Rate locking allows server-verified admins to lock rate inputs so non-admin
+ * users cannot modify them. This is governance, not paywall logic.
  */
 
 import { RateSourceType, RATE_SOURCE_LABELS } from "./mortgage";
@@ -40,9 +40,9 @@ export const RATE_KEY_LABELS: Record<RateKey, string> = {
 export interface RateSourceMeta {
   sourceType: RateSourceType;
   sourceNote: string | null;
-  // Lock state - when locked, only advisors can edit
+  // Lock state - when locked, only server-verified admins can edit
   locked: boolean;
-  lockedBy: string | null; // user_id of advisor who locked
+  lockedBy: string | null; // user_id of admin who locked
   lockedAt: string | null; // ISO timestamp
 }
 
@@ -113,22 +113,22 @@ export function setComponentRateSource(
 }
 
 /**
- * Lock a rate field (advisor-only action)
+ * Lock a rate field (server-verified admin action)
  */
 export function lockRateField(
   rateMeta: RateMeta | undefined,
   rateKey: RateKey,
-  advisorUserId: string
+  adminUserId: string
 ): RateMeta {
   return setComponentRateSource(rateMeta, rateKey, {
     locked: true,
-    lockedBy: advisorUserId,
+    lockedBy: adminUserId,
     lockedAt: new Date().toISOString(),
   });
 }
 
 /**
- * Unlock a rate field (advisor-only action)
+ * Unlock a rate field (server-verified admin action)
  */
 export function unlockRateField(
   rateMeta: RateMeta | undefined,
@@ -142,11 +142,11 @@ export function unlockRateField(
 }
 
 /**
- * Lock all rate fields in the scenario (advisor-only action)
+ * Lock all rate fields in the scenario (server-verified admin action)
  */
 export function lockAllRates(
   rateMeta: RateMeta | undefined,
-  advisorUserId: string
+  adminUserId: string
 ): RateMeta {
   const current = rateMeta ?? { ...DEFAULT_RATE_META, components: {} };
   
@@ -154,7 +154,7 @@ export function lockAllRates(
     global: {
       ...current.global,
       locked: true,
-      lockedBy: advisorUserId,
+      lockedBy: adminUserId,
       lockedAt: new Date().toISOString(),
     },
     components: current.components,
@@ -162,7 +162,7 @@ export function lockAllRates(
 }
 
 /**
- * Unlock all rate fields in the scenario (advisor-only action)
+ * Unlock all rate fields in the scenario (server-verified admin action)
  */
 export function unlockAllRates(
   rateMeta: RateMeta | undefined

@@ -61,10 +61,10 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { user, signOut } = useAuth();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { canUsePro, isAdmin } = useCapabilities();
+  const { canUsePro, isAdmin, entitlementStatus } = useCapabilities();
   
-  // Check if user has access to pro features
-  const hasProAccess = canUsePro || isAdmin;
+  // Comparisons area: pro create, or read_only retain access to existing rows
+  const hasProAccess = canUsePro || isAdmin || entitlementStatus === "read_only";
   const handleSignOut = async () => {
     setMobileMenuOpen(false);
     await signOut();

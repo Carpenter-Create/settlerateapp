@@ -1,79 +1,78 @@
 /**
- * Hook for unified user capabilities
- * 
- * Combines admin status, advisor role, subscription tier,
- * and admin testing mode into a single source of truth.
+ * Unified UI capabilities — mirrors server entitlement decisions only.
+ * Does not grant access from localStorage, simulated tiers, or client Stripe status.
  */
 
-import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useEffectiveAccess, getEffectiveTier } from "@/hooks/useEffectiveAccess";
-import { supabase } from "@/integrations/supabase/client";
-import { getFeatureAccessWithAdminBypass } from "@/lib/authz";
+import { canEditLockedRatesCapability } from "@/lib/adminLockedRateCapability";
+import { resolveEffectiveFeatureAccess } from "@/lib/entitlementLoading";
 
 export function useCapabilities() {
-  const { user, isAnonymous } = useAuth();
   const { isAdmin: realIsAdmin, isLoading: adminLoading } = useAdmin();
-  const { tier: realTier, isLoading: subLoading } = useSubscription();
-  const { effectiveRole, effectiveTier, isSimulating, canSimulate } = useEffectiveAccess();
+  const {
+    isLoading: subLoading,
+    isPro,
+    features: resolvedFeatures,
+    planCode,
+    entitlementStatus,
+    cancelAtPeriodEnd,
+    subscriptionEnd,
+    scenarioCount,
+    isAdminBypass,
+    isEntitlementPending,
+    isEntitlementResolved,
+    isUsageRefreshPending,
+  } = useSubscription();
 
-  // Check for advisor role in user_roles table
-  const advisorQuery = useQuery({
-    queryKey: ["advisor-role", user?.id],
-    queryFn: async (): Promise<boolean> => {
-      if (!user?.id) return false;
+  const isScenarioMutationBlocked = isEntitlementPending || isUsageRefreshPending;
 
-      // If admin, they have advisor capabilities
-      if (realIsAdmin) return true;
-
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "advisor")
-        .maybeSingle();
-
-      if (error) {
-        return false;
-      }
-
-      return data !== null;
-    },
-    enabled: !!user?.id && !isAnonymous && !adminLoading,
-    staleTime: 5 * 60 * 1000,
+  const features = resolveEffectiveFeatureAccess({
+    isEntitlementPending,
+    resolvedFeatures,
   });
 
-  const isLoading = adminLoading || subLoading || advisorQuery.isLoading;
-
-  // Compute effective values based on simulation state
-  const isAdmin = realIsAdmin && effectiveRole === "admin";
-  const tier = getEffectiveTier(realTier, realIsAdmin, isSimulating, effectiveTier);
-  
-  const isAdvisor = isAdmin || advisorQuery.data || false;
-  const hasPaid = tier === "pro" || tier === "advisor";
-
-  // Feature access - respects simulation mode
-  const featureAccess = getFeatureAccessWithAdminBypass(tier, isAdmin);
+  const isLoading = adminLoading || subLoading || isEntitlementPending;
+  const hasPaid = isEntitlementPending ? false : isPro;
+  const canEditLockedRates = canEditLockedRatesCapability({
+    realIsAdmin,
+    adminLoading,
+    isEntitlementPending,
+  });
 
   return {
     isLoading,
-    // Real values (for testing panel visibility)
+    isEntitlementPending,
+    isEntitlementResolved,
+    isUsageRefreshPending,
+    isScenarioMutationBlocked,
     realIsAdmin,
-    // Effective values (for feature gating)
-    isAdmin,
-    isAdvisor,
+    isAdmin: realIsAdmin,
     hasPaid,
-    tier,
-    // Simulation state
-    isSimulating,
-    canSimulate,
-    // Unified capability flags
-    canUsePro: isAdmin || hasPaid,
-    canUseAdvisor: isAdmin || isAdvisor,
-    canApproveAdvisors: isAdmin,
-    // Feature-level access
-    ...featureAccess,
+    tier: planCode === "professional" ? "pro" : "free",
+    planCode,
+    entitlementStatus,
+    cancelAtPeriodEnd,
+    subscriptionEnd,
+    scenarioCount,
+    isAdminBypass,
+    isSimulating: false,
+    canSimulate: false,
+    canUsePro: hasPaid,
+    canEditLockedRates,
+    canModel: features.canModel,
+    canCompare: features.canCompareInSession,
+    canSave: features.canSaveScenario,
+    canExport: features.canExportPdf,
+    canViewIncomeContext: features.canViewIncomeContext,
+    canVersion: features.canSaveComparison,
+    canSaveComparison: features.canSaveComparison,
+    canCreateShare: features.canCreateShare,
+    canUpdateScenario: features.canUpdateScenario,
+    canDuplicateScenario: features.canDuplicateScenario,
+    canUpdateComparison: features.canSaveComparison,
+    atScenarioLimit: features.atScenarioLimit,
+    scenarioLimit: features.scenarioLimit,
+    scenariosRemaining: features.scenariosRemaining,
   };
 }

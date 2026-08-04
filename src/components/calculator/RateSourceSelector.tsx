@@ -5,7 +5,7 @@
  * - Rate source type (user_entered, advisor_quote, market_index, assumption)
  * - Optional note field for context
  * 
- * Shows lock status when rate is locked by advisor.
+ * Shows lock status when rate is locked by admin.
  * Rate source is informational only - it never restricts editing
  * (locking is handled separately).
  */

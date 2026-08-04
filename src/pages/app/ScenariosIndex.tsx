@@ -30,10 +30,14 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageShell } from "@/components/layout/PageShell";
 import { useScenarios } from "@/hooks/useScenarios";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { ScenarioCard } from "@/components/scenarios/ScenarioCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import { resolveNewScenarioControl } from "@/lib/newScenarioControl";
+import { resolveDuplicateScenarioControl } from "@/lib/duplicateScenarioControl";
+import { resolveScenarioEditControl } from "@/lib/scenarioEditControl";
 
 /**
  * Format relative time for display
@@ -124,6 +128,38 @@ export default function ScenariosIndex() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { scenarios, isLoaded, duplicateScenario, deleteScenario } = useScenarios();
+  const {
+    canSave,
+    canDuplicateScenario,
+    canUpdateScenario,
+    atScenarioLimit,
+    entitlementStatus,
+    isEntitlementPending,
+    isUsageRefreshPending,
+    isScenarioMutationBlocked,
+  } = useCapabilities();
+  const limitTitle = isScenarioMutationBlocked
+    ? undefined
+    : atScenarioLimit
+      ? "Free plan limit reached (3 saved scenarios)."
+      : entitlementStatus === "read_only"
+        ? "Scenarios are read-only until billing is updated."
+        : undefined;
+  const newScenarioControl = resolveNewScenarioControl(
+    canSave && !isUsageRefreshPending,
+    limitTitle
+  );
+  const duplicateControl = resolveDuplicateScenarioControl({
+    canDuplicateScenario,
+    isEntitlementPending: isScenarioMutationBlocked,
+    atScenarioLimit,
+    entitlementStatus,
+  });
+  const editControl = resolveScenarioEditControl({
+    canUpdateScenario,
+    isEntitlementPending,
+    entitlementStatus,
+  });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [scenarioToDelete, setScenarioToDelete] = useState<ScenarioData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -145,6 +181,7 @@ export default function ScenariosIndex() {
   };
 
   const handleDuplicate = async (scenario: ScenarioData) => {
+    if (!duplicateControl.allowed) return;
     try {
       const duplicated = await duplicateScenario(scenario.id);
       if (duplicated) {
@@ -199,24 +236,38 @@ export default function ScenariosIndex() {
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
             Create your first scenario to model a purchase or refinance.
           </p>
-          <Button asChild className="mt-6">
-            <Link to="/app/calculator">
+          {newScenarioControl.mode === "link" ? (
+            <Button asChild className="mt-6">
+              <Link to={newScenarioControl.to}>
+                <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                New scenario
+              </Link>
+            </Button>
+          ) : (
+            <Button className="mt-6" disabled title={newScenarioControl.title}>
               <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
               New scenario
-            </Link>
-          </Button>
+            </Button>
+          )}
         </div>
       </PageShell>
     );
   }
 
   const desktopActions = !isMobile ? (
-    <Button asChild variant="outline">
-      <Link to="/app/calculator">
+    newScenarioControl.mode === "link" ? (
+      <Button asChild variant="outline">
+        <Link to={newScenarioControl.to}>
+          <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
+          New scenario
+        </Link>
+      </Button>
+    ) : (
+      <Button variant="outline" disabled title={newScenarioControl.title}>
         <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
         New scenario
-      </Link>
-    </Button>
+      </Button>
+    )
   ) : undefined;
 
   return (
@@ -225,6 +276,16 @@ export default function ScenariosIndex() {
       subtitle="Saved mortgage models for comparison and export."
       actions={desktopActions}
     >
+      {entitlementStatus === "read_only" && (
+        <p className="mb-4 text-sm text-muted-foreground">
+          Your subscription is past due. Scenarios are read-only until billing is updated. You may still delete scenarios.
+        </p>
+      )}
+      {atScenarioLimit && entitlementStatus === "free" && (
+        <p className="mb-4 text-sm text-muted-foreground">
+          You have reached the free plan limit of 3 saved scenarios.
+        </p>
+      )}
       {/* Mobile: Card-based layout */}
       {isMobile ? (
         <div className="space-y-3 pb-20">
@@ -235,6 +296,8 @@ export default function ScenariosIndex() {
               onOpen={handleOpen}
               onDuplicate={handleDuplicate}
               onDelete={handleDeleteClick}
+              canDuplicate={duplicateControl.allowed}
+              duplicateTitle={duplicateControl.title}
             />
           ))}
         </div>
@@ -292,11 +355,24 @@ export default function ScenariosIndex() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/app/calculator?scenario=${scenario.id}`); }}>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (editControl.allowed) {
+                                navigate(`/app/calculator?scenario=${scenario.id}`);
+                              }
+                            }}
+                            disabled={!editControl.allowed}
+                            title={editControl.title}
+                          >
                             <FileEdit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(scenario); }}>
+                          <DropdownMenuItem
+                            onClick={(e) => { e.stopPropagation(); handleDuplicate(scenario); }}
+                            disabled={!duplicateControl.allowed}
+                            title={duplicateControl.title}
+                          >
                             <Copy className="mr-2 h-4 w-4" />
                             Duplicate
                           </DropdownMenuItem>
@@ -320,10 +396,10 @@ export default function ScenariosIndex() {
       )}
 
       {/* Mobile: Floating action button */}
-      {isMobile && (
+      {isMobile && newScenarioControl.mode === "link" && (
         <div className="fixed bottom-6 right-4 z-50">
           <Link
-            to="/app/calculator"
+            to={newScenarioControl.to}
             className="flex items-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background shadow-lg transition-transform active:scale-95"
           >
             <Plus className="h-4 w-4" strokeWidth={2} />

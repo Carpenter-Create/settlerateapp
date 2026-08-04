@@ -683,7 +683,7 @@ function buildScenarioLayout(scenario: ScenarioData): ExportLayout {
       `Snapshot: ${snapshotLabel} (calculator v${scenario.exportCalculatorVersion}).`,
       "Financing cost excludes principal repayment; principal reduction is reported separately.",
       "All-in monthly housing payment is a secondary cash-flow metric, not the primary cost ranking metric.",
-      "Rates shown are inputs provided by the user or advisor and are not lender quotes.",
+      "Rates shown are inputs provided by the user or lender and are not lender quotes.",
       "Summary reflects modeled totals under stated assumptions. Not financial advice.",
     ],
     disclaimer:
@@ -1122,6 +1122,25 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Server-authoritative entitlement (ownership checked below via RLS)
+    const { error: entitlementError } = await supabase.rpc("assert_feature_allowed", {
+      p_feature: "pdf_export",
+    });
+    if (entitlementError) {
+      console.error("EXPORT_PDF_ENTITLEMENT_DENIED:", {
+        user_id: user.id,
+        error: entitlementError.message,
+      });
+      return new Response(
+        JSON.stringify({
+          error: "Professional access required for PDF export",
+          code: "ENTITLEMENT_DENIED",
+          feature: "pdf_export",
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

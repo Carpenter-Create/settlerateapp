@@ -3,7 +3,7 @@
  * 
  * Input form for Loan Assumption scenarios.
  * Institutional, restrained UI following the Mercury-leaning standard.
- * Supports advisor rate locking for multiple rate fields.
+ * Supports admin rate locking for multiple rate fields.
  */
 
 import { useState, useCallback } from "react";
@@ -24,7 +24,7 @@ import { CurrencyInput } from "./CurrencyInput";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
 import { RateSourceSelector } from "./RateSourceSelector";
-import { AdvisorRateLockPanel } from "./AdvisorRateLockPanel";
+import { AdminRateLockPanel } from "./AdminRateLockPanel";
 import { LockedRateIndicator } from "./LockedRateIndicator";
 import { ChevronDown, ChevronUp, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -47,13 +47,12 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
   const rateMeta = inputs.rateMeta ?? DEFAULT_RATE_META;
   
   const { user } = useAuth();
-  const { canUseAdvisor } = useCapabilities();
+  const { canEditLockedRates } = useCapabilities();
   
   // Check if rates are locked
   const assumedRateLocked = isRateLocked(rateMeta, "assumption.assumed_apr");
   const gapSecondRateLocked = isRateLocked(rateMeta, "assumption.gap_second_apr");
   const gapHelocRateLocked = isRateLocked(rateMeta, "assumption.gap_heloc_apr");
-  const canEditLockedRates = canUseAdvisor;
   
   const [showEscrow, setShowEscrow] = useState(
     assumed.monthlyPmi > 0 || assumed.monthlyEscrow > 0
@@ -171,12 +170,12 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
         </div>
       </div>
       
-      {/* Advisor rate locking panel for assumption */}
-      {canUseAdvisor && user?.id && (
-        <AdvisorRateLockPanel
+      {/* Admin rate locking panel for assumption */}
+      {canEditLockedRates && user?.id && (
+        <AdminRateLockPanel
           rateMeta={rateMeta}
           onUpdateRateMeta={updateRateMeta}
-          advisorUserId={user.id}
+          adminUserId={user.id}
           scenarioType="assumption"
         />
       )}

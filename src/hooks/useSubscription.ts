@@ -1,24 +1,66 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { 
-  SubscriptionState, 
-  SubscriptionTier, 
-  getTierFromProductId,
-  getFeatureAccess,
-  FeatureAccess 
+import {
+  SubscriptionState,
+  SubscriptionTier,
+  FeatureAccess,
 } from "@/lib/stripe";
+import {
+  EntitlementDecision,
+  EntitlementStatus,
+  FeatureAccessFlags,
+  PlanCode,
+  featureAccessFromDecision,
+  planCodeToLegacyTier,
+} from "@/lib/entitlementContract";
 import { useCallback, useEffect } from "react";
+import {
+  buildAnonymousEntitlementState,
+  buildUnresolvedEntitlementState,
+  isAuthenticatedEntitlementPending,
+  isUsageRefreshPending,
+} from "@/lib/entitlementLoading";
+import { subscriptionQueryKey } from "@/lib/entitlementUsageRefresh";
 
 interface CheckSubscriptionResponse {
   subscribed: boolean;
   product_id: string | null;
   subscription_end: string | null;
   is_admin?: boolean;
+  is_admin_bypass?: boolean;
+  plan_code?: PlanCode;
+  entitlement_status?: EntitlementStatus;
+  cancel_at_period_end?: boolean;
+  price_id?: string | null;
+  stripe_status?: string | null;
+  features?: FeatureAccessFlags;
+  scenario_count?: number;
+  legacy_tier?: "free" | "pro";
   error?: string;
 }
 
-async function checkSubscription(accessToken: string): Promise<SubscriptionState> {
+export interface EntitlementState extends SubscriptionState {
+  planCode: PlanCode;
+  entitlementStatus: EntitlementStatus;
+  cancelAtPeriodEnd: boolean;
+  isAdminBypass: boolean;
+  scenarioCount: number;
+  features: FeatureAccessFlags;
+  decision: EntitlementDecision;
+}
+
+function flagsToLegacyFeatureAccess(flags: FeatureAccessFlags): FeatureAccess {
+  return {
+    canModel: flags.canModel,
+    canCompare: flags.canCompareInSession,
+    canSave: flags.canSaveScenario,
+    canExport: flags.canExportPdf,
+    canViewIncomeContext: flags.canViewIncomeContext,
+    canVersion: flags.canSaveComparison,
+  };
+}
+
+async function checkSubscription(accessToken: string): Promise<EntitlementState> {
   const response = await fetch(
     `https://vpcxzbaxhpucvevnkalo.supabase.co/functions/v1/check-subscription`,
     {
@@ -36,23 +78,47 @@ async function checkSubscription(accessToken: string): Promise<SubscriptionState
   }
 
   const data: CheckSubscriptionResponse = await response.json();
-  
-  // Admin users get full access regardless of Stripe status
-  if (data.is_admin) {
-    return {
-      tier: "advisor" as SubscriptionTier, // Highest tier for admin
-      isSubscribed: true,
-      productId: "admin_access",
-      subscriptionEnd: null,
-    };
-  }
-  
+
+  const decision: EntitlementDecision = {
+    planCode: data.plan_code ?? (data.subscribed ? "professional" : "analytical"),
+    entitlementStatus: data.entitlement_status ?? (data.subscribed ? "entitled" : "free"),
+    isAdminBypass: Boolean(data.is_admin_bypass ?? data.is_admin),
+    cancelAtPeriodEnd: Boolean(data.cancel_at_period_end),
+    currentPeriodEndsAt: data.subscription_end,
+    priceId: data.price_id ?? null,
+    stripeStatus: data.stripe_status ?? null,
+    hasProfessionalAccess: Boolean(data.subscribed),
+  };
+
+  const scenarioCount = data.scenario_count ?? 0;
+  const features =
+    data.features ??
+    featureAccessFromDecision(decision, { scenarioCount });
+
+  const tier: SubscriptionTier =
+    data.legacy_tier ?? planCodeToLegacyTier(decision.planCode);
+
   return {
-    tier: data.subscribed ? getTierFromProductId(data.product_id) : "free",
-    isSubscribed: data.subscribed,
+    tier,
+    isSubscribed: decision.hasProfessionalAccess,
     productId: data.product_id,
     subscriptionEnd: data.subscription_end,
+    planCode: decision.planCode,
+    entitlementStatus: decision.entitlementStatus,
+    cancelAtPeriodEnd: decision.cancelAtPeriodEnd,
+    isAdminBypass: decision.isAdminBypass,
+    scenarioCount,
+    features,
+    decision,
   };
+}
+
+function freeState(): EntitlementState {
+  return buildAnonymousEntitlementState();
+}
+
+function unresolvedState(): EntitlementState {
+  return buildUnresolvedEntitlementState();
 }
 
 export function useSubscription() {
@@ -60,55 +126,71 @@ export function useSubscription() {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["subscription", user?.id],
-    queryFn: async (): Promise<SubscriptionState> => {
-      // Anonymous users are always free tier
+    queryKey: subscriptionQueryKey(user?.id),
+    queryFn: async (): Promise<EntitlementState> => {
       if (!session?.access_token || isAnonymous) {
-        return {
-          tier: "free",
-          isSubscribed: false,
-          productId: null,
-          subscriptionEnd: null,
-        };
+        return freeState();
       }
-
       return checkSubscription(session.access_token);
     },
     enabled: !!user,
-    staleTime: 60 * 1000, // 1 minute
-    refetchInterval: 60 * 1000, // Refresh every minute
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
     refetchOnWindowFocus: true,
   });
 
-  // Refresh subscription when session changes
   useEffect(() => {
     if (session?.access_token && !isAnonymous) {
-      queryClient.invalidateQueries({ queryKey: ["subscription", user?.id] });
+      queryClient.invalidateQueries({ queryKey: subscriptionQueryKey(user?.id) });
     }
   }, [session?.access_token, isAnonymous, user?.id, queryClient]);
 
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["subscription", user?.id] });
+    queryClient.invalidateQueries({ queryKey: subscriptionQueryKey(user?.id) });
   }, [queryClient, user?.id]);
 
-  const tier: SubscriptionTier = query.data?.tier ?? "free";
-  const featureAccess: FeatureAccess = getFeatureAccess(tier);
+  const isEntitlementPending = isAuthenticatedEntitlementPending({
+    hasUser: Boolean(user),
+    isAnonymous,
+    isSubscriptionLoading: query.isLoading,
+    isSubscriptionSuccess: query.isSuccess,
+  });
+
+  const isUsageRefreshPendingFlag = isUsageRefreshPending({
+    hasUser: Boolean(user),
+    isAnonymous,
+    isSubscriptionSuccess: query.isSuccess,
+    isSubscriptionFetching: query.isFetching,
+  });
+
+  const state = query.data ?? (isEntitlementPending ? unresolvedState() : freeState());
+  const isEntitlementResolved = !isEntitlementPending;
+  const featureAccess = flagsToLegacyFeatureAccess(state.features);
 
   return {
     ...query,
-    tier,
-    isPro: tier === "pro" || tier === "advisor",
-    isAdvisor: tier === "advisor",
-    subscriptionEnd: query.data?.subscriptionEnd ?? null,
+    tier: state.tier,
+    isPro: state.isSubscribed,
+    subscriptionEnd: state.subscriptionEnd,
+    planCode: state.planCode,
+    entitlementStatus: state.entitlementStatus,
+    cancelAtPeriodEnd: state.cancelAtPeriodEnd,
+    isAdminBypass: state.isAdminBypass,
+    scenarioCount: state.scenarioCount,
+    features: state.features,
+    decision: state.decision,
     featureAccess,
+    isEntitlementResolved,
+    isEntitlementPending,
+    isUsageRefreshPending: isUsageRefreshPendingFlag,
     refresh,
   };
 }
 
 /**
- * Hook to check if a specific feature is available
+ * Hook to check if a specific feature is available (UI mirror of server decision).
  */
 export function useFeatureAccess() {
-  const { featureAccess, isPro, tier, isLoading } = useSubscription();
-  return { ...featureAccess, isPro, tier, isLoading };
+  const { featureAccess, isPro, tier, isLoading, features } = useSubscription();
+  return { ...featureAccess, isPro, tier, isLoading, features };
 }

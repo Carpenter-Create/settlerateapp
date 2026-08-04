@@ -70,7 +70,7 @@ export type RateSourceType = "user_entered" | "advisor_quote" | "market_index" |
  */
 export const RATE_SOURCE_LABELS: Record<RateSourceType, string> = {
   user_entered: "User-entered estimate",
-  advisor_quote: "Advisor quote",
+  advisor_quote: "Third-party quote",
   market_index: "Market index",
   assumption: "Planning assumption",
 } as const;

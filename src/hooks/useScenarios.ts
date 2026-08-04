@@ -7,6 +7,7 @@ import { calculateScenario } from "@/lib/scenarioCalculator";
 import { projectUiResults } from "@/lib/scenarioPersistence";
 import { scenarioStore, StoreSnapshot } from "@/lib/scenarioStore";
 import { useAuth } from "@/contexts/AuthContext";
+import { useInvalidateEntitlementUsage } from "@/hooks/useInvalidateEntitlementUsage";
 
 // Re-export for backward compatibility
 export type Scenario = ScenarioData;
@@ -18,6 +19,7 @@ export type SaveStatus = "idle" | "draft" | "saving" | "saved" | "error";
  */
 export function useScenarios() {
   const { user, isLoading: authLoading, signInAnonymously } = useAuth();
+  const refreshEntitlementUsage = useInvalidateEntitlementUsage();
   const [isInitialized, setIsInitialized] = useState(false);
   const initRef = useRef(false);
   const userIdRef = useRef<string | null>(null);
@@ -74,8 +76,14 @@ export function useScenarios() {
     if (!hasSession) {
       throw new Error("Unable to create session for scenario storage");
     }
-    return scenarioStore.createScenario(name, inputs, sourceScenarioId);
-  }, [ensureSession]);
+    const created = await scenarioStore.createScenario(name, inputs, sourceScenarioId);
+    try {
+      await refreshEntitlementUsage();
+    } catch {
+      // Usage reconciles on the next subscription fetch.
+    }
+    return created;
+  }, [ensureSession, refreshEntitlementUsage]);
 
   const updateScenario = useCallback(async (
     id: string, 
@@ -85,12 +93,25 @@ export function useScenarios() {
   }, []);
 
   const duplicateScenario = useCallback(async (id: string): Promise<ScenarioData | null> => {
-    return scenarioStore.duplicateScenario(id);
-  }, []);
+    const duplicated = await scenarioStore.duplicateScenario(id);
+    if (duplicated) {
+      try {
+        await refreshEntitlementUsage();
+      } catch {
+        // Usage reconciles on the next subscription fetch.
+      }
+    }
+    return duplicated;
+  }, [refreshEntitlementUsage]);
 
   const deleteScenario = useCallback(async (id: string): Promise<void> => {
-    return scenarioStore.deleteScenario(id);
-  }, []);
+    await scenarioStore.deleteScenario(id);
+    try {
+      await refreshEntitlementUsage();
+    } catch {
+      // Usage reconciles on the next subscription fetch.
+    }
+  }, [refreshEntitlementUsage]);
 
   const reload = useCallback(async (): Promise<void> => {
     return scenarioStore.reload();

@@ -84,7 +84,7 @@ export const METHODOLOGY_COPY = {
   title: "Scenario methodology",
   points: [
     "Calculations are based on standard amortization formulas.",
-    "Rates shown are inputs provided by the user or advisor and are not lender quotes.",
+    "Rates shown are inputs provided by the user or lender and are not lender quotes.",
     "Property taxes and insurance are estimates where applicable.",
     "Summary reflects modeled totals under stated assumptions. Not financial advice.",
   ],

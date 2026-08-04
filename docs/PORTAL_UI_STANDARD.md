@@ -146,9 +146,9 @@ Comparisons should feel like a spreadsheet done right, not a sales pitch.
 
 ---
 
-## ADVISOR VIEW (Future)
+## ADMIN RATE LOCK VIEW
 
-When an advisor views a scenario, they should think: "This client is prepared."
+When an admin locks rates for review workflows, the UI should remain institutional and non-directive.
 
 ### Header
 

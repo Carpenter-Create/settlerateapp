@@ -20,6 +20,7 @@ import { calculateAssumption, DEFAULT_ASSUMPTION_INPUTS } from "@/lib/assumption
 import { RateMeta, DEFAULT_RATE_META, isRateLocked } from "@/lib/rateMeta";
 import { Scenario, SaveStatus } from "@/hooks/useScenarios";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { cn } from "@/lib/utils";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
 import { LoanTermInput } from "./LoanTermInput";
@@ -36,7 +37,7 @@ import { MethodologyPanel } from "./MethodologyPanel";
 import { AmortizationTable } from "./AmortizationTable";
 import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import { RateSourceSelector } from "./RateSourceSelector";
-import { AdvisorRateLockPanel } from "./AdvisorRateLockPanel";
+import { AdminRateLockPanel } from "./AdminRateLockPanel";
 import { LockedRateIndicator } from "./LockedRateIndicator";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "./CurrencyInput";
@@ -108,14 +109,28 @@ export function ScenarioEditor({
   const [saveAsName, setSaveAsName] = useState("");
 
   const { user } = useAuth();
-  const { isAdvisor, canUseAdvisor } = useCapabilities();
+  const {
+    canEditLockedRates,
+    canSave,
+    canUpdateScenario,
+    canDuplicateScenario,
+    atScenarioLimit,
+    entitlementStatus,
+    isUsageRefreshPending,
+  } = useCapabilities();
+  const canCreateScenario = canSave && !isUsageRefreshPending;
+  const canDuplicateNow = canDuplicateScenario && !isUsageRefreshPending;
+  const readOnlyAccount = entitlementStatus === "read_only";
+  const limitTitle = atScenarioLimit
+    ? "Free plan limit reached (3 saved scenarios). Upgrade to save more."
+    : undefined;
+  const readOnlyTitle = readOnlyAccount
+    ? "Your subscription is past due. Update billing to edit scenarios."
+    : undefined;
   const rateMeta = inputs.rateMeta ?? DEFAULT_RATE_META;
 
   // Check if the mortgage rate is locked (for purchase/refinance)
   const mortgageRateLocked = isRateLocked(rateMeta, "mortgage.apr");
-  
-  // Clients cannot edit locked rates (only advisors can)
-  const canEditLockedRates = canUseAdvisor;
 
   // Helper to update shared inputs
   const updateShared = useCallback((updates: Partial<SharedInputs>) => {
@@ -130,11 +145,10 @@ export function ScenarioEditor({
 
   // Start renaming
   const handleStartRename = useCallback(() => {
-    if (activeScenario) {
-      setScenarioName(activeScenario.name);
-      setIsRenamingScenario(true);
-    }
-  }, [activeScenario]);
+    if (!canUpdateScenario || !activeScenario) return;
+    setScenarioName(activeScenario.name);
+    setIsRenamingScenario(true);
+  }, [activeScenario, canUpdateScenario]);
 
   // Save rename
   const handleSaveRename = useCallback(() => {
@@ -205,9 +219,13 @@ export function ScenarioEditor({
                   />
                 ) : (
                   <span 
-                    className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
-                    onClick={handleStartRename}
-                    title="Click to rename"
+                    className={cn(
+                      "text-sm text-muted-foreground",
+                      canUpdateScenario &&
+                        "cursor-pointer hover:text-foreground transition-colors"
+                    )}
+                    onClick={canUpdateScenario ? handleStartRename : undefined}
+                    title={canUpdateScenario ? "Click to rename" : readOnlyTitle}
                   >
                     {activeScenario.name}
                   </span>
@@ -294,12 +312,12 @@ export function ScenarioEditor({
                     />
                   </div>
                   
-                  {/* Advisor rate locking panel */}
-                  {canUseAdvisor && user?.id && (
-                    <AdvisorRateLockPanel
+                  {/* Admin rate locking panel */}
+                  {canEditLockedRates && user?.id && (
+                    <AdminRateLockPanel
                       rateMeta={rateMeta}
                       onUpdateRateMeta={updateRateMeta}
-                      advisorUserId={user.id}
+                      adminUserId={user.id}
                       scenarioType={inputs.mode}
                     />
                   )}
@@ -363,6 +381,13 @@ export function ScenarioEditor({
           </div>
 
           {/* Actions - minimal */}
+          {(atScenarioLimit || readOnlyAccount) && (
+            <p className="text-sm text-muted-foreground">
+              {readOnlyAccount
+                ? "Scenarios are read-only until billing is updated. You may still delete scenarios."
+                : "You have reached the free plan limit of 3 saved scenarios. Upgrade to save more."}
+            </p>
+          )}
           <div className="flex flex-wrap items-center gap-2">
             {isEditing ? (
               <>
@@ -370,8 +395,8 @@ export function ScenarioEditor({
                   onClick={onSave} 
                   size="sm" 
                   className="gap-1.5"
-                  disabled={!isDirty}
-                  title="Save current changes"
+                  disabled={!isDirty || !canUpdateScenario}
+                  title={readOnlyTitle ?? "Save current changes"}
                 >
                   <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
                   Save scenario
@@ -384,15 +409,15 @@ export function ScenarioEditor({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={handleOpenSaveAs}>
+                    <DropdownMenuItem onClick={handleOpenSaveAs} disabled={!canCreateScenario} title={limitTitle}>
                       <FilePlus className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
                       Save as new
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={onDuplicate}>
+                    <DropdownMenuItem onClick={onDuplicate} disabled={!canDuplicateNow} title={limitTitle}>
                       <Copy className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
                       Duplicate
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleStartRename}>
+                    <DropdownMenuItem onClick={handleStartRename} disabled={!canUpdateScenario} title={readOnlyTitle}>
                       <Pencil className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
                       Rename
                     </DropdownMenuItem>
@@ -416,7 +441,13 @@ export function ScenarioEditor({
               </>
             ) : (
               <>
-                <Button onClick={onSave} size="sm" className="gap-1.5">
+                <Button
+                  onClick={onSave}
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={!canCreateScenario}
+                  title={limitTitle}
+                >
                   <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
                   Save scenario
                 </Button>
@@ -484,7 +515,7 @@ export function ScenarioEditor({
                   onSaveAsNew(saveAsName.trim());
                 }
               }} 
-              disabled={!saveAsName.trim()}
+              disabled={!saveAsName.trim() || !canCreateScenario}
             >
               Save
             </Button>
