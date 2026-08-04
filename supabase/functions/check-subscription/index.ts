@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import {
+  evaluateEntitlement,
+  featureAccessFromDecision,
+  planCodeToLegacyTier,
+} from "../_shared/entitlementContract.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,33 +30,36 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
-
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
-    logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
-    logStep("Authenticating user with token");
-
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    logStep("User authenticated", { userId: user.id });
 
-    // Check if user is anonymous
     if (user.is_anonymous) {
-      logStep("Anonymous user, returning free tier");
+      const decision = evaluateEntitlement({ stripeStatus: null, priceId: null });
+      const flags = featureAccessFromDecision(decision, { scenarioCount: 0 });
       return new Response(
-        JSON.stringify({ subscribed: false, product_id: null, subscription_end: null, is_admin: false }),
+        JSON.stringify({
+          subscribed: false,
+          product_id: null,
+          subscription_end: null,
+          is_admin: false,
+          plan_code: decision.planCode,
+          entitlement_status: decision.entitlementStatus,
+          cancel_at_period_end: false,
+          features: flags,
+          scenario_count: 0,
+          legacy_tier: "free",
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
     }
 
-    // Check if user has admin role - admins bypass all billing checks
     const { data: adminRole } = await supabaseClient
       .from("user_roles")
       .select("role")
@@ -60,62 +67,59 @@ serve(async (req) => {
       .eq("role", "admin")
       .maybeSingle();
 
-    if (adminRole) {
-      logStep("Admin user detected, granting full access", { userId: user.id });
-      return new Response(
-        JSON.stringify({ 
-          subscribed: true, 
-          product_id: "admin_access", 
-          subscription_end: null,
-          is_admin: true 
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-      );
-    }
+    const isAdmin = Boolean(adminRole);
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const { count: scenarioCount } = await supabaseClient
+      .from("scenarios")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("is_archived", false);
 
-    if (customers.data.length === 0) {
-      logStep("No Stripe customer found, returning unsubscribed state");
-      return new Response(
-        JSON.stringify({ subscribed: false, product_id: null, subscription_end: null, is_admin: false }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-      );
-    }
+    const { data: billing } = await supabaseClient
+      .from("billing")
+      .select(
+        "subscription_status, price_id, product_id, current_period_end, cancel_at_period_end, plan_code, entitlement_status, stripe_customer_id"
+      )
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    const customerId = customers.data[0].id;
-    logStep("Found Stripe customer", { customerId });
-
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "active",
-      limit: 1,
+    // Authoritative: verified billing row (webhook), not client or success URL
+    const decision = evaluateEntitlement({
+      stripeStatus: billing?.subscription_status ?? null,
+      priceId: billing?.price_id ?? null,
+      productId: billing?.product_id ?? null,
+      currentPeriodEndsAt: billing?.current_period_end ?? null,
+      cancelAtPeriodEnd: billing?.cancel_at_period_end ?? false,
+      isAdmin,
     });
 
-    const hasActiveSub = subscriptions.data.length > 0;
-    let productId: string | null = null;
-    let subscriptionEnd: string | null = null;
+    // Admin bypass is logged when a protected feature is asserted (assert_feature_allowed),
+    // not on every status poll.
 
-    if (hasActiveSub) {
-      const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      productId = subscription.items.data[0].price.product as string;
-      logStep("Active subscription found", { 
-        subscriptionId: subscription.id, 
-        productId, 
-        endDate: subscriptionEnd 
-      });
-    } else {
-      logStep("No active subscription found");
-    }
+    const flags = featureAccessFromDecision(decision, {
+      scenarioCount: scenarioCount ?? 0,
+    });
+
+    const legacyTier = planCodeToLegacyTier(
+      decision.hasProfessionalAccess ? "professional" : "analytical"
+    );
 
     return new Response(
       JSON.stringify({
-        subscribed: hasActiveSub,
-        product_id: productId,
-        subscription_end: subscriptionEnd,
-        is_admin: false,
+        subscribed: decision.hasProfessionalAccess,
+        product_id: isAdmin ? "admin_access" : billing?.product_id ?? null,
+        subscription_end: decision.currentPeriodEndsAt,
+        is_admin: isAdmin,
+        plan_code: decision.planCode,
+        entitlement_status: decision.entitlementStatus,
+        cancel_at_period_end: decision.cancelAtPeriodEnd,
+        price_id: decision.priceId,
+        stripe_status: decision.stripeStatus,
+        stripe_customer_id: billing?.stripe_customer_id ?? null,
+        features: flags,
+        scenario_count: scenarioCount ?? 0,
+        legacy_tier: legacyTier,
+        is_admin_bypass: decision.isAdminBypass,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );

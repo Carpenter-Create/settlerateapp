@@ -1125,6 +1125,25 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Server-authoritative entitlement (ownership checked below via RLS)
+    const { error: entitlementError } = await supabase.rpc("assert_feature_allowed", {
+      p_feature: "pdf_export",
+    });
+    if (entitlementError) {
+      console.error("EXPORT_PDF_ENTITLEMENT_DENIED:", {
+        user_id: user.id,
+        error: entitlementError.message,
+      });
+      return new Response(
+        JSON.stringify({
+          error: "Professional access required for PDF export",
+          code: "ENTITLEMENT_DENIED",
+          feature: "pdf_export",
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     let pdfBytes: Uint8Array;
     let filename: string;
 

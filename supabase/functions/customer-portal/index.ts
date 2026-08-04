@@ -22,7 +22,6 @@ serve(async (req) => {
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -32,16 +31,14 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
-    logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    logStep("User authenticated", { userId: user.id });
 
-    // Check if user is admin - admins don't need billing portal
     const { data: adminRole } = await supabaseClient
       .from("user_roles")
       .select("role")
@@ -51,24 +48,45 @@ serve(async (req) => {
 
     if (adminRole) {
       logStep("Admin user detected, billing portal not applicable");
+      await supabaseClient.rpc("log_admin_entitlement_bypass", {
+        p_user_id: user.id,
+        p_source: "customer-portal",
+        p_feature: "billing_manage",
+        p_details: { action: "portal_not_applicable" },
+      });
       return new Response(
         JSON.stringify({ code: "ADMIN_USER", error: "Billing not required for administrator access" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
     }
 
+    // Prefer normalized billing mapping over email search
+    const { data: billing } = await supabaseClient
+      .from("billing")
+      .select("stripe_customer_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    let customerId = billing?.stripe_customer_id ?? null;
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    
-    if (customers.data.length === 0) {
-      logStep("No Stripe customer found for this user");
-      return new Response(
-        JSON.stringify({ code: "NO_STRIPE_CUSTOMER", error: "No billing profile found" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+
+    if (!customerId) {
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      if (customers.data.length === 0) {
+        logStep("No Stripe customer found");
+        return new Response(
+          JSON.stringify({ code: "NO_STRIPE_CUSTOMER", error: "No billing profile found" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
+      }
+      customerId = customers.data[0].id;
+      await supabaseClient.from("billing").upsert(
+        { user_id: user.id, stripe_customer_id: customerId },
+        { onConflict: "user_id" }
       );
     }
-    
-    const customerId = customers.data[0].id;
+
     logStep("Found Stripe customer", { customerId });
 
     const origin = req.headers.get("origin") || "https://vpcxzbaxhpucvevnkalo.lovable.app";
@@ -76,8 +94,8 @@ serve(async (req) => {
       customer: customerId,
       return_url: `${origin}/app/account`,
     });
-    
-    logStep("Customer portal session created", { sessionId: portalSession.id, url: portalSession.url });
+
+    logStep("Customer portal session created", { sessionId: portalSession.id });
 
     return new Response(
       JSON.stringify({ url: portalSession.url }),

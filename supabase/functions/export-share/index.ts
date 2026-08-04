@@ -175,6 +175,21 @@ async function handleCreateShare(req: Request): Promise<Response> {
     );
   }
 
+  // Server-authoritative entitlement
+  const { error: entitlementError } = await supabase.rpc("assert_feature_allowed", {
+    p_feature: "share_create",
+  });
+  if (entitlementError) {
+    return new Response(
+      JSON.stringify({
+        error: "Professional access required to create shares",
+        code: "ENTITLEMENT_DENIED",
+        feature: "share_create",
+      }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
   // Parse request body
   const body = await req.json();
   const { entityType, entityId, expiresInDays } = body as {
@@ -197,8 +212,8 @@ async function handleCreateShare(req: Request): Promise<Response> {
     );
   }
 
-  // Verify ownership of the entity
-  const tableName = entityType === "scenario" ? "scenarios" : "saved_comparisons";
+  // Verify ownership of the entity (canonical comparison table is user_comparisons)
+  const tableName = entityType === "scenario" ? "scenarios" : "user_comparisons";
   const { data: entity, error: entityError } = await supabase
     .from(tableName)
     .select("id, user_id")

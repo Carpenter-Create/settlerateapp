@@ -1,6 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import {
+  evaluateEntitlement,
+  isAllowlistedProfessionalPrice,
+  resolvePlanCodeFromPrice,
+} from "../_shared/entitlementContract.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,13 +23,6 @@ interface WebhookLog {
 
 const logWebhook = (log: WebhookLog) => {
   console.log(`[STRIPE-WEBHOOK] ${JSON.stringify(log)}`);
-};
-
-// Map Stripe product IDs to tier names
-const PRODUCT_TO_TIER: Record<string, string> = {
-  "prod_TmBRSW3mqUk9l9": "pro",
-  "prod_TmBRGPUBjfB7DR": "pro",
-  "prod_TmBSkiojosKhTo": "advisor",
 };
 
 serve(async (req) => {
@@ -50,6 +48,21 @@ serve(async (req) => {
     });
   }
 
+  if (!webhookSecret) {
+    logWebhook({
+      event_type: "error",
+      stripe_customer_id: null,
+      app_user_id: null,
+      user_role: null,
+      action_taken: "rejected",
+      details: { error: "STRIPE_WEBHOOK_SECRET not set" },
+    });
+    return new Response(JSON.stringify({ error: "Webhook signature required" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -59,239 +72,72 @@ serve(async (req) => {
 
   try {
     const body = await req.text();
-    let event: Stripe.Event;
-
-    // Verify webhook signature if secret is configured
-    if (webhookSecret) {
-      const signature = req.headers.get("stripe-signature");
-      if (!signature) {
-        return new Response(JSON.stringify({ error: "Missing signature" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-    } else {
-      // Development mode - parse without verification
-      event = JSON.parse(body);
-      console.warn("[STRIPE-WEBHOOK] Running without signature verification");
+    const signature = req.headers.get("stripe-signature");
+    if (!signature) {
+      return new Response(JSON.stringify({ error: "Missing signature" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
+    const event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     const eventType = event.type;
+
+    // Idempotency: claim event id before processing
+    const { data: claimed, error: claimError } = await supabase.rpc("claim_stripe_webhook_event", {
+      p_event_id: event.id,
+      p_event_type: eventType,
+      p_action_taken: "received",
+    });
+
+    if (claimError) {
+      logWebhook({
+        event_type: eventType,
+        stripe_customer_id: null,
+        app_user_id: null,
+        user_role: null,
+        action_taken: "error",
+        details: { error: claimError.message, phase: "claim" },
+      });
+      return new Response(JSON.stringify({ error: "Idempotency claim failed" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (claimed === false) {
+      logWebhook({
+        event_type: eventType,
+        stripe_customer_id: null,
+        app_user_id: null,
+        user_role: null,
+        action_taken: "duplicate",
+        details: { event_id: event.id },
+      });
+      return new Response(JSON.stringify({ received: true, duplicate: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     logWebhook({
       event_type: eventType,
       stripe_customer_id: null,
       app_user_id: null,
       user_role: null,
       action_taken: "received",
+      details: { event_id: event.id },
     });
 
-    // Handle subscription events
-    if (
+    const handled =
       eventType === "customer.subscription.created" ||
       eventType === "customer.subscription.updated" ||
       eventType === "customer.subscription.deleted" ||
       eventType === "checkout.session.completed" ||
       eventType === "invoice.paid" ||
-      eventType === "invoice.payment_failed"
-    ) {
-      let stripeCustomerId: string | null = null;
-      let subscriptionStatus: string | null = null;
-      let productId: string | null = null;
-      let priceId: string | null = null;
-      let subscriptionId: string | null = null;
-      let currentPeriodEnd: number | null = null;
+      eventType === "invoice.payment_failed";
 
-      // Extract data based on event type
-      if (eventType.startsWith("customer.subscription")) {
-        const subscription = event.data.object as Stripe.Subscription;
-        stripeCustomerId = subscription.customer as string;
-        subscriptionStatus = subscription.status;
-        subscriptionId = subscription.id;
-        currentPeriodEnd = subscription.current_period_end;
-        if (subscription.items.data.length > 0) {
-          priceId = subscription.items.data[0].price.id;
-          productId = subscription.items.data[0].price.product as string;
-        }
-      } else if (eventType === "checkout.session.completed") {
-        const session = event.data.object as Stripe.Checkout.Session;
-        stripeCustomerId = session.customer as string;
-        subscriptionId = session.subscription as string;
-        
-        // Fetch subscription details
-        if (subscriptionId) {
-          const sub = await stripe.subscriptions.retrieve(subscriptionId);
-          subscriptionStatus = sub.status;
-          currentPeriodEnd = sub.current_period_end;
-          if (sub.items.data.length > 0) {
-            priceId = sub.items.data[0].price.id;
-            productId = sub.items.data[0].price.product as string;
-          }
-        }
-      } else if (eventType.startsWith("invoice")) {
-        const invoice = event.data.object as Stripe.Invoice;
-        stripeCustomerId = invoice.customer as string;
-        subscriptionId = invoice.subscription as string;
-        
-        if (subscriptionId && eventType === "invoice.paid") {
-          const sub = await stripe.subscriptions.retrieve(subscriptionId);
-          subscriptionStatus = sub.status;
-          currentPeriodEnd = sub.current_period_end;
-          if (sub.items.data.length > 0) {
-            priceId = sub.items.data[0].price.id;
-            productId = sub.items.data[0].price.product as string;
-          }
-        }
-      }
-
-      if (!stripeCustomerId) {
-        logWebhook({
-          event_type: eventType,
-          stripe_customer_id: null,
-          app_user_id: null,
-          user_role: null,
-          action_taken: "skipped",
-          details: { reason: "No customer ID in event" },
-        });
-        return new Response(JSON.stringify({ received: true }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Resolve app user from Stripe customer
-      const customer = await stripe.customers.retrieve(stripeCustomerId);
-      if (customer.deleted) {
-        logWebhook({
-          event_type: eventType,
-          stripe_customer_id: stripeCustomerId,
-          app_user_id: null,
-          user_role: null,
-          action_taken: "skipped",
-          details: { reason: "Customer deleted in Stripe" },
-        });
-        return new Response(JSON.stringify({ received: true }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const customerEmail = customer.email;
-      if (!customerEmail) {
-        logWebhook({
-          event_type: eventType,
-          stripe_customer_id: stripeCustomerId,
-          app_user_id: null,
-          user_role: null,
-          action_taken: "skipped",
-          details: { reason: "No email on customer" },
-        });
-        return new Response(JSON.stringify({ received: true }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Find app user by email
-      const { data: users } = await supabase.auth.admin.listUsers();
-      const appUser = users?.users?.find((u) => u.email === customerEmail);
-
-      if (!appUser) {
-        logWebhook({
-          event_type: eventType,
-          stripe_customer_id: stripeCustomerId,
-          app_user_id: null,
-          user_role: null,
-          action_taken: "skipped",
-          details: { reason: "No app user found for email", email: customerEmail },
-        });
-        return new Response(JSON.stringify({ received: true }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // ============================================================
-      // CRITICAL: Check if user is admin - NEVER modify admin access
-      // Database trigger also protects this, but we exit early for safety
-      // ============================================================
-      const { data: adminRole } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", appUser.id)
-        .eq("role", "admin")
-        .maybeSingle();
-
-      if (adminRole) {
-        logWebhook({
-          event_type: eventType,
-          stripe_customer_id: stripeCustomerId,
-          app_user_id: appUser.id,
-          user_role: "admin",
-          action_taken: "ignored",
-          details: { 
-            reason: "Admin user - billing changes do not affect access",
-            note: "Database trigger also prevents admin billing modifications"
-          },
-        });
-        
-        // Log to audit table for observability
-        await supabase.rpc("log_webhook_admin_ignored", {
-          p_user_id: appUser.id,
-          p_email: customerEmail,
-          p_event_type: eventType,
-        });
-        
-        return new Response(JSON.stringify({ received: true }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Standard user - process billing update
-      const tier = productId ? (PRODUCT_TO_TIER[productId] || "free") : "free";
-      const isActive = subscriptionStatus === "active" || subscriptionStatus === "trialing";
-
-      // Upsert billing record
-      const billingData = {
-        user_id: appUser.id,
-        stripe_customer_id: stripeCustomerId,
-        stripe_subscription_id: subscriptionId,
-        subscription_status: eventType === "customer.subscription.deleted" ? "canceled" : subscriptionStatus,
-        price_id: priceId,
-        current_period_end: currentPeriodEnd
-          ? new Date(currentPeriodEnd * 1000).toISOString()
-          : null,
-      };
-
-      const { error: billingError } = await supabase
-        .from("billing")
-        .upsert(billingData, { onConflict: "user_id" });
-
-      if (billingError) {
-        logWebhook({
-          event_type: eventType,
-          stripe_customer_id: stripeCustomerId,
-          app_user_id: appUser.id,
-          user_role: "user",
-          action_taken: "error",
-          details: { error: billingError.message },
-        });
-      } else {
-        logWebhook({
-          event_type: eventType,
-          stripe_customer_id: stripeCustomerId,
-          app_user_id: appUser.id,
-          user_role: "user",
-          action_taken: "updated",
-          details: {
-            tier,
-            status: billingData.subscription_status,
-            isActive,
-          },
-        });
-      }
-    } else {
+    if (!handled) {
       logWebhook({
         event_type: eventType,
         stripe_customer_id: null,
@@ -299,7 +145,274 @@ serve(async (req) => {
         user_role: null,
         action_taken: "unhandled",
       });
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
+
+    let stripeCustomerId: string | null = null;
+    let subscriptionStatus: string | null = null;
+    let productId: string | null = null;
+    let priceId: string | null = null;
+    let subscriptionId: string | null = null;
+    let currentPeriodEnd: number | null = null;
+    let cancelAtPeriodEnd = false;
+    let metadataUserId: string | null = null;
+
+    if (eventType.startsWith("customer.subscription")) {
+      const subscription = event.data.object as Stripe.Subscription;
+      stripeCustomerId = subscription.customer as string;
+      subscriptionStatus =
+        eventType === "customer.subscription.deleted" ? "canceled" : subscription.status;
+      subscriptionId = subscription.id;
+      currentPeriodEnd = subscription.current_period_end;
+      cancelAtPeriodEnd = Boolean(subscription.cancel_at_period_end);
+      metadataUserId = (subscription.metadata?.user_id as string) || null;
+      if (subscription.items.data.length > 0) {
+        priceId = subscription.items.data[0].price.id;
+        productId = subscription.items.data[0].price.product as string;
+      }
+    } else if (eventType === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      stripeCustomerId = session.customer as string;
+      subscriptionId = session.subscription as string;
+      metadataUserId = (session.metadata?.user_id as string) || null;
+      if (subscriptionId) {
+        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        subscriptionStatus = sub.status;
+        currentPeriodEnd = sub.current_period_end;
+        cancelAtPeriodEnd = Boolean(sub.cancel_at_period_end);
+        if (sub.items.data.length > 0) {
+          priceId = sub.items.data[0].price.id;
+          productId = sub.items.data[0].price.product as string;
+        }
+      }
+    } else if (eventType.startsWith("invoice")) {
+      const invoice = event.data.object as Stripe.Invoice;
+      stripeCustomerId = invoice.customer as string;
+      subscriptionId = (invoice.subscription as string) || null;
+      if (subscriptionId) {
+        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        subscriptionStatus = sub.status;
+        currentPeriodEnd = sub.current_period_end;
+        cancelAtPeriodEnd = Boolean(sub.cancel_at_period_end);
+        if (sub.items.data.length > 0) {
+          priceId = sub.items.data[0].price.id;
+          productId = sub.items.data[0].price.product as string;
+        }
+      }
+    }
+
+    if (!stripeCustomerId) {
+      logWebhook({
+        event_type: eventType,
+        stripe_customer_id: null,
+        app_user_id: null,
+        user_role: null,
+        action_taken: "skipped",
+        details: { reason: "No customer ID in event", event_id: event.id },
+      });
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Reject unknown prices for entitlement mapping (still persist raw status)
+    if (priceId && !isAllowlistedProfessionalPrice(priceId)) {
+      logWebhook({
+        event_type: eventType,
+        stripe_customer_id: stripeCustomerId,
+        app_user_id: null,
+        user_role: null,
+        action_taken: "price_rejected",
+        details: { priceId, note: "Not on Professional allowlist; no paid entitlement grant" },
+      });
+    }
+
+    // Resolve app user: billing mapping → metadata → customer metadata → email
+    let appUserId: string | null = null;
+
+    const { data: billingByCustomer } = await supabase
+      .from("billing")
+      .select("user_id")
+      .eq("stripe_customer_id", stripeCustomerId)
+      .maybeSingle();
+
+    if (billingByCustomer?.user_id) {
+      appUserId = billingByCustomer.user_id;
+    }
+
+    if (!appUserId && metadataUserId) {
+      appUserId = metadataUserId;
+    }
+
+    const customer = await stripe.customers.retrieve(stripeCustomerId);
+    if (!customer.deleted) {
+      if (!appUserId && customer.metadata?.user_id) {
+        appUserId = customer.metadata.user_id;
+      }
+
+      if (!appUserId && customer.email) {
+        const { data: listed, error: listError } = await supabase.auth.admin.listUsers({
+          page: 1,
+          perPage: 200,
+        });
+        if (!listError && listed?.users) {
+          const match = listed.users.find((u) => u.email === customer.email);
+          if (match) appUserId = match.id;
+        }
+      }
+    }
+
+    if (!appUserId) {
+      logWebhook({
+        event_type: eventType,
+        stripe_customer_id: stripeCustomerId,
+        app_user_id: null,
+        user_role: null,
+        action_taken: "skipped",
+        details: { reason: "No app user mapping", event_id: event.id },
+      });
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: adminRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", appUserId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (adminRole) {
+      logWebhook({
+        event_type: eventType,
+        stripe_customer_id: stripeCustomerId,
+        app_user_id: appUserId,
+        user_role: "admin",
+        action_taken: "ignored",
+        details: {
+          reason: "Admin user - billing changes do not affect access",
+          event_id: event.id,
+        },
+      });
+      await supabase.rpc("log_admin_entitlement_bypass", {
+        p_user_id: appUserId,
+        p_source: "stripe-webhook",
+        p_feature: null,
+        p_details: { event_type: eventType, event_id: event.id, action: "billing_ignored" },
+      });
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const planCode = resolvePlanCodeFromPrice(priceId);
+    const decision = evaluateEntitlement({
+      stripeStatus: subscriptionStatus,
+      priceId,
+      productId,
+      currentPeriodEndsAt: currentPeriodEnd
+        ? new Date(currentPeriodEnd * 1000).toISOString()
+        : null,
+      cancelAtPeriodEnd,
+    });
+
+    const billingData = {
+      user_id: appUserId,
+      stripe_customer_id: stripeCustomerId,
+      stripe_subscription_id: subscriptionId,
+      subscription_status: subscriptionStatus,
+      price_id: priceId,
+      product_id: productId,
+      cancel_at_period_end: cancelAtPeriodEnd,
+      plan_code: planCode,
+      entitlement_status: decision.entitlementStatus,
+      current_period_end: currentPeriodEnd
+        ? new Date(currentPeriodEnd * 1000).toISOString()
+        : null,
+      last_stripe_event_id: event.id,
+      last_stripe_event_at: new Date().toISOString(),
+    };
+
+    const { error: billingError } = await supabase
+      .from("billing")
+      .upsert(billingData, { onConflict: "user_id" });
+
+    if (billingError) {
+      logWebhook({
+        event_type: eventType,
+        stripe_customer_id: stripeCustomerId,
+        app_user_id: appUserId,
+        user_role: "user",
+        action_taken: "error",
+        details: { error: billingError.message },
+      });
+      return new Response(JSON.stringify({ error: billingError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Best-effort legacy subscriptions sync (billing remains authoritative)
+    if (subscriptionId && subscriptionStatus) {
+      const { error: subError } = await supabase.from("subscriptions").upsert(
+        {
+          user_id: appUserId,
+          stripe_customer_id: stripeCustomerId,
+          stripe_subscription_id: subscriptionId,
+          status: subscriptionStatus,
+          plan_key: planCode === "professional" ? "professional" : "analytical",
+          cancel_at_period_end: cancelAtPeriodEnd,
+          current_period_end: billingData.current_period_end,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "stripe_subscription_id" }
+      );
+      if (subError) {
+        logWebhook({
+          event_type: eventType,
+          stripe_customer_id: stripeCustomerId,
+          app_user_id: appUserId,
+          user_role: "user",
+          action_taken: "subscriptions_sync_skipped",
+          details: { error: subError.message },
+        });
+      }
+    }
+
+    await supabase
+      .from("stripe_webhook_events")
+      .update({
+        stripe_customer_id: stripeCustomerId,
+        app_user_id: appUserId,
+        action_taken: "updated",
+        details: {
+          entitlementStatus: decision.entitlementStatus,
+          planCode,
+          priceId,
+        },
+      })
+      .eq("event_id", event.id);
+
+    logWebhook({
+      event_type: eventType,
+      stripe_customer_id: stripeCustomerId,
+      app_user_id: appUserId,
+      user_role: "user",
+      action_taken: "updated",
+      details: {
+        entitlementStatus: decision.entitlementStatus,
+        planCode,
+        cancelAtPeriodEnd,
+        event_id: event.id,
+      },
+    });
 
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
