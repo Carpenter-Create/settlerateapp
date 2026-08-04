@@ -10,6 +10,7 @@ import {
 import type { ScenarioCalculationSnapshot } from "@/lib/scenarioPersistence";
 import {
   COMPARISON_TIE_TOLERANCE_USD,
+  COMPARISON_FUNDING_EQUIVALENCE_TOLERANCE_USD,
   buildComparisonParticipant,
   buildComparisonParticipants,
 } from "@/lib/comparisonContract";
@@ -121,6 +122,23 @@ function withFinancing(
   };
 }
 
+function withPrincipal(scenario: ScenarioData, principalAmount: number): ScenarioData {
+  return {
+    ...scenario,
+    activeSnapshot: {
+      ...scenario.activeSnapshot,
+      summary: {
+        ...scenario.activeSnapshot.summary,
+        principalAmount,
+      },
+    },
+    results: {
+      ...scenario.results,
+      loanAmount: principalAmount,
+    },
+  };
+}
+
 describe("comparisonContract — participant construction", () => {
   it("defaults to activeSnapshot and never fabricates unsupported HELOC mortgage fields", () => {
     const heloc = helocScenario("BM-H02");
@@ -171,58 +189,144 @@ describe("comparisonContract — participant construction", () => {
   });
 });
 
-describe("comparisonWinner — primary metric and horizon rules", () => {
-  it("BM-C01: ranks by financingCostOverHorizon; H02 wins; A02 excluded for horizon mismatch", () => {
+describe("comparisonWinner — primary metric, horizon, and funding comparability", () => {
+  it("BM-C01: P01/H02/A02 are not economically comparable — indeterminate", () => {
     expect(bmC01.expected.primaryRankingMetric).toBe("financingCostOverHorizon");
+    expect(bmC01.expected.status).toBe("indeterminate");
+    expect(bmC01.expected.winnerScenarioId).toBeNull();
+
     const p01 = purchaseScenario("BM-P01", "BM-P01");
     const h02 = helocScenario("BM-H02", "BM-H02");
     const a02 = assumptionScenario("BM-A02", "BM-A02");
 
+    const p = buildComparisonParticipant(p01);
+    const h = buildComparisonParticipant(h02);
+    const a = buildComparisonParticipant(a02);
+
+    expect(p.decisionObjective).toBe("home_purchase");
+    expect(p.totalFinancingProvided).toBeCloseTo(360000, 0);
+    expect(p.upfrontCashRequired).toBeCloseTo(90000, 0);
+    expect(p.fundingRequirement).toBeCloseTo(450000, 0);
+
+    expect(h.decisionObjective).toBe("heloc_credit");
+    expect(h.totalFinancingProvided).toBeCloseTo(50000, 0);
+    expect(h.upfrontCashRequired).toBeCloseTo(0, 0);
+
+    expect(a.decisionObjective).toBe("assumption_purchase");
+    expect(a.decisionHorizonMonths).toBe(300);
+    expect(a.totalFinancingProvided).toBeCloseTo(300000, 0);
+    expect(a.upfrontCashRequired).toBeCloseTo(50000, 0);
+
     const result = determineComparisonWinner([p01, h02, a02]);
-    expect(result.primaryMetric).toBe("financingCostOverHorizon");
-    expect(result.status).toBe("winner");
-    expect(result.winnerScenarioId).toBe(bmC01.expected.lowestFinancingCostId);
-    expect(result.comparisonHorizonMonths).toBe(
-      bmC01.expected.comparisonHorizonMonths
-    );
-    expect(result.excludedScenarioIds.map((e) => e.scenarioId)).toContain("BM-A02");
-    expect(
-      result.excludedScenarioIds.find((e) => e.scenarioId === "BM-A02")?.reason
-    ).toBe("horizon_mismatch");
+    expect(result.status).toBe("indeterminate");
+    expect(result.winnerScenarioId).toBeNull();
+    expect(result.explanationCode).toBe(bmC01.expected.explanationCode);
+    expect(result.explanation.toLowerCase()).not.toContain("best");
+    expect(result.explanation.toLowerCase()).not.toContain("winner");
   });
 
-  it("purchase vs purchase, same horizon — lower financing cost wins", () => {
+  it("equivalent financing amount and same horizon — lowest financing cost wins", () => {
     const a = withFinancing(purchaseScenario("a", "A"), 100000, 360, 2000);
     const b = withFinancing(purchaseScenario("b", "B"), 120000, 360, 1500);
+    // Same persisted principal (BM-P01 $360k) → funding-equivalent
+    expect(a.activeSnapshot.summary.principalAmount).toBe(
+      b.activeSnapshot.summary.principalAmount
+    );
     const result = determineComparisonWinner([a, b]);
     expect(result.status).toBe("winner");
     expect(result.winnerScenarioId).toBe("a");
     expect(result.delta).toBeCloseTo(20000, 2);
+    expect(result.fundingEquivalenceTolerance).toBe(
+      COMPARISON_FUNDING_EQUIVALENCE_TOLERANCE_USD
+    );
   });
 
-  it("purchase vs refinance, same horizon", () => {
-    const purchase = withFinancing(purchaseScenario("p"), 200000, 360);
-    const refi = withFinancing(refinanceScenario("r"), 150000, 360);
-    const result = determineComparisonWinner([purchase, refi]);
-    expect(result.status).toBe("winner");
-    expect(result.winnerScenarioId).toBe("r");
+  it("same horizon but different financing amounts → indeterminate", () => {
+    const a = withPrincipal(
+      withFinancing(purchaseScenario("a"), 100000, 360),
+      360000
+    );
+    const b = withPrincipal(
+      withFinancing(purchaseScenario("b"), 80000, 360),
+      50000
+    );
+    const result = determineComparisonWinner([a, b]);
+    expect(result.status).toBe("indeterminate");
+    expect(result.winnerScenarioId).toBeNull();
+    expect(result.explanationCode).toBe("non_equivalent_funding");
   });
 
-  it("purchase vs HELOC where shared metrics are valid", () => {
+  it("missing funding amount → indeterminate", () => {
+    const a = purchaseScenario("a");
+    const b = purchaseScenario("b");
+    const participants = buildComparisonParticipants([a, b]);
+    participants[1] = {
+      ...participants[1],
+      totalFinancingProvided: null,
+      financingPrincipalOrDraw: null,
+    };
+    const result = determineComparisonWinnerFromParticipants(participants);
+    expect(result.status).toBe("indeterminate");
+    expect(result.explanationCode).toBe("missing_funding_amount");
+    expect(
+      result.excludedScenarioIds.some((e) => e.reason === "missing_funding_amount")
+    ).toBe(true);
+  });
+
+  it("different decision objective/comparison group → indeterminate", () => {
     const purchase = purchaseScenario("BM-P01");
     const heloc = helocScenario("BM-H02");
     const result = determineComparisonWinner([purchase, heloc]);
-    expect(result.status).toBe("winner");
-    expect(result.winnerScenarioId).toBe("BM-H02");
-    expect(result.comparisonHorizonMonths).toBe(360);
+    expect(result.status).toBe("indeterminate");
+    expect(result.winnerScenarioId).toBeNull();
+    expect(result.explanationCode).toBe("decision_objective_mismatch");
   });
 
-  it("purchase vs assumption where shared metrics are valid (same horizon)", () => {
+  it("purchase vs refinance differ by decision objective → indeterminate", () => {
+    const purchase = withFinancing(purchaseScenario("p"), 200000, 360);
+    const refi = withFinancing(refinanceScenario("r"), 150000, 360);
+    const result = determineComparisonWinner([purchase, refi]);
+    expect(result.status).toBe("indeterminate");
+    expect(result.explanationCode).toBe("decision_objective_mismatch");
+  });
+
+  it("purchase vs assumption with mismatched objectives/funding → indeterminate", () => {
     const purchase = withFinancing(purchaseScenario("p"), 200000, 300);
     const assumption = withFinancing(assumptionScenario("a"), 167236, 300);
     const result = determineComparisonWinner([purchase, assumption]);
-    expect(result.status).toBe("winner");
-    expect(result.winnerScenarioId).toBe("a");
+    expect(result.status).toBe("indeterminate");
+    expect(result.winnerScenarioId).toBeNull();
+    expect(["decision_objective_mismatch", "non_equivalent_funding"]).toContain(
+      result.explanationCode
+    );
+  });
+
+  it("upfront-cash incompatibility → indeterminate", () => {
+    const a = purchaseScenario("a");
+    const b = purchaseScenario("b");
+    const participants = buildComparisonParticipants([a, b]);
+    participants[0] = { ...participants[0], upfrontCashRequired: 90000 };
+    participants[1] = { ...participants[1], upfrontCashRequired: 10000 };
+    const result = determineComparisonWinnerFromParticipants(participants);
+    expect(result.status).toBe("indeterminate");
+    expect(result.explanationCode).toBe("upfront_cash_incompatible");
+    expect(result.winnerScenarioId).toBeNull();
+  });
+
+  it("side-by-side metrics remain available without a winner", () => {
+    const purchase = purchaseScenario("BM-P01", "Purchase");
+    const heloc = helocScenario("BM-H02", "HELOC");
+    const result = determineComparisonWinner([purchase, heloc]);
+    expect(result.status).toBe("indeterminate");
+    const layout = buildComparisonLayout(purchase, heloc);
+    const costSection = layout.sections.find(
+      (s) => s.title === "Cost Over the Modeled Term"
+    );
+    expect(costSection?.rows?.length).toBeGreaterThan(0);
+    expect(layout.sections[0].text?.toLowerCase()).not.toContain("best option");
+    expect(layout.sections[0].text?.toLowerCase()).toContain(
+      "side-by-side metrics remain available"
+    );
   });
 
   it("financing cost excludes principal reduction from ranking", () => {
@@ -248,7 +352,6 @@ describe("comparisonWinner — primary metric and horizon rules", () => {
   it("BM-C02: all-in monthly payment does not determine the primary winner", () => {
     expect(bmC02.expected.winnerDeterminedBy).toBe("financingCostOverHorizon");
     expect(bmC02.expected.primaryMetricNever).toBe("allInMonthlyHousingPayment");
-    // Lower monthly, higher financing cost
     const lowMonthly = withFinancing(purchaseScenario("low-mo"), 300000, 360, 1000);
     const highMonthly = withFinancing(purchaseScenario("high-mo"), 100000, 360, 3000);
     const result = determineComparisonWinner([lowMonthly, highMonthly]);
@@ -281,18 +384,7 @@ describe("comparisonWinner — primary metric and horizon rules", () => {
   it("unsupported / missing primary metric returns indeterminate", () => {
     const a = purchaseScenario("a");
     const b = purchaseScenario("b");
-    const broken = {
-      ...b,
-      activeSnapshot: {
-        ...b.activeSnapshot,
-        summary: {
-          ...b.activeSnapshot.summary,
-          financingCostOverHorizon: Number.NaN,
-        },
-      },
-    };
-    // Force null via participant path
-    const participants = buildComparisonParticipants([a, broken]);
+    const participants = buildComparisonParticipants([a, b]);
     participants[1] = { ...participants[1], financingCostOverHorizon: null };
     const result = determineComparisonWinnerFromParticipants(participants);
     expect(result.status).toBe("indeterminate");
@@ -305,7 +397,6 @@ describe("comparisonWinner — primary metric and horizon rules", () => {
     const stale = withStaleActive(
       withFinancing(purchaseScenario("stale"), 100000, 360)
     );
-    // withStaleActive overwrites financing to 999999 — keep that persisted value
     const result = determineComparisonWinner([fresh, stale]);
     expect(result.staleScenarioIds).toContain("stale");
     expect(result.winnerScenarioId).toBe("fresh");
@@ -317,9 +408,10 @@ describe("comparisonWinner — primary metric and horizon rules", () => {
     const h02 = helocScenario("BM-H02");
     const a02 = assumptionScenario("BM-A02");
     const result = determineComparisonWinner([p01, h02, a02]);
+    expect(result.excludedScenarioIds.length).toBeGreaterThan(0);
     for (const excluded of result.excludedScenarioIds) {
       expect(excluded.reason).toMatch(
-        /missing_financing_cost|horizon_mismatch|incomplete_snapshot|unsupported_scenario_type/
+        /missing_financing_cost|horizon_mismatch|incomplete_snapshot|unsupported_scenario_type|missing_funding_amount|decision_objective_mismatch|non_equivalent_funding|upfront_cash_incompatible/
       );
     }
   });
@@ -356,12 +448,15 @@ describe("legacy comparison adapter parity", () => {
     expect(labels).not.toContain("Total cost (legacy)");
   });
 
-  it("three-way export narrative excludes horizon-mismatched scenarios from winner claim", () => {
+  it("three-way export narrative does not declare a least-expensive option for BM-C01", () => {
     const p01 = purchaseScenario("BM-P01", "Purchase");
     const h02 = helocScenario("BM-H02", "HELOC");
     const a02 = assumptionScenario("BM-A02", "Assumption");
     const text = generateThreeWaySummaryText(p01, h02, a02);
-    expect(text).toContain("HELOC");
-    expect(text.toLowerCase()).toMatch(/least expensive|financing cost/);
+    expect(text.toLowerCase()).not.toContain("best option");
+    expect(text.toLowerCase()).not.toContain("least expensive option overall");
+    expect(text.toLowerCase()).toMatch(
+      /decision objective|equivalent financing|side-by-side/
+    );
   });
 });

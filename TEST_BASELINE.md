@@ -89,7 +89,7 @@ Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P0
 
 | ID | Type | Status | Target behavior | Current observed behavior | Defect | Phase | Verification |
 |----|------|--------|-----------------|---------------------------|--------|-------|--------------|
-| **BM-C01** | cross | **active** | Rank by `financingCostOverHorizon`; shared-horizon winner BM-H02; BM-A02 excluded (horizon mismatch) | Canonical winner + fixture | DEF-003 | Phase 5 | ✅ Vitest `comparisonContract.test.ts` |
+| **BM-C01** | cross | **active** | Cross-type P01/H02/A02 **indeterminate** — unequal funding / decision objectives (not H02 “winner”) | Comparability gate + fixture audit | DEF-003 | Phase 5 | ✅ Vitest `comparisonContract.test.ts` |
 | **BM-C02** | cross | **active** | All-in monthly must not determine primary winner | Winner follows financing cost when monthly ranks opposite | DEF-003 | Phase 5 | ✅ Vitest `comparisonContract.test.ts` |
 | **BM-C03** | cross | **active** | `principalReductionOverHorizon` separate from financing cost | Exposed on mortgage + unified results | — | Phase 2 | ✅ Vitest |
 
@@ -146,7 +146,7 @@ None for Phase 5 comparison beyond known summary-field omissions (ending balance
 | Assumptions | Frozen at save, applied | Applied in calc / sensitivity / integrity | — |
 | Calculator version | 2.0.0 | `CALCULATOR_VERSION = "2.0.0"` | — |
 | Persistence | Dual snapshots, `calculateScenario` dispatch | Implemented (`docs/SCENARIO_PERSISTENCE.md`) | Broad schema redesign |
-| Comparison winner | Financing cost primary; shared horizon; $1 tie | Implemented (`docs/COMPARISON_CONTRACT.md`) | Ending balance / equity when not persisted |
+| Comparison winner | Financing cost primary after funding/objective comparability gate | Implemented (`docs/COMPARISON_CONTRACT.md` v5.1.0) | Ending balance / equity when not persisted; cross-type rankings need equivalent funding |
 | Save limits / income context | Deferred | Unchanged | — |
 
 ---

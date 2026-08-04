@@ -1,7 +1,7 @@
 # SettleRate Comparison Contract
 
 **Status:** Phase 5 canonical comparison model  
-**Methodology version:** `5.0.0` (`COMPARISON_METHODOLOGY_VERSION`)  
+**Methodology version:** `5.1.0` (`COMPARISON_METHODOLOGY_VERSION`)  
 **Calculator version:** `2.0.0`  
 **Authority:** `docs/FINANCIAL_METHODOLOGY.md` §2–3; implementation in `src/lib/comparisonContract.ts` and `src/lib/comparisonWinner.ts`
 
@@ -23,7 +23,14 @@ Each compared scenario is normalized to a `CanonicalComparisonParticipant`:
 | `decisionHorizonMonths` | Persisted horizon; `null` if unavailable |
 | `financingCostOverHorizon` | **Primary** economic metric; excludes principal |
 | `principalReductionOverHorizon` | Reported separately; never ranked as cost |
-| `cashRequiredAtClosingOrStart` | From inputs when definable; else `null` |
+| `upfrontCashRequired` | From inputs when definable; else `null` (`cashRequiredAtClosingOrStart` alias) |
+| `financingPrincipalOrDraw` | Snapshot `principalAmount` (loan / HELOC draw / assumed+gap) |
+| `totalFinancingProvided` | Capital supplied by financing (same source; `null` if unknown) |
+| `fundingRequirement` | Decision funding target from inputs when knowable (e.g. purchase price); else `null` |
+| `decisionObjective` | Type-derived: `home_purchase` / `refinance` / `heloc_credit` / `assumption_purchase` |
+| `comparisonGroupId` | Defaults to `decisionObjective`; optional explicit override |
+| `comparabilityStatus` | `candidate` / `ineligible` at build; exclusions listed on participant |
+| `comparabilityExclusions` | Individual-level missing-field reasons at build time |
 | `allInMonthlyHousingPayment` | **Secondary** cash-flow metric |
 | `endingLoanBalance` | `null` when not persisted / unsupported |
 | `modeledEquityAtHorizon` | `null` when not persisted / unsupported |
@@ -48,16 +55,37 @@ Each compared scenario is normalized to a `CanonicalComparisonParticipant`:
 
 ---
 
-## 3. Winner methodology
+## 3. Comparability gate (before ranking)
 
-### Primary economic comparison
+A direct financing-cost ranking requires **all** of:
 
-1. Require `financingCostOverHorizon` and a positive `decisionHorizonMonths` for eligibility.
-2. Select the **most common** decision horizon among eligible scenarios (ties broken by smaller horizon).
-3. Exclude scenarios whose horizon ≠ comparison horizon (`horizon_mismatch`).
-4. Among remaining eligible scenarios (≥ 2), rank by lowest `financingCostOverHorizon`.
-5. **Do not** treat principal reduction as cost.
-6. **Do not** use all-in monthly payment as the primary winner criterion.
+1. Supported `financingCostOverHorizon`
+2. Common decision horizon
+3. Common `comparisonGroupId` / decision objective
+4. Equivalent `totalFinancingProvided` (funding / draw) within tolerance
+5. Compatible `upfrontCashRequired` treatment within tolerance
+
+Equal horizons alone do **not** make structures comparable. A smaller HELOC draw with lower financing cost is not a superior purchase mortgage.
+
+### Prohibited substitute winner rules (not approved)
+
+Do **not** use cost-per-dollar borrowed, APR, monthly payment, principal reduction, or arbitrary normalization as a substitute primary ranking without separate methodology approval.
+
+### Primary economic comparison (after the gate)
+
+1. Require financing cost, horizon, and known `totalFinancingProvided`.
+2. Select the most common decision horizon (ties → smaller horizon).
+3. Select the most common comparison group (ties → lexicographically smaller id).
+4. Keep the largest funding-equivalent cluster (`max − min` ≤ funding tolerance).
+5. Require compatible upfront cash when cash is known for the cluster.
+6. Among remaining (≥ 2), rank by lowest `financingCostOverHorizon`.
+7. Never treat principal reduction as cost; never use all-in monthly as primary.
+
+When funding equivalence cannot be established →  
+`status: "indeterminate"`, `winnerScenarioId: null`, `explanationCode: "non_equivalent_funding"`  
+(or `decision_objective_mismatch` / `upfront_cash_incompatible` / `missing_funding_amount` as applicable).
+
+Side-by-side metric tables remain available without declaring a least-expensive option.
 
 ### Winner result contract
 
@@ -71,7 +99,8 @@ Each compared scenario is normalized to a `CanonicalComparisonParticipant`:
 | `explanationCode` | Machine-stable reason code |
 | `excludedScenarioIds` | `{ scenarioId, reason }[]` |
 | `staleScenarioIds` | Ids with stale active snapshots |
-| `tieTolerance` | Absolute USD tolerance |
+| `tieTolerance` | Absolute USD tolerance for financing-cost ties |
+| `fundingEquivalenceTolerance` | Absolute USD tolerance for financing proceeds |
 | `methodologyVersion` / calculator metadata | Provenance |
 
 ### Explanation codes
@@ -80,6 +109,10 @@ Each compared scenario is normalized to a `CanonicalComparisonParticipant`:
 - `financing_cost_tie`
 - `horizon_incompatible`
 - `missing_primary_metric`
+- `missing_funding_amount`
+- `decision_objective_mismatch`
+- `non_equivalent_funding`
+- `upfront_cash_incompatible`
 - `single_scenario`
 - `no_comparable_scenarios`
 
@@ -89,26 +122,41 @@ Each compared scenario is normalized to a `CanonicalComparisonParticipant`:
 - `horizon_mismatch`
 - `incomplete_snapshot`
 - `unsupported_scenario_type`
+- `missing_funding_amount`
+- `decision_objective_mismatch`
+- `non_equivalent_funding`
+- `upfront_cash_incompatible`
 
 ---
 
-## 4. Tie tolerance
+## 4. Tolerances
 
-`COMPARISON_TIE_TOLERANCE_USD = 1.00`
+| Constant | Value | Use |
+|----------|-------|-----|
+| `COMPARISON_TIE_TOLERANCE_USD` | `$1.00` | Financing-cost ties |
+| `COMPARISON_FUNDING_EQUIVALENCE_TOLERANCE_USD` | `$1.00` | Equivalent financing proceeds |
+| `COMPARISON_UPFRONT_CASH_TOLERANCE_USD` | `$1.00` | Compatible upfront cash |
 
-If two or more eligible scenarios differ by ≤ $1.00 on financing cost, status is **`tie`**. Secondary metrics may explain tradeoffs in narrative UI but **must not** silently break a primary-metric tie.
+Secondary metrics may explain tradeoffs but **must not** silently break a primary-metric tie.
 
 ---
 
-## 5. Horizon rule
+## 5. Horizon and BM-C01
 
 Direct winner logic requires a **common decision horizon**.
 
 - There is **no** approved cross-horizon normalization path in Phase 5.
-- Do **not** extrapolate, annualize, or fabricate values to force a winner.
-- When fewer than two scenarios share the selected horizon → `indeterminate` / `horizon_incompatible`.
+- Do **not** extrapolate, annualize, or fabricate values to force a ranking.
 
-Example (BM-C01): BM-P01 and BM-H02 share 360 months; BM-A02 at 300 months is excluded; winner is BM-H02 (lowest financing cost at 360).
+**BM-C01 audit (not economically comparable for a primary ranking):**
+
+| Id | Type | Horizon | Financing provided | Upfront cash | Funding target | Objective |
+|----|------|---------|--------------------|--------------|----------------|-----------|
+| BM-P01 | purchase | 360 | $360,000 | $90,000 | $450,000 purchase | `home_purchase` |
+| BM-H02 | heloc | 360 | $50,000 draw | $0 | HELOC draw | `heloc_credit` |
+| BM-A02 | assumption | 300 | $300,000 ($200k assumed + $100k gap) | $50,000 | $350,000 purchase | `assumption_purchase` |
+
+**Outcome:** `indeterminate` — equal horizons do not equate a $50k HELOC with a $360k purchase mortgage. Side-by-side display remains valid.
 
 ---
 

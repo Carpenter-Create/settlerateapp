@@ -1,22 +1,54 @@
 {
   "id": "BM-C01",
-  "description": "Cross-type comparison normalization uses financing cost as primary metric",
+  "description": "Cross-type comparison normalization: financing-cost winner requires equivalent funding, not horizon alone",
   "scenarioType": "cross-type",
   "status": "active",
   "calculatorVersionTarget": "2.0.0",
   "scenarios": ["BM-P01", "BM-H02", "BM-A02"],
   "expected": {
     "primaryRankingMetric": "financingCostOverHorizon",
-    "lowestFinancingCostId": "BM-H02",
-    "comparisonHorizonMonths": 360,
-    "excludedScenarioIds": ["BM-A02"],
-    "exclusionReason": "horizon_mismatch"
+    "status": "indeterminate",
+    "winnerScenarioId": null,
+    "explanationCode": "decision_objective_mismatch",
+    "capitalAudit": {
+      "BM-P01": {
+        "scenarioType": "purchase",
+        "decisionObjective": "home_purchase",
+        "decisionHorizonMonths": 360,
+        "principalFinanced": 360000,
+        "upfrontCashRequired": 90000,
+        "totalFinancingProvided": 360000,
+        "fundingRequirement": 450000,
+        "sameFundingRequirementAsGroup": false
+      },
+      "BM-H02": {
+        "scenarioType": "heloc",
+        "decisionObjective": "heloc_credit",
+        "decisionHorizonMonths": 360,
+        "principalFinancedOrDraw": 50000,
+        "upfrontCashRequired": 0,
+        "totalFinancingProvided": 50000,
+        "fundingRequirement": 50000,
+        "sameFundingRequirementAsGroup": false
+      },
+      "BM-A02": {
+        "scenarioType": "assumption",
+        "decisionObjective": "assumption_purchase",
+        "decisionHorizonMonths": 300,
+        "assumedBalance": 200000,
+        "gapFinancing": 100000,
+        "upfrontCashRequired": 50000,
+        "totalFinancingProvided": 300000,
+        "fundingRequirement": 350000,
+        "sameFundingRequirementAsGroup": false
+      }
+    }
   },
   "verification": {
-    "method": "Independent financing costs: P01≈459160 (360 mo), H02≈87962 (360 mo), A02≈167236 (300 mo). Shared-horizon winner is H02; A02 excluded for horizon mismatch. Prior fixture incorrectly listed P01 as lowest.",
+    "method": "P01 finances $360k toward a $450k purchase ($90k cash). H02 draws $50k HELOC. A02 finances $300k ($200k assumed + $100k gap) toward a $350k purchase over 300 months. Equal horizons do not make P01/H02 economically comparable; primary winner must be indeterminate.",
     "verificationDate": "2026-08-03"
   },
   "defectIds": ["DEF-001", "DEF-003"],
   "remediationPhase": "Phase 5",
-  "currentBehaviorNotes": "Canonical comparison reads activeSnapshot financingCostOverHorizon; does not recalculate."
+  "currentBehaviorNotes": "Canonical comparison reads activeSnapshot; does not recalculate; does not declare a financing-cost winner across non-equivalent funding or decision objectives."
 }

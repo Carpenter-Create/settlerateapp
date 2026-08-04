@@ -499,9 +499,9 @@ function generateSameRateDifferentSizeSummary(
     }
   }
   
-  // Line 4: Conclusion
+  // Line 4: Conclusion (neutral; not a product recommendation)
   sentences.push(
-    `If minimizing long-term cost is the priority, ${winnerName} is the most financially efficient choice.`
+    `If minimizing financing cost over the modeled term is the priority among these equivalent-funding options, ${winnerName} has the lower financing cost.`
   );
   
   return sentences;

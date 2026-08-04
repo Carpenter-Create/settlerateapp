@@ -142,6 +142,7 @@ function calculateDownPaymentAmount(
 }
 
 const COMPARISON_TIE_TOLERANCE_USD = 1.0;
+const COMPARISON_FUNDING_EQUIVALENCE_TOLERANCE_USD = 1.0;
 
 function financingCostOf(scenario: ScenarioData): number | null {
   const value = scenario.results?.financingCostOverHorizon;
@@ -152,6 +153,19 @@ function decisionHorizonOf(scenario: ScenarioData): number | null {
   const value =
     scenario.results?.decisionHorizonMonths ?? scenario.results?.payoffMonths;
   return typeof value === "number" && value > 0 ? value : null;
+}
+
+function financingProvidedOf(scenario: ScenarioData): number | null {
+  const value = scenario.results?.loanAmount;
+  return typeof value === "number" && !Number.isNaN(value) ? value : null;
+}
+
+function decisionObjectiveOf(scenario: ScenarioData): string {
+  const mode = scenario.inputs?.mode;
+  if (mode === "refinance") return "refinance";
+  if (mode === "heloc") return "heloc_credit";
+  if (mode === "assumption") return "assumption_purchase";
+  return "home_purchase";
 }
 
 function calculateDeltas(a: ScenarioData, b: ScenarioData) {
@@ -219,14 +233,18 @@ function formatLtvDelta(value: number): string {
 }
 
 /**
- * Canonical Phase 5 winner: lowest financingCostOverHorizon under a shared horizon.
+ * Canonical Phase 5 winner: lowest financingCostOverHorizon under a shared
+ * horizon, shared decision objective, and equivalent financing amount.
  * Returns null for tie / indeterminate (no secondary-metric silent break).
  */
 function determineLowestCost(
   scenarios: { name: string; data: ScenarioData }[]
 ): { name: string; data: ScenarioData } | null {
   const withPrimary = scenarios.filter(
-    (s) => financingCostOf(s.data) != null && decisionHorizonOf(s.data) != null
+    (s) =>
+      financingCostOf(s.data) != null &&
+      decisionHorizonOf(s.data) != null &&
+      financingProvidedOf(s.data) != null
   );
   if (withPrimary.length < 2) return null;
 
@@ -244,16 +262,57 @@ function determineLowestCost(
     }
   }
 
-  const eligible = withPrimary
-    .filter((s) => decisionHorizonOf(s.data) === comparisonHorizon)
-    .sort((a, b) => {
-      const costA = financingCostOf(a.data)!;
-      const costB = financingCostOf(b.data)!;
-      if (costA !== costB) return costA - costB;
-      return a.name.localeCompare(b.name);
-    });
+  const horizonMatched = withPrimary.filter(
+    (s) => decisionHorizonOf(s.data) === comparisonHorizon
+  );
+  if (horizonMatched.length < 2) return null;
 
-  if (eligible.length < 2) return null;
+  const objectiveCounts = new Map<string, number>();
+  for (const s of horizonMatched) {
+    const o = decisionObjectiveOf(s.data);
+    objectiveCounts.set(o, (objectiveCounts.get(o) ?? 0) + 1);
+  }
+  let comparisonObjective = decisionObjectiveOf(horizonMatched[0].data);
+  let bestObjectiveCount = 0;
+  for (const [o, count] of objectiveCounts) {
+    if (
+      count > bestObjectiveCount ||
+      (count === bestObjectiveCount && o < comparisonObjective)
+    ) {
+      bestObjectiveCount = count;
+      comparisonObjective = o;
+    }
+  }
+
+  const groupMatched = horizonMatched.filter(
+    (s) => decisionObjectiveOf(s.data) === comparisonObjective
+  );
+  if (groupMatched.length < 2) return null;
+
+  const sortedByFunding = [...groupMatched].sort(
+    (a, b) => financingProvidedOf(a.data)! - financingProvidedOf(b.data)!
+  );
+  let fundingCluster = sortedByFunding.slice(0, 0);
+  let start = 0;
+  for (let end = 0; end < sortedByFunding.length; end++) {
+    while (
+      financingProvidedOf(sortedByFunding[end].data)! -
+        financingProvidedOf(sortedByFunding[start].data)! >
+      COMPARISON_FUNDING_EQUIVALENCE_TOLERANCE_USD
+    ) {
+      start += 1;
+    }
+    const cluster = sortedByFunding.slice(start, end + 1);
+    if (cluster.length > fundingCluster.length) fundingCluster = cluster;
+  }
+  if (fundingCluster.length < 2) return null;
+
+  const eligible = [...fundingCluster].sort((a, b) => {
+    const costA = financingCostOf(a.data)!;
+    const costB = financingCostOf(b.data)!;
+    if (costA !== costB) return costA - costB;
+    return a.name.localeCompare(b.name);
+  });
 
   const lowest = eligible[0];
   const tied = eligible.filter(
@@ -290,7 +349,7 @@ function generateSummaryText(a: ScenarioData, b: ScenarioData): string {
   
   const winner = determineLowestCost(scenarios);
   if (!winner) {
-    return "Under these assumptions, no single least-expensive option is declared. Financing-cost comparison requires a shared decision horizon and available financing cost for each scenario.";
+    return "Under these assumptions, no least-expensive option is declared. A primary financing-cost ranking requires a shared decision horizon, the same decision objective, and equivalent financing amounts. Side-by-side metrics remain available for review.";
   }
   const other = scenarios.find(s => s.name !== winner.name)!;
   
@@ -349,7 +408,7 @@ function generateThreeWaySummaryText(a: ScenarioData, b: ScenarioData, c: Scenar
   
   const winner = determineLowestCost(scenarios);
   if (!winner) {
-    return "Under these assumptions, no single least-expensive option is declared. Financing-cost comparison requires a shared decision horizon and available financing cost for each included scenario.";
+    return "Under these assumptions, no least-expensive option is declared. A primary financing-cost ranking requires a shared decision horizon, the same decision objective, and equivalent financing amounts. Side-by-side metrics remain available for review.";
   }
   const others = scenarios.filter(s => s.name !== winner.name);
   
@@ -761,8 +820,8 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
       "Comparison figures use each scenario's persisted activeSnapshot; exports do not recalculate.",
       "Financing cost excludes principal repayment; principal reduction is reported separately.",
       "All-in monthly housing payment is a secondary cash-flow metric.",
-      "Primary economic ranking uses financing cost over a shared decision horizon; principal repayment is excluded.",
-      "Scenarios with mismatched horizons or missing financing cost are excluded from the primary winner determination.",
+      "Primary economic ranking uses financing cost only among scenarios with a shared decision horizon, the same decision objective, and equivalent financing amounts; principal repayment is excluded.",
+      "Non-equivalent structures may be shown side by side without declaring a least-expensive option.",
       "Rates shown are assumed inputs, not lender quotes.",
       "No recommendation is implied by the order or presentation of scenarios.",
     ],

@@ -47,8 +47,10 @@ Do **not** define total cost as **loan principal + interest** for comparison pur
 
 ### Comparison winner (Phase 5 / DEF-003) — implemented
 
-- Canonical ranking uses `financingCostOverHorizon` under a shared decision horizon.
-- See `docs/COMPARISON_CONTRACT.md` for participant contract, tie tolerance ($1.00), horizon rules, and indeterminate outcomes.
+- Canonical ranking uses `financingCostOverHorizon` only after a **comparability gate**: shared decision horizon, shared decision objective/comparison group, equivalent financing proceeds, and compatible upfront cash.
+- Equal horizons alone do **not** authorize a ranking across unequal funding amounts (e.g. a $50k HELOC vs a $360k purchase).
+- See `docs/COMPARISON_CONTRACT.md` for participant contract, tolerances ($1.00), and indeterminate outcomes (`non_equivalent_funding`, `decision_objective_mismatch`, etc.).
+- Cost-per-dollar, APR, monthly payment, and principal reduction are **not** approved substitute winner rules.
 - `comparisonSummary.determineLowestCost()` is a legacy adapter over `determineComparisonWinner()`.
 - **Exports:** see `docs/EXPORT_CONTRACT.md` — comparison narrative consumes the canonical financing-cost winner.
 
@@ -165,7 +167,7 @@ Unified projection fields (from `calculateScenario()`):
 
 **Phase 3 persistence:** save/load/create/update dispatch through `calculateScenario` with dual snapshots. See `docs/SCENARIO_PERSISTENCE.md`.
 
-**Phase 5 comparison:** UI and export winner logic use `docs/COMPARISON_CONTRACT.md` (shared horizon, $1.00 tie tolerance, null for unsupported metrics).
+**Phase 5 comparison:** UI and export winner logic use `docs/COMPARISON_CONTRACT.md` (comparability gate + financing-cost ranking; $1.00 tolerances; null for unsupported metrics).
 
 ---
 

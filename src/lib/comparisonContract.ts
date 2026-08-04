@@ -21,11 +21,27 @@ export type ComparisonSnapshotSelection = "active" | "original";
 
 export type ComparisonWinnerStatus = "winner" | "tie" | "indeterminate";
 
+export type DecisionObjective =
+  | "home_purchase"
+  | "refinance"
+  | "heloc_credit"
+  | "assumption_purchase";
+
+export type ComparabilityStatus =
+  | "candidate"
+  | "ineligible"
+  | "comparable"
+  | "excluded";
+
 export type ComparisonExclusionReason =
   | "missing_financing_cost"
   | "horizon_mismatch"
   | "unsupported_scenario_type"
-  | "incomplete_snapshot";
+  | "incomplete_snapshot"
+  | "missing_funding_amount"
+  | "decision_objective_mismatch"
+  | "non_equivalent_funding"
+  | "upfront_cash_incompatible";
 
 export type ComparisonExplanationCode =
   | "lowest_financing_cost"
@@ -33,16 +49,34 @@ export type ComparisonExplanationCode =
   | "no_comparable_scenarios"
   | "horizon_incompatible"
   | "missing_primary_metric"
-  | "single_scenario";
+  | "single_scenario"
+  | "non_equivalent_funding"
+  | "decision_objective_mismatch"
+  | "upfront_cash_incompatible"
+  | "missing_funding_amount";
 
 /** Absolute USD tolerance for primary-metric ties (financing cost). */
 export const COMPARISON_TIE_TOLERANCE_USD = 1.0;
 
-export const COMPARISON_METHODOLOGY_VERSION = "5.0.0";
+/**
+ * Absolute USD tolerance for equivalent financing proceeds / principal drawn.
+ * Scenarios outside this band are not ranked against each other.
+ */
+export const COMPARISON_FUNDING_EQUIVALENCE_TOLERANCE_USD = 1.0;
+
+/** Absolute USD tolerance for compatible upfront cash within a comparable set. */
+export const COMPARISON_UPFRONT_CASH_TOLERANCE_USD = 1.0;
+
+export const COMPARISON_METHODOLOGY_VERSION = "5.1.0";
 
 export interface CanonicalComparisonOptions {
   /** Default: "active". Original only when explicitly requested. */
   snapshot?: ComparisonSnapshotSelection;
+  /**
+   * Optional explicit comparison group override. When omitted, group defaults
+   * to the scenario's decisionObjective (type-derived).
+   */
+  comparisonGroupId?: string;
 }
 
 export interface CanonicalComparisonParticipant {
@@ -54,13 +88,25 @@ export interface CanonicalComparisonParticipant {
   decisionHorizonMonths: number | null;
   financingCostOverHorizon: number | null;
   principalReductionOverHorizon: number | null;
+  /** @deprecated Prefer upfrontCashRequired */
   cashRequiredAtClosingOrStart: number | null;
+  upfrontCashRequired: number | null;
   allInMonthlyHousingPayment: number | null;
   endingLoanBalance: number | null;
   modeledEquityAtHorizon: number | null;
   totalInterestOverHorizon: number | null;
   modeledMortgageInsurance: number | null;
   definedFinancingFees: number | null;
+  /** Loan principal, HELOC draw, or assumed+gap principal from the snapshot. */
+  financingPrincipalOrDraw: number | null;
+  /** Capital supplied by financing (same source as financingPrincipalOrDraw). */
+  totalFinancingProvided: number | null;
+  /** Decision funding target when knowable from inputs (e.g. purchase price). */
+  fundingRequirement: number | null;
+  decisionObjective: DecisionObjective;
+  comparisonGroupId: string;
+  comparabilityStatus: ComparabilityStatus;
+  comparabilityExclusions: ComparisonExclusionReason[];
   unsupportedMetrics: string[];
   staleCalculation: boolean;
   activeCalculatorVersion: string;
@@ -78,6 +124,7 @@ export interface ComparisonWinnerResult {
   excludedScenarioIds: { scenarioId: string; reason: ComparisonExclusionReason }[];
   staleScenarioIds: string[];
   tieTolerance: number;
+  fundingEquivalenceTolerance: number;
   methodologyVersion: string;
   calculatorVersionMetadata: {
     currentCalculatorVersion: string;
@@ -90,6 +137,21 @@ export interface ComparisonWinnerResult {
 function nullIfMissing(value: number | null | undefined): number | null {
   if (value == null || Number.isNaN(value)) return null;
   return value;
+}
+
+export function decisionObjectiveForType(mode: ScenarioType): DecisionObjective {
+  switch (mode) {
+    case "purchase":
+      return "home_purchase";
+    case "refinance":
+      return "refinance";
+    case "heloc":
+      return "heloc_credit";
+    case "assumption":
+      return "assumption_purchase";
+    default:
+      return "home_purchase";
+  }
 }
 
 function cashRequiredFromInputs(scenario: ScenarioData): number | null {
@@ -108,7 +170,8 @@ function cashRequiredFromInputs(scenario: ScenarioData): number | null {
     return refi.financeClosingCosts ? 0 : refi.closingCosts;
   }
   if (mode === "heloc") {
-    return scenario.inputs.heloc?.closingCosts ?? 0;
+    if (!scenario.inputs.heloc) return null;
+    return scenario.inputs.heloc.closingCosts ?? 0;
   }
   if (mode === "assumption") {
     const assumption = scenario.inputs.assumption;
@@ -116,6 +179,26 @@ function cashRequiredFromInputs(scenario: ScenarioData): number | null {
     return (
       (assumption.downPaymentCash ?? 0) + (assumption.assumptionFees ?? 0)
     );
+  }
+  return null;
+}
+
+function fundingRequirementFromInputs(scenario: ScenarioData): number | null {
+  const mode = scenario.inputs.mode;
+  if (mode === "purchase") {
+    return nullIfMissing(scenario.inputs.purchase?.purchasePrice);
+  }
+  if (mode === "refinance") {
+    const refi = scenario.inputs.refinance;
+    if (!refi) return null;
+    return nullIfMissing(refi.currentLoanBalance + (refi.cashOutAmount ?? 0));
+  }
+  if (mode === "heloc") {
+    // HELOC funding target is the modeled draw / end-of-draw balance when persisted.
+    return null;
+  }
+  if (mode === "assumption") {
+    return nullIfMissing(scenario.inputs.assumption?.purchasePrice);
   }
   return null;
 }
@@ -131,6 +214,7 @@ function unsupportedForMode(mode: ScenarioType): string[] {
       "ltvRatio",
       "modeledEquityAtHorizon",
       "endingLoanBalance",
+      "fundingRequirement",
     ];
   }
   if (mode === "assumption") {
@@ -192,6 +276,24 @@ export function buildComparisonParticipant(
   const staleCalculation =
     snapshotKind === "active" && staleState.recalculationAvailable;
   const mode = scenario.inputs.mode;
+  const decisionObjective = decisionObjectiveForType(mode);
+  const financingPrincipalOrDraw = nullIfMissing(summary.principalAmount);
+  const totalFinancingProvided = financingPrincipalOrDraw;
+  const fundingRequirement =
+    fundingRequirementFromInputs(scenario) ??
+    // HELOC: use persisted draw amount as the only available funding figure.
+    (mode === "heloc" ? financingPrincipalOrDraw : null);
+  const upfrontCashRequired = cashRequiredFromInputs(scenario);
+  const comparabilityExclusions: ComparisonExclusionReason[] = [];
+  if (nullIfMissing(summary.financingCostOverHorizon) == null) {
+    comparabilityExclusions.push("missing_financing_cost");
+  }
+  if (totalFinancingProvided == null) {
+    comparabilityExclusions.push("missing_funding_amount");
+  }
+  if (nullIfMissing(summary.decisionHorizonMonths) == null) {
+    comparabilityExclusions.push("incomplete_snapshot");
+  }
 
   return {
     scenarioId: scenario.id,
@@ -204,7 +306,8 @@ export function buildComparisonParticipant(
     principalReductionOverHorizon: nullIfMissing(
       summary.principalReductionOverHorizon
     ),
-    cashRequiredAtClosingOrStart: cashRequiredFromInputs(scenario),
+    cashRequiredAtClosingOrStart: upfrontCashRequired,
+    upfrontCashRequired,
     allInMonthlyHousingPayment: nullIfMissing(
       summary.allInMonthlyHousingPayment
     ),
@@ -225,6 +328,14 @@ export function buildComparisonParticipant(
           : mode === "assumption"
             ? nullIfMissing(scenario.inputs.assumption?.assumptionFees)
             : 0,
+    financingPrincipalOrDraw,
+    totalFinancingProvided,
+    fundingRequirement,
+    decisionObjective,
+    comparisonGroupId: options.comparisonGroupId ?? decisionObjective,
+    comparabilityStatus:
+      comparabilityExclusions.length > 0 ? "ineligible" : "candidate",
+    comparabilityExclusions,
     unsupportedMetrics: unsupportedForMode(mode),
     staleCalculation,
     activeCalculatorVersion: scenario.activeCalculatorVersion,
