@@ -1,44 +1,41 @@
 /**
- * Hook for unified user capabilities
- * 
- * Combines admin status, advisor role, subscription tier,
- * and admin testing mode into a single source of truth.
+ * Unified UI capabilities — mirrors server entitlement decisions only.
+ * Does not grant access from localStorage, simulated tiers, or client Stripe status.
  */
 
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useEffectiveAccess, getEffectiveTier } from "@/hooks/useEffectiveAccess";
 import { supabase } from "@/integrations/supabase/client";
-import { getFeatureAccessWithAdminBypass } from "@/lib/authz";
 
 export function useCapabilities() {
   const { user, isAnonymous } = useAuth();
   const { isAdmin: realIsAdmin, isLoading: adminLoading } = useAdmin();
-  const { tier: realTier, isLoading: subLoading } = useSubscription();
-  const { effectiveRole, effectiveTier, isSimulating, canSimulate } = useEffectiveAccess();
+  const {
+    isLoading: subLoading,
+    isPro,
+    features,
+    planCode,
+    entitlementStatus,
+    cancelAtPeriodEnd,
+    subscriptionEnd,
+    scenarioCount,
+    isAdminBypass,
+  } = useSubscription();
 
-  // Check for advisor role in user_roles table
+  // Advisor role is retained for compatibility only — does not grant features
   const advisorQuery = useQuery({
     queryKey: ["advisor-role", user?.id],
     queryFn: async (): Promise<boolean> => {
       if (!user?.id) return false;
-
-      // If admin, they have advisor capabilities
-      if (realIsAdmin) return true;
-
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id)
         .eq("role", "advisor")
         .maybeSingle();
-
-      if (error) {
-        return false;
-      }
-
+      if (error) return false;
       return data !== null;
     },
     enabled: !!user?.id && !isAnonymous && !adminLoading,
@@ -46,34 +43,41 @@ export function useCapabilities() {
   });
 
   const isLoading = adminLoading || subLoading || advisorQuery.isLoading;
-
-  // Compute effective values based on simulation state
-  const isAdmin = realIsAdmin && effectiveRole === "admin";
-  const tier = getEffectiveTier(realTier, realIsAdmin, isSimulating, effectiveTier);
-  
-  const isAdvisor = isAdmin || advisorQuery.data || false;
-  const hasPaid = tier === "pro" || tier === "advisor";
-
-  // Feature access - respects simulation mode
-  const featureAccess = getFeatureAccessWithAdminBypass(tier, isAdmin);
+  const hasPaid = isPro;
+  const isAdvisorRole = Boolean(advisorQuery.data);
 
   return {
     isLoading,
-    // Real values (for testing panel visibility)
     realIsAdmin,
-    // Effective values (for feature gating)
-    isAdmin,
-    isAdvisor,
+    isAdmin: realIsAdmin,
+    isAdvisor: isAdvisorRole,
     hasPaid,
-    tier,
-    // Simulation state
-    isSimulating,
-    canSimulate,
-    // Unified capability flags
-    canUsePro: isAdmin || hasPaid,
-    canUseAdvisor: isAdmin || isAdvisor,
-    canApproveAdvisors: isAdmin,
-    // Feature-level access
-    ...featureAccess,
+    tier: planCode === "professional" ? "pro" : "free",
+    planCode,
+    entitlementStatus,
+    cancelAtPeriodEnd,
+    subscriptionEnd,
+    scenarioCount,
+    isAdminBypass,
+    // Simulation removed from entitlement path (Phase 6)
+    isSimulating: false,
+    canSimulate: false,
+    canUsePro: hasPaid,
+    canUseAdvisor: false, // not an active tier
+    canApproveAdvisors: realIsAdmin,
+    // Feature-level access (mirror of check-subscription)
+    canModel: features.canModel,
+    canCompare: features.canCompareInSession,
+    canSave: features.canSaveScenario,
+    canExport: features.canExportPdf,
+    canViewIncomeContext: features.canViewIncomeContext,
+    canVersion: features.canSaveComparison,
+    canSaveComparison: features.canSaveComparison,
+    canCreateShare: features.canCreateShare,
+    canUpdateScenario: features.canUpdateScenario,
+    canDuplicateScenario: features.canDuplicateScenario,
+    atScenarioLimit: features.atScenarioLimit,
+    scenarioLimit: features.scenarioLimit,
+    scenariosRemaining: features.scenariosRemaining,
   };
 }

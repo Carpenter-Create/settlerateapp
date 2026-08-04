@@ -52,13 +52,10 @@ export async function isAdvisor(userId: string): Promise<boolean> {
 }
 
 /**
- * Get effective tier for a user using the database resolver.
- * Admins always return highest tier regardless of billing.
- * 
- * This is the CANONICAL resolver - all tier checks should use this.
+ * Effective legacy tier via DB evaluate_entitlement / get_effective_tier.
+ * Advisor is never returned as a paid grant.
  */
 export async function getEffectiveTier(userId: string): Promise<SubscriptionTier> {
-  // Use the database function for canonical resolution
   const { data, error } = await supabase
     .rpc("get_effective_tier", { target_user_id: userId });
 
@@ -67,37 +64,21 @@ export async function getEffectiveTier(userId: string): Promise<SubscriptionTier
     return "free";
   }
 
-  // Map database tier to app tier
   const tier = data as string;
-  if (tier === "advisor") return "advisor";
-  if (tier === "pro") return "pro";
+  if (tier === "pro" || tier === "professional") return "pro";
   return "free";
 }
 
-/**
- * Check if a user has access to a specific feature.
- * Uses effective tier with admin bypass.
- */
 export async function canAccessFeature(
   userId: string,
   requiredTier: SubscriptionTier
 ): Promise<boolean> {
   const effectiveTier = await getEffectiveTier(userId);
-
-  // Tier hierarchy: advisor > pro > free
-  const tierValue: Record<SubscriptionTier, number> = {
-    free: 0,
-    pro: 1,
-    advisor: 2,
-  };
-
-  return tierValue[effectiveTier] >= tierValue[requiredTier];
+  if (requiredTier === "free") return true;
+  // advisor requiredTier treated as professional for legacy callers
+  return effectiveTier === "pro";
 }
 
-/**
- * Get all user capabilities in one call.
- * Useful for initial page load or auth checks.
- */
 export async function getUserCapabilitiesServer(userId: string) {
   const [admin, advisor, tier] = await Promise.all([
     isAdmin(userId),
@@ -109,7 +90,7 @@ export async function getUserCapabilitiesServer(userId: string) {
     isAdmin: admin,
     isAdvisor: advisor,
     effectiveTier: tier,
-    canUsePro: admin || tier === "pro" || tier === "advisor",
-    canUseAdvisor: admin || advisor,
+    canUsePro: admin || tier === "pro",
+    canUseAdvisor: false,
   };
 }

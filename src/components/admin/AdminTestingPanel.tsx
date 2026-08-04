@@ -1,113 +1,48 @@
 /**
- * Admin Testing Panel
- * 
- * Allows administrators to simulate standard user experiences.
- * UI-only simulation - no database or Stripe mutations.
+ * Admin panel note (Phase 6).
+ *
+ * Client-side entitlement simulation is disabled. Admin bypass is
+ * server-verified via user_roles / has_role() and logged on each use.
  */
 
-import { useEffectiveAccess, EffectiveRole, EffectiveTier } from "@/hooks/useEffectiveAccess";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { RotateCcw } from "lucide-react";
+import { useAdmin } from "@/hooks/useAdmin";
+import { useCapabilities } from "@/hooks/useCapabilities";
 
-/**
- * Testing mode panel - only renders for admin users.
- * Positioned at bottom of Settings page.
- */
 export function AdminTestingPanel() {
-  const {
-    effectiveRole,
-    effectiveTier,
-    isSimulating,
-    setEffectiveRole,
-    setEffectiveTier,
-    resetToAdmin,
-    canSimulate,
-  } = useEffectiveAccess();
+  const { isAdmin, isLoading } = useAdmin();
+  const { entitlementStatus, planCode, isAdminBypass } = useCapabilities();
 
-  // Only render for actual admins
-  if (!canSimulate) {
+  if (isLoading || !isAdmin) {
     return null;
   }
 
   return (
     <div className="border border-border rounded-sm p-6">
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
-          <h3 className="font-medium">Testing Mode</h3>
+          <h3 className="font-medium">Administrator access</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Simulate user experiences without affecting real data.
+            Entitlement bypass is server-verified via{" "}
+            <code className="text-xs">user_roles</code> /{" "}
+            <code className="text-xs">has_role()</code>. Browser simulation
+            cannot grant or revoke features. Each bypass is logged; billing
+            state is not modified.
           </p>
         </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {/* Effective role selector */}
-          <div className="space-y-2">
-            <Label htmlFor="effective-role">Effective role</Label>
-            <Select
-              value={effectiveRole}
-              onValueChange={(value) => setEffectiveRole(value as EffectiveRole)}
-            >
-              <SelectTrigger id="effective-role" className="rounded-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Administrator</SelectItem>
-                <SelectItem value="user">Standard user</SelectItem>
-              </SelectContent>
-            </Select>
+        <dl className="grid gap-2 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-muted-foreground">Plan code</dt>
+            <dd className="font-medium">{planCode}</dd>
           </div>
-
-          {/* Effective tier selector - only when simulating user */}
-          <div className="space-y-2">
-            <Label htmlFor="effective-tier">Effective tier</Label>
-            <Select
-              value={effectiveTier}
-              onValueChange={(value) => setEffectiveTier(value as EffectiveTier)}
-              disabled={effectiveRole === "admin"}
-            >
-              <SelectTrigger id="effective-tier" className="rounded-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="free">Free (Analytical)</SelectItem>
-                <SelectItem value="pro">Professional</SelectItem>
-                <SelectItem value="advisor">Advisor</SelectItem>
-              </SelectContent>
-            </Select>
+          <div>
+            <dt className="text-muted-foreground">Entitlement status</dt>
+            <dd className="font-medium">{entitlementStatus}</dd>
           </div>
-        </div>
-
-        {/* Status and reset */}
-        <div className="flex items-center justify-between pt-2">
-          <p className="text-xs text-muted-foreground">
-            {isSimulating
-              ? `Viewing as: Standard user (${effectiveTier})`
-              : "Viewing as: Administrator (full access)"}
-          </p>
-          {isSimulating && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-sm"
-              onClick={resetToAdmin}
-            >
-              <RotateCcw className="mr-2 h-3 w-3" />
-              Reset to administrator
-            </Button>
-          )}
-        </div>
-
-        <p className="text-xs text-muted-foreground border-t border-border pt-3 mt-3">
-          Testing mode only affects this browser session. No data is modified.
-        </p>
+          <div>
+            <dt className="text-muted-foreground">Admin bypass active</dt>
+            <dd className="font-medium">{isAdminBypass ? "yes" : "no"}</dd>
+          </div>
+        </dl>
       </div>
     </div>
   );

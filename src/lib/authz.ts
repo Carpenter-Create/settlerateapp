@@ -92,12 +92,15 @@ export async function getUserCapabilities(
  * Feature access with admin bypass.
  * Admins get all features regardless of subscription.
  */
+/**
+ * @deprecated Prefer useCapabilities / server evaluate_entitlement.
+ * Admin bypass must be server-verified; this helper is UI-only.
+ */
 export function getFeatureAccessWithAdminBypass(
   tier: "free" | "pro" | "advisor",
   isAdmin: boolean
 ) {
-  // Admin gets all features
-  if (isAdmin) {
+  if (isAdmin || tier === "pro") {
     return {
       canModel: true,
       canCompare: true,
@@ -108,27 +111,13 @@ export function getFeatureAccessWithAdminBypass(
     };
   }
 
-  // Otherwise use standard tier-based access
-  switch (tier) {
-    case "pro":
-    case "advisor":
-      return {
-        canModel: true,
-        canCompare: true,
-        canSave: true,
-        canExport: true,
-        canViewIncomeContext: true,
-        canVersion: true,
-      };
-    case "free":
-    default:
-      return {
-        canModel: true,
-        canCompare: true,
-        canSave: false,
-        canExport: false,
-        canViewIncomeContext: false,
-        canVersion: false,
-      };
-  }
+  // Advisor is not an active entitlement tier
+  return {
+    canModel: true,
+    canCompare: true,
+    canSave: true,
+    canExport: false,
+    canViewIncomeContext: false,
+    canVersion: false,
+  };
 }

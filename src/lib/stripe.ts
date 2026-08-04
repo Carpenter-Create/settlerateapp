@@ -53,10 +53,13 @@ export interface FeatureAccess {
   canVersion: boolean;
 }
 
+/**
+ * Legacy helper. Prefer featureAccessFromDecision / check-subscription.
+ * Advisor tier no longer grants features (compatibility alias only).
+ */
 export function getFeatureAccess(tier: SubscriptionTier): FeatureAccess {
   switch (tier) {
     case "pro":
-    case "advisor":
       return {
         canModel: true,
         canCompare: true,
@@ -65,12 +68,14 @@ export function getFeatureAccess(tier: SubscriptionTier): FeatureAccess {
         canViewIncomeContext: true,
         canVersion: true,
       };
+    case "advisor":
     case "free":
     default:
       return {
         canModel: true,
         canCompare: true,
-        canSave: false,
+        // Analytical may save up to the free limit (enforced server-side)
+        canSave: tier === "free" || tier === "advisor",
         canExport: false,
         canViewIncomeContext: false,
         canVersion: false,

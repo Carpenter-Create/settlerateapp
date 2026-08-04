@@ -28,7 +28,7 @@ export default function AppSettings() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile();
-  const { hasPaid, realIsAdmin, isSimulating } = useCapabilities();
+  const { hasPaid, realIsAdmin } = useCapabilities();
   const updateProfile = useUpdateProfile();
 
   const [fullName, setFullName] = useState(profile?.full_name || "");
@@ -79,13 +79,6 @@ export default function AppSettings() {
           Profile and account management
         </p>
       </div>
-
-      {/* Simulation indicator for admins */}
-      {isSimulating && (
-        <div className="rounded-sm border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-          Viewing as standard user. Feature access is simulated.
-        </div>
-      )}
 
       {/* Profile section */}
       <div className="border border-border rounded-sm p-6">
