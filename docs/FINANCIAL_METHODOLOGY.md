@@ -187,9 +187,9 @@ Persist (see `docs/SCENARIO_PERSISTENCE.md`):
 
 Stored in the existing Supabase JSON `derived` column — **no** Postgres DDL migration in Phase 3.
 
-**Lazy recompute on open:** preserve original snapshot; update active snapshot when calculator version advances. Do not silently overwrite historical records.
+**Hydration:** restore `originalSnapshot` and `activeSnapshot` exactly as persisted. Opening a scenario does **not** silently recalculate when `CALCULATOR_VERSION` advances; expose `recalculationAvailable` instead. Explicit recalculation updates **active only**, preserves original, and persists immediately.
 
-Amortization schedules: regenerate on demand; frozen exports may embed immutable schedules.
+Amortization schedules: regenerate on demand when the active calculator version matches the running calculator; frozen exports may embed immutable schedules.
 
 ---
 

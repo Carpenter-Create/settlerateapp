@@ -5,7 +5,7 @@
 **Calculator version:** 2.0.0 (`CALCULATOR_VERSION` in `src/lib/calculatorVersion.ts`)  
 **Schema version:** 2 (dual-snapshot persistence shape)  
 **Baseline date:** 2026-08-03  
-**Status:** CI green on branch — lint (0 errors), typecheck, verify:benchmarks, test:run (**47 passed | 2 todo**), build all pass
+**Status:** CI green on branch — lint (0 errors), typecheck, verify:benchmarks, test:run (**51 passed | 2 todo**), build all pass
 
 ---
 
@@ -98,7 +98,7 @@ Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P0
 | ID | Type | Status | Target behavior | Current observed behavior | Defect | Phase | Verification |
 |----|------|--------|-----------------|---------------------------|--------|-------|--------------|
 | **BM-M01** | migration | **active** | Legacy flat `inputs` → canonical namespaced schema (now v2) | `migrateScenario` preserves values through v0→v1→v2 | — | — | ✅ Pipeline inspection |
-| **BM-V01** | versioning | **active** | Dual snapshots; lazy recompute; `calculatedAt` metadata | `originalSnapshot` preserved; active updates on recompute | DEF-001 | Phase 3 | ✅ Vitest + `docs/SCENARIO_PERSISTENCE.md` |
+| **BM-V01** | versioning | **active** | Dual snapshots; explicit recompute; `calculatedAt` metadata | Hydration restores snapshots; stale flag; explicit persist recalculation | DEF-001 | Phase 3 | ✅ Vitest + `docs/SCENARIO_PERSISTENCE.md` |
 
 ---
 
@@ -111,7 +111,7 @@ Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P0
 | `assumption.benchmark.test.ts` | BM-A02 |
 | `scenarioCalculator.benchmark.test.ts` | BM-P01/H02/A02 dispatch + financing fields; BM-C03; unified `totalCost` baseline |
 | `scenarioMigrations.test.ts` | BM-M01 |
-| `scenarioPersistence.test.ts` | DEF-001 dispatch; BM-V01 dual snapshots; round trips; legacy hydration; serialization parity |
+| `scenarioPersistence.test.ts` | DEF-001 dispatch; BM-V01 dual snapshots; stale open; explicit persist recalculation; duplicate v2; round trips; legacy hydration |
 | `financingCost.composition.test.ts` | BM-P06, BM-P03 MI, BM-C03, BM-R04–R06, frozen assumptions in sensitivity |
 | `scenarioInputSerialization.test.ts` | Create/update Supabase persistence parity |
 

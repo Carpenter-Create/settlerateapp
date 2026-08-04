@@ -342,17 +342,81 @@ export interface HydrateScenarioOptions {
   activeSnapshot?: unknown;
   originalCalculatorVersion?: string;
   activeCalculatorVersion?: string;
-  /**
-   * When true (default), if activeCalculatorVersion !== CALCULATOR_VERSION,
-   * recompute activeSnapshot only. Never mutates originalSnapshot.
-   */
-  lazyRecomputeActive?: boolean;
   now?: Date;
 }
 
 /**
+ * Deterministic stale / recalculation-available state.
+ * Hydration never mutates snapshots when this is true — callers must use
+ * an explicit recalculation path that also persists.
+ */
+export interface ScenarioRecalculationState {
+  /** True when activeCalculatorVersion !== current CALCULATOR_VERSION. */
+  recalculationAvailable: boolean;
+  activeCalculatorVersion: string;
+  originalCalculatorVersion: string;
+  currentCalculatorVersion: string;
+}
+
+export function getScenarioRecalculationState(
+  scenario: Pick<
+    ScenarioData,
+    "activeCalculatorVersion" | "originalCalculatorVersion"
+  >
+): ScenarioRecalculationState {
+  return {
+    recalculationAvailable:
+      scenario.activeCalculatorVersion !== CALCULATOR_VERSION,
+    activeCalculatorVersion: scenario.activeCalculatorVersion,
+    originalCalculatorVersion: scenario.originalCalculatorVersion,
+    currentCalculatorVersion: CALCULATOR_VERSION,
+  };
+}
+
+export function isRecalculationAvailable(
+  scenario: Pick<ScenarioData, "activeCalculatorVersion">
+): boolean {
+  return scenario.activeCalculatorVersion !== CALCULATOR_VERSION;
+}
+
+/** UI projection from a persisted active snapshot summary (no live recompute). */
+function projectResultsFromSnapshot(
+  snapshot: ScenarioCalculationSnapshot
+): MortgageResults {
+  return projectUiResults({
+    ...snapshot.summary,
+    original: {
+      loanAmount: snapshot.summary.principalAmount,
+      monthlyPrincipalInterest: snapshot.summary.monthlyPaymentPrimary,
+      monthlyPropertyTax: 0,
+      monthlyHomeInsurance: 0,
+      monthlyPMI: 0,
+      monthlyHOA: 0,
+      monthlyTotal: snapshot.summary.monthlyTotal,
+      totalInterest: snapshot.summary.totalInterest,
+      totalCost: snapshot.summary.totalCost,
+      financingCostOverHorizon: snapshot.summary.financingCostOverHorizon,
+      principalReductionOverHorizon:
+        snapshot.summary.principalReductionOverHorizon,
+      allInMonthlyHousingPayment: snapshot.summary.allInMonthlyHousingPayment,
+      decisionHorizonMonths: snapshot.summary.decisionHorizonMonths,
+      payoffDate: new Date(snapshot.calculatedAt),
+      payoffMonths: snapshot.summary.payoffMonths,
+      amortizationSchedule: [],
+      ltvRatio: snapshot.summary.ltvRatio ?? 0,
+      requiresPMI: false,
+      usedEstimates: false,
+      mode: snapshot.summary.type,
+    },
+  });
+}
+
+/**
  * Hydrate a ScenarioData from persisted fields.
- * Does not silently overwrite originalSnapshot.
+ *
+ * Restores originalSnapshot and activeSnapshot exactly as persisted.
+ * Does **not** recalculate when CALCULATOR_VERSION advances — that requires
+ * an explicit recalculation path that also persists.
  */
 export function hydrateScenarioData(options: HydrateScenarioOptions): ScenarioData {
   const now = options.now ?? new Date();
@@ -372,8 +436,8 @@ export function hydrateScenarioData(options: HydrateScenarioOptions): ScenarioDa
     isCalculationSnapshot(options.originalSnapshot) &&
     isCalculationSnapshot(options.activeSnapshot)
   ) {
-    originalSnapshot = options.originalSnapshot;
-    activeSnapshot = options.activeSnapshot;
+    originalSnapshot = structuredClone(options.originalSnapshot);
+    activeSnapshot = structuredClone(options.activeSnapshot);
     originalCalculatorVersion =
       options.originalCalculatorVersion ?? originalSnapshot.calculatorVersion;
     activeCalculatorVersion =
@@ -416,54 +480,16 @@ export function hydrateScenarioData(options: HydrateScenarioOptions): ScenarioDa
   }
 
   let results: MortgageResults;
-  const shouldLazyRecompute =
-    (options.lazyRecomputeActive ?? true) &&
-    activeCalculatorVersion !== CALCULATOR_VERSION;
-
-  if (shouldLazyRecompute) {
-    const recomputed = computeScenarioBundle(options.inputs, options.assumptions, {
-      calculatorVersion: CALCULATOR_VERSION,
-      calculatedAt: now,
-      preserveOriginal: { originalSnapshot, originalCalculatorVersion },
-    });
-    activeSnapshot = recomputed.activeSnapshot;
-    activeCalculatorVersion = recomputed.activeCalculatorVersion;
-    results = recomputed.results;
-  } else if (activeCalculatorVersion === CALCULATOR_VERSION) {
-    // Regenerate full typed results (incl. amortization for mortgage modes).
+  if (activeCalculatorVersion === CALCULATOR_VERSION) {
+    // Same calculator generation: regenerate typed results / amortization for UI.
+    // Snapshots themselves remain the persisted values.
     const live = calculateScenario(options.inputs, {
       pmiRemovalThreshold: options.assumptions.pmiRemovalThreshold,
     });
     results = projectUiResults(live);
   } else {
-    // Stale active kept as-is (lazy recompute disabled); project from summary.
-    results = projectUiResults({
-      ...activeSnapshot.summary,
-      original: {
-        loanAmount: activeSnapshot.summary.principalAmount,
-        monthlyPrincipalInterest: activeSnapshot.summary.monthlyPaymentPrimary,
-        monthlyPropertyTax: 0,
-        monthlyHomeInsurance: 0,
-        monthlyPMI: 0,
-        monthlyHOA: 0,
-        monthlyTotal: activeSnapshot.summary.monthlyTotal,
-        totalInterest: activeSnapshot.summary.totalInterest,
-        totalCost: activeSnapshot.summary.totalCost,
-        financingCostOverHorizon: activeSnapshot.summary.financingCostOverHorizon,
-        principalReductionOverHorizon:
-          activeSnapshot.summary.principalReductionOverHorizon,
-        allInMonthlyHousingPayment:
-          activeSnapshot.summary.allInMonthlyHousingPayment,
-        decisionHorizonMonths: activeSnapshot.summary.decisionHorizonMonths,
-        payoffDate: new Date(activeSnapshot.calculatedAt),
-        payoffMonths: activeSnapshot.summary.payoffMonths,
-        amortizationSchedule: [],
-        ltvRatio: activeSnapshot.summary.ltvRatio ?? 0,
-        requiresPMI: false,
-        usedEstimates: false,
-        mode: activeSnapshot.summary.type,
-      },
-    });
+    // Stale active version: project UI from persisted summary only.
+    results = projectResultsFromSnapshot(activeSnapshot);
   }
 
   return {
@@ -487,6 +513,7 @@ export function hydrateScenarioData(options: HydrateScenarioOptions): ScenarioDa
 
 /**
  * Explicit recalculation: updates activeSnapshot only.
+ * Callers that mutate durable state must persist immediately (see ScenarioStore.recalculateScenario).
  */
 export function recalculateActiveSnapshot(
   scenario: ScenarioData,
@@ -496,7 +523,7 @@ export function recalculateActiveSnapshot(
     calculatorVersion: CALCULATOR_VERSION,
     calculatedAt,
     preserveOriginal: {
-      originalSnapshot: scenario.originalSnapshot,
+      originalSnapshot: structuredClone(scenario.originalSnapshot),
       originalCalculatorVersion: scenario.originalCalculatorVersion,
     },
   });
@@ -507,8 +534,26 @@ export function recalculateActiveSnapshot(
     calculatorVersion: bundle.calculatorVersion,
     activeSnapshot: bundle.activeSnapshot,
     activeCalculatorVersion: bundle.activeCalculatorVersion,
+    // Keep original byte-stable even if caller held a shared reference.
+    originalSnapshot: structuredClone(scenario.originalSnapshot),
+    originalCalculatorVersion: scenario.originalCalculatorVersion,
     updatedAt: calculatedAt,
+    schemaVersion: LATEST_SCHEMA_VERSION,
   };
+}
+
+/**
+ * True when a scenario carries the Phase 3 dual-snapshot persistence fields.
+ */
+export function hasCompleteDualSnapshotContract(scenario: ScenarioData): boolean {
+  return (
+    scenario.schemaVersion >= LATEST_SCHEMA_VERSION &&
+    isCalculationSnapshot(scenario.originalSnapshot) &&
+    isCalculationSnapshot(scenario.activeSnapshot) &&
+    typeof scenario.originalCalculatorVersion === "string" &&
+    typeof scenario.activeCalculatorVersion === "string" &&
+    scenario.calculatorVersion === scenario.activeCalculatorVersion
+  );
 }
 
 export function toDerivedPersistencePayload(

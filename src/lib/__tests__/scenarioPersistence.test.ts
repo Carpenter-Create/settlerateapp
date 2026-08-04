@@ -5,19 +5,25 @@ import { DEFAULT_HELOC_INPUTS } from "@/lib/heloc";
 import { DEFAULT_ASSUMPTION_INPUTS } from "@/lib/assumption";
 import {
   createScenarioData,
+  getScenarioRecalculationState,
   recalculateActiveSnapshot,
   updateScenarioInputs,
   CALCULATOR_VERSION,
+  LATEST_SCHEMA_VERSION,
 } from "@/lib/scenarioContract";
 import {
+  hasCompleteDualSnapshotContract,
   hydrateScenarioData,
   snapshotsFromLegacyResults,
   summaryFromUnified,
 } from "@/lib/scenarioPersistence";
 import { calculateScenario } from "@/lib/scenarioCalculator";
+import * as heloc from "@/lib/heloc";
+import * as assumption from "@/lib/assumption";
 import {
   ensureClientId,
   fromSupabaseRow,
+  materializeDuplicatedScenario,
   toSupabaseRow,
 } from "@/lib/scenarioStore";
 import { serializeInputsForSupabase } from "@/lib/scenarioInputSerialization";
@@ -183,33 +189,83 @@ describe("scenarioPersistence — calculateScenario dispatch (DEF-001)", () => {
   });
 });
 
-describe("scenarioPersistence — dual-snapshot recalculation (BM-V01)", () => {
-  it("recalculation updates activeCalculation only and preserves original", () => {
-    const created = createScenarioData("Purchase", purchaseInputs(), "user-1");
-    const originalSummary = structuredClone(created.originalSnapshot.summary);
-    const originalVersion = created.originalCalculatorVersion;
-    const originalCalculatedAt = created.originalSnapshot.calculatedAt;
-
-    // Simulate a prior version on active for an intentional recompute.
-    const stale: typeof created = {
+function makeStaleScenario() {
+  const created = createScenarioData("Purchase", purchaseInputs(), "user-1");
+  const staleActive = {
+    calculatorVersion: "1.0.0",
+    calculatedAt: "2024-01-01T00:00:00.000Z",
+    summary: {
+      ...created.activeSnapshot.summary,
+      totalInterest: 1,
+    },
+  };
+  const staleOriginal = {
+    ...created.originalSnapshot,
+    calculatorVersion: "1.0.0",
+    calculatedAt: "2024-01-01T00:00:00.000Z",
+  };
+  return {
+    created,
+    stale: {
       ...created,
       activeCalculatorVersion: "1.0.0",
+      originalCalculatorVersion: "1.0.0",
       calculatorVersion: "1.0.0",
-      activeSnapshot: {
-        ...created.activeSnapshot,
-        calculatorVersion: "1.0.0",
-        summary: {
-          ...created.activeSnapshot.summary,
-          totalInterest: created.activeSnapshot.summary.totalInterest + 999,
-        },
-      },
-    };
+      originalSnapshot: staleOriginal,
+      activeSnapshot: staleActive,
+    },
+    staleOriginal,
+    staleActive,
+  };
+}
+
+describe("scenarioPersistence — dual-snapshot recalculation (BM-V01)", () => {
+  it("opening a stale-version scenario does not alter either persisted snapshot", () => {
+    const { stale, staleOriginal, staleActive } = makeStaleScenario();
+    const originalJson = JSON.stringify(staleOriginal);
+    const activeJson = JSON.stringify(staleActive);
+
+    const hydrated = hydrateScenarioData({
+      id: stale.id,
+      ownerId: "user-1",
+      name: stale.name,
+      createdAt: stale.createdAt,
+      updatedAt: stale.updatedAt,
+      sourceScenarioId: null,
+      inputs: stale.inputs,
+      assumptions: stale.assumptions,
+      schemaVersion: 2,
+      originalSnapshot: stale.originalSnapshot,
+      activeSnapshot: stale.activeSnapshot,
+      originalCalculatorVersion: "1.0.0",
+      activeCalculatorVersion: "1.0.0",
+    });
+
+    expect(JSON.stringify(hydrated.originalSnapshot)).toBe(originalJson);
+    expect(JSON.stringify(hydrated.activeSnapshot)).toBe(activeJson);
+    expect(hydrated.activeCalculatorVersion).toBe("1.0.0");
+    expect(hydrated.activeSnapshot.summary.totalInterest).toBe(1);
+  });
+
+  it("a stale-version scenario reports recalculation availability", () => {
+    const { stale, created } = makeStaleScenario();
+    const staleState = getScenarioRecalculationState(stale);
+    expect(staleState.recalculationAvailable).toBe(true);
+    expect(staleState.activeCalculatorVersion).toBe("1.0.0");
+    expect(staleState.currentCalculatorVersion).toBe(CALCULATOR_VERSION);
+
+    const freshState = getScenarioRecalculationState(created);
+    expect(freshState.recalculationAvailable).toBe(false);
+  });
+
+  it("explicit recalculation updates activeSnapshot and leaves original byte-for-byte unchanged", () => {
+    const { created, stale } = makeStaleScenario();
+    const originalJson = JSON.stringify(stale.originalSnapshot);
 
     const recalculated = recalculateActiveSnapshot(stale);
 
-    expect(recalculated.originalSnapshot.summary).toEqual(originalSummary);
-    expect(recalculated.originalCalculatorVersion).toBe(originalVersion);
-    expect(recalculated.originalSnapshot.calculatedAt).toBe(originalCalculatedAt);
+    expect(JSON.stringify(recalculated.originalSnapshot)).toBe(originalJson);
+    expect(recalculated.originalCalculatorVersion).toBe("1.0.0");
     expect(recalculated.activeCalculatorVersion).toBe(CALCULATOR_VERSION);
     expect(recalculated.activeSnapshot.calculatorVersion).toBe(
       CALCULATOR_VERSION
@@ -221,45 +277,53 @@ describe("scenarioPersistence — dual-snapshot recalculation (BM-V01)", () => {
     expect(recalculated.activeSnapshot.summary.totalInterest).not.toBe(
       stale.activeSnapshot.summary.totalInterest
     );
+    expect(getScenarioRecalculationState(recalculated).recalculationAvailable).toBe(
+      false
+    );
   });
 
-  it("lazy hydrate recompute preserves originalSnapshot when version advances", () => {
-    const created = createScenarioData("Purchase", purchaseInputs(), "user-1");
-    const originalSummary = structuredClone(created.originalSnapshot.summary);
+  it("explicit recalculation persists activeSnapshot through the update path and reloads", () => {
+    const { created, stale } = makeStaleScenario();
+    const recalculated = recalculateActiveSnapshot(stale);
+    const persistedRow = {
+      id: recalculated.id,
+      user_id: "user-1",
+      name: recalculated.name,
+      created_at: recalculated.createdAt.toISOString(),
+      updated_at: recalculated.updatedAt.toISOString(),
+      schema_version: recalculated.schemaVersion,
+      ...toSupabaseRow(recalculated, "user-1"),
+    };
 
-    const hydrated = hydrateScenarioData({
-      id: created.id,
-      ownerId: "user-1",
-      name: created.name,
-      createdAt: created.createdAt,
-      updatedAt: created.updatedAt,
-      sourceScenarioId: null,
-      inputs: created.inputs,
-      assumptions: created.assumptions,
-      schemaVersion: 2,
-      originalSnapshot: {
-        ...created.originalSnapshot,
-        calculatorVersion: "1.0.0",
-      },
-      activeSnapshot: {
-        ...created.activeSnapshot,
-        calculatorVersion: "1.0.0",
-        summary: {
-          ...created.activeSnapshot.summary,
-          totalInterest: 1,
-        },
-      },
-      originalCalculatorVersion: "1.0.0",
-      activeCalculatorVersion: "1.0.0",
-      lazyRecomputeActive: true,
-    });
-
-    expect(hydrated.originalSnapshot.summary).toEqual(originalSummary);
-    expect(hydrated.originalCalculatorVersion).toBe("1.0.0");
-    expect(hydrated.activeCalculatorVersion).toBe(CALCULATOR_VERSION);
+    const derived = persistedRow.derived as {
+      activeSnapshot: { summary: { totalInterest: number } };
+      originalSnapshot: unknown;
+      activeCalculatorVersion: string;
+      originalCalculatorVersion: string;
+      calculatorVersion: string;
+    };
+    expect(derived.activeCalculatorVersion).toBe(CALCULATOR_VERSION);
+    expect(derived.calculatorVersion).toBe(CALCULATOR_VERSION);
+    expect(derived.originalCalculatorVersion).toBe("1.0.0");
+    expect(JSON.stringify(derived.originalSnapshot)).toBe(
+      JSON.stringify(stale.originalSnapshot)
+    );
     assertWithinTolerance(
-      hydrated.activeSnapshot.summary.totalInterest,
+      derived.activeSnapshot.summary.totalInterest,
       created.activeSnapshot.summary.totalInterest
+    );
+
+    const reloaded = fromSupabaseRow(persistedRow);
+    expect(reloaded.activeCalculatorVersion).toBe(CALCULATOR_VERSION);
+    assertWithinTolerance(
+      reloaded.activeSnapshot.summary.totalInterest,
+      created.activeSnapshot.summary.totalInterest
+    );
+    expect(JSON.stringify(reloaded.originalSnapshot)).toBe(
+      JSON.stringify(stale.originalSnapshot)
+    );
+    expect(getScenarioRecalculationState(reloaded).recalculationAvailable).toBe(
+      false
     );
   });
 
@@ -275,6 +339,82 @@ describe("scenarioPersistence — dual-snapshot recalculation (BM-V01)", () => {
     expect(loaded.calculatorVersion).toBe(CALCULATOR_VERSION);
     expect(loaded.originalCalculatorVersion).toBe(CALCULATOR_VERSION);
     expect(loaded.activeCalculatorVersion).toBe(CALCULATOR_VERSION);
+  });
+});
+
+describe("scenarioPersistence — duplicate schema v2 materialization", () => {
+  it("duplicate scenario is immediately valid under schema version 2", () => {
+    const source = createScenarioData("Purchase", purchaseInputs(), "user-1");
+    const duplicate = materializeDuplicatedScenario(source, {
+      id: "00000000-0000-4000-8000-000000000099",
+      name: "Purchase (Copy)",
+      ownerId: "user-1",
+      createdAt: new Date("2026-08-03T12:00:00.000Z"),
+      updatedAt: new Date("2026-08-03T12:00:00.000Z"),
+    });
+
+    expect(duplicate.schemaVersion).toBe(LATEST_SCHEMA_VERSION);
+    expect(duplicate.id).toBe("00000000-0000-4000-8000-000000000099");
+    expect(duplicate.sourceScenarioId).toBe(source.id);
+    expect(hasCompleteDualSnapshotContract(duplicate)).toBe(true);
+
+    const row = toSupabaseRow(duplicate, "user-1");
+    expect(row.schema_version).toBe(2);
+    const derived = row.derived as Record<string, unknown>;
+    expect(derived.originalSnapshot).toBeDefined();
+    expect(derived.activeSnapshot).toBeDefined();
+    expect(derived.originalCalculatorVersion).toBe(CALCULATOR_VERSION);
+    expect(derived.activeCalculatorVersion).toBe(CALCULATOR_VERSION);
+    expect(derived.calculatorVersion).toBe(CALCULATOR_VERSION);
+
+    const reloaded = fromSupabaseRow({
+      id: duplicate.id,
+      user_id: "user-1",
+      name: duplicate.name,
+      created_at: duplicate.createdAt.toISOString(),
+      updated_at: duplicate.updatedAt.toISOString(),
+      schema_version: row.schema_version,
+      inputs: row.inputs,
+      derived: row.derived,
+    });
+    expect(hasCompleteDualSnapshotContract(reloaded)).toBe(true);
+  });
+});
+
+describe("scenarioPersistence — calculator dispatch by mode", () => {
+  it("routes each scenario type only through its correct calculator", () => {
+    const mortgageSpy = vi.spyOn(mortgage, "calculateMortgage");
+    const helocSpy = vi.spyOn(heloc, "calculateHeloc");
+    const assumptionSpy = vi.spyOn(assumption, "calculateAssumption");
+
+    createScenarioData("Purchase", purchaseInputs(), "user-1");
+    expect(mortgageSpy).toHaveBeenCalled();
+    expect(helocSpy).not.toHaveBeenCalled();
+    expect(assumptionSpy).not.toHaveBeenCalled();
+    mortgageSpy.mockClear();
+    helocSpy.mockClear();
+    assumptionSpy.mockClear();
+
+    createScenarioData("Refinance", refinanceInputs(), "user-1");
+    expect(mortgageSpy).toHaveBeenCalled();
+    expect(helocSpy).not.toHaveBeenCalled();
+    expect(assumptionSpy).not.toHaveBeenCalled();
+    mortgageSpy.mockClear();
+    helocSpy.mockClear();
+    assumptionSpy.mockClear();
+
+    createScenarioData("HELOC", helocInputs(), "user-1");
+    expect(helocSpy).toHaveBeenCalled();
+    expect(mortgageSpy).not.toHaveBeenCalled();
+    expect(assumptionSpy).not.toHaveBeenCalled();
+    mortgageSpy.mockClear();
+    helocSpy.mockClear();
+    assumptionSpy.mockClear();
+
+    createScenarioData("Assumption", assumptionInputs(), "user-1");
+    expect(assumptionSpy).toHaveBeenCalled();
+    expect(mortgageSpy).not.toHaveBeenCalled();
+    expect(helocSpy).not.toHaveBeenCalled();
   });
 });
 
@@ -329,14 +469,15 @@ describe("scenarioPersistence — legacy single-result hydration", () => {
         ltvRatio: 0.8,
       },
       calculatorVersion: "1.0.0",
-      // Keep active at legacy version without silent overwrite of original.
-      lazyRecomputeActive: false,
     });
 
     expect(hydrated.originalSnapshot.summary.principalAmount).toBe(320000);
     expect(hydrated.activeSnapshot.summary.principalAmount).toBe(320000);
     expect(hydrated.originalCalculatorVersion).toBe("1.0.0");
     expect(hydrated.activeCalculatorVersion).toBe("1.0.0");
+    expect(getScenarioRecalculationState(hydrated).recalculationAvailable).toBe(
+      true
+    );
   });
 });
 

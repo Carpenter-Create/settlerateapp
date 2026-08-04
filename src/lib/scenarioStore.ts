@@ -15,7 +15,9 @@ import {
   duplicateScenarioData,
   updateScenarioInputs,
   updateScenarioName,
+  recalculateActiveSnapshot,
   CALCULATOR_VERSION,
+  LATEST_SCHEMA_VERSION,
 } from "@/lib/scenarioContract";
 import {
   migrateScenario,
@@ -74,7 +76,6 @@ function loadAndMigrateScenario(raw: unknown): ScenarioData | null {
     activeCalculatorVersion:
       (rawObj.activeCalculatorVersion as string | undefined) ??
       ((migrated as unknown as Record<string, unknown>).activeCalculatorVersion as string | undefined),
-    lazyRecomputeActive: true,
   });
 }
 
@@ -184,8 +185,34 @@ export function fromSupabaseRow(row: any): ScenarioData {
     activeSnapshot: derived.activeSnapshot,
     originalCalculatorVersion: derived.originalCalculatorVersion,
     activeCalculatorVersion: derived.activeCalculatorVersion,
-    lazyRecomputeActive: true,
   });
+}
+
+/**
+ * Build a schema-v2 dual-snapshot duplicate bound to a server-assigned row id.
+ * Used after duplicate_scenario RPC so the DB row is immediately contract-valid.
+ */
+export function materializeDuplicatedScenario(
+  source: ScenarioData,
+  server: {
+    id: string;
+    name: string;
+    ownerId: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }
+): ScenarioData {
+  const fresh = duplicateScenarioData(source, server.ownerId);
+  return {
+    ...fresh,
+    id: server.id,
+    name: server.name,
+    createdAt: server.createdAt,
+    updatedAt: server.updatedAt,
+    ownerId: server.ownerId,
+    sourceScenarioId: source.id,
+    schemaVersion: LATEST_SCHEMA_VERSION,
+  };
 }
 
 /**
@@ -386,36 +413,21 @@ export class ScenarioStore {
     }
   }
 
-  async updateScenario(
-    id: string,
-    updates: Partial<Pick<ScenarioData, "name" | "inputs">>
-  ): Promise<void> {
-    let updatedScenario: ScenarioData | undefined;
-
-    // Update local state first for responsiveness
-    this.scenarios = this.scenarios.map((s) => {
-      if (s.id !== id) return s;
-
-      let updated = s;
-      if (updates.name !== undefined) {
-        updated = updateScenarioName(updated, updates.name);
-      }
-      if (updates.inputs !== undefined) {
-        updated = updateScenarioInputs(updated, updates.inputs);
-      }
-      updatedScenario = updated;
-      return updated;
-    });
+  /**
+   * Persist an already-computed scenario update through the shared update path.
+   * Keeps in-memory state and durable storage aligned (no deferred write).
+   */
+  private async persistScenarioUpdate(scenario: ScenarioData): Promise<void> {
+    this.scenarios = this.scenarios.map((s) =>
+      s.id === scenario.id ? scenario : s
+    );
     this.notify();
-
-    if (!updatedScenario) return;
 
     if (this.currentUser && !this.fallbackMode) {
       try {
-        await this.updateInSupabase(updatedScenario);
+        await this.updateInSupabase(scenario);
       } catch (e) {
         console.error("Failed to update scenario in Supabase:", e);
-        // Fall back to local storage
         this.fallbackMode = true;
         this.isOnline = false;
         saveScenariosToFallbackStorage(this.scenarios);
@@ -426,29 +438,80 @@ export class ScenarioStore {
     }
   }
 
+  async updateScenario(
+    id: string,
+    updates: Partial<Pick<ScenarioData, "name" | "inputs">>
+  ): Promise<void> {
+    const existing = this.scenarios.find((s) => s.id === id);
+    if (!existing) return;
+
+    let updated = existing;
+    if (updates.name !== undefined) {
+      updated = updateScenarioName(updated, updates.name);
+    }
+    if (updates.inputs !== undefined) {
+      updated = updateScenarioInputs(updated, updates.inputs);
+    }
+
+    await this.persistScenarioUpdate(updated);
+  }
+
+  /**
+   * Explicit recalculation: updates activeSnapshot only and persists immediately
+   * through the same update path as other scenario writes.
+   */
+  async recalculateScenario(id: string): Promise<ScenarioData | null> {
+    const existing = this.scenarios.find((s) => s.id === id);
+    if (!existing) return null;
+
+    const recalculated = recalculateActiveSnapshot(existing);
+    await this.persistScenarioUpdate(recalculated);
+    return this.scenarios.find((s) => s.id === id) ?? recalculated;
+  }
+
   async duplicateScenario(id: string): Promise<ScenarioData | null> {
     const original = this.scenarios.find((s) => s.id === id);
     if (!original) return null;
 
     if (this.currentUser && !this.fallbackMode) {
       try {
-        // Use server-side RPC for duplication
+        // RPC inserts a row (may copy pre-v2 derived). Immediately normalize
+        // to schema v2 dual-snapshot contract and persist — no deferred recovery.
         const { data, error } = await supabase.rpc("duplicate_scenario", {
           source_scenario_id: id,
         });
 
         if (error) throw error;
 
-        // Reload to get the new scenario
-        await this.loadFromSupabase(this.currentUser.id);
+        const newId = data as string;
+        const { data: row, error: fetchError } = await supabase
+          .from("scenarios")
+          .select("*")
+          .eq("id", newId)
+          .eq("user_id", this.currentUser.id)
+          .single();
 
-        return this.scenarios.find((s) => s.id === data) ?? null;
+        if (fetchError) throw fetchError;
+        if (!row) throw new Error("Duplicated scenario row not found");
+
+        const materialized = materializeDuplicatedScenario(original, {
+          id: row.id,
+          name: row.name,
+          ownerId: row.user_id,
+          createdAt: new Date(row.created_at),
+          updatedAt: new Date(),
+        });
+
+        await this.updateInSupabase(materialized);
+        this.scenarios = [materialized, ...this.scenarios];
+        this.notify();
+        return materialized;
       } catch (e) {
         console.error("Failed to duplicate scenario:", e);
         throw e;
       }
     } else {
-      // Fallback mode: local duplication
+      // Fallback mode: local duplication (already schema v2 dual-snapshot)
       const duplicate = duplicateScenarioData(original);
       this.scenarios = [duplicate, ...this.scenarios];
       saveScenariosToFallbackStorage(this.scenarios);

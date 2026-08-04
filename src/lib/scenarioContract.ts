@@ -16,16 +16,23 @@ import { MortgageInputs, MortgageResults } from "./mortgage";
 import { CALCULATOR_VERSION, LATEST_SCHEMA_VERSION } from "./calculatorVersion";
 import {
   computeScenarioBundle,
+  getScenarioRecalculationState,
+  isRecalculationAvailable,
   recalculateActiveSnapshot,
   summariesMatch,
   summaryFromUnified,
   type ScenarioCalculationSnapshot,
+  type ScenarioRecalculationState,
 } from "./scenarioPersistence";
 import { calculateScenario } from "./scenarioCalculator";
 
 export { CALCULATOR_VERSION, LATEST_SCHEMA_VERSION };
-export type { ScenarioCalculationSnapshot };
-export { recalculateActiveSnapshot };
+export type { ScenarioCalculationSnapshot, ScenarioRecalculationState };
+export {
+  recalculateActiveSnapshot,
+  getScenarioRecalculationState,
+  isRecalculationAvailable,
+};
 
 /**
  * System-level assumptions that may change over time.

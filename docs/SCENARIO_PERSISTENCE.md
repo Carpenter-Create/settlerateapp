@@ -12,7 +12,8 @@ Authoritative dual-snapshot persistence for SettleRate scenarios. Aligns with `d
 | `activeCalculatorVersion` | Calculator version that produced `activeSnapshot` |
 | `calculatorVersion` | Compatibility alias of `activeCalculatorVersion` |
 | `calculatedAt` | ISO metadata on each snapshot — **not** part of deterministic math |
-| `results` | UI/compat projection of the **active** calculation (mortgage modes may include a regenerated amortization schedule) |
+| `results` | UI/compat projection of the **active** calculation (mortgage modes may include a regenerated amortization schedule when versions match) |
+| `recalculationAvailable` | Deterministic stale flag: `activeCalculatorVersion !== CALCULATOR_VERSION` |
 
 Do not introduce competing names (`originalCalculation` / `activeCalculation`) in code. Those phrases in product discussion map to the snapshot fields above.
 
@@ -66,24 +67,59 @@ Each snapshot `summary` is a `PersistedScenarioSummary`: unified comparison metr
 
 Implemented by `hydrateScenarioData`:
 
-1. **Both snapshots present** — restore both; regenerate live `results` when active version is current.
+1. **Both snapshots present** — restore both **exactly as persisted** (no silent overwrite).
 2. **Only one snapshot present** — mirror that snapshot into both.
 3. **Legacy single `results` blob** — assign the same summarized legacy result to **both** `originalSnapshot` and `activeSnapshot`, preserving the stored `calculatorVersion`.
 4. **Neither snapshots nor results** — recovery compute once via `calculateScenario` (broken/incomplete records only).
-5. **Lazy recompute on open** (default): if `activeCalculatorVersion !== CALCULATOR_VERSION`, recompute **active only**; never mutate `originalSnapshot`.
+5. **Stale active version** — do **not** recalculate on open. Project UI `results` from the persisted active summary and expose `recalculationAvailable: true` via `getScenarioRecalculationState`.
+6. **Current active version** — may regenerate typed `results` / amortization for UI from inputs under the same calculator generation; snapshots remain the persisted values.
 
-Hydration does **not** silently overwrite historical originals.
+Hydration never replaces `activeSnapshot` because `CALCULATOR_VERSION` advanced.
 
-## Recalculation
+## Stale-version / recalculation-available state
 
-- Must be intentional: `recalculateActiveSnapshot`, input updates via `updateScenarioInputs`, or lazy recompute on open when the calculator version advances.
-- Updates `activeSnapshot` + `activeCalculatorVersion` (+ `results` / `calculatorVersion` alias) only.
-- Leaves `originalSnapshot` and `originalCalculatorVersion` unchanged.
-- No version history beyond this bounded dual-snapshot model in Phase 3.
+```ts
+getScenarioRecalculationState(scenario) => {
+  recalculationAvailable: boolean; // activeCalculatorVersion !== CALCULATOR_VERSION
+  activeCalculatorVersion: string;
+  originalCalculatorVersion: string;
+  currentCalculatorVersion: string; // CALCULATOR_VERSION
+}
+```
+
+Phase 3 does **not** add public UI for this flag. Callers may read the state and invoke `ScenarioStore.recalculateScenario(id)`.
+
+## Recalculation (explicit only)
+
+Recalculation is intentional and durable:
+
+| Path | Behavior |
+|------|----------|
+| `ScenarioStore.recalculateScenario(id)` | Preferred: `recalculateActiveSnapshot` then **immediate persist** via the shared scenario update path |
+| `recalculateActiveSnapshot(scenario)` | Pure in-memory transform (tests / composition); must not be used alone for durable state |
+| `updateScenarioInputs` | Input edit recomputes active and persists through `updateScenario` |
+
+Explicit recalculation:
+
+- updates `activeSnapshot` + `activeCalculatorVersion` (+ `results` / `calculatorVersion` alias) only
+- leaves `originalSnapshot` and `originalCalculatorVersion` **byte-stable**
+- persists the new active snapshot immediately (no in-memory-only divergence)
+- does not create version history beyond this bounded dual-snapshot model
+
+## Duplication (`duplicate_scenario` RPC)
+
+The SQL RPC inserts a copy of the source row (may still carry pre-v2 `derived`). The client **must not** leave that row dependent on a later reload:
+
+1. Call `duplicate_scenario`
+2. Fetch the new row id
+3. `materializeDuplicatedScenario(source, serverRow)` — schema **2**, dual snapshots, version aliases
+4. Persist immediately via `updateInSupabase` (same update path as other writes)
+
+Offline/fallback duplication uses `duplicateScenarioData` directly (already schema v2).
 
 ## Input updates vs original baseline
 
-`updateScenarioInputs` recomputes the active snapshot from the new inputs under the current calculator while preserving the original snapshot as the audit baseline of the first established calculation.
+`updateScenarioInputs` recomputes the active snapshot from the new inputs under the current calculator while preserving the original snapshot as the audit baseline of the first established calculation. The store persists that update immediately.
 
 ## Schema
 
@@ -101,4 +137,5 @@ Client `schema_version` column may store `2`. No Postgres DDL change is required
 - Export pipeline changes
 - Entitlement / save-limit enforcement
 - Broad schema redesign or deletion of legacy fields
+- Public recalculation UI control
 - Next.js / AWS migration
