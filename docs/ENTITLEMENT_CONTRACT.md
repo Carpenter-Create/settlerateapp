@@ -91,3 +91,15 @@ Arbitrary client-supplied price IDs are rejected.
 | Portal | Prefers `billing.stripe_customer_id` |
 
 Success URLs never grant entitlement. Verified webhook state is authoritative.
+
+## Client print vs server PDF
+
+Authoritative `pdf_export` enforcement is the `generate-pdf` edge function (`assert_feature_allowed`). Browser `window.print()` paths are UI-mirrored only: data already rendered in the client cannot be server-revoked. Prefer routing professional PDF export through `generate-pdf` / `ExportModal`.
+
+## Orchestration follow-ups (applied)
+
+- Cross-user RPC caller binding on `evaluate_entitlement` / `feature_allowed` / `get_effective_tier`
+- Webhook claim release on retryable failure; stale `event.created` guard; no null subscription snapshot clobber
+- Checkout/portal customer binding fail-closed; allowlisted return origins
+- Free-tier scenario count includes archived rows (closes stash-then-unarchive)
+- Legacy `saved_comparisons` write trigger; comparison scenario ownership check

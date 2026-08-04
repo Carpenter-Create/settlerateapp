@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { resolveAppOrigin } from "../_shared/appOrigin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -60,7 +61,7 @@ serve(async (req) => {
       );
     }
 
-    // Prefer normalized billing mapping over email search
+    // Prefer normalized billing mapping — do not open portal via unbound email search
     const { data: billing } = await supabaseClient
       .from("billing")
       .select("stripe_customer_id")
@@ -80,16 +81,42 @@ serve(async (req) => {
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
         );
       }
-      customerId = customers.data[0].id;
-      await supabaseClient.from("billing").upsert(
+      const candidate = customers.data[0];
+      const metaUser = candidate.metadata?.user_id;
+      if (metaUser && metaUser !== user.id) {
+        logStep("Email customer metadata mismatch", { customerId: candidate.id });
+        return new Response(
+          JSON.stringify({ code: "NO_STRIPE_CUSTOMER", error: "No billing profile found" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
+      }
+      const { data: owner } = await supabaseClient
+        .from("billing")
+        .select("user_id")
+        .eq("stripe_customer_id", candidate.id)
+        .maybeSingle();
+      if (owner?.user_id && owner.user_id !== user.id) {
+        return new Response(
+          JSON.stringify({ code: "NO_STRIPE_CUSTOMER", error: "No billing profile found" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
+      }
+      customerId = candidate.id;
+      const { error: mapError } = await supabaseClient.from("billing").upsert(
         { user_id: user.id, stripe_customer_id: customerId },
         { onConflict: "user_id" }
       );
+      if (mapError) {
+        return new Response(
+          JSON.stringify({ code: "BILLING_MAP_FAILED", error: "Failed to bind billing profile" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        );
+      }
     }
 
     logStep("Found Stripe customer", { customerId });
 
-    const origin = req.headers.get("origin") || "https://vpcxzbaxhpucvevnkalo.lovable.app";
+    const origin = resolveAppOrigin(req);
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${origin}/app/account`,

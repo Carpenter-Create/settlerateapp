@@ -383,7 +383,15 @@ export default function ComparisonsIndex() {
   const isMobile = useIsMobile();
   const { scenarios, isLoaded: scenariosLoaded } = useScenarios();
   const { comparisons, isLoaded: comparisonsLoaded, createComparison, renameComparison, deleteComparison, isCreating, isDeleting } = useComparisons();
-  const { isLoading: capsLoading, canUsePro, isAdmin } = useCapabilities();
+  const {
+    isLoading: capsLoading,
+    canSaveComparison,
+    entitlementStatus,
+    isAdmin,
+  } = useCapabilities();
+  const canCreateComparisons = canSaveComparison || isAdmin;
+  const canViewComparisonsArea =
+    canCreateComparisons || entitlementStatus === "read_only";
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [comparisonToDelete, setComparisonToDelete] = useState<SavedComparison | null>(null);
@@ -454,7 +462,8 @@ export default function ComparisonsIndex() {
   }
 
   // Access control: Professional Review tier and admin only
-  if (!canUsePro && !isAdmin) {
+  // Free users without create rights see upgrade lock; read_only may list/delete
+  if (!canViewComparisonsArea) {
     return <LockedState />;
   }
 
@@ -512,13 +521,20 @@ export default function ComparisonsIndex() {
             Side-by-side review of saved mortgage scenarios.
           </p>
         </div>
-        {!isMobile && (
+        {!isMobile && canCreateComparisons && (
           <Button variant="outline" onClick={() => setSelectorOpen(true)}>
             <GitCompare className="mr-2 h-4 w-4" strokeWidth={1.5} />
             Create comparison
           </Button>
         )}
       </div>
+
+      {entitlementStatus === "read_only" && (
+        <div className="rounded-sm border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+          Billing is past due. Existing comparisons remain readable and deletable.
+          Creating or editing comparisons is paused until payment succeeds.
+        </div>
+      )}
 
       {/* Empty state */}
       {!hasComparisons && (
@@ -530,15 +546,19 @@ export default function ComparisonsIndex() {
             No comparisons created.
           </p>
           <p className="mt-2 max-w-sm mx-auto text-sm text-muted-foreground">
-            Select two scenarios to compare.
+            {canCreateComparisons
+              ? "Select two scenarios to compare."
+              : "Professional access is required to create comparisons."}
           </p>
-          <Button 
-            variant="outline" 
-            className="mt-6"
-            onClick={() => setSelectorOpen(true)}
-          >
-            Create comparison
-          </Button>
+          {canCreateComparisons && (
+            <Button 
+              variant="outline" 
+              className="mt-6"
+              onClick={() => setSelectorOpen(true)}
+            >
+              Create comparison
+            </Button>
+          )}
         </div>
       )}
 
@@ -669,7 +689,7 @@ export default function ComparisonsIndex() {
       )}
 
       {/* Mobile: Floating action button */}
-      {isMobile && (
+      {isMobile && canCreateComparisons && (
         <div className="fixed bottom-6 right-4 z-50">
           <Button
             onClick={() => setSelectorOpen(true)}

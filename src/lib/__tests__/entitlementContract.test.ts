@@ -70,6 +70,17 @@ describe("entitlementContract", () => {
     expect(d.hasProfessionalAccess).toBe(false);
   });
 
+  it("does not grant professional when currentPeriodEndsAt is null", () => {
+    const d = evaluateEntitlement({
+      stripeStatus: "active",
+      priceId: proPrice,
+      currentPeriodEndsAt: null,
+      now,
+    });
+    expect(d.entitlementStatus).toBe("free");
+    expect(d.hasProfessionalAccess).toBe(false);
+  });
+
   it("maps past_due and unpaid to read_only", () => {
     for (const stripeStatus of ["past_due", "unpaid"] as const) {
       const d = evaluateEntitlement({

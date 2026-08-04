@@ -396,7 +396,11 @@ export class ScenarioStore {
         return persisted;
       } catch (e) {
         console.error("Failed to create scenario in Supabase:", e);
-        // Fall back to local storage
+        const message = e instanceof Error ? e.message : String(e);
+        // Entitlement / RLS denials must fail closed — never grant via localStorage
+        if (/ENTITLEMENT_DENIED|42501|permission|row-level security/i.test(message)) {
+          throw e;
+        }
         this.fallbackMode = true;
         this.isOnline = false;
         this.scenarios = [scenario, ...this.scenarios];
@@ -428,6 +432,11 @@ export class ScenarioStore {
         await this.updateInSupabase(scenario);
       } catch (e) {
         console.error("Failed to update scenario in Supabase:", e);
+        const message = e instanceof Error ? e.message : String(e);
+        if (/ENTITLEMENT_DENIED|42501|permission|row-level security/i.test(message)) {
+          await this.loadFromSupabase(this.currentUser.id);
+          throw e;
+        }
         this.fallbackMode = true;
         this.isOnline = false;
         saveScenariosToFallbackStorage(this.scenarios);

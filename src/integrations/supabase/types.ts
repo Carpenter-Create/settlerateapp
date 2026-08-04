@@ -727,6 +727,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      release_stripe_webhook_event: {
+        Args: { p_event_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

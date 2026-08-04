@@ -70,6 +70,8 @@ serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
+  let claimedEventId: string | null = null;
+
   try {
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
@@ -83,11 +85,17 @@ serve(async (req) => {
     const event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     const eventType = event.type;
 
-    // Idempotency: claim event id before processing
+    const releaseClaim = async () => {
+      if (!claimedEventId) return;
+      await supabase.rpc("release_stripe_webhook_event", { p_event_id: claimedEventId });
+      claimedEventId = null;
+    };
+
+    // Idempotency: claim event id before processing; release on retryable failure
     const { data: claimed, error: claimError } = await supabase.rpc("claim_stripe_webhook_event", {
       p_event_id: event.id,
       p_event_type: eventType,
-      p_action_taken: "received",
+      p_action_taken: "processing",
     });
 
     if (claimError) {
@@ -119,6 +127,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    claimedEventId = event.id;
 
     logWebhook({
       event_type: eventType,
@@ -267,18 +276,29 @@ serve(async (req) => {
     }
 
     if (!appUserId) {
+      // Retryable: mapping may appear after checkout binds billing
+      await releaseClaim();
       logWebhook({
         event_type: eventType,
         stripe_customer_id: stripeCustomerId,
         app_user_id: null,
         user_role: null,
-        action_taken: "skipped",
+        action_taken: "skipped_retryable",
         details: { reason: "No app user mapping", event_id: event.id },
       });
-      return new Response(JSON.stringify({ received: true }), {
-        status: 200,
+      return new Response(JSON.stringify({ received: true, retryable: true }), {
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Prefer billing mapping over metadata when they disagree
+    if (
+      billingByCustomer?.user_id &&
+      metadataUserId &&
+      billingByCustomer.user_id !== metadataUserId
+    ) {
+      appUserId = billingByCustomer.user_id;
     }
 
     const { data: adminRole } = await supabase
@@ -312,6 +332,71 @@ serve(async (req) => {
       });
     }
 
+    // Never null-clobber an existing entitled row when the event lacks a subscription snapshot
+    if (!subscriptionStatus || !subscriptionId) {
+      logWebhook({
+        event_type: eventType,
+        stripe_customer_id: stripeCustomerId,
+        app_user_id: appUserId,
+        user_role: "user",
+        action_taken: "skipped_no_subscription_snapshot",
+        details: { event_id: event.id },
+      });
+      await supabase
+        .from("stripe_webhook_events")
+        .update({
+          stripe_customer_id: stripeCustomerId,
+          app_user_id: appUserId,
+          action_taken: "skipped_no_subscription_snapshot",
+        })
+        .eq("event_id", event.id);
+      claimedEventId = null;
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Stale/out-of-order guard using Stripe event.created
+    const { data: existingBilling } = await supabase
+      .from("billing")
+      .select("last_stripe_event_at, last_stripe_event_id")
+      .eq("user_id", appUserId)
+      .maybeSingle();
+
+    if (existingBilling?.last_stripe_event_at) {
+      const lastEventUnix = Math.floor(
+        new Date(existingBilling.last_stripe_event_at).getTime() / 1000
+      );
+      if (event.created < lastEventUnix) {
+        logWebhook({
+          event_type: eventType,
+          stripe_customer_id: stripeCustomerId,
+          app_user_id: appUserId,
+          user_role: "user",
+          action_taken: "skipped_stale",
+          details: {
+            event_id: event.id,
+            event_created: event.created,
+            last_stripe_event_at: existingBilling.last_stripe_event_at,
+          },
+        });
+        await supabase
+          .from("stripe_webhook_events")
+          .update({
+            stripe_customer_id: stripeCustomerId,
+            app_user_id: appUserId,
+            action_taken: "skipped_stale",
+          })
+          .eq("event_id", event.id);
+        claimedEventId = null;
+        return new Response(JSON.stringify({ received: true, stale: true }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const planCode = resolvePlanCodeFromPrice(priceId);
     const decision = evaluateEntitlement({
       stripeStatus: subscriptionStatus,
@@ -337,7 +422,7 @@ serve(async (req) => {
         ? new Date(currentPeriodEnd * 1000).toISOString()
         : null,
       last_stripe_event_id: event.id,
-      last_stripe_event_at: new Date().toISOString(),
+      last_stripe_event_at: new Date(event.created * 1000).toISOString(),
     };
 
     const { error: billingError } = await supabase
@@ -345,6 +430,7 @@ serve(async (req) => {
       .upsert(billingData, { onConflict: "user_id" });
 
     if (billingError) {
+      await releaseClaim();
       logWebhook({
         event_type: eventType,
         stripe_customer_id: stripeCustomerId,
@@ -414,12 +500,17 @@ serve(async (req) => {
       },
     });
 
+    claimedEventId = null;
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    if (claimedEventId) {
+      await supabase.rpc("release_stripe_webhook_event", { p_event_id: claimedEventId });
+      claimedEventId = null;
+    }
     logWebhook({
       event_type: "error",
       stripe_customer_id: null,
@@ -434,3 +525,5 @@ serve(async (req) => {
     });
   }
 });
+
+

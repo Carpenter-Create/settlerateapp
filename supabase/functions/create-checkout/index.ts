@@ -6,6 +6,7 @@ import {
   PROFESSIONAL_TRIAL_DAYS,
   isAllowlistedProfessionalPrice,
 } from "../_shared/entitlementContract.ts";
+import { resolveAppOrigin } from "../_shared/appOrigin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -55,7 +56,6 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const priceType = body.priceType === "monthly" ? "monthly" : "annual";
-    // Never accept arbitrary client price IDs — allowlist only
     const requestedPriceId = typeof body.priceId === "string" ? body.priceId : null;
     let priceId = PRICE_BY_TYPE[priceType];
 
@@ -81,7 +81,6 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Prefer mapped customer from billing
     const { data: billing } = await supabaseService
       .from("billing")
       .select("stripe_customer_id")
@@ -93,7 +92,38 @@ serve(async (req) => {
     if (!customerId) {
       const customers = await stripe.customers.list({ email: user.email, limit: 1 });
       if (customers.data.length > 0) {
-        customerId = customers.data[0].id;
+        const candidate = customers.data[0];
+        // Fail closed if this Stripe customer is already bound to another app user
+        const { data: owner } = await supabaseService
+          .from("billing")
+          .select("user_id")
+          .eq("stripe_customer_id", candidate.id)
+          .maybeSingle();
+        if (owner?.user_id && owner.user_id !== user.id) {
+          logStep("Customer already bound to another user", {
+            customerId: candidate.id,
+            ownerUserId: owner.user_id,
+          });
+          return new Response(
+            JSON.stringify({
+              error: "Billing profile conflict",
+              code: "CUSTOMER_BOUND_ELSEWHERE",
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
+          );
+        }
+        // Only adopt when metadata matches or is unset
+        const metaUser = candidate.metadata?.user_id;
+        if (metaUser && metaUser !== user.id) {
+          return new Response(
+            JSON.stringify({
+              error: "Billing profile conflict",
+              code: "CUSTOMER_BOUND_ELSEWHERE",
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
+          );
+        }
+        customerId = candidate.id;
       }
     }
 
@@ -111,24 +141,29 @@ serve(async (req) => {
       logStep("Using Stripe customer", { customerId });
     }
 
-    // Persist mapping immediately (webhook resolution must not rely on email alone)
-    await supabaseService.from("billing").upsert(
+    const { error: mapError } = await supabaseService.from("billing").upsert(
       {
         user_id: user.id,
         stripe_customer_id: customerId,
       },
       { onConflict: "user_id" }
     );
+    if (mapError) {
+      logStep("Billing map upsert failed", { error: mapError.message });
+      return new Response(
+        JSON.stringify({ error: "Failed to bind billing profile", code: "BILLING_MAP_FAILED" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
 
-    const origin = req.headers.get("origin") || "https://vpcxzbaxhpucvevnkalo.lovable.app";
+    const origin = resolveAppOrigin(req);
 
-    // success_url never grants entitlement — webhook state is authoritative
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       success_url: `${origin}/app/account?subscription=success`,
-      cancel_url: `${origin}/pricing`,
+      cancel_url: `${origin}/app/account`,
       client_reference_id: user.id,
       metadata: { user_id: user.id },
       subscription_data: {

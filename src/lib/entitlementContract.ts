@@ -141,7 +141,8 @@ export function evaluateEntitlement(input: BillingEntitlementInput): Entitlement
   }
 
   const professionalPrice = isAllowlistedProfessionalPrice(priceId);
-  const periodStillValid = !periodEnd || periodEnd.getTime() > now.getTime();
+  // Null period end must not perpetuate Professional access
+  const periodStillValid = periodEnd != null && periodEnd.getTime() > now.getTime();
 
   let entitlementStatus: EntitlementStatus;
   let planCode: PlanCode = "analytical";

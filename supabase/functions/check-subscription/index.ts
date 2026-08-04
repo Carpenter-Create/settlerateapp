@@ -69,11 +69,11 @@ serve(async (req) => {
 
     const isAdmin = Boolean(adminRole);
 
+    // Count all saved rows (including archived) to mirror atomic free-tier limit
     const { count: scenarioCount } = await supabaseClient
       .from("scenarios")
       .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("is_archived", false);
+      .eq("user_id", user.id);
 
     const { data: billing } = await supabaseClient
       .from("billing")
