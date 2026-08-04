@@ -33,7 +33,7 @@
     }
   },
   "expected": {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "mode": "purchase",
     "purchasePrice": 400000,
     "downPayment": 15,
@@ -42,8 +42,8 @@
   },
   "tolerance": {},
   "verification": {
-    "method": "migrateScenario pipeline v0→v1; legacy flat inputs nested under inputs key; field preservation inspection",
+    "method": "migrateScenario pipeline v0→v1→v2; legacy flat inputs nested under inputs key; field preservation inspection",
     "verificationDate": "2026-08-03"
   },
-  "currentBehaviorNotes": "Migration pipeline expects legacy flat fields under scenario.inputs, not at scenario root."
+  "currentBehaviorNotes": "Migration pipeline expects legacy flat fields under scenario.inputs, not at scenario root. Schema v2 adds dual-snapshot fields via hydration."
 }
