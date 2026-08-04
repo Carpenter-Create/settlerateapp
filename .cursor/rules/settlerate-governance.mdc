@@ -1,0 +1,30 @@
+---
+description: SettleRate domain authority and documentation-vs-implementation conflicts
+alwaysApply: true
+---
+
+# Domain Authority
+
+Use the authoritative document for each domain. Do not invent a universal ranking across domains.
+
+| Domain | Authority |
+|--------|-----------|
+| Financial methodology | `docs/FINANCIAL_METHODOLOGY.md` |
+| Benchmark and defect status | `TEST_BASELINE.md` |
+| Product scope | `docs/APP_SCOPE.md` |
+| Security | `docs/SECURITY_MODEL.md` |
+| Roles and entitlements | `docs/ROLES_AND_ENTITLEMENTS.md` |
+| Copy | `docs/COPY_STANDARD.md` |
+| UI | `docs/UI_STANDARD.md`, `docs/PORTAL_UI_STANDARD.md` |
+| Current implemented behavior | Source code and **active tests** |
+
+## Documentation vs implementation
+
+- **Documentation** defines approved **target** behavior.
+- **Code and active tests** establish **current implemented** behavior.
+- When they conflict, **report the conflict** — do not silently pick one side.
+- Label gaps as: documented target, current behavior, or unresolved (needs founder decision).
+
+## Before financial work
+
+Read `docs/FINANCIAL_METHODOLOGY.md` and the relevant DEF-*/BM-* rows in `TEST_BASELINE.md`.
