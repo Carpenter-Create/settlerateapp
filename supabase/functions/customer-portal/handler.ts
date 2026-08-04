@@ -24,6 +24,8 @@ export interface CustomerPortalDeps {
   getBillingCustomerId: (userId: string) => Promise<string | null | undefined>;
   /** Metadata-only Stripe search candidates for the authenticated user. */
   searchCustomersByUserId: (userId: string) => Promise<StripeCustomerLike[]>;
+  /** True when stripe_customer_id is already mapped to a different app user. */
+  isCustomerBoundToOtherUser: (customerId: string, userId: string) => Promise<boolean>;
   /** Repairs the authenticated user's billing mapping after a unique metadata match. */
   upsertBillingCustomerId: (userId: string, customerId: string) => Promise<void>;
   createPortalSession: (customerId: string, returnUrl: string) => Promise<{ url: string; id: string }>;
@@ -83,6 +85,15 @@ export async function handleCustomerPortalRequest(
       }
 
       customerId = resolution.customerId;
+      if (await deps.isCustomerBoundToOtherUser(customerId, user.id)) {
+        return jsonResponse(
+          {
+            code: "CUSTOMER_BOUND_ELSEWHERE",
+            error: "Billing profile is already linked to another account",
+          },
+          409
+        );
+      }
       await deps.upsertBillingCustomerId(user.id, customerId);
     }
 

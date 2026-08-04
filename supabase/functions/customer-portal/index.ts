@@ -66,6 +66,14 @@ serve(async (req) => {
       });
       return result.data;
     },
+    isCustomerBoundToOtherUser: async (customerId, userId) => {
+      const { data: owner } = await supabaseClient
+        .from("billing")
+        .select("user_id")
+        .eq("stripe_customer_id", customerId)
+        .maybeSingle();
+      return Boolean(owner?.user_id && owner.user_id !== userId);
+    },
     upsertBillingCustomerId: async (userId, customerId) => {
       const { error } = await supabaseClient.from("billing").upsert(
         { user_id: userId, stripe_customer_id: customerId },

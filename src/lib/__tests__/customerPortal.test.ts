@@ -41,6 +41,7 @@ function makeDeps(overrides: Partial<CustomerPortalDeps> = {}): CustomerPortalDe
     logAdminBypass: vi.fn(async () => undefined),
     getBillingCustomerId: vi.fn(async () => null),
     searchCustomersByUserId: vi.fn(async () => []),
+    isCustomerBoundToOtherUser: vi.fn(async () => false),
     upsertBillingCustomerId: vi.fn(async () => undefined),
     createPortalSession: vi.fn(async (_customerId, returnUrl) => ({
       url: `https://billing.stripe.com/session/test?return=${encodeURIComponent(returnUrl)}`,
@@ -98,11 +99,30 @@ describe("handleCustomerPortalRequest", () => {
 
     expect(response.status).toBe(200);
     expect(body.url).toBeDefined();
+    expect(deps.isCustomerBoundToOtherUser).toHaveBeenCalledWith(CUSTOMER_A, USER_A);
     expect(deps.upsertBillingCustomerId).toHaveBeenCalledWith(USER_A, CUSTOMER_A);
     expect(deps.createPortalSession).toHaveBeenCalledWith(
       CUSTOMER_A,
       `${DEFAULT_APP_ORIGIN}/app/account`
     );
+  });
+
+  it("returns CUSTOMER_BOUND_ELSEWHERE when the metadata match is mapped to another user", async () => {
+    const deps = makeDeps({
+      getBillingCustomerId: vi.fn(async () => null),
+      searchCustomersByUserId: vi.fn(async (userId) => [
+        { id: CUSTOMER_A, metadata: { user_id: userId } },
+      ]),
+      isCustomerBoundToOtherUser: vi.fn(async () => true),
+    });
+
+    const response = await handleCustomerPortalRequest(requestWithAuth("valid-token"), deps);
+    const body = await readJson(response);
+
+    expect(response.status).toBe(409);
+    expect(body.code).toBe("CUSTOMER_BOUND_ELSEWHERE");
+    expect(deps.upsertBillingCustomerId).not.toHaveBeenCalled();
+    expect(deps.createPortalSession).not.toHaveBeenCalled();
   });
 
   it("creates a portal session when billing.stripe_customer_id is present for the user", async () => {
