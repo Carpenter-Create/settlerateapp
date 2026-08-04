@@ -103,3 +103,7 @@ Authoritative `pdf_export` enforcement is the `generate-pdf` edge function (`ass
 - Checkout/portal customer binding fail-closed; allowlisted return origins
 - Free-tier scenario count includes archived rows (closes stash-then-unarchive)
 - Legacy `saved_comparisons` write trigger; comparison scenario ownership check
+
+## Deployment
+
+See `docs/PHASE6_DEPLOYMENT.md` for migration order, function deploy sequence, and smoke checks.
