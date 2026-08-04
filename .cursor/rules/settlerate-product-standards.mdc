@@ -1,0 +1,40 @@
+---
+description: SettleRate app repository scope, security, roles, copy, and UI
+globs: src/**/*.tsx,src/**/*.ts,supabase/**,docs/**
+alwaysApply: false
+---
+
+# Repository Scope
+
+This repository is the **authenticated SettleRate application** (`settlerate-app`): auth, `/app/*`, calculator, scenarios, comparisons, billing, Supabase persistence.
+
+It is **not** the marketing site. Prohibited-route rules below apply **only here** — do not generalize them to `settlerate-web` or other repos.
+
+Authority: `docs/APP_SCOPE.md`.
+
+## Prohibited routes (this repo only)
+
+Never reintroduce: `/pricing`, `/how-it-works`, `/terms`, `/privacy`, `/contact`, `/approach`, `/advisors`, `/investors`, `/documentation`, `/regulatory`.
+
+## Security — `docs/SECURITY_MODEL.md`
+
+- RLS required on all user data tables; no cross-user access
+- Authorize via JWT + RLS; never trust client-provided user IDs
+- Admin via `user_roles` + `has_role()` only
+- Service role key never in client
+
+## Roles and entitlements — `docs/ROLES_AND_ENTITLEMENTS.md`
+
+- Entitlement gating is server-side; client checks are UI hints only
+- No advisor multi-client features without explicit design approval
+
+## Copy — `docs/COPY_STANDARD.md`
+
+- Neutral, institutional, non-promotional
+- Use canonical product identity sentences verbatim where defining SettleRate
+- Forbidden terms: best, optimize, recommend, predict, you should, etc.
+
+## UI — `docs/UI_STANDARD.md`, `docs/PORTAL_UI_STANDARD.md`
+
+- Institutional, calm, ledger-style surfaces; design tokens only
+- Phase 2 UI changes allowed only when **required by approved financial methodology** — no visual redesign

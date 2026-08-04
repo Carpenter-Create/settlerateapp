@@ -1,0 +1,36 @@
+---
+description: SettleRate validation commands and git discipline
+alwaysApply: true
+---
+
+# Validation (before every commit or push)
+
+Run in order; all must pass (mirrors `.github/workflows/ci.yml`):
+
+```bash
+npm run lint
+npm run typecheck
+npm run verify:benchmarks
+npm run test:run
+npm run build
+```
+
+Do not claim completion or push without a green run.
+
+## Prohibited CI weakening
+
+- No `continue-on-error` on required steps
+- No skipping commands
+- No broadening ESLint ignores beyond existing project config
+- No weakening assertions, deleting active benchmarks, or converting failing tests to `it.todo` for green CI
+- No importing production calculator code into `scripts/verify-benchmarks.mjs`
+
+# Git discipline
+
+- Work on a **dedicated branch**; never commit directly to `main`
+- Keep commits bounded and why-focused
+- Use **draft PRs** for active phase work
+- Confirm working tree is clean before and after git operations
+- Branch naming: `feat/`, `fix/`, `test/` prefixes per repo convention
+
+Push and draft-PR creation are allowed by default (see `settlerate-phase-and-agent-workflow.mdc`). Merge, ready-for-review, and branch deletion require explicit authorization.

@@ -1,0 +1,44 @@
+---
+description: SettleRate financial calculator governance
+globs: src/lib/mortgage.ts,src/lib/heloc.ts,src/lib/assumption.ts,src/lib/scenarioCalculator.ts,src/lib/rateSensitivity.ts,src/lib/comparisonSummary.ts,src/lib/scenarioContract.ts,src/lib/scenarioStore.ts,scripts/verify-benchmarks.mjs
+alwaysApply: false
+---
+
+# Financial Engine Governance
+
+Authoritative reference: `docs/FINANCIAL_METHODOLOGY.md`. Do not paraphrase or simplify beyond that document.
+
+## Change gate
+
+Never change a financial formula or comparison semantic without:
+
+- Approved **DEF-*** defect ID
+- Applicable **BM-*** benchmark ID(s)
+- Methodology basis (section in FINANCIAL_METHODOLOGY.md)
+- Updated or activated tests and independent verification where required
+
+## Core semantics (v2.0.0 target)
+
+- Principal repayment is **not** a financing cost
+- `financingCostOverHorizon` = interest + financing fees + MI/premiums + defined borrowing costs; **excludes principal**
+- `principalReductionOverHorizon` reported separately
+- Primary comparisons use `financingCostOverHorizon` (UI winner logic is Phase 5 — do not implement early)
+- `allInMonthlyHousingPayment` is secondary; must not determine primary winner
+- Refinance break-even requires explicit `currentInterestRate` and `currentRemainingTermMonths`; omit when absent or savings ≤ 0; no synthetic `baseRate + 1.0%`
+- HELOC remediation: interest-only draw only; reject unsupported amortizing draw
+- Frozen `ScenarioAssumptions` (e.g., `pmiRemovalThreshold`) must apply when stored on scenarios
+- `oneTimePrincipalPayment` at month 1 before first payment (DEF-007)
+- Do not define comparison total cost as loan principal + interest
+
+## Independent verification
+
+- `scripts/verify-benchmarks.mjs` must not import production calculator modules
+- Never derive benchmark expected values from the production calculator under test
+
+## Versioning
+
+Calculator behavior changes require versioning review (`CALCULATOR_VERSION`, methodology §12). Do not bump silently.
+
+## Phase note
+
+`calculateScenario()` dispatch is correct for HELOC/assumption; save/load persistence remains mortgage-shaped (DEF-001, Phase 3). Do not fix persistence in Phase 2 unless Phase 3 is authorized.
