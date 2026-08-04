@@ -20,6 +20,10 @@ export interface StripeSubscriptionItemLike {
 }
 
 export interface StripeSubscriptionLike {
+  id?: string | null;
+  customer?: string | { id?: string | null } | null;
+  status?: string | null;
+  cancel_at_period_end?: boolean | null;
   current_period_end?: number | null;
   current_period_start?: number | null;
   items?: {
@@ -47,6 +51,36 @@ function asObjectId(value: string | { id?: string | null } | null | undefined): 
     return value.id;
   }
   return null;
+}
+
+export interface StripeSubscriptionBillingSnapshot {
+  subscriptionId: string | null;
+  stripeCustomerId: string | null;
+  subscriptionStatus: string | null;
+  currentPeriodEnd: number | null;
+  cancelAtPeriodEnd: boolean;
+  priceId: string | null;
+  productId: string | null;
+}
+
+/**
+ * Maps the current Stripe Subscription object into the fields persisted by billing.
+ * Callers must pass a retrieved subscription rather than trust a webhook's object snapshot.
+ */
+export function mapSubscriptionToBillingSnapshot(
+  subscription: StripeSubscriptionLike | null | undefined
+): StripeSubscriptionBillingSnapshot {
+  const firstItem = subscription?.items?.data?.[0];
+
+  return {
+    subscriptionId: asObjectId(subscription?.id),
+    stripeCustomerId: asObjectId(subscription?.customer),
+    subscriptionStatus: subscription?.status ?? null,
+    currentPeriodEnd: extractSubscriptionPeriodEnd(subscription),
+    cancelAtPeriodEnd: Boolean(subscription?.cancel_at_period_end),
+    priceId: firstItem?.price?.id ?? null,
+    productId: asObjectId(firstItem?.price?.product),
+  };
 }
 
 /**
