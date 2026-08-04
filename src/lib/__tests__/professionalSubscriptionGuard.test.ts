@@ -15,9 +15,10 @@ describe("professionalSubscriptionGuard", () => {
     (subscriptionStatus) => {
       expect(
         billingRowBlocksCheckout({
+          price_id: PROFESSIONAL_PRICE_ID,
           stripe_subscription_id: "sub_professional",
           subscription_status: subscriptionStatus,
-        })
+        }, isAllowlistedProfessionalPrice)
       ).toBe(true);
     }
   );
@@ -25,15 +26,30 @@ describe("professionalSubscriptionGuard", () => {
   it("does not block billing rows without a subscription id or with a non-blocking status", () => {
     expect(
       billingRowBlocksCheckout({
+        price_id: PROFESSIONAL_PRICE_ID,
         stripe_subscription_id: null,
         subscription_status: "active",
-      })
+      }, isAllowlistedProfessionalPrice)
     ).toBe(false);
     expect(
       billingRowBlocksCheckout({
+        price_id: PROFESSIONAL_PRICE_ID,
         stripe_subscription_id: "sub_canceled",
         subscription_status: "canceled",
-      })
+      }, isAllowlistedProfessionalPrice)
+    ).toBe(false);
+  });
+
+  it("does not block an active billing row with a non-Professional price", () => {
+    expect(
+      billingRowBlocksCheckout(
+        {
+          price_id: "price_other",
+          stripe_subscription_id: "sub_other",
+          subscription_status: "active",
+        },
+        isAllowlistedProfessionalPrice
+      )
     ).toBe(false);
   });
 

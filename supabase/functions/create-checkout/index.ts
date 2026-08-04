@@ -8,6 +8,7 @@ import {
 } from "../_shared/entitlementContract.ts";
 import { resolveAppOrigin } from "../_shared/appOrigin.ts";
 import {
+  CHECKOUT_BLOCKING_SUBSCRIPTION_STATUSES,
   billingRowBlocksCheckout,
   checkoutIdempotencyKey,
   stripeSubscriptionsBlockCheckout,
@@ -139,7 +140,7 @@ serve(async (req) => {
 
     const { data: billing } = await supabaseService
       .from("billing")
-      .select("stripe_customer_id, stripe_subscription_id, subscription_status")
+      .select("stripe_customer_id, stripe_subscription_id, subscription_status, price_id")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -212,7 +213,7 @@ serve(async (req) => {
       );
     }
 
-    if (billingRowBlocksCheckout(billing)) {
+    if (billingRowBlocksCheckout(billing, isAllowlistedProfessionalPrice)) {
       logStep("Checkout blocked: billing row has active subscription", { userId: user.id });
       return new Response(
         JSON.stringify({
@@ -223,12 +224,17 @@ serve(async (req) => {
       );
     }
 
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "all",
-      limit: 100,
-    });
-    if (stripeSubscriptionsBlockCheckout(subscriptions.data, isAllowlistedProfessionalPrice)) {
+    const subscriptionLists = await Promise.all(
+      CHECKOUT_BLOCKING_SUBSCRIPTION_STATUSES.map((status) =>
+        stripe.subscriptions.list({
+          customer: customerId,
+          status,
+          limit: 100,
+        })
+      )
+    );
+    const subscriptions = subscriptionLists.flatMap(({ data }) => data);
+    if (stripeSubscriptionsBlockCheckout(subscriptions, isAllowlistedProfessionalPrice)) {
       logStep("Checkout blocked: Stripe has active Professional subscription", { userId: user.id });
       return new Response(
         JSON.stringify({

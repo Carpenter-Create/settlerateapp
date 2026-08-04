@@ -11,6 +11,7 @@ export const CHECKOUT_BLOCKING_SUBSCRIPTION_STATUSES = [
 ] as const;
 
 interface BillingRowLike {
+  price_id?: string | null;
   stripe_subscription_id?: string | null;
   subscription_status?: string | null;
 }
@@ -32,9 +33,14 @@ function hasCheckoutBlockingStatus(status: string | null | undefined): boolean {
   );
 }
 
-export function billingRowBlocksCheckout(billing: BillingRowLike | null | undefined): boolean {
+export function billingRowBlocksCheckout(
+  billing: BillingRowLike | null | undefined,
+  isAllowlistedPrice: (priceId: string | null | undefined) => boolean
+): boolean {
   return Boolean(
-    billing?.stripe_subscription_id && hasCheckoutBlockingStatus(billing.subscription_status)
+    billing?.stripe_subscription_id &&
+      hasCheckoutBlockingStatus(billing.subscription_status) &&
+      isAllowlistedPrice(billing.price_id)
   );
 }
 
