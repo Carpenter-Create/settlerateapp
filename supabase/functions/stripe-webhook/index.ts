@@ -25,6 +25,70 @@ const logWebhook = (log: WebhookLog) => {
   console.log(`[STRIPE-WEBHOOK] ${JSON.stringify(log)}`);
 };
 
+type SupabaseAdmin = ReturnType<typeof createClient>;
+
+/** Resolve app user: billing map → verified metadata (no email scan). */
+async function resolveAppUserId(
+  supabase: SupabaseAdmin,
+  stripeCustomerId: string,
+  metadataUserId: string | null,
+  customerMetadataUserId: string | null
+): Promise<string | null> {
+  const { data: billingByCustomer } = await supabase
+    .from("billing")
+    .select("user_id")
+    .eq("stripe_customer_id", stripeCustomerId)
+    .maybeSingle();
+
+  if (billingByCustomer?.user_id) {
+    return billingByCustomer.user_id;
+  }
+
+  for (const candidate of [metadataUserId, customerMetadataUserId]) {
+    if (!candidate) continue;
+    const verified = await verifyMetadataUserId(supabase, candidate, stripeCustomerId);
+    if (verified) return verified;
+  }
+
+  return null;
+}
+
+async function verifyMetadataUserId(
+  supabase: SupabaseAdmin,
+  userId: string,
+  stripeCustomerId: string
+): Promise<string | null> {
+  const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+  if (userError || !userData?.user) {
+    return null;
+  }
+
+  const { data: customerOwner } = await supabase
+    .from("billing")
+    .select("user_id")
+    .eq("stripe_customer_id", stripeCustomerId)
+    .maybeSingle();
+
+  if (customerOwner?.user_id && customerOwner.user_id !== userId) {
+    return null;
+  }
+
+  const { data: userBilling } = await supabase
+    .from("billing")
+    .select("stripe_customer_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (
+    userBilling?.stripe_customer_id &&
+    userBilling.stripe_customer_id !== stripeCustomerId
+  ) {
+    return null;
+  }
+
+  return userId;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -240,8 +304,9 @@ serve(async (req) => {
       });
     }
 
-    // Resolve app user: billing mapping → metadata → customer metadata → email
+    // Resolve app user: billing mapping → verified metadata (no email listing)
     let appUserId: string | null = null;
+    let billingByCustomerUserId: string | null = null;
 
     const { data: billingByCustomer } = await supabase
       .from("billing")
@@ -250,30 +315,21 @@ serve(async (req) => {
       .maybeSingle();
 
     if (billingByCustomer?.user_id) {
-      appUserId = billingByCustomer.user_id;
-    }
-
-    if (!appUserId && metadataUserId) {
-      appUserId = metadataUserId;
+      billingByCustomerUserId = billingByCustomer.user_id;
     }
 
     const customer = await stripe.customers.retrieve(stripeCustomerId);
-    if (!customer.deleted) {
-      if (!appUserId && customer.metadata?.user_id) {
-        appUserId = customer.metadata.user_id;
-      }
+    const customerMetadataUserId =
+      !customer.deleted && customer.metadata?.user_id
+        ? (customer.metadata.user_id as string)
+        : null;
 
-      if (!appUserId && customer.email) {
-        const { data: listed, error: listError } = await supabase.auth.admin.listUsers({
-          page: 1,
-          perPage: 200,
-        });
-        if (!listError && listed?.users) {
-          const match = listed.users.find((u) => u.email === customer.email);
-          if (match) appUserId = match.id;
-        }
-      }
-    }
+    appUserId = await resolveAppUserId(
+      supabase,
+      stripeCustomerId,
+      metadataUserId,
+      customerMetadataUserId
+    );
 
     if (!appUserId) {
       // Retryable: mapping may appear after checkout binds billing
@@ -294,11 +350,11 @@ serve(async (req) => {
 
     // Prefer billing mapping over metadata when they disagree
     if (
-      billingByCustomer?.user_id &&
+      billingByCustomerUserId &&
       metadataUserId &&
-      billingByCustomer.user_id !== metadataUserId
+      billingByCustomerUserId !== metadataUserId
     ) {
-      appUserId = billingByCustomer.user_id;
+      appUserId = billingByCustomerUserId;
     }
 
     const { data: adminRole } = await supabase

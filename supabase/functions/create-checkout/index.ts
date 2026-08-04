@@ -18,6 +18,57 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
+/** Trial only for first-time Professional checkout; fail closed when uncertain. */
+async function isEligibleForProfessionalTrial(
+  stripe: Stripe,
+  supabaseService: ReturnType<typeof createClient>,
+  userId: string,
+  customerId: string
+): Promise<boolean> {
+  const { data: billing } = await supabaseService
+    .from("billing")
+    .select("subscription_status, stripe_subscription_id, price_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (billing?.stripe_subscription_id) {
+    logStep("Trial skipped: prior subscription on record", { userId });
+    return false;
+  }
+
+  if (
+    billing?.subscription_status &&
+    ["active", "trialing", "past_due", "unpaid", "canceled"].includes(billing.subscription_status)
+  ) {
+    logStep("Trial skipped: prior billing status", {
+      userId,
+      status: billing.subscription_status,
+    });
+    return false;
+  }
+
+  const subs = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "all",
+    limit: 100,
+  });
+
+  for (const sub of subs.data) {
+    for (const item of sub.items.data) {
+      if (isAllowlistedProfessionalPrice(item.price.id)) {
+        logStep("Trial skipped: Stripe history on allowlisted price", {
+          userId,
+          subscriptionId: sub.id,
+          priceId: item.price.id,
+        });
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 const PRICE_BY_TYPE: Record<string, string> = {
   monthly: PROFESSIONAL_PRICE_IDS[0],
   annual: PROFESSIONAL_PRICE_IDS[1],
@@ -158,6 +209,23 @@ serve(async (req) => {
 
     const origin = resolveAppOrigin(req);
 
+    const eligibleForTrial = await isEligibleForProfessionalTrial(
+      stripe,
+      supabaseService,
+      user.id,
+      customerId
+    );
+
+    const subscriptionData: Stripe.Checkout.SessionCreateParams.SubscriptionData = {
+      metadata: { user_id: user.id },
+    };
+    if (eligibleForTrial) {
+      subscriptionData.trial_period_days = PROFESSIONAL_TRIAL_DAYS;
+      logStep("Trial eligible", { trialDays: PROFESSIONAL_TRIAL_DAYS });
+    } else {
+      logStep("Trial not eligible — omitting trial_period_days");
+    }
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
@@ -166,10 +234,7 @@ serve(async (req) => {
       cancel_url: `${origin}/app/account`,
       client_reference_id: user.id,
       metadata: { user_id: user.id },
-      subscription_data: {
-        trial_period_days: PROFESSIONAL_TRIAL_DAYS,
-        metadata: { user_id: user.id },
-      },
+      subscription_data: subscriptionData,
     });
 
     logStep("Checkout session created", { sessionId: session.id });
