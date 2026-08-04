@@ -1,6 +1,8 @@
 # Phase 7A Beta Billing Hardening Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. **Do not start implementation until Phase 7A is explicitly authorized.**
+> **Status (2026-08-04):** Code hardening Tasks 1–3 and runbook Task 4 are implemented on `feat/phase7a-beta-billing-hardening`. **Live Stripe catalog/secret cutover (P0-2) remains unauthorized** — sandbox prices stay in code until founder cutover.
+>
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make SettleRate safe for the first real paying customers by eliminating incorrect charges, incorrect Professional access, and broken subscription-management paths.
 
@@ -131,20 +133,20 @@ Sandbox full smoke → draft PR → authorized live cutover
 - Modify: `src/components/billing/UpgradeModal.tsx`
 - Create (optional): `supabase/functions/_shared/professionalSubscriptionGuard.ts` + `src/lib/professionalSubscriptionGuard.ts` + Vitest
 
-- [ ] **Step 1:** Add failing tests for “active/trialing/past_due/unpaid + allowlisted price ⇒ blocked”.
-- [ ] **Step 2:** Implement billing-row + Stripe list guards; return `409 ALREADY_SUBSCRIBED`.
-- [ ] **Step 3:** Add Stripe idempotency key on `checkout.sessions.create`.
-- [ ] **Step 4:** UI: on `ALREADY_SUBSCRIBED`, toast + open portal (or instruct Manage billing).
-- [ ] **Step 5:** Run focused tests + full validation suite; commit on `fix/phase7a-checkout-already-subscribed`.
+- [x] **Step 1:** Add failing tests for “active/trialing/past_due/unpaid + allowlisted price ⇒ blocked”.
+- [x] **Step 2:** Implement billing-row + Stripe list guards; return `409 ALREADY_SUBSCRIBED`.
+- [x] **Step 3:** Add Stripe idempotency key on `checkout.sessions.create`.
+- [x] **Step 4:** UI: on `ALREADY_SUBSCRIBED`, toast + open portal (or instruct Manage billing).
+- [x] **Step 5:** Run focused tests + full validation suite; commit on feature branch.
 
 ### Task 2: Webhook retrieve-on-write for subscription events
 
 **Files:**
 - Modify: `supabase/functions/stripe-webhook/index.ts`
 
-- [ ] **Step 1:** Add/extend test or sandbox script proving stale event payload does not win over retrieved subscription.
-- [ ] **Step 2:** For `customer.subscription.*`, retrieve subscription before mapping period/status/price/cancel flags (reuse `extractSubscriptionPeriodEnd`).
-- [ ] **Step 3:** Redeploy webhook to sandbox; replay out-of-order pair; commit.
+- [x] **Step 1:** Add/extend test or sandbox script proving stale event payload does not win over retrieved subscription.
+- [x] **Step 2:** For `customer.subscription.*`, retrieve subscription before mapping period/status/price/cancel flags (reuse `extractSubscriptionPeriodEnd`).
+- [ ] **Step 3:** Redeploy webhook to sandbox; replay out-of-order pair (ops; after PR deploy).
 
 ### Task 3: Metadata-only customer resolve + portal repair
 
@@ -153,11 +155,11 @@ Sandbox full smoke → draft PR → authorized live cutover
 - Modify: `customer-portal/handler.ts`, `create-checkout/index.ts`
 - Modify: `Account.tsx` for `CUSTOMER_AMBIGUOUS`
 
-- [ ] **Step 1:** Failing tests for 0 / 1 / N metadata matches.
-- [ ] **Step 2:** Implement resolve+upsert; wire portal before `NO_STRIPE_CUSTOMER`.
-- [ ] **Step 3:** Remove email `customers.list` adoption from checkout (P1-2 in same PR if small).
-- [ ] **Step 4:** Sandbox: wipe billing map → portal repairs → manage works; checkout still blocked if sub active (Task 1).
-- [ ] **Step 5:** Validate + commit.
+- [x] **Step 1:** Failing tests for 0 / 1 / N metadata matches.
+- [x] **Step 2:** Implement resolve+upsert; wire portal before `NO_STRIPE_CUSTOMER`.
+- [x] **Step 3:** Remove email `customers.list` adoption from checkout (P1-2 in same PR if small).
+- [ ] **Step 4:** Sandbox: wipe billing map → portal repairs → manage works; checkout still blocked if sub active (Task 1) — after edge redeploy.
+- [x] **Step 5:** Validate + commit.
 
 ### Task 4: Live catalog lockstep + Phase 7A runbook
 
@@ -165,8 +167,8 @@ Sandbox full smoke → draft PR → authorized live cutover
 - Migration + entitlement allowlists + `docs/PHASE7A_DEPLOYMENT.md` + contract docs
 
 - [ ] **Step 1:** Founder provides live `product` / `price` IDs (blocked until then).
-- [ ] **Step 2:** Single migration + TS allowlist PR; update SQL harness prices.
-- [ ] **Step 3:** Write cutover runbook including webhook secret, portal return URL `https://app.settlerate.com/app/account`, edge deploy order, smoke checklist covering Tasks 1–3.
+- [ ] **Step 2:** Single migration + TS allowlist PR; update SQL harness prices (**deferred — no live cutover yet**).
+- [x] **Step 3:** Write cutover runbook including webhook secret, portal return URL `https://app.settlerate.com/app/account`, edge deploy order, smoke checklist covering Tasks 1–3.
 - [ ] **Step 4:** `test:entitlement-sql` + full CI; draft PR; **stop for authorization** before live secret/price cutover.
 
 ### Task 5: Closed-beta smoke (human + sandbox/live)
@@ -202,4 +204,4 @@ Sandbox full smoke → draft PR → authorized live cutover
 
 ## Authorization gate
 
-This plan is documentation only until a founder/owner explicitly authorizes **Phase 7A implementation**. Do not create live products, rotate webhook secrets, or merge to `main` without that authorization.
+Phase 7A **code hardening** is authorized and implemented on the feature branch. Do **not** create live products, rotate live webhook secrets, swap allowlists to live price IDs, or merge to `main` without explicit founder authorization. Sandbox redeploy + smoke remain the next ops step before any live cutover.
