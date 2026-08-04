@@ -58,15 +58,7 @@ describe("scenarioCalculator.benchmark — active dispatch regression", () => {
   });
 });
 
-describe("scenarioCalculator.benchmark — pending v2.0.0 cross-type normalization", () => {
-  it.todo(
-    "BM-C01 comparison normalization — DEF-001, DEF-003 — Phase 5: financingCostOverHorizon ranks BM-P01 lowest among P01/H02/A02"
-  );
-
-  it.todo(
-    "BM-C02 all-in monthly secondary — DEF-003 — Phase 5: winner must not be determined by allInMonthlyHousingPayment alone"
-  );
-
+describe("scenarioCalculator.benchmark — v2.0.0 cross-type normalization (Phase 5)", () => {
   it("BM-C03 exposes principal reduction separately from financing cost", () => {
     const unified = calculateScenario(bmP01.inputs as MortgageInputs);
     expect(unified.principalReductionOverHorizon).toBeCloseTo(unified.principalAmount, 2);

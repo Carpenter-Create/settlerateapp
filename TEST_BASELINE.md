@@ -33,7 +33,7 @@ Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P0
 | Category | Count |
 |----------|-------|
 | Independently verified (`verify:benchmarks`) | 7 |
-| Remaining `it.todo` | 2 (BM-C01, BM-C02 — Phase 5) |
+| Remaining `it.todo` | 0 |
 | **Total benchmark fixtures** | **16** |
 
 ---
@@ -42,8 +42,8 @@ Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P0
 
 | ID | Description | Phase | Status on this branch |
 |----|-------------|-------|------------------------|
-| DEF-001 | Persistence used `calculateMortgage` for all modes; dual snapshots absent; comparison still ranks by `totalCost` | Phase 3 (store) / Phase 5 (winner) | **Store dispatch resolved** — dual snapshots + `calculateScenario`; winner still Phase 5 |
-| DEF-003 | Comparison winner uses `totalCost` / all-in monthly instead of financing cost | Phase 5 | Open |
+| DEF-001 | Persistence used `calculateMortgage` for all modes; dual snapshots absent; comparison still ranks by `totalCost` | Phase 3 (store) / Phase 5 (winner) | **Resolved** — dual snapshots + financing-cost winner |
+| DEF-003 | Comparison winner uses `totalCost` / all-in monthly instead of financing cost | Phase 5 | **Resolved** — `docs/COMPARISON_CONTRACT.md` |
 | DEF-007 | `oneTimePrincipalPayment` ignored in amortization | Phase 2 | **Resolved** |
 | DEF-008 | `ScenarioAssumptions` stored but not applied | Phase 2 | **Resolved** |
 | DEF-009 | Synthetic break-even rate `baseRate + 1.0%`; missing current-loan inputs | Phase 2 | **Resolved** |
@@ -89,8 +89,8 @@ Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P0
 
 | ID | Type | Status | Target behavior | Current observed behavior | Defect | Phase | Verification |
 |----|------|--------|-----------------|---------------------------|--------|-------|--------------|
-| **BM-C01** | cross | **pending** | Rank by `financingCostOverHorizon` across P01/H02/A02 | Still ranks by `totalCost` | DEF-003 | Phase 5 | ✅ Expected values in fixtures |
-| **BM-C02** | cross | **pending** | All-in monthly is secondary tie-breaker only | Winner may still use all-in / totalCost | DEF-003 | Phase 5 | Specification |
+| **BM-C01** | cross | **active** | Cross-type P01/H02/A02 **indeterminate** — unequal funding / decision objectives (not H02 “winner”) | Comparability gate + fixture audit | DEF-003 | Phase 5 | ✅ Vitest `comparisonContract.test.ts` |
+| **BM-C02** | cross | **active** | All-in monthly must not determine primary winner | Winner follows financing cost when monthly ranks opposite | DEF-003 | Phase 5 | ✅ Vitest `comparisonContract.test.ts` |
 | **BM-C03** | cross | **active** | `principalReductionOverHorizon` separate from financing cost | Exposed on mortgage + unified results | — | Phase 2 | ✅ Vitest |
 
 ### Migration and versioning
@@ -111,6 +111,7 @@ Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P0
 | `heloc.benchmark.test.ts` | BM-H02; BM-H04 engine rejection |
 | `assumption.benchmark.test.ts` | BM-A02 |
 | `scenarioCalculator.benchmark.test.ts` | BM-P01/H02/A02 dispatch + financing fields; BM-C03; unified `totalCost` baseline |
+| `comparisonContract.test.ts` | BM-C01/C02; winner/tie/horizon/stale/HELOC/assumption; legacy adapter; export narrative |
 | `scenarioMigrations.test.ts` | BM-M01 |
 | `scenarioPersistence.test.ts` | DEF-001 dispatch; BM-V01 dual snapshots; stale open; explicit persist recalculation; duplicate v2; round trips; legacy hydration |
 | `financingCost.composition.test.ts` | BM-P06, BM-P03 MI, BM-C03, BM-R04–R06, frozen assumptions in sensitivity |
@@ -121,18 +122,15 @@ Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P0
 
 ---
 
-## Remaining pending tests (`it.todo` — 2)
+## Remaining pending tests (`it.todo`)
 
-| Benchmark / defect | Exact todo summary | Phase |
-|--------------------|--------------------|-------|
-| **BM-C01** | Comparison normalization — `financingCostOverHorizon` ranks BM-P01 lowest among P01/H02/A02 | Phase 5 |
-| **BM-C02** | All-in monthly secondary — winner must not be determined by `allInMonthlyHousingPayment` alone | Phase 5 |
+None.
 
 ---
 
 ## Unresolved expected values
 
-None for Phase 4 export alignment beyond known summary-field omissions (HELOC draw avg / assumption gap splits). Phase 5 comparison winner fixtures remain specification-only until that phase.
+None for Phase 5 comparison beyond known summary-field omissions (ending balance / modeled equity not on persisted summary; HELOC draw avg / assumption gap splits).
 
 ---
 
@@ -140,15 +138,15 @@ None for Phase 4 export alignment beyond known summary-field omissions (HELOC dr
 
 | Topic | Approved | Current on this branch | Deferred |
 |-------|----------|------------------------|----------|
-| Financing cost metric | `financingCostOverHorizon` | Exposed on mortgage + unified results | Comparison UI winner (Phase 5) |
+| Financing cost metric | `financingCostOverHorizon` | Exposed on mortgage + unified results + comparison winner | — |
 | Principal | Reported separately | `principalReductionOverHorizon` exposed | — |
-| Exports | Canonical contract; activeSnapshot default; no silent recalc | Implemented (`docs/EXPORT_CONTRACT.md`) | Edge deploy of `generate-pdf`; HELOC/assumption component detail not on summary |
+| Exports | Canonical contract; activeSnapshot default; no silent recalc | Implemented (`docs/EXPORT_CONTRACT.md`) | HELOC/assumption component detail not on summary |
 | Break-even | Explicit current rate + term | Implemented; synthetic rate removed | — |
 | HELOC draw | Interest-only only | Engine rejects non-IO; UI has no non-IO control | Amortizing draw math |
 | Assumptions | Frozen at save, applied | Applied in calc / sensitivity / integrity | — |
 | Calculator version | 2.0.0 | `CALCULATOR_VERSION = "2.0.0"` | — |
 | Persistence | Dual snapshots, `calculateScenario` dispatch | Implemented (`docs/SCENARIO_PERSISTENCE.md`) | Broad schema redesign |
-| Comparison winner | Financing cost primary | Still `totalCost` in `comparisonSummary` | Phase 5 |
+| Comparison winner | Financing cost primary after funding/objective comparability gate | Implemented (`docs/COMPARISON_CONTRACT.md` v5.1.0) | Ending balance / equity when not persisted; cross-type rankings need equivalent funding |
 | Save limits / income context | Deferred | Unchanged | — |
 
 ---
@@ -178,13 +176,14 @@ Full-repository lint with strict rules restored. **Ignored paths:** `dist` only.
 
 ---
 
-## Confirmation: out-of-scope items unchanged
+## Confirmation: Phase 5 scope notes
 
 - Supabase DDL migrations — not modified  
-- Supabase edge functions — not modified  
-- Export pipelines — not modified  
-- Routes — not modified  
-- Approved copy — not modified  
+- Entitlements / billing — not modified  
+- Routes — not modified beyond comparison metric labels  
 - Visual redesign — not modified  
-- Comparison winner logic — not modified (Phase 5)  
+- Material label corrections only where prior labels were methodologically false  
+- Comparison winner — updated to financing-cost primary (`docs/COMPARISON_CONTRACT.md`)  
+- `generate-pdf` comparison narrative aligned to financing-cost ranking (deploy separately if needed)  
 - AWS / Next.js migration — not started  
+- Phase 6 — not started

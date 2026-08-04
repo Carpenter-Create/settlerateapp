@@ -5,24 +5,28 @@ alwaysApply: true
 
 # Phase Boundaries
 
-**Phase 1–3 complete on main.** **Phase 4** (when authorized) = export and report alignment (`docs/EXPORT_CONTRACT.md`).
+**Phase 1–4 complete on main.** **Phase 5** (when authorized) = comparison normalization and winner logic (`docs/COMPARISON_CONTRACT.md`, DEF-003, BM-C01/C02).
 
-## Allowed in Phase 4 (when task is authorized)
+## Allowed in Phase 5 (when task is authorized)
 
-- Canonical export contract consuming dual snapshots and Phase 2 financial metrics
-- Client print/HTML and server `generate-pdf` / share export field alignment
-- Adapters for legacy flat `derived` without deleting compatibility paths
-- Focused export parity / regression tests; documentation of export semantics
+- Canonical comparison participant + winner contracts
+- Routing UI/export/PDF narrative through financing-cost winner under a shared horizon
+- Activating BM-C01/BM-C02; focused comparison regression tests
+- Material label corrections when prior labels are methodologically false
+- Documentation of horizon rules, tie tolerance, stale/snapshot behavior
 
 ## Prohibited unless a later phase is explicitly authorized
 
 - AWS / Cloudflare migration
-- Route changes
+- Next.js migration
+- Route changes unrelated to comparison correctness
 - Visual redesign or unapproved copy changes
 - Broad Supabase DDL redesign
 - Entitlement or billing refactors
-- Cross-type comparison winner logic (`comparisonSummary`, Phase 5 / DEF-003)
-- Deferred methodology §13 items (income context, OAuth, free-tier limits, etc.)
+- Calculator formula changes from Phase 2
+- Persistence dual-snapshot semantics changes from Phase 3
+- Export field semantics changes from Phase 4 except consuming the canonical comparison result
+- Deferred methodology items (income context, OAuth, free-tier limits, etc.)
 
 **Never begin the next phase automatically.**
 

@@ -15,6 +15,7 @@ This repository is the **authenticated SettleRate application** — auth, `/app/
 | Financial methodology | `docs/FINANCIAL_METHODOLOGY.md` |
 | Scenario persistence | `docs/SCENARIO_PERSISTENCE.md` |
 | Export contract | `docs/EXPORT_CONTRACT.md` |
+| Comparison contract | `docs/COMPARISON_CONTRACT.md` |
 | Benchmark and defect status | `TEST_BASELINE.md` |
 | Product scope | `docs/APP_SCOPE.md` |
 | Security | `docs/SECURITY_MODEL.md` |
@@ -28,9 +29,9 @@ Detailed agent rules: `.cursor/rules/`.
 
 ## Current phase
 
-**Phase 1–3 are complete on main.** Confirm the current branch and repository state before assuming later-phase work has begun. **Phase 4** (when authorized) is export and report alignment to the canonical scenario contract — see `docs/EXPORT_CONTRACT.md`.
+**Phase 1–4 are complete on main.** Confirm the current branch and repository state before assuming later-phase work has begun. **Phase 5** (when authorized) is comparison normalization and winner logic — see `docs/COMPARISON_CONTRACT.md`.
 
-Do not begin Phase 5+ work (comparison winner normalization, entitlements, Next.js migration, AWS migration) unless explicitly authorized.
+Do not begin Phase 6+ work (entitlements, Next.js migration, AWS migration) unless explicitly authorized.
 
 ## Required validation
 

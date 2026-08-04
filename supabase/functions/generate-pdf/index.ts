@@ -141,24 +141,51 @@ function calculateDownPaymentAmount(
   return downPayment;
 }
 
+const COMPARISON_TIE_TOLERANCE_USD = 1.0;
+const COMPARISON_FUNDING_EQUIVALENCE_TOLERANCE_USD = 1.0;
+
+function financingCostOf(scenario: ScenarioData): number | null {
+  const value = scenario.results?.financingCostOverHorizon;
+  return typeof value === "number" && !Number.isNaN(value) ? value : null;
+}
+
+function decisionHorizonOf(scenario: ScenarioData): number | null {
+  const value =
+    scenario.results?.decisionHorizonMonths ?? scenario.results?.payoffMonths;
+  return typeof value === "number" && value > 0 ? value : null;
+}
+
+function financingProvidedOf(scenario: ScenarioData): number | null {
+  const value = scenario.results?.loanAmount;
+  return typeof value === "number" && !Number.isNaN(value) ? value : null;
+}
+
+function decisionObjectiveOf(scenario: ScenarioData): string {
+  const mode = scenario.inputs?.mode;
+  if (mode === "refinance") return "refinance";
+  if (mode === "heloc") return "heloc_credit";
+  if (mode === "assumption") return "assumption_purchase";
+  return "home_purchase";
+}
+
 function calculateDeltas(a: ScenarioData, b: ScenarioData) {
-  const aMonthly = a.results.monthlyTotal || 0;
-  const bMonthly = b.results.monthlyTotal || 0;
-  const aTotalCost = a.results.totalCost || 0;
-  const bTotalCost = b.results.totalCost || 0;
+  const aMonthly = a.results.allInMonthlyHousingPayment || a.results.monthlyTotal || 0;
+  const bMonthly = b.results.allInMonthlyHousingPayment || b.results.monthlyTotal || 0;
+  const aFinancing = financingCostOf(a) ?? 0;
+  const bFinancing = financingCostOf(b) ?? 0;
   const aTotalInterest = a.results.totalInterest || 0;
   const bTotalInterest = b.results.totalInterest || 0;
   
   return {
-    // Dollar deltas (independent per metric)
+    // Dollar deltas (independent per metric) — financing cost, not legacy totalCost
     monthlyPaymentDelta: aMonthly - bMonthly,
-    totalCostDelta: aTotalCost - bTotalCost,
+    totalCostDelta: aFinancing - bFinancing,
     totalInterestDelta: aTotalInterest - bTotalInterest,
     interestRateDelta: Math.round(((a.inputs?.shared?.interestRate || 0) - (b.inputs?.shared?.interestRate || 0)) * 100),
     ltvDelta: (a.results.ltvRatio || 0) - (b.results.ltvRatio || 0),
     // Percentage deltas (computed independently - never reuse across categories)
     monthlyPaymentPercentDelta: bMonthly > 0 ? ((aMonthly - bMonthly) / bMonthly) * 100 : 0,
-    totalCostPercentDelta: bTotalCost > 0 ? ((aTotalCost - bTotalCost) / bTotalCost) * 100 : 0,
+    totalCostPercentDelta: bFinancing > 0 ? ((aFinancing - bFinancing) / bFinancing) * 100 : 0,
     totalInterestPercentDelta: bTotalInterest > 0 ? ((aTotalInterest - bTotalInterest) / bTotalInterest) * 100 : 0,
   };
 }
@@ -206,33 +233,95 @@ function formatLtvDelta(value: number): string {
 }
 
 /**
- * Determine lowest cost scenario with tie-breaker logic:
- * 1. Lowest Total Cost (primary)
- * 2. Lowest Total Interest (first tie-breaker)
- * 3. Lowest Monthly Payment (second tie-breaker)
- * 4. Lowest LTV (third tie-breaker)
+ * Canonical Phase 5 winner: lowest financingCostOverHorizon under a shared
+ * horizon, shared decision objective, and equivalent financing amount.
+ * Returns null for tie / indeterminate (no secondary-metric silent break).
  */
-function determineLowestCost(scenarios: { name: string; data: ScenarioData }[]): { name: string; data: ScenarioData } {
-  return [...scenarios].sort((a, b) => {
-    const costA = a.data.results.totalCost ?? Infinity;
-    const costB = b.data.results.totalCost ?? Infinity;
+function determineLowestCost(
+  scenarios: { name: string; data: ScenarioData }[]
+): { name: string; data: ScenarioData } | null {
+  const withPrimary = scenarios.filter(
+    (s) =>
+      financingCostOf(s.data) != null &&
+      decisionHorizonOf(s.data) != null &&
+      financingProvidedOf(s.data) != null
+  );
+  if (withPrimary.length < 2) return null;
+
+  const horizonCounts = new Map<number, number>();
+  for (const s of withPrimary) {
+    const h = decisionHorizonOf(s.data)!;
+    horizonCounts.set(h, (horizonCounts.get(h) ?? 0) + 1);
+  }
+  let comparisonHorizon = withPrimary[0] ? decisionHorizonOf(withPrimary[0].data)! : 0;
+  let bestCount = 0;
+  for (const [h, count] of horizonCounts) {
+    if (count > bestCount || (count === bestCount && h < comparisonHorizon)) {
+      bestCount = count;
+      comparisonHorizon = h;
+    }
+  }
+
+  const horizonMatched = withPrimary.filter(
+    (s) => decisionHorizonOf(s.data) === comparisonHorizon
+  );
+  if (horizonMatched.length < 2) return null;
+
+  const objectiveCounts = new Map<string, number>();
+  for (const s of horizonMatched) {
+    const o = decisionObjectiveOf(s.data);
+    objectiveCounts.set(o, (objectiveCounts.get(o) ?? 0) + 1);
+  }
+  let comparisonObjective = decisionObjectiveOf(horizonMatched[0].data);
+  let bestObjectiveCount = 0;
+  for (const [o, count] of objectiveCounts) {
+    if (
+      count > bestObjectiveCount ||
+      (count === bestObjectiveCount && o < comparisonObjective)
+    ) {
+      bestObjectiveCount = count;
+      comparisonObjective = o;
+    }
+  }
+
+  const groupMatched = horizonMatched.filter(
+    (s) => decisionObjectiveOf(s.data) === comparisonObjective
+  );
+  if (groupMatched.length < 2) return null;
+
+  const sortedByFunding = [...groupMatched].sort(
+    (a, b) => financingProvidedOf(a.data)! - financingProvidedOf(b.data)!
+  );
+  let fundingCluster = sortedByFunding.slice(0, 0);
+  let start = 0;
+  for (let end = 0; end < sortedByFunding.length; end++) {
+    while (
+      financingProvidedOf(sortedByFunding[end].data)! -
+        financingProvidedOf(sortedByFunding[start].data)! >
+      COMPARISON_FUNDING_EQUIVALENCE_TOLERANCE_USD
+    ) {
+      start += 1;
+    }
+    const cluster = sortedByFunding.slice(start, end + 1);
+    if (cluster.length > fundingCluster.length) fundingCluster = cluster;
+  }
+  if (fundingCluster.length < 2) return null;
+
+  const eligible = [...fundingCluster].sort((a, b) => {
+    const costA = financingCostOf(a.data)!;
+    const costB = financingCostOf(b.data)!;
     if (costA !== costB) return costA - costB;
-    
-    // Tie-breaker 1: lower total interest
-    const interestA = a.data.results.totalInterest ?? Infinity;
-    const interestB = b.data.results.totalInterest ?? Infinity;
-    if (interestA !== interestB) return interestA - interestB;
-    
-    // Tie-breaker 2: lower monthly payment
-    const monthlyA = a.data.results.monthlyTotal ?? Infinity;
-    const monthlyB = b.data.results.monthlyTotal ?? Infinity;
-    if (monthlyA !== monthlyB) return monthlyA - monthlyB;
-    
-    // Tie-breaker 3: lower LTV
-    const ltvA = a.data.results.ltvRatio ?? Infinity;
-    const ltvB = b.data.results.ltvRatio ?? Infinity;
-    return ltvA - ltvB;
-  })[0];
+    return a.name.localeCompare(b.name);
+  });
+
+  const lowest = eligible[0];
+  const tied = eligible.filter(
+    (s) =>
+      Math.abs(financingCostOf(s.data)! - financingCostOf(lowest.data)!) <=
+      COMPARISON_TIE_TOLERANCE_USD
+  );
+  if (tied.length > 1) return null;
+  return lowest;
 }
 
 /**
@@ -259,22 +348,27 @@ function generateSummaryText(a: ScenarioData, b: ScenarioData): string {
   ];
   
   const winner = determineLowestCost(scenarios);
+  if (!winner) {
+    return "Under these assumptions, no least-expensive option is declared. A primary financing-cost ranking requires a shared decision horizon, the same decision objective, and equivalent financing amounts. Side-by-side metrics remain available for review.";
+  }
   const other = scenarios.find(s => s.name !== winner.name)!;
   
-  // Calculate percentage difference
-  const winnerCost = winner.data.results.totalCost ?? 0;
-  const otherCost = other.data.results.totalCost ?? 0;
+  // Calculate percentage difference on financing cost
+  const winnerCost = financingCostOf(winner.data) ?? 0;
+  const otherCost = financingCostOf(other.data) ?? 0;
   const costDiffPercent = winnerCost > 0 ? ((otherCost - winnerCost) / winnerCost) * 100 : 0;
   
   let summary = `Under these assumptions, ${winner.name} is the least expensive option overall. `;
   
   if (Math.abs(costDiffPercent) >= 0.5) {
-    const monthlyDiffPercent = ((other.data.results.monthlyTotal - winner.data.results.monthlyTotal) / winner.data.results.monthlyTotal) * 100;
+    const wMonthly = winner.data.results.allInMonthlyHousingPayment || winner.data.results.monthlyTotal || 0;
+    const oMonthly = other.data.results.allInMonthlyHousingPayment || other.data.results.monthlyTotal || 0;
+    const monthlyDiffPercent = wMonthly > 0 ? ((oMonthly - wMonthly) / wMonthly) * 100 : 0;
     
     if (Math.abs(monthlyDiffPercent) < 3 && Math.abs(costDiffPercent) >= 5) {
-      summary += `Compared to ${other.name}, it results in meaningfully lower total costs over the life of the loan, even though the monthly payments may look similar at first. `;
+      summary += `Compared to ${other.name}, it has meaningfully lower financing cost over the modeled term, even though the monthly payments may look similar at first. `;
     } else {
-      summary += `Compared to ${other.name}, it results in about ${Math.abs(costDiffPercent).toFixed(0)}% lower total costs over the life of the loan. `;
+      summary += `Compared to ${other.name}, it has about ${Math.abs(costDiffPercent).toFixed(0)}% lower financing cost over the modeled term. `;
     }
   }
   
@@ -313,28 +407,32 @@ function generateThreeWaySummaryText(a: ScenarioData, b: ScenarioData, c: Scenar
   ];
   
   const winner = determineLowestCost(scenarios);
+  if (!winner) {
+    return "Under these assumptions, no least-expensive option is declared. A primary financing-cost ranking requires a shared decision horizon, the same decision objective, and equivalent financing amounts. Side-by-side metrics remain available for review.";
+  }
   const others = scenarios.filter(s => s.name !== winner.name);
   
   let summary = `Under these assumptions, ${winner.name} is the least expensive option overall. `;
   
-  // Calculate percentage differences for others
-  const winnerCost = winner.data.results.totalCost ?? 0;
+  // Calculate percentage differences for others on financing cost
+  const winnerCost = financingCostOf(winner.data) ?? 0;
   const comparisons = others
     .filter(o => {
-      const otherCost = o.data.results.totalCost ?? 0;
+      const otherCost = financingCostOf(o.data) ?? 0;
       const diff = winnerCost > 0 ? ((otherCost - winnerCost) / winnerCost) * 100 : 0;
       return Math.abs(diff) >= 3;
     })
     .map(o => {
-      const diff = ((o.data.results.totalCost - winnerCost) / winnerCost) * 100;
-      return `about ${Math.abs(diff).toFixed(0)}% lower than ${o.name}`;
+      const otherCost = financingCostOf(o.data) ?? 0;
+      const diff = winnerCost > 0 ? ((otherCost - winnerCost) / winnerCost) * 100 : 0;
+      return `about ${Math.abs(diff).toFixed(0)}% lower financing cost than ${o.name}`;
     });
   
   if (comparisons.length > 0) {
     const comparisonText = comparisons.length === 1 
       ? comparisons[0]
       : `${comparisons[0]} and ${comparisons[1]}`;
-    summary += `Its total cost over the life of the loan is ${comparisonText}. `;
+    summary += `Its financing cost over the modeled term is ${comparisonText}. `;
   }
   
   // Add driver explanation
@@ -632,7 +730,7 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
             label: `${nameA} vs ${nameB}`,
             items: [
           { label: "Monthly payment", value: formatDollarFirstDelta(aVsBDeltas.monthlyPaymentDelta, aVsBDeltas.monthlyPaymentPercentDelta, "/mo") },
-              { label: "Total cost (legacy)", value: formatDollarFirstDelta(aVsBDeltas.totalCostDelta, aVsBDeltas.totalCostPercentDelta) },
+              { label: "Financing cost over modeled term", value: formatDollarFirstDelta(aVsBDeltas.totalCostDelta, aVsBDeltas.totalCostPercentDelta) },
               { label: "Total interest", value: formatDollarFirstDelta(aVsBDeltas.totalInterestDelta, aVsBDeltas.totalInterestPercentDelta) },
               { label: "Interest rate (assumed)", value: formatSignedRateDelta(aVsBDeltas.interestRateDelta) },
               { label: "Loan size vs home value", value: formatLtvDelta(aVsBDeltas.ltvDelta) },
@@ -642,7 +740,7 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
             label: `${nameC} vs ${nameB}`,
             items: [
               { label: "Monthly payment", value: formatDollarFirstDelta(cVsBDeltas!.monthlyPaymentDelta, cVsBDeltas!.monthlyPaymentPercentDelta, "/mo") },
-              { label: "Total cost (legacy)", value: formatDollarFirstDelta(cVsBDeltas!.totalCostDelta, cVsBDeltas!.totalCostPercentDelta) },
+              { label: "Financing cost over modeled term", value: formatDollarFirstDelta(cVsBDeltas!.totalCostDelta, cVsBDeltas!.totalCostPercentDelta) },
               { label: "Total interest", value: formatDollarFirstDelta(cVsBDeltas!.totalInterestDelta, cVsBDeltas!.totalInterestPercentDelta) },
               { label: "Interest rate (assumed)", value: formatSignedRateDelta(cVsBDeltas!.interestRateDelta) },
               { label: "Loan size vs home value", value: formatLtvDelta(cVsBDeltas!.ltvDelta) },
@@ -655,7 +753,7 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
         type: "key-diff",
         items: [
           { label: "Monthly payment", value: formatDollarFirstDelta(aVsBDeltas.monthlyPaymentDelta, aVsBDeltas.monthlyPaymentPercentDelta, "/mo") },
-          { label: "Total cost (legacy)", value: formatDollarFirstDelta(aVsBDeltas.totalCostDelta, aVsBDeltas.totalCostPercentDelta) },
+          { label: "Financing cost over modeled term", value: formatDollarFirstDelta(aVsBDeltas.totalCostDelta, aVsBDeltas.totalCostPercentDelta) },
           { label: "Total interest", value: formatDollarFirstDelta(aVsBDeltas.totalInterestDelta, aVsBDeltas.totalInterestPercentDelta) },
           { label: "Interest rate (assumed)", value: formatSignedRateDelta(aVsBDeltas.interestRateDelta) },
           { label: "Loan size vs home value", value: formatLtvDelta(aVsBDeltas.ltvDelta) },
@@ -722,7 +820,8 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
       "Comparison figures use each scenario's persisted activeSnapshot; exports do not recalculate.",
       "Financing cost excludes principal repayment; principal reduction is reported separately.",
       "All-in monthly housing payment is a secondary cash-flow metric.",
-      "Comparison summary narrative may still use legacy total-cost ranking until Phase 5 normalization.",
+      "Primary economic ranking uses financing cost only among scenarios with a shared decision horizon, the same decision objective, and equivalent financing amounts; principal repayment is excluded.",
+      "Non-equivalent structures may be shown side by side without declaring a least-expensive option.",
       "Rates shown are assumed inputs, not lender quotes.",
       "No recommendation is implied by the order or presentation of scenarios.",
     ],

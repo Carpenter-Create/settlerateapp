@@ -154,11 +154,11 @@ Smoke testing temporarily used the Supabase Admin API (`auth.admin.updateUserByI
 | Legacy flat `derived` results blob | Adapter maps known fields; marks `isLegacyFlat` |
 | Competing layout formatters | Client layout routes through canonical contract; server layout mirrors field semantics |
 
-Do not delete legacy comparison narrative helpers solely for cleanup while Phase 5 ranking remains open.
+Comparison ranking consumes the Phase 5 canonical winner (`docs/COMPARISON_CONTRACT.md`).
 
 ## Known limitations
 
 - HELOC draw-period average and assumption gap/assumed payment splits are not on `PersistedScenarioSummary`; exports omit them rather than recomputing
-- Comparison ranking / `comparisonSummary` winner text is Phase 5
-- Entitlement gates for export remain unchanged in Phase 4
+- Comparison winner narrative uses financing cost over a shared decision horizon (see `docs/COMPARISON_CONTRACT.md`)
+- Entitlement gates for export remain unchanged
 - Email-report specific payloads (if any) must adopt this contract when touched; no new product surface was added here
