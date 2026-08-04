@@ -7,6 +7,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useSubscription } from "@/hooks/useSubscription";
+import { canEditLockedRatesCapability } from "@/lib/adminLockedRateCapability";
+import { resolveEffectiveFeatureAccess } from "@/lib/entitlementLoading";
 import { supabase } from "@/integrations/supabase/client";
 
 export function useCapabilities() {
@@ -15,13 +17,15 @@ export function useCapabilities() {
   const {
     isLoading: subLoading,
     isPro,
-    features,
+    features: resolvedFeatures,
     planCode,
     entitlementStatus,
     cancelAtPeriodEnd,
     subscriptionEnd,
     scenarioCount,
     isAdminBypass,
+    isEntitlementPending,
+    isEntitlementResolved,
   } = useSubscription();
 
   // Advisor role is retained for compatibility only — does not grant features
@@ -42,12 +46,24 @@ export function useCapabilities() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const isLoading = adminLoading || subLoading || advisorQuery.isLoading;
-  const hasPaid = isPro;
+  const features = resolveEffectiveFeatureAccess({
+    isEntitlementPending,
+    resolvedFeatures,
+  });
+
+  const isLoading = adminLoading || subLoading || isEntitlementPending;
+  const hasPaid = isEntitlementPending ? false : isPro;
   const isAdvisorRole = Boolean(advisorQuery.data);
+  const canEditLockedRates = canEditLockedRatesCapability({
+    realIsAdmin,
+    adminLoading,
+    isEntitlementPending,
+  });
 
   return {
     isLoading,
+    isEntitlementPending,
+    isEntitlementResolved,
     realIsAdmin,
     isAdmin: realIsAdmin,
     isAdvisor: isAdvisorRole,
@@ -63,7 +79,9 @@ export function useCapabilities() {
     isSimulating: false,
     canSimulate: false,
     canUsePro: hasPaid,
-    canUseAdvisor: false, // not an active tier
+    /** @deprecated Use canEditLockedRates for admin locked-rate tooling. */
+    canUseAdvisor: canEditLockedRates,
+    canEditLockedRates,
     canApproveAdvisors: realIsAdmin,
     // Feature-level access (mirror of check-subscription)
     canModel: features.canModel,

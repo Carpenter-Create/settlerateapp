@@ -36,6 +36,7 @@ import { ScenarioCard } from "@/components/scenarios/ScenarioCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { resolveNewScenarioControl } from "@/lib/newScenarioControl";
+import { resolveDuplicateScenarioControl } from "@/lib/duplicateScenarioControl";
 
 /**
  * Format relative time for display
@@ -126,13 +127,22 @@ export default function ScenariosIndex() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { scenarios, isLoaded, duplicateScenario, deleteScenario } = useScenarios();
-  const { canSave, canDuplicateScenario, atScenarioLimit, entitlementStatus } = useCapabilities();
-  const limitTitle = atScenarioLimit
-    ? "Free plan limit reached (3 saved scenarios)."
-    : entitlementStatus === "read_only"
-      ? "Scenarios are read-only until billing is updated."
-      : undefined;
+  const { canSave, canDuplicateScenario, atScenarioLimit, entitlementStatus, isEntitlementPending } =
+    useCapabilities();
+  const limitTitle = isEntitlementPending
+    ? undefined
+    : atScenarioLimit
+      ? "Free plan limit reached (3 saved scenarios)."
+      : entitlementStatus === "read_only"
+        ? "Scenarios are read-only until billing is updated."
+        : undefined;
   const newScenarioControl = resolveNewScenarioControl(canSave, limitTitle);
+  const duplicateControl = resolveDuplicateScenarioControl({
+    canDuplicateScenario,
+    isEntitlementPending,
+    atScenarioLimit,
+    entitlementStatus,
+  });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [scenarioToDelete, setScenarioToDelete] = useState<ScenarioData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -154,6 +164,7 @@ export default function ScenariosIndex() {
   };
 
   const handleDuplicate = async (scenario: ScenarioData) => {
+    if (!duplicateControl.allowed) return;
     try {
       const duplicated = await duplicateScenario(scenario.id);
       if (duplicated) {
@@ -268,6 +279,8 @@ export default function ScenariosIndex() {
               onOpen={handleOpen}
               onDuplicate={handleDuplicate}
               onDelete={handleDeleteClick}
+              canDuplicate={duplicateControl.allowed}
+              duplicateTitle={duplicateControl.title}
             />
           ))}
         </div>
@@ -331,7 +344,8 @@ export default function ScenariosIndex() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={(e) => { e.stopPropagation(); handleDuplicate(scenario); }}
-                            disabled={!canDuplicateScenario}
+                            disabled={!duplicateControl.allowed}
+                            title={duplicateControl.title}
                           >
                             <Copy className="mr-2 h-4 w-4" />
                             Duplicate

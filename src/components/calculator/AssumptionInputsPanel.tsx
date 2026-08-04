@@ -47,13 +47,12 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
   const rateMeta = inputs.rateMeta ?? DEFAULT_RATE_META;
   
   const { user } = useAuth();
-  const { canUseAdvisor } = useCapabilities();
+  const { canEditLockedRates } = useCapabilities();
   
   // Check if rates are locked
   const assumedRateLocked = isRateLocked(rateMeta, "assumption.assumed_apr");
   const gapSecondRateLocked = isRateLocked(rateMeta, "assumption.gap_second_apr");
   const gapHelocRateLocked = isRateLocked(rateMeta, "assumption.gap_heloc_apr");
-  const canEditLockedRates = canUseAdvisor;
   
   const [showEscrow, setShowEscrow] = useState(
     assumed.monthlyPmi > 0 || assumed.monthlyEscrow > 0
@@ -172,7 +171,7 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
       </div>
       
       {/* Advisor rate locking panel for assumption */}
-      {canUseAdvisor && user?.id && (
+      {canEditLockedRates && user?.id && (
         <AdvisorRateLockPanel
           rateMeta={rateMeta}
           onUpdateRateMeta={updateRateMeta}

@@ -30,11 +30,10 @@ export function HelocInputsPanel({ inputs, onBatchUpdate }: HelocInputsPanelProp
   const rateMeta = inputs.rateMeta ?? DEFAULT_RATE_META;
   
   const { user } = useAuth();
-  const { canUseAdvisor } = useCapabilities();
+  const { canEditLockedRates } = useCapabilities();
   
   // Check if HELOC rate is locked
   const helocRateLocked = isRateLocked(rateMeta, "heloc.apr");
-  const canEditLockedRates = canUseAdvisor;
   
   const [showAdvanced, setShowAdvanced] = useState(
     heloc.annualFee > 0 || heloc.closingCosts > 0 || heloc.monthlyDraw > 0
@@ -118,7 +117,7 @@ export function HelocInputsPanel({ inputs, onBatchUpdate }: HelocInputsPanelProp
       </div>
 
       {/* Advisor rate locking panel */}
-      {canUseAdvisor && user?.id && (
+      {canEditLockedRates && user?.id && (
         <AdvisorRateLockPanel
           rateMeta={rateMeta}
           onUpdateRateMeta={updateRateMeta}

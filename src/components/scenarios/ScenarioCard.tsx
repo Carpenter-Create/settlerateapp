@@ -28,6 +28,8 @@ interface ScenarioCardProps {
   onOpen: (scenario: ScenarioData) => void;
   onDuplicate: (scenario: ScenarioData) => void;
   onDelete: (scenario: ScenarioData) => void;
+  canDuplicate: boolean;
+  duplicateTitle?: string;
 }
 
 /**
@@ -109,7 +111,14 @@ function getScenarioTypeLabel(scenario: ScenarioData): string {
   return termLabel ? `${type} • ${termLabel}` : type;
 }
 
-export function ScenarioCard({ scenario, onOpen, onDuplicate, onDelete }: ScenarioCardProps) {
+export function ScenarioCard({
+  scenario,
+  onOpen,
+  onDuplicate,
+  onDelete,
+  canDuplicate,
+  duplicateTitle,
+}: ScenarioCardProps) {
   const monthlyPayment = getMonthlyPayment(scenario);
   const typeLabel = getScenarioTypeLabel(scenario);
   const updatedAt = formatRelativeTime(new Date(scenario.updatedAt));
@@ -127,7 +136,14 @@ export function ScenarioCard({ scenario, onOpen, onDuplicate, onDelete }: Scenar
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-popover">
-        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(scenario); }}>
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            if (canDuplicate) onDuplicate(scenario);
+          }}
+          disabled={!canDuplicate}
+          title={duplicateTitle}
+        >
           <Copy className="mr-2 h-4 w-4" />
           Duplicate
         </DropdownMenuItem>

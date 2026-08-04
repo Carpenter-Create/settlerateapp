@@ -10,11 +10,15 @@ import {
   EntitlementStatus,
   FeatureAccessFlags,
   PlanCode,
-  evaluateEntitlement,
   featureAccessFromDecision,
   planCodeToLegacyTier,
 } from "@/lib/entitlementContract";
 import { useCallback, useEffect } from "react";
+import {
+  buildAnonymousEntitlementState,
+  buildUnresolvedEntitlementState,
+  isAuthenticatedEntitlementPending,
+} from "@/lib/entitlementLoading";
 
 interface CheckSubscriptionResponse {
   subscribed: boolean;
@@ -108,21 +112,11 @@ async function checkSubscription(accessToken: string): Promise<EntitlementState>
 }
 
 function freeState(): EntitlementState {
-  const decision = evaluateEntitlement({ stripeStatus: null, priceId: null });
-  const features = featureAccessFromDecision(decision, { scenarioCount: 0 });
-  return {
-    tier: "free",
-    isSubscribed: false,
-    productId: null,
-    subscriptionEnd: null,
-    planCode: "analytical",
-    entitlementStatus: "free",
-    cancelAtPeriodEnd: false,
-    isAdminBypass: false,
-    scenarioCount: 0,
-    features,
-    decision,
-  };
+  return buildAnonymousEntitlementState();
+}
+
+function unresolvedState(): EntitlementState {
+  return buildUnresolvedEntitlementState();
 }
 
 export function useSubscription() {
@@ -153,7 +147,15 @@ export function useSubscription() {
     queryClient.invalidateQueries({ queryKey: ["subscription", user?.id] });
   }, [queryClient, user?.id]);
 
-  const state = query.data ?? freeState();
+  const isEntitlementPending = isAuthenticatedEntitlementPending({
+    hasUser: Boolean(user),
+    isAnonymous,
+    isSubscriptionLoading: query.isLoading,
+    isSubscriptionSuccess: query.isSuccess,
+  });
+
+  const state = query.data ?? (isEntitlementPending ? unresolvedState() : freeState());
+  const isEntitlementResolved = !isEntitlementPending;
   const featureAccess = flagsToLegacyFeatureAccess(state.features);
 
   return {
@@ -170,6 +172,8 @@ export function useSubscription() {
     features: state.features,
     decision: state.decision,
     featureAccess,
+    isEntitlementResolved,
+    isEntitlementPending,
     refresh,
   };
 }

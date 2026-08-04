@@ -109,8 +109,7 @@ export function ScenarioEditor({
 
   const { user } = useAuth();
   const {
-    isAdvisor,
-    canUseAdvisor,
+    canEditLockedRates,
     canSave,
     canUpdateScenario,
     canDuplicateScenario,
@@ -128,9 +127,6 @@ export function ScenarioEditor({
 
   // Check if the mortgage rate is locked (for purchase/refinance)
   const mortgageRateLocked = isRateLocked(rateMeta, "mortgage.apr");
-  
-  // Clients cannot edit locked rates (only advisors can)
-  const canEditLockedRates = canUseAdvisor;
 
   // Helper to update shared inputs
   const updateShared = useCallback((updates: Partial<SharedInputs>) => {
@@ -310,7 +306,7 @@ export function ScenarioEditor({
                   </div>
                   
                   {/* Advisor rate locking panel */}
-                  {canUseAdvisor && user?.id && (
+                  {canEditLockedRates && user?.id && (
                     <AdvisorRateLockPanel
                       rateMeta={rateMeta}
                       onUpdateRateMeta={updateRateMeta}
