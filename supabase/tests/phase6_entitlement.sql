@@ -220,7 +220,7 @@ BEGIN
     )
   );
 
-  RESET ROLE;
+  SET ROLE service_role;
   PERFORM test.assert_true(
     'claim first true',
     public.claim_stripe_webhook_event(
@@ -246,6 +246,7 @@ BEGIN
       p_action_taken := 'processing'
     )
   );
+  RESET ROLE;
 
   v_decision := public.evaluate_entitlement(v_entitled);
   PERFORM test.assert_true('active pro entitled', (v_decision ->> 'entitlementStatus') = 'entitled');

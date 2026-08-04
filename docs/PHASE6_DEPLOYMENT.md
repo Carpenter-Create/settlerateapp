@@ -29,8 +29,27 @@ Before production migration apply:
 2. `20260804130000_phase6_entitlement_followup.sql`
 3. `20260804140000_phase6_stage2_hardening.sql`
 4. `20260804150000_phase6_remove_advisor_product_model.sql`
+5. `20260804160000_phase6_privileged_function_grants.sql`
 
 Apply via Supabase SQL migration workflow or `supabase db push` against the target project **after** review. Do not apply out of order.
+
+### Privileged function grants (Step 5)
+
+Phase 6 migrations 1–4 use `REVOKE ... FROM PUBLIC` for webhook and audit RPCs. On Supabase/Postgres, **direct `EXECUTE` grants on `anon` and `authenticated` can remain** after a public revoke because those roles are granted explicitly elsewhere in the platform bootstrap.
+
+Migration 5 (`phase6_privileged_function_grants`) **explicitly revokes** from `PUBLIC`, `anon`, and `authenticated`, then re-grants only to approved roles:
+
+| Function | Approved roles |
+|----------|----------------|
+| `claim_stripe_webhook_event`, `release_stripe_webhook_event`, `log_admin_entitlement_bypass`, `maybe_log_admin_entitlement_write` | `service_role` only |
+| `evaluate_entitlement`, `feature_allowed`, `assert_feature_allowed` | `authenticated`, `service_role` |
+| `duplicate_scenario`, `assert_export_source_owned_by_user`, `get_effective_tier` | `authenticated`, `service_role` (plus `postgres` for `get_effective_tier`) |
+
+Apply Step 5 in production before deploying Phase 6 edge functions if manual grant correction was performed ad hoc.
+
+### Duplicate migration history note
+
+Production may show two `supabase_migrations.schema_migrations` rows with the same name `phase6_entitlement_hardening` (different apply timestamps). This occurs when the same migration SQL is registered twice via separate apply calls; the SQL is idempotent and schema state is unaffected. **Do not delete production history rows without explicit approval.** Repository file versions (`20260804120000`, etc.) remain the source of truth for content; production timestamps are apply-time registry entries only.
 
 ## Post-migration SQL smoke checks
 
@@ -63,7 +82,7 @@ npm run test:entitlement-sql
 
 ## Edge function deploy order
 
-Deploy **after** all four migrations are verified:
+Deploy **after** all five migrations are verified:
 
 | Function | Stage 2 change | Required |
 |----------|----------------|----------|
