@@ -683,7 +683,7 @@ function buildScenarioLayout(scenario: ScenarioData): ExportLayout {
       `Snapshot: ${snapshotLabel} (calculator v${scenario.exportCalculatorVersion}).`,
       "Financing cost excludes principal repayment; principal reduction is reported separately.",
       "All-in monthly housing payment is a secondary cash-flow metric, not the primary cost ranking metric.",
-      "Rates shown are inputs provided by the user or advisor and are not lender quotes.",
+      "Rates shown are inputs provided by the user or lender and are not lender quotes.",
       "Summary reflects modeled totals under stated assumptions. Not financial advice.",
     ],
     disclaimer:

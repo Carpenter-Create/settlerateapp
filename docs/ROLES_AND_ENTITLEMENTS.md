@@ -15,7 +15,10 @@ For the Phase 6 canonical entitlement matrix, Stripe mapping, and enforcement po
 | `user` | Default authenticated user | Standard app access |
 | `moderator` | Content/support oversight | User access + moderation tools |
 | `admin` | Full administrative access | All features + admin dashboard (server-verified bypass) |
-| `advisor` | Legacy / future role | **Does not grant Professional features** |
+
+SettleRate supports **two customer plans**: **Analytical** and **Professional**. Administrative permissions are **role-based** and are **not** a billing tier.
+
+The legacy `advisor` enum value and `user_roles.advisor` rows may exist for historical audit only. They **must not** grant Professional features, admin authority, or locked-rate editing.
 
 Roles are stored in the `user_roles` table, not on the profile or users table. This prevents privilege escalation attacks.
 
@@ -94,9 +97,9 @@ Admin bypass is logged (`entitlement_bypass_log`) and does not modify billing st
 
 ---
 
-## Advisor Role (Future)
+## Advisor Role (removed from active product model)
 
-The `advisor` role may exist for compatibility. Do **not** implement advisor as an active entitlement tier or grant Professional features from advisor Stripe prices or the advisor role without explicit design approval.
+The legacy `advisor` app_role enum value may exist for historical audit. It **must not** grant Professional features, admin authority, or locked-rate editing. Use server-verified `admin` role for administrative permissions.
 
 ---
 

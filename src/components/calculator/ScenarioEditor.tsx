@@ -37,7 +37,7 @@ import { MethodologyPanel } from "./MethodologyPanel";
 import { AmortizationTable } from "./AmortizationTable";
 import { SaveStatusIndicator } from "./SaveStatusIndicator";
 import { RateSourceSelector } from "./RateSourceSelector";
-import { AdvisorRateLockPanel } from "./AdvisorRateLockPanel";
+import { AdminRateLockPanel } from "./AdminRateLockPanel";
 import { LockedRateIndicator } from "./LockedRateIndicator";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "./CurrencyInput";
@@ -312,12 +312,12 @@ export function ScenarioEditor({
                     />
                   </div>
                   
-                  {/* Advisor rate locking panel */}
+                  {/* Admin rate locking panel */}
                   {canEditLockedRates && user?.id && (
-                    <AdvisorRateLockPanel
+                    <AdminRateLockPanel
                       rateMeta={rateMeta}
                       onUpdateRateMeta={updateRateMeta}
-                      advisorUserId={user.id}
+                      adminUserId={user.id}
                       scenarioType={inputs.mode}
                     />
                   )}

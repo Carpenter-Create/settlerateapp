@@ -11,6 +11,7 @@ verify_jwt = false
 
 [functions.admin-assign-advisor]
 verify_jwt = false
+# Deprecated — returns HTTP 410; do not use for new operations
 
 [functions.stripe-webhook]
 verify_jwt = false

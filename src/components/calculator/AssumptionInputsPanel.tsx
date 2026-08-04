@@ -3,7 +3,7 @@
  * 
  * Input form for Loan Assumption scenarios.
  * Institutional, restrained UI following the Mercury-leaning standard.
- * Supports advisor rate locking for multiple rate fields.
+ * Supports admin rate locking for multiple rate fields.
  */
 
 import { useState, useCallback } from "react";
@@ -24,7 +24,7 @@ import { CurrencyInput } from "./CurrencyInput";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
 import { RateSourceSelector } from "./RateSourceSelector";
-import { AdvisorRateLockPanel } from "./AdvisorRateLockPanel";
+import { AdminRateLockPanel } from "./AdminRateLockPanel";
 import { LockedRateIndicator } from "./LockedRateIndicator";
 import { ChevronDown, ChevronUp, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -170,12 +170,12 @@ export function AssumptionInputsPanel({ inputs, onBatchUpdate }: AssumptionInput
         </div>
       </div>
       
-      {/* Advisor rate locking panel for assumption */}
+      {/* Admin rate locking panel for assumption */}
       {canEditLockedRates && user?.id && (
-        <AdvisorRateLockPanel
+        <AdminRateLockPanel
           rateMeta={rateMeta}
           onUpdateRateMeta={updateRateMeta}
-          advisorUserId={user.id}
+          adminUserId={user.id}
           scenarioType="assumption"
         />
       )}

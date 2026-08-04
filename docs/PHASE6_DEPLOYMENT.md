@@ -28,6 +28,7 @@ Before production migration apply:
 1. `20260804120000_phase6_entitlement_hardening.sql`
 2. `20260804130000_phase6_entitlement_followup.sql`
 3. `20260804140000_phase6_stage2_hardening.sql`
+4. `20260804150000_phase6_remove_advisor_product_model.sql`
 
 Apply via Supabase SQL migration workflow or `supabase db push` against the target project **after** review. Do not apply out of order.
 
@@ -62,17 +63,22 @@ npm run test:entitlement-sql
 
 ## Edge function deploy order
 
-Deploy **after** all three migrations are verified:
+Deploy **after** all four migrations are verified:
 
 | Function | Stage 2 change | Required |
 |----------|----------------|----------|
 | `stripe-webhook` | C3/C8 mapping hardening | Yes |
 | `create-checkout` | C4 repeat-trial prevention | Yes |
-| `admin-assign-advisor` | C9 legacy advisor price allowlist | Yes (if ops uses it) |
 | `check-subscription` | unchanged in Stage 2 | Redeploy only if prior Phase 6 not yet live |
 | `customer-portal` | unchanged in Stage 2 | Redeploy only if prior Phase 6 not yet live |
 | `generate-pdf` | unchanged in Stage 2 | Redeploy only if prior Phase 6 not yet live |
 | `export-share` | unchanged in Stage 2 | Redeploy only if prior Phase 6 not yet live |
+
+## Advisor product model (removed)
+
+The legacy `admin-assign-advisor` edge function is **deprecated** and returns HTTP 410 with no billing or role mutation. Do not deploy for new operations.
+
+SettleRate supports two customer plans: **Analytical** and **Professional**. Administrative permissions are role-based and are not a billing tier.
 
 ## Frontend
 

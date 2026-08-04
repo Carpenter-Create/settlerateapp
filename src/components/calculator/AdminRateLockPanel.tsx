@@ -1,11 +1,7 @@
 /**
- * AdvisorRateLockPanel - Rate locking controls for advisors
- * 
- * Collapsed by default. Allows advisors to:
- * - Lock individual rate fields
- * - Lock all rates in the scenario
- * 
- * Minimal, institutional UI.
+ * AdminRateLockPanel - Rate locking controls for server-verified admins
+ *
+ * Collapsed by default. Allows admins to lock individual or all rate fields.
  */
 
 import { useState } from "react";
@@ -25,16 +21,13 @@ import {
 } from "@/lib/rateMeta";
 import { ScenarioType } from "@/lib/mortgage";
 
-interface AdvisorRateLockPanelProps {
+interface AdminRateLockPanelProps {
   rateMeta: RateMeta | undefined;
   onUpdateRateMeta: (rateMeta: RateMeta) => void;
-  advisorUserId: string;
+  adminUserId: string;
   scenarioType: ScenarioType;
 }
 
-/**
- * Get relevant rate keys for a given scenario type
- */
 function getRateKeysForScenarioType(scenarioType: ScenarioType): RateKey[] {
   switch (scenarioType) {
     case "purchase":
@@ -53,34 +46,30 @@ function getRateKeysForScenarioType(scenarioType: ScenarioType): RateKey[] {
   }
 }
 
-export function AdvisorRateLockPanel({
+export function AdminRateLockPanel({
   rateMeta,
   onUpdateRateMeta,
-  advisorUserId,
+  adminUserId,
   scenarioType,
-}: AdvisorRateLockPanelProps) {
+}: AdminRateLockPanelProps) {
   const [isExpanded, setIsExpanded] = useState(hasAnyLockedRate(rateMeta));
-  
+
   const rateKeys = getRateKeysForScenarioType(scenarioType);
   const anyLocked = hasAnyLockedRate(rateMeta);
 
   const handleLockRate = (rateKey: RateKey, lock: boolean) => {
     if (lock) {
-      const updated = lockRateField(rateMeta, rateKey, advisorUserId);
-      onUpdateRateMeta(updated);
+      onUpdateRateMeta(lockRateField(rateMeta, rateKey, adminUserId));
     } else {
-      const updated = unlockRateField(rateMeta, rateKey);
-      onUpdateRateMeta(updated);
+      onUpdateRateMeta(unlockRateField(rateMeta, rateKey));
     }
   };
 
   const handleLockAll = (lock: boolean) => {
     if (lock) {
-      const updated = lockAllRates(rateMeta, advisorUserId);
-      onUpdateRateMeta(updated);
+      onUpdateRateMeta(lockAllRates(rateMeta, adminUserId));
     } else {
-      const updated = unlockAllRates(rateMeta);
-      onUpdateRateMeta(updated);
+      onUpdateRateMeta(unlockAllRates(rateMeta));
     }
   };
 
@@ -97,7 +86,7 @@ export function AdvisorRateLockPanel({
           ) : (
             <Unlock className="h-3 w-3" />
           )}
-          Rate locking (advisor)
+          Rate locking (admin)
         </span>
         {isExpanded ? (
           <ChevronUp className="h-3.5 w-3.5" />
@@ -108,7 +97,6 @@ export function AdvisorRateLockPanel({
 
       {isExpanded && (
         <div className="space-y-3 pt-3 animate-slide-up">
-          {/* Lock all toggle */}
           <div className="flex items-center space-x-2">
             <Checkbox
               id="lock-all-rates"
@@ -123,7 +111,6 @@ export function AdvisorRateLockPanel({
             </Label>
           </div>
 
-          {/* Individual rate locks */}
           <div className="pl-4 space-y-2">
             {rateKeys.map((rateKey) => (
               <div key={rateKey} className="flex items-center space-x-2">
@@ -143,7 +130,7 @@ export function AdvisorRateLockPanel({
           </div>
 
           <p className="text-[11px] text-muted-foreground/70 leading-snug pt-1">
-            Locked rates cannot be edited by the client.
+            Locked rates cannot be edited by non-admin users.
           </p>
         </div>
       )}

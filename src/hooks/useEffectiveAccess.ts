@@ -3,13 +3,12 @@
  *
  * localStorage simulation must NEVER grant or revoke entitlements.
  * Server-verified billing + user_roles remain authoritative.
- * This hook is retained only so the admin panel can display a non-authoritative note.
  */
 
 import { useAdmin } from "./useAdmin";
 
 export type EffectiveRole = "admin" | "user";
-export type EffectiveTier = "free" | "pro" | "advisor";
+export type EffectiveTier = "free" | "pro";
 
 interface UseEffectiveAccessReturn {
   effectiveRole: EffectiveRole;
@@ -21,9 +20,6 @@ interface UseEffectiveAccessReturn {
   canSimulate: boolean;
 }
 
-/**
- * No-op simulation surface. Entitlement bypass is server-only via has_role(admin).
- */
 export function useEffectiveAccess(): UseEffectiveAccessReturn {
   const { isAdmin, isLoading: adminLoading } = useAdmin();
   const canSimulate = false;
@@ -48,14 +44,7 @@ export function useEffectiveAccess(): UseEffectiveAccessReturn {
   };
 }
 
-/**
- * @deprecated Phase 6 — do not use for feature gating. Prefer useCapabilities / check-subscription.
- */
-export function getEffectiveTier(
-  realTier: EffectiveTier,
-  _isAdmin: boolean,
-  _isSimulating: boolean,
-  _simulatedTier: EffectiveTier
-): EffectiveTier {
-  return realTier === "advisor" ? "pro" : realTier;
+/** @deprecated Phase 6 — do not use for feature gating. */
+export function getEffectiveTierLegacy(realTier: EffectiveTier): EffectiveTier {
+  return realTier;
 }

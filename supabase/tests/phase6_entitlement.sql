@@ -259,6 +259,17 @@ BEGIN
   v_decision := public.evaluate_entitlement(v_user_a);
   PERFORM test.assert_true('advisor price maps free', (v_decision ->> 'entitlementStatus') = 'free');
 
+  BEGIN
+    PERFORM public.approve_advisor_request(gen_random_uuid(), true);
+    PERFORM test.assert_true('approve_advisor_request should fail', false);
+  EXCEPTION
+    WHEN OTHERS THEN
+      PERFORM test.assert_true(
+        'approve_advisor_request fail-closed',
+        SQLERRM LIKE '%Advisor product model removed%'
+      );
+  END;
+
   UPDATE public.billing SET current_period_end = NULL WHERE user_id = v_entitled;
   v_decision := public.evaluate_entitlement(v_entitled);
   PERFORM test.assert_true('null period end maps free', (v_decision ->> 'entitlementStatus') = 'free');

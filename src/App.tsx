@@ -22,10 +22,8 @@ import ComparisonDetail from "./pages/app/ComparisonDetail";
 import Calculator from "./pages/app/Calculator";
 import Account from "./pages/app/Account";
 import AppSettings from "./pages/app/Settings";
-import AdvisorRequest from "./pages/app/AdvisorRequest";
 
 // Admin pages
-import AdvisorRequestsAdmin from "./pages/admin/AdvisorRequestsNew";
 import AdminAccess from "./pages/admin/AdminAccess";
 
 const queryClient = new QueryClient();
@@ -55,15 +53,15 @@ const App = () => (
             <Route path="/app/calculator" element={<ProtectedRoute><AppLayout><Calculator /></AppLayout></ProtectedRoute>} />
             <Route path="/app/account" element={<ProtectedRoute><AppLayout><Account /></AppLayout></ProtectedRoute>} />
             <Route path="/app/settings" element={<ProtectedRoute><AppLayout><AppSettings /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/advisor-request" element={<ProtectedRoute><AdvisorRequest /></ProtectedRoute>} />
-            
+
             {/* Legacy compare route - redirect to new comparisons */}
             <Route path="/app/compare" element={<Navigate to="/app/comparisons" replace />} />
 
             {/* Admin routes */}
-            <Route path="/admin/advisor-requests" element={<AdminRoute><AdvisorRequestsAdmin /></AdminRoute>} />
-            <Route path="/app/admin/advisors" element={<AdminRoute><AdvisorRequestsAdmin /></AdminRoute>} />
             <Route path="/app/admin/access" element={<AdminRoute><AdminAccess /></AdminRoute>} />
+            <Route path="/admin/advisor-requests" element={<Navigate to="/app/scenarios" replace />} />
+            <Route path="/app/admin/advisors" element={<Navigate to="/app/scenarios" replace />} />
+            <Route path="/app/advisor-request" element={<Navigate to="/app/scenarios" replace />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -171,7 +171,6 @@ export function useSubscription() {
     ...query,
     tier: state.tier,
     isPro: state.isSubscribed,
-    isAdvisor: false, // advisor is not an active entitlement tier
     subscriptionEnd: state.subscriptionEnd,
     planCode: state.planCode,
     entitlementStatus: state.entitlementStatus,

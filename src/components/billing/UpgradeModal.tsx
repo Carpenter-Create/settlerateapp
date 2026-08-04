@@ -29,7 +29,7 @@ const features = [
   "Unlimited scenario modeling",
   "Saved scenarios and revisions",
   "Exportable PDF summaries",
-  "Advisor- and lender-ready outputs",
+  "Lender-ready outputs",
   "Income-context framing (percent-of-income views)",
 ];
 

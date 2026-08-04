@@ -3,7 +3,7 @@
  * 
  * Input form for Home Equity Line of Credit scenarios.
  * Institutional, restrained UI following the Mercury-leaning standard.
- * Supports advisor rate locking.
+ * Supports admin rate locking.
  */
 
 import { useState, useCallback } from "react";
@@ -16,7 +16,7 @@ import { CurrencyInput } from "./CurrencyInput";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
 import { RateSourceSelector } from "./RateSourceSelector";
-import { AdvisorRateLockPanel } from "./AdvisorRateLockPanel";
+import { AdminRateLockPanel } from "./AdminRateLockPanel";
 import { LockedRateIndicator } from "./LockedRateIndicator";
 import { ChevronDown, ChevronUp, Info } from "lucide-react";
 
@@ -116,12 +116,12 @@ export function HelocInputsPanel({ inputs, onBatchUpdate }: HelocInputsPanelProp
         </div>
       </div>
 
-      {/* Advisor rate locking panel */}
+      {/* Admin rate locking panel */}
       {canEditLockedRates && user?.id && (
-        <AdvisorRateLockPanel
+        <AdminRateLockPanel
           rateMeta={rateMeta}
           onUpdateRateMeta={updateRateMeta}
-          advisorUserId={user.id}
+          adminUserId={user.id}
           scenarioType="heloc"
         />
       )}

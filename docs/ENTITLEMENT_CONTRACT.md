@@ -12,7 +12,9 @@ Server enforcement is authoritative. Client gates mirror only.
 | `analytical` | Analytical (free) | Active free tier |
 | `professional` | Professional (paid) | Active paid tier |
 
-Advisor is **not** an active tier. Legacy advisor Stripe price IDs and `user_roles.advisor` must not grant Professional features.
+Advisor is **not** an active tier. Legacy advisor Stripe price IDs and `user_roles.advisor` must not grant Professional features or admin authority.
+
+SettleRate supports two customer plans: **Analytical** and **Professional**. Administrative permissions are role-based and are not a billing tier.
 
 ## Entitlement statuses
 
