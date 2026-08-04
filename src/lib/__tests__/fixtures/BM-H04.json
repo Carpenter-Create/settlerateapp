@@ -2,17 +2,17 @@
   "id": "BM-H04",
   "description": "Remediation scope: interest-only HELOC draw periods only",
   "scenarioType": "heloc",
-  "status": "pending-v2",
+  "status": "active",
   "calculatorVersionTarget": "2.0.0",
   "expected": {
     "interestOnlyDrawEnforced": true,
     "nonInterestOnlyDrawSupported": false
   },
   "verification": {
-    "method": "Founder decision: UI must not offer non-IO draw until amortizing draw is implemented and benchmark-tested",
+    "method": "calculateHeloc rejects interestOnlyDraw=false; HelocInputsPanel does not expose a non-IO control; no UI redesign required",
     "verificationDate": "2026-08-03"
   },
   "defectIds": ["DEF-010"],
   "remediationPhase": "Phase 2",
-  "currentBehaviorNotes": "heloc.ts non-IO branch falls back to interest-only; UI may still expose toggle."
+  "currentBehaviorNotes": "Engine throws if interestOnlyDraw is false. HelocInputsPanel has no non-interest-only control (defaults remain IO-only)."
 }

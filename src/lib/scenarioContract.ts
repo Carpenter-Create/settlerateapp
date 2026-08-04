@@ -14,7 +14,7 @@ import { MortgageInputs, MortgageResults, calculateMortgage } from "./mortgage";
 
 // Semantic versioning for the mortgage calculator
 // Increment when calculation logic changes to ensure reproducibility
-export const CALCULATOR_VERSION = "1.0.0";
+export const CALCULATOR_VERSION = "2.0.0";
 
 // Schema version for migrations - increment when scenario shape changes
 export const LATEST_SCHEMA_VERSION = 1;
@@ -312,9 +312,9 @@ export function validateDuplicateIndependence(
 export function runIntegrityTests(scenario: ScenarioData): IntegrityCheckResult {
   const selfCheck = validateScenarioIntegrity(scenario);
   
-  // Additional checks for computation determinism
-  const recomputed1 = calculateMortgage(scenario.inputs);
-  const recomputed2 = calculateMortgage(scenario.inputs);
+  // Additional checks for computation determinism (DEF-008: apply frozen assumptions)
+  const recomputed1 = calculateMortgage(scenario.inputs, scenario.assumptions);
+  const recomputed2 = calculateMortgage(scenario.inputs, scenario.assumptions);
   
   if (JSON.stringify(recomputed1) !== JSON.stringify(recomputed2)) {
     selfCheck.errors.push("Non-deterministic computation detected");
