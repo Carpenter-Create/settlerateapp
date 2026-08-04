@@ -48,7 +48,7 @@ Do **not** define total cost as **loan principal + interest** for comparison pur
 ### Still deferred
 
 - **Comparison winner logic (Phase 5 / DEF-003):** `comparisonSummary.determineLowestCost()` still ranks by `results.totalCost`.
-- **Exports:** financing cost / principal reduction labeling in export pipelines is not part of Phase 2 closeout.
+- **Exports:** see `docs/EXPORT_CONTRACT.md` (Phase 4) — financing cost / principal reduction are the primary export cost labels; comparison winner narrative remains Phase 5.
 
 ---
 
@@ -68,7 +68,7 @@ Horizon must be stated in comparison and export copy (“over the modeled term�
 
 - Principal is **not** a cost.
 - `principalReductionOverHorizon` = cumulative scheduled + extra + origination principal over the horizon.
-- Equity framing may reference down payment + principal reduction (exports — deferred).
+- Equity framing may reference down payment + principal reduction (see export contract).
 
 ---
 

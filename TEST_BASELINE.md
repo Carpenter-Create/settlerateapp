@@ -1,11 +1,11 @@
 # SettleRate Financial Benchmark Baseline
 
-**Branch:** `feat/phase3-scenario-persistence`  
-**Phase:** 3 — Scenario persistence alignment (dual snapshots + `calculateScenario` dispatch)  
+**Branch:** `feat/phase4-export-alignment`  
+**Phase:** 4 — Export and report alignment (canonical export contract)  
 **Calculator version:** 2.0.0 (`CALCULATOR_VERSION` in `src/lib/calculatorVersion.ts`)  
 **Schema version:** 2 (dual-snapshot persistence shape)  
 **Baseline date:** 2026-08-03  
-**Status:** CI green on branch — lint (0 errors), typecheck, verify:benchmarks, test:run (**52 passed | 2 todo**), build all pass
+**Status:** CI green on branch — lint (0 errors), typecheck, verify:benchmarks, test:run (**63 passed | 2 todo**), build all pass
 
 ---
 
@@ -99,6 +99,7 @@ Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P0
 |----|------|--------|-----------------|---------------------------|--------|-------|--------------|
 | **BM-M01** | migration | **active** | Legacy flat `inputs` → canonical namespaced schema (now v2) | `migrateScenario` preserves values through v0→v1→v2 | — | — | ✅ Pipeline inspection |
 | **BM-V01** | versioning | **active** | Dual snapshots; explicit recompute; `calculatedAt` metadata | Hydration restores snapshots; stale flag; explicit persist recalculation | DEF-001 | Phase 3 | ✅ Vitest + `docs/SCENARIO_PERSISTENCE.md` |
+| **BM-X01** | export | **active** | Canonical export from activeSnapshot; financing ≠ principal; type-specific omission; stale no-recalc; derived parity | `exportContract.test.ts` + `docs/EXPORT_CONTRACT.md` | — | Phase 4 | ✅ Vitest |
 
 ---
 
@@ -114,6 +115,7 @@ Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P0
 | `scenarioPersistence.test.ts` | DEF-001 dispatch; BM-V01 dual snapshots; stale open; explicit persist recalculation; duplicate v2; round trips; legacy hydration |
 | `financingCost.composition.test.ts` | BM-P06, BM-P03 MI, BM-C03, BM-R04–R06, frozen assumptions in sensitivity |
 | `scenarioInputSerialization.test.ts` | Create/update Supabase persistence parity |
+| `exportContract.test.ts` | BM-X01 Phase 4 export contract; snapshot selection; HELOC/assumption omission; client/server derived parity |
 
 ---
 
@@ -128,7 +130,7 @@ Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P0
 
 ## Unresolved expected values
 
-None for Phase 3 persistence. Phase 5 comparison winner fixtures remain specification-only until that phase.
+None for Phase 4 export alignment beyond known summary-field omissions (HELOC draw avg / assumption gap splits). Phase 5 comparison winner fixtures remain specification-only until that phase.
 
 ---
 
@@ -137,7 +139,8 @@ None for Phase 3 persistence. Phase 5 comparison winner fixtures remain specific
 | Topic | Approved | Current on this branch | Deferred |
 |-------|----------|------------------------|----------|
 | Financing cost metric | `financingCostOverHorizon` | Exposed on mortgage + unified results | Comparison UI winner (Phase 5) |
-| Principal | Reported separately | `principalReductionOverHorizon` exposed | Export labeling (later) |
+| Principal | Reported separately | `principalReductionOverHorizon` exposed | — |
+| Exports | Canonical contract; activeSnapshot default; no silent recalc | Implemented (`docs/EXPORT_CONTRACT.md`) | Edge deploy of `generate-pdf`; HELOC/assumption component detail not on summary |
 | Break-even | Explicit current rate + term | Implemented; synthetic rate removed | — |
 | HELOC draw | Interest-only only | Engine rejects non-IO; UI has no non-IO control | Amortizing draw math |
 | Assumptions | Frozen at save, applied | Applied in calc / sensitivity / integrity | — |
@@ -166,6 +169,7 @@ Full-repository lint with strict rules restored. **Ignored paths:** `dist` only.
 
 - `docs/FINANCIAL_METHODOLOGY.md` — approved vs current vs deferred semantics
 - `docs/SCENARIO_PERSISTENCE.md` — dual-snapshot persistence contract
+- `docs/EXPORT_CONTRACT.md` — Phase 4 export/report contract
 - `src/lib/__tests__/fixtures/` — golden JSON fixtures
 - `vitest.config.ts` — Node environment, `@/` alias
 - `AGENTS.md` / `.cursor/rules/` — cross-agent governance

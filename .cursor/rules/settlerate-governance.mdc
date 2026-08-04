@@ -10,6 +10,8 @@ Use the authoritative document for each domain. Do not invent a universal rankin
 | Domain | Authority |
 |--------|-----------|
 | Financial methodology | `docs/FINANCIAL_METHODOLOGY.md` |
+| Scenario persistence | `docs/SCENARIO_PERSISTENCE.md` |
+| Export contract | `docs/EXPORT_CONTRACT.md` |
 | Benchmark and defect status | `TEST_BASELINE.md` |
 | Product scope | `docs/APP_SCOPE.md` |
 | Security | `docs/SECURITY_MODEL.md` |
