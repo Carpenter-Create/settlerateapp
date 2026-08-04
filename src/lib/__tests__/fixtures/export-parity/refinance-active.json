@@ -1,0 +1,82 @@
+{
+  "name": "refinance-active",
+  "selection": "active",
+  "mode": "refinance",
+  "row": {
+    "id": "parity-refi-001",
+    "name": "Refinance BM-R01",
+    "inputs": {
+      "mode": "refinance",
+      "shared": { "loanTerm": 30, "interestRate": 6.5 },
+      "refinance": {
+        "currentLoanBalance": 300000,
+        "estimatedHomeValue": 400000,
+        "closingCosts": 6000
+      }
+    },
+    "derived": {
+      "assumptions": { "pmiRemovalThreshold": 80 },
+      "sourceScenarioId": null,
+      "calculatorVersion": "2.0.0",
+      "originalCalculatorVersion": "2.0.0",
+      "activeCalculatorVersion": "2.0.0",
+      "originalSnapshot": {
+        "calculatorVersion": "2.0.0",
+        "calculatedAt": "2026-08-03T00:00:00.000Z",
+        "summary": {
+          "type": "refinance",
+          "monthlyPaymentPrimary": 1896.2,
+          "monthlyTotal": 1896.2,
+          "totalInterest": 382633.47,
+          "totalCost": 682633.47,
+          "financingCostOverHorizon": 388633.47,
+          "principalReductionOverHorizon": 300000,
+          "allInMonthlyHousingPayment": 1896.2,
+          "decisionHorizonMonths": 360,
+          "rateForComparison": 6.5,
+          "ltvRatio": 75,
+          "payoffMonths": 360,
+          "principalAmount": 300000
+        }
+      },
+      "activeSnapshot": {
+        "calculatorVersion": "2.0.0",
+        "calculatedAt": "2026-08-03T00:00:00.000Z",
+        "summary": {
+          "type": "refinance",
+          "monthlyPaymentPrimary": 1896.2,
+          "monthlyTotal": 1896.2,
+          "totalInterest": 382633.47,
+          "totalCost": 682633.47,
+          "financingCostOverHorizon": 388633.47,
+          "principalReductionOverHorizon": 300000,
+          "allInMonthlyHousingPayment": 1896.2,
+          "decisionHorizonMonths": 360,
+          "rateForComparison": 6.5,
+          "ltvRatio": 75,
+          "payoffMonths": 360,
+          "principalAmount": 300000
+        }
+      }
+    }
+  },
+  "expected": {
+    "financingCostOverHorizon": 388633.47,
+    "principalReductionOverHorizon": 300000,
+    "allInMonthlyHousingPayment": 1896.2,
+    "decisionHorizonMonths": 360,
+    "totalInterest": 382633.47,
+    "legacyTotalCost": 682633.47,
+    "monthlyPaymentPrimary": 1896.2,
+    "principalAmount": 300000,
+    "ltvRatio": 75,
+    "rateForComparison": 6.5,
+    "payoffMonths": 360,
+    "calculatorVersion": "2.0.0",
+    "isLegacyFlat": false,
+    "paymentDrawAvg": null,
+    "assumedPaymentPi": null,
+    "gapPayment": null,
+    "gapAmount": null
+  }
+}

@@ -63,22 +63,63 @@ Use assumption summary semantics only. Do **not** flatten into a standard mortga
 
 ## Server / client parity
 
-- Client: `buildCanonicalScenarioExport` → layout
-- Server: `buildScenarioData` reads `derived.activeSnapshot` / `originalSnapshot` (legacy flat `derived` via adapter)
-- Shared field mapping for persisted JSON: `exportSummaryFromDerivedJson` (client) mirrored by generate-pdf `buildScenarioData`
-- Deno cannot import Vite `@/` modules; parity is enforced by Vitest comparing canonical export metrics to the derived-JSON mapper for the same scenario row
+- Client layout: `buildCanonicalScenarioExport` → `exportLayout`
+- Client derived mapper: `exportSummaryFromDerivedJson` in `src/lib/exports/exportContract.ts`
+- Server derived mapper (actual generate-pdf path): `mapDerivedForExport` / `buildScenarioData` in `supabase/functions/generate-pdf/mapDerivedForExport.ts`
+- Shared fixtures: `src/lib/__tests__/fixtures/export-parity/*.json`
+- Automated coverage:
+  - Vitest `exportParity.test.ts` imports the **actual** Deno module and compares both mappers to fixtures
+  - Deno `mapDerivedForExport_test.ts` exercises the same module + fixtures (`deno test supabase/functions/generate-pdf/mapDerivedForExport_test.ts`)
+
+**Important:** Client-only mapper tests do **not** prove server parity. The Deno implementation must be imported or run under Deno against the shared fixtures.
 
 Intentional differences:
 
 - Server PDF typography/spacing may differ slightly from browser print CSS
 - Comparison **winner narrative** remains legacy until Phase 5 on both sides
 - Escrow line-item detail on server PDF may be unavailable when only summary snapshots are stored
+- `ScenarioResults.ltvRatio` is numeric on the server layout object; null summary LTV projects to `0` for PDF tables while the shared summary mapper returns `null`
 
 ## Schema / deployment impact
 
 - **No Postgres DDL.** Dual snapshots remain in `derived` JSON.
-- Edge function `generate-pdf` must be redeployed for server PDF alignment.
+- Edge function `generate-pdf` must be redeployed for server PDF alignment (see deployment checklist below).
 - Client schema version unchanged (v2).
+
+## Deployment checklist — `generate-pdf`
+
+Phase 4 client export alignment ships with the web app deploy. **Server PDF alignment requires a separate edge-function deploy.** Repository governance does **not** authorize agents to deploy edge functions by default; a human operator (or an explicitly authorized deploy task) must run this.
+
+| Item | Value |
+|------|--------|
+| Function name | `generate-pdf` |
+| Project ref | `vpcxzbaxhpucvevnkalo` (see `supabase/config.toml`) |
+| JWT verify | `verify_jwt = false` in `supabase/config.toml` (auth checked inside the function via user JWT) |
+| Approved command | `supabase functions deploy generate-pdf --project-ref vpcxzbaxhpucvevnkalo` |
+| Alternate | Supabase Dashboard → Edge Functions → `generate-pdf` → Deploy from linked repo/CLI |
+| Required env (platform-provided) | `SUPABASE_URL`, `SUPABASE_ANON_KEY` (read via `Deno.env` in the function) |
+| Required secrets | None beyond project defaults for this function (caller supplies `Authorization` bearer token) |
+| Related function | `export-share` invokes PDF generation; redeploy `generate-pdf` even if `export-share` is unchanged |
+| Safe after merge? | **Yes** — mapping is additive/corrective for Phase 3 `derived` dual snapshots; deploy after merge to `main` (or from the release commit). No DDL. Rollback = redeploy previous function bundle. |
+
+### Smoke-test procedure (post-deploy)
+
+1. Authenticate as a user who can export (Professional Review / admin per product rules).
+2. Open a purchase scenario saved under schema v2 dual snapshots; export PDF via the in-app export flow (or `GET /functions/v1/generate-pdf?type=scenario&id=<id>` with `Authorization`).
+3. Confirm PDF meta shows calculator version and “Active snapshot”; Cost section shows **Financing cost over modeled term** and **Principal reduction** (not legacy “Total payments over term” as primary).
+4. Repeat for HELOC: no fabricated mortgage P&I/escrow rows; financing cost present.
+5. Optional: `?snapshot=original` on a stale scenario returns historical original figures and original calculator version.
+6. Comparison export: financing cost / principal reduction columns present; winner narrative may still say legacy total cost until Phase 5.
+
+### Rollback procedure
+
+1. `supabase functions deploy generate-pdf --project-ref vpcxzbaxhpucvevnkalo` from the previous known-good commit (or Dashboard rollback if enabled).
+2. Re-run smoke steps 2–3 on a purchase scenario.
+3. Client-only print/HTML continues to work from the web deploy even if the edge function is rolled back; only server PDF/share PDF is affected.
+
+### Deployment status for Phase 4 PR
+
+Deployment is **out of scope for automated PR closeout** unless an authorized operator runs the command above. Treat “edge deploy of `generate-pdf`” as a **remaining blocker for production server PDF correctness** until completed.
 
 ## Legacy compatibility
 

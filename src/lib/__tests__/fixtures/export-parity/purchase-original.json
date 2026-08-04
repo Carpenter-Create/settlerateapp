@@ -1,0 +1,77 @@
+{
+  "name": "purchase-original",
+  "selection": "original",
+  "mode": "purchase",
+  "row": {
+    "id": "parity-stale-001",
+    "name": "Stale Purchase",
+    "inputs": {
+      "mode": "purchase",
+      "shared": { "loanTerm": 30, "interestRate": 6.5 },
+      "purchase": {
+        "purchasePrice": 450000,
+        "downPayment": 20,
+        "downPaymentType": "percent"
+      }
+    },
+    "derived": {
+      "assumptions": { "pmiRemovalThreshold": 80 },
+      "sourceScenarioId": null,
+      "calculatorVersion": "1.0.0",
+      "originalCalculatorVersion": "2.0.0",
+      "activeCalculatorVersion": "1.0.0",
+      "originalSnapshot": {
+        "calculatorVersion": "2.0.0",
+        "calculatedAt": "2026-01-01T00:00:00.000Z",
+        "summary": {
+          "type": "purchase",
+          "monthlyPaymentPrimary": 2275.44,
+          "monthlyTotal": 2275.44,
+          "totalInterest": 459160.16,
+          "totalCost": 819160.16,
+          "financingCostOverHorizon": 459160.16,
+          "principalReductionOverHorizon": 360000,
+          "allInMonthlyHousingPayment": 2275.44,
+          "decisionHorizonMonths": 360,
+          "rateForComparison": 6.5,
+          "ltvRatio": 80,
+          "payoffMonths": 360,
+          "principalAmount": 360000
+        }
+      },
+      "activeSnapshot": {
+        "calculatorVersion": "1.0.0",
+        "calculatedAt": "2026-01-01T00:00:00.000Z",
+        "summary": {
+          "type": "purchase",
+          "monthlyPaymentPrimary": 2275.44,
+          "monthlyTotal": 2275.44,
+          "totalInterest": 1,
+          "totalCost": 360001,
+          "financingCostOverHorizon": 1,
+          "principalReductionOverHorizon": 2,
+          "allInMonthlyHousingPayment": 2275.44,
+          "decisionHorizonMonths": 360,
+          "rateForComparison": 6.5,
+          "ltvRatio": 80,
+          "payoffMonths": 360,
+          "principalAmount": 360000
+        }
+      }
+    }
+  },
+  "expected": {
+    "financingCostOverHorizon": 459160.16,
+    "principalReductionOverHorizon": 360000,
+    "totalInterest": 459160.16,
+    "legacyTotalCost": 819160.16,
+    "calculatorVersion": "2.0.0",
+    "activeCalculatorVersion": "1.0.0",
+    "originalCalculatorVersion": "2.0.0",
+    "isLegacyFlat": false,
+    "paymentDrawAvg": null,
+    "assumedPaymentPi": null,
+    "gapPayment": null,
+    "gapAmount": null
+  }
+}

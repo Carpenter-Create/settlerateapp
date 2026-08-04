@@ -20,6 +20,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
+import {
+  buildScenarioData,
+  type ScenarioData,
+  type ScenarioType,
+} from "./mapDerivedForExport.ts";
 
 // CORS headers
 const corsHeaders = {
@@ -63,86 +68,8 @@ const BRAND = {
 } as const;
 
 // ============================================================================
-// TYPES
+// TYPES (scenario data types live in mapDerivedForExport.ts)
 // ============================================================================
-
-type ScenarioType = "purchase" | "refinance" | "heloc" | "assumption";
-
-interface ScenarioInputs {
-  mode: ScenarioType;
-  shared: {
-    loanTerm: number;
-    interestRate: number;
-    propertyTaxAnnual?: number;
-    homeInsuranceMonthly?: number;
-  };
-  purchase?: {
-    purchasePrice: number;
-    downPayment: number;
-    downPaymentType: "percent" | "amount";
-  };
-  refinance?: {
-    currentLoanBalance: number;
-    estimatedHomeValue?: number;
-  };
-  heloc?: {
-    creditLimit: number;
-    currentBalance: number;
-    apr: number;
-    drawMonths: number;
-    repayMonths: number;
-  };
-  assumption?: {
-    purchasePrice: number;
-    downPaymentCash: number;
-    assumed: {
-      balance: number;
-      apr: number;
-      remainingMonths: number;
-    };
-    gap: {
-      method: "cash" | "second_loan" | "heloc";
-    };
-  };
-}
-
-interface ScenarioResults {
-  loanAmount: number;
-  monthlyPrincipalInterest: number;
-  monthlyTotal: number;
-  monthlyPropertyTax: number;
-  monthlyHomeInsurance: number;
-  monthlyPMI: number;
-  monthlyHOA: number;
-  totalCost: number;
-  totalInterest: number;
-  ltvRatio: number;
-  payoffMonths: number;
-  financingCostOverHorizon: number;
-  principalReductionOverHorizon: number;
-  decisionHorizonMonths: number;
-  allInMonthlyHousingPayment: number;
-  rateForComparison: number;
-  // HELOC-specific
-  paymentDrawAvg?: number;
-  paymentRepay?: number;
-  // Assumption-specific
-  assumedPaymentPi?: number;
-  gapPayment?: number;
-  gapAmount?: number;
-}
-
-interface ScenarioData {
-  id: string;
-  name: string;
-  inputs: ScenarioInputs;
-  results: ScenarioResults;
-  activeCalculatorVersion: string;
-  originalCalculatorVersion: string;
-  /** Calculator version of the selected export snapshot. */
-  exportCalculatorVersion: string;
-  snapshotSource: "active" | "original";
-}
 
 interface LayoutRow {
   label: string;
@@ -1222,152 +1149,5 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-// ============================================================================
-// DATA BUILDER HELPER
-// ============================================================================
+// Scenario row → export ScenarioData mapping: ./mapDerivedForExport.ts
 
-interface ScenarioRow {
-  id: string;
-  name?: string;
-  inputs?: ScenarioInputs;
-  derived?: Record<string, unknown> | ScenarioResults;
-}
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object"
-    ? (value as Record<string, unknown>)
-    : null;
-}
-
-function readNumber(value: unknown, fallback = 0): number {
-  return typeof value === "number" && !Number.isNaN(value) ? value : fallback;
-}
-
-/**
- * Maps Phase 3 dual-snapshot `derived` JSON (or legacy flat results) into
- * export results. Mirrors `exportSummaryFromDerivedJson` in
- * `src/lib/exports/exportContract.ts` — keep semantics aligned.
- */
-function buildScenarioData(
-  s: ScenarioRow,
-  snapshotSource: "active" | "original" = "active"
-): ScenarioData {
-  const inputs = (s.inputs || {}) as ScenarioInputs;
-  const derived = asRecord(s.derived) ?? {};
-
-  const activeSnap = asRecord(derived.activeSnapshot);
-  const originalSnap = asRecord(derived.originalSnapshot);
-  const selectedSnap =
-    snapshotSource === "original"
-      ? (originalSnap ?? activeSnap)
-      : (activeSnap ?? originalSnap);
-  const summary = asRecord(selectedSnap?.summary);
-
-  const isLegacyFlat =
-    !activeSnap &&
-    !originalSnap &&
-    (typeof derived.loanAmount === "number" ||
-      typeof derived.monthlyPrincipalInterest === "number" ||
-      typeof derived.totalCost === "number" ||
-      typeof derived.financingCostOverHorizon === "number");
-
-  const src = isLegacyFlat ? derived : (summary ?? {});
-
-  const activeCalculatorVersion =
-    typeof derived.activeCalculatorVersion === "string"
-      ? derived.activeCalculatorVersion
-      : typeof derived.calculatorVersion === "string"
-        ? derived.calculatorVersion
-        : typeof activeSnap?.calculatorVersion === "string"
-          ? (activeSnap.calculatorVersion as string)
-          : "unknown";
-
-  const originalCalculatorVersion =
-    typeof derived.originalCalculatorVersion === "string"
-      ? derived.originalCalculatorVersion
-      : typeof originalSnap?.calculatorVersion === "string"
-        ? (originalSnap.calculatorVersion as string)
-        : activeCalculatorVersion;
-
-  const exportCalculatorVersion =
-    typeof selectedSnap?.calculatorVersion === "string"
-      ? (selectedSnap.calculatorVersion as string)
-      : snapshotSource === "original"
-        ? originalCalculatorVersion
-        : activeCalculatorVersion;
-
-  const principalAmount = readNumber(
-    src.principalAmount ?? src.loanAmount ?? src.balanceEndDraw
-  );
-  const monthlyPrimary = readNumber(
-    src.monthlyPaymentPrimary ??
-      src.monthlyPrincipalInterest ??
-      src.paymentRepay ??
-      src.paymentTotal
-  );
-  const monthlyTotal = readNumber(src.monthlyTotal, monthlyPrimary);
-  const totalInterest = readNumber(src.totalInterest ?? src.interestTotal);
-  const totalCost = readNumber(src.totalCost ?? src.costTotal, totalInterest);
-  const financingCost = readNumber(src.financingCostOverHorizon, totalInterest);
-  const principalReduction = readNumber(src.principalReductionOverHorizon);
-  const decisionHorizon = readNumber(
-    src.decisionHorizonMonths ?? src.payoffMonths,
-    360
-  );
-  const allInMonthly = readNumber(src.allInMonthlyHousingPayment, monthlyTotal);
-  const ltvRatio = readNumber(src.ltvRatio);
-  const rateForComparison = readNumber(
-    src.rateForComparison,
-    inputs.shared?.interestRate ?? 0
-  );
-
-  return {
-    id: s.id,
-    name: s.name || "Untitled",
-    inputs: {
-      mode: inputs.mode || "purchase",
-      shared: inputs.shared || { loanTerm: 30, interestRate: 0 },
-      purchase: inputs.purchase,
-      refinance: inputs.refinance,
-      heloc: inputs.heloc,
-      assumption: inputs.assumption,
-    },
-    results: {
-      loanAmount: principalAmount,
-      monthlyPrincipalInterest: monthlyPrimary,
-      monthlyTotal,
-      monthlyPropertyTax: readNumber(src.monthlyPropertyTax),
-      monthlyHomeInsurance: readNumber(src.monthlyHomeInsurance),
-      monthlyPMI: readNumber(src.monthlyPMI),
-      monthlyHOA: readNumber(src.monthlyHOA),
-      totalCost,
-      totalInterest,
-      ltvRatio,
-      payoffMonths: readNumber(src.payoffMonths, decisionHorizon),
-      financingCostOverHorizon: financingCost,
-      principalReductionOverHorizon: principalReduction,
-      decisionHorizonMonths: decisionHorizon,
-      allInMonthlyHousingPayment: allInMonthly,
-      rateForComparison,
-      paymentDrawAvg:
-        typeof src.paymentDrawAvg === "number" ? src.paymentDrawAvg : undefined,
-      paymentRepay:
-        typeof src.paymentRepay === "number"
-          ? src.paymentRepay
-          : inputs.mode === "heloc"
-            ? monthlyPrimary
-            : undefined,
-      assumedPaymentPi:
-        typeof src.assumedPaymentPi === "number"
-          ? src.assumedPaymentPi
-          : undefined,
-      gapPayment:
-        typeof src.gapPayment === "number" ? src.gapPayment : undefined,
-      gapAmount: typeof src.gapAmount === "number" ? src.gapAmount : undefined,
-    },
-    activeCalculatorVersion,
-    originalCalculatorVersion,
-    exportCalculatorVersion,
-    snapshotSource,
-  };
-}

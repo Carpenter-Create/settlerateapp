@@ -256,8 +256,9 @@ export function buildCanonicalScenarioExport(
 
 /**
  * Pure mapper for Supabase `derived` JSON → export summary fields.
- * Mirrored by `buildScenarioData` in `supabase/functions/generate-pdf/index.ts`.
- * Keep semantics aligned; parity covered by exportContract tests.
+ * Server counterpart: `mapDerivedForExport` in
+ * `supabase/functions/generate-pdf/mapDerivedForExport.ts` (used by generate-pdf).
+ * Parity fixtures: `src/lib/__tests__/fixtures/export-parity/` + `exportParity.test.ts`.
  */
 export function exportSummaryFromDerivedJson(
   derived: unknown,
@@ -279,6 +280,11 @@ export function exportSummaryFromDerivedJson(
   originalCalculatorVersion: string;
   isLegacyFlat: boolean;
   snapshotSource: ExportSnapshotSelection;
+  paymentDrawAvg: number | null;
+  paymentRepay: number | null;
+  assumedPaymentPi: number | null;
+  gapPayment: number | null;
+  gapAmount: number | null;
 } {
   const root =
     derived && typeof derived === "object"
@@ -313,6 +319,8 @@ export function exportSummaryFromDerivedJson(
 
   const num = (value: unknown, fallback = 0) =>
     typeof value === "number" && !Number.isNaN(value) ? value : fallback;
+  const optionalNum = (value: unknown): number | null =>
+    typeof value === "number" && !Number.isNaN(value) ? value : null;
 
   const monthlyPaymentPrimary = num(
     src.monthlyPaymentPrimary ??
@@ -371,6 +379,11 @@ export function exportSummaryFromDerivedJson(
     originalCalculatorVersion,
     isLegacyFlat,
     snapshotSource: selection,
+    paymentDrawAvg: optionalNum(src.paymentDrawAvg),
+    paymentRepay: optionalNum(src.paymentRepay),
+    assumedPaymentPi: optionalNum(src.assumedPaymentPi),
+    gapPayment: optionalNum(src.gapPayment),
+    gapAmount: optionalNum(src.gapAmount),
   };
 }
 

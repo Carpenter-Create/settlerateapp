@@ -1,0 +1,84 @@
+{
+  "name": "assumption-active",
+  "selection": "active",
+  "mode": "assumption",
+  "row": {
+    "id": "parity-assumption-001",
+    "name": "Assumption BM-A02",
+    "inputs": {
+      "mode": "assumption",
+      "shared": { "loanTerm": 30, "interestRate": 0 },
+      "assumption": {
+        "purchasePrice": 350000,
+        "downPaymentCash": 50000,
+        "assumed": { "balance": 150000, "apr": 4.5, "remainingMonths": 240 },
+        "gap": { "method": "second_loan" }
+      }
+    },
+    "derived": {
+      "assumptions": { "pmiRemovalThreshold": 80 },
+      "sourceScenarioId": null,
+      "calculatorVersion": "2.0.0",
+      "originalCalculatorVersion": "2.0.0",
+      "activeCalculatorVersion": "2.0.0",
+      "originalSnapshot": {
+        "calculatorVersion": "2.0.0",
+        "calculatedAt": "2026-08-03T00:00:00.000Z",
+        "summary": {
+          "type": "assumption",
+          "monthlyPaymentPrimary": 1928.26,
+          "monthlyTotal": 1928.26,
+          "totalInterest": 167236.37,
+          "totalCost": 417236.37,
+          "financingCostOverHorizon": 167236.37,
+          "principalReductionOverHorizon": 250000,
+          "allInMonthlyHousingPayment": 1928.26,
+          "decisionHorizonMonths": 240,
+          "rateForComparison": 4.5,
+          "ltvRatio": 57.14,
+          "payoffMonths": 240,
+          "principalAmount": 250000
+        }
+      },
+      "activeSnapshot": {
+        "calculatorVersion": "2.0.0",
+        "calculatedAt": "2026-08-03T00:00:00.000Z",
+        "summary": {
+          "type": "assumption",
+          "monthlyPaymentPrimary": 1928.26,
+          "monthlyTotal": 1928.26,
+          "totalInterest": 167236.37,
+          "totalCost": 417236.37,
+          "financingCostOverHorizon": 167236.37,
+          "principalReductionOverHorizon": 250000,
+          "allInMonthlyHousingPayment": 1928.26,
+          "decisionHorizonMonths": 240,
+          "rateForComparison": 4.5,
+          "ltvRatio": 57.14,
+          "payoffMonths": 240,
+          "principalAmount": 250000
+        }
+      }
+    }
+  },
+  "expected": {
+    "financingCostOverHorizon": 167236.37,
+    "principalReductionOverHorizon": 250000,
+    "allInMonthlyHousingPayment": 1928.26,
+    "decisionHorizonMonths": 240,
+    "totalInterest": 167236.37,
+    "legacyTotalCost": 417236.37,
+    "monthlyPaymentPrimary": 1928.26,
+    "principalAmount": 250000,
+    "ltvRatio": 57.14,
+    "rateForComparison": 4.5,
+    "payoffMonths": 240,
+    "calculatorVersion": "2.0.0",
+    "isLegacyFlat": false,
+    "paymentDrawAvg": null,
+    "assumedPaymentPi": null,
+    "gapPayment": null,
+    "gapAmount": null
+  },
+  "notes": "assumedPaymentPi / gapPayment intentionally absent from summary — both mappers must leave them null"
+}

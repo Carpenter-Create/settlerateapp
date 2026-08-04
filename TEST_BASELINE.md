@@ -5,7 +5,7 @@
 **Calculator version:** 2.0.0 (`CALCULATOR_VERSION` in `src/lib/calculatorVersion.ts`)  
 **Schema version:** 2 (dual-snapshot persistence shape)  
 **Baseline date:** 2026-08-03  
-**Status:** CI green on branch — lint (0 errors), typecheck, verify:benchmarks, test:run (**63 passed | 2 todo**), build all pass
+**Status:** CI green on branch — lint (0 errors), typecheck, verify:benchmarks, test:run (**74 passed | 2 todo**), build all pass; Deno export-parity mapper tests via `npm run test:export-parity-deno`
 
 ---
 
@@ -115,7 +115,9 @@ Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P0
 | `scenarioPersistence.test.ts` | DEF-001 dispatch; BM-V01 dual snapshots; stale open; explicit persist recalculation; duplicate v2; round trips; legacy hydration |
 | `financingCost.composition.test.ts` | BM-P06, BM-P03 MI, BM-C03, BM-R04–R06, frozen assumptions in sensitivity |
 | `scenarioInputSerialization.test.ts` | Create/update Supabase persistence parity |
-| `exportContract.test.ts` | BM-X01 Phase 4 export contract; snapshot selection; HELOC/assumption omission; client/server derived parity |
+| `exportContract.test.ts` | BM-X01 Phase 4 export contract; snapshot selection; HELOC/assumption omission |
+| `exportParity.test.ts` | BM-X01 client vs **actual** Deno `mapDerivedForExport` against `fixtures/export-parity/*` |
+| Deno `mapDerivedForExport_test.ts` | Same fixtures via `npm run test:export-parity-deno` |
 
 ---
 

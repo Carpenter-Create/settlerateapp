@@ -12,6 +12,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:watch": "vitest watch",
+    "test:export-parity-deno": "deno test --allow-read --no-check supabase/functions/generate-pdf/mapDerivedForExport_test.ts",
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "verify:benchmarks": "node scripts/verify-benchmarks.mjs"
   },
