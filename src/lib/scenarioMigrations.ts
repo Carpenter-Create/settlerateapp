@@ -23,7 +23,11 @@ import {
   DEFAULT_SHARED_INPUTS,
   ScenarioType,
 } from "./mortgage";
-import { ScenarioAssumptions, DEFAULT_ASSUMPTIONS, CALCULATOR_VERSION as CONTRACT_VERSION } from "./scenarioContract";
+import { ScenarioAssumptions, DEFAULT_ASSUMPTIONS } from "./scenarioContract";
+import {
+  CALCULATOR_VERSION as CONTRACT_VERSION,
+  LATEST_SCHEMA_VERSION as CONTRACT_SCHEMA_VERSION,
+} from "./calculatorVersion";
 
 // =============================================================================
 // VERSION CONSTANTS
@@ -31,8 +35,9 @@ import { ScenarioAssumptions, DEFAULT_ASSUMPTIONS, CALCULATOR_VERSION as CONTRAC
 
 /**
  * Current schema version. Increment when the scenario shape changes.
+ * v2 adds dual-snapshot fields (originalSnapshot / activeSnapshot).
  */
-export const LATEST_SCHEMA_VERSION = 1;
+export const LATEST_SCHEMA_VERSION = CONTRACT_SCHEMA_VERSION;
 
 /**
  * Current calculator version for computation reproducibility.
@@ -70,9 +75,13 @@ export interface MigratedScenario {
   sourceScenarioId: string | null;
   inputs: MortgageInputs;
   assumptions: ScenarioAssumptions;
-  results: unknown; // Will be recomputed after migration
+  results: unknown; // May be legacy; hydration builds dual snapshots
   calculatorVersion: string;
   schemaVersion: number;
+  originalSnapshot?: unknown;
+  activeSnapshot?: unknown;
+  originalCalculatorVersion?: string;
+  activeCalculatorVersion?: string;
 }
 
 // =============================================================================
@@ -290,6 +299,51 @@ function migrate_v0_to_v1(raw: Record<string, unknown>): MigrationOutcome {
   };
 }
 
+/**
+ * v1 → v2 Migration
+ *
+ * Promotes scenarios to the dual-snapshot persistence shape.
+ * Does not recompute or overwrite historical result values — hydration
+ * assigns legacy single results to both snapshots when snapshots are absent.
+ */
+function migrate_v1_to_v2(raw: Record<string, unknown>): MigrationOutcome {
+  const migrations: string[] = [];
+  const scenario: Record<string, unknown> = { ...raw };
+
+  scenario.schemaVersion = 2;
+  migrations.push("Set schemaVersion to 2 (dual-snapshot persistence)");
+
+  const calculatorVersion =
+    typeof scenario.calculatorVersion === "string"
+      ? scenario.calculatorVersion
+      : CALCULATOR_VERSION;
+
+  if (typeof scenario.originalCalculatorVersion !== "string") {
+    scenario.originalCalculatorVersion = calculatorVersion;
+    migrations.push("Set originalCalculatorVersion from calculatorVersion");
+  }
+
+  if (typeof scenario.activeCalculatorVersion !== "string") {
+    scenario.activeCalculatorVersion = calculatorVersion;
+    migrations.push("Set activeCalculatorVersion from calculatorVersion");
+  }
+
+  // Preserve any pre-existing snapshots; do not invent recomputed ones here.
+  if (scenario.originalSnapshot === undefined) {
+    migrations.push("originalSnapshot deferred to hydration (legacy compatible)");
+  }
+  if (scenario.activeSnapshot === undefined) {
+    migrations.push("activeSnapshot deferred to hydration (legacy compatible)");
+  }
+
+  return {
+    success: true,
+    scenario: scenario as unknown as MigratedScenario,
+    wasChanged: migrations.length > 0,
+    migrations,
+  };
+}
+
 // =============================================================================
 // MAIN MIGRATION PIPELINE
 // =============================================================================
@@ -326,10 +380,9 @@ export function migrateScenario(raw: unknown): MigrationOutcome {
       case 0:
         result = migrate_v0_to_v1(current);
         break;
-      // Future migrations would be added here:
-      // case 1:
-      //   result = migrate_v1_to_v2(current);
-      //   break;
+      case 1:
+        result = migrate_v1_to_v2(current);
+        break;
       default:
         return {
           success: false,

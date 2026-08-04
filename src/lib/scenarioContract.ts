@@ -1,23 +1,31 @@
 /**
  * SettleRate Scenario Data Model Contract
- * 
+ *
  * A scenario is a self-contained, immutable-on-read financial analysis snapshot.
- * 
+ *
  * Core principles:
  * 1. Self-containment: Each scenario stores all inputs, assumptions, and derived results
  * 2. Immutability: Historical scenarios do not change when system defaults update
  * 3. Lineage: Duplicated scenarios track their source for audit purposes
  * 4. Determinism: Same inputs + assumptions + calculator version = same results
+ * 5. Dual snapshots (Phase 3 / BM-V01): originalSnapshot is an immutable baseline;
+ *    activeSnapshot may be recalculated under a newer calculator version
  */
 
-import { MortgageInputs, MortgageResults, calculateMortgage } from "./mortgage";
+import { MortgageInputs, MortgageResults } from "./mortgage";
+import { CALCULATOR_VERSION, LATEST_SCHEMA_VERSION } from "./calculatorVersion";
+import {
+  computeScenarioBundle,
+  recalculateActiveSnapshot,
+  summariesMatch,
+  summaryFromUnified,
+  type ScenarioCalculationSnapshot,
+} from "./scenarioPersistence";
+import { calculateScenario } from "./scenarioCalculator";
 
-// Semantic versioning for the mortgage calculator
-// Increment when calculation logic changes to ensure reproducibility
-export const CALCULATOR_VERSION = "2.0.0";
-
-// Schema version for migrations - increment when scenario shape changes
-export const LATEST_SCHEMA_VERSION = 1;
+export { CALCULATOR_VERSION, LATEST_SCHEMA_VERSION };
+export type { ScenarioCalculationSnapshot };
+export { recalculateActiveSnapshot };
 
 /**
  * System-level assumptions that may change over time.
@@ -26,19 +34,19 @@ export const LATEST_SCHEMA_VERSION = 1;
 export interface ScenarioAssumptions {
   // Amortization method
   amortizationType: "standard" | "simple";
-  
+
   // PMI removal threshold (LTV percentage)
   pmiRemovalThreshold: number;
-  
+
   // Default PMI rate if not specified (annual % of loan amount)
   defaultPmiRate: number;
-  
+
   // Whether prepayment penalties are assumed (always false in v1)
   assumePrepaymentPenalty: boolean;
-  
+
   // Tax treatment assumptions
   taxDeductible: boolean;
-  
+
   // Calculator version at time of scenario creation
   calculatorVersion: string;
 }
@@ -64,24 +72,38 @@ export interface ScenarioData {
   id: string;
   ownerId: string | null; // null for anonymous/local scenarios
   name: string;
-  
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
-  
+
   // Lineage tracking
   sourceScenarioId: string | null; // ID of scenario this was duplicated from
-  
+
   // Core data (self-contained)
   inputs: MortgageInputs;
   assumptions: ScenarioAssumptions;
+  /**
+   * UI/compat projection of the active calculation.
+   * Purchase/refinance: full MortgageResults (schedule regenerated when current).
+   * HELOC/assumption: bounded projection — never produced via calculateMortgage.
+   */
   results: MortgageResults;
-  
-  // Version for deterministic recomputation
+
+  /**
+   * @deprecated Prefer activeCalculatorVersion. Kept as alias for compatibility.
+   */
   calculatorVersion: string;
-  
+
   // Schema version for migrations (REQUIRED)
   schemaVersion: number;
+
+  /** Immutable historical baseline (first save / established original). */
+  originalSnapshot: ScenarioCalculationSnapshot;
+  /** Current result used by the application (may be recalculated). */
+  activeSnapshot: ScenarioCalculationSnapshot;
+  originalCalculatorVersion: string;
+  activeCalculatorVersion: string;
 }
 
 /**
@@ -92,7 +114,8 @@ export function generateScenarioId(): string {
 }
 
 /**
- * Create a new scenario from inputs
+ * Create a new scenario from inputs.
+ * Dispatches through calculateScenario for all supported modes.
  */
 export function createScenarioData(
   name: string,
@@ -102,7 +125,11 @@ export function createScenarioData(
 ): ScenarioData {
   const now = new Date();
   const assumptions = { ...DEFAULT_ASSUMPTIONS };
-  
+  const bundle = computeScenarioBundle(inputs, assumptions, {
+    calculatorVersion: CALCULATOR_VERSION,
+    calculatedAt: now,
+  });
+
   return {
     id: generateScenarioId(),
     ownerId,
@@ -112,22 +139,27 @@ export function createScenarioData(
     sourceScenarioId,
     inputs: structuredClone(inputs),
     assumptions,
-    results: calculateMortgage(inputs, assumptions),
-    calculatorVersion: CALCULATOR_VERSION,
+    results: bundle.results,
+    calculatorVersion: bundle.calculatorVersion,
     schemaVersion: LATEST_SCHEMA_VERSION,
+    originalSnapshot: bundle.originalSnapshot,
+    activeSnapshot: bundle.activeSnapshot,
+    originalCalculatorVersion: bundle.originalCalculatorVersion,
+    activeCalculatorVersion: bundle.activeCalculatorVersion,
   };
 }
 
 /**
  * Deep clone a scenario for duplication.
  * Creates a completely independent copy with new ID and lineage reference.
+ * Both snapshots are established from a fresh calculateScenario dispatch.
  */
 export function duplicateScenarioData(
   original: ScenarioData,
   newOwnerId?: string | null
 ): ScenarioData {
   const now = new Date();
-  
+
   // Generate appropriate name
   let newName = original.name;
   const copyMatch = newName.match(/^(.+?)\s*\(Copy(?:\s*(\d+))?\)$/i);
@@ -138,42 +170,61 @@ export function duplicateScenarioData(
   } else {
     newName = `${original.name} (Copy)`;
   }
-  
-  // Deep clone all data structures
+
   const clonedInputs: MortgageInputs = structuredClone(original.inputs);
-  const clonedAssumptions: ScenarioAssumptions = structuredClone(original.assumptions);
-  
-  // Recompute results to ensure no shared references in amortization schedule
-  const freshResults = calculateMortgage(clonedInputs, clonedAssumptions);
-  
+  const clonedAssumptions: ScenarioAssumptions = structuredClone(
+    original.assumptions
+  );
+  const bundle = computeScenarioBundle(clonedInputs, clonedAssumptions, {
+    calculatorVersion: CALCULATOR_VERSION,
+    calculatedAt: now,
+  });
+
   return {
     id: generateScenarioId(),
     ownerId: newOwnerId !== undefined ? newOwnerId : original.ownerId,
     name: newName,
     createdAt: now,
     updatedAt: now,
-    sourceScenarioId: original.id, // Track lineage
+    sourceScenarioId: original.id,
     inputs: clonedInputs,
     assumptions: clonedAssumptions,
-    results: freshResults,
-    calculatorVersion: CALCULATOR_VERSION,
+    results: bundle.results,
+    calculatorVersion: bundle.calculatorVersion,
     schemaVersion: LATEST_SCHEMA_VERSION,
+    originalSnapshot: bundle.originalSnapshot,
+    activeSnapshot: bundle.activeSnapshot,
+    originalCalculatorVersion: bundle.originalCalculatorVersion,
+    activeCalculatorVersion: bundle.activeCalculatorVersion,
   };
 }
 
 /**
- * Update a scenario's inputs and recompute results.
- * Returns a new scenario object (immutable update pattern).
+ * Update a scenario's inputs and recompute the active snapshot only.
+ * originalSnapshot remains unchanged for auditability.
  */
 export function updateScenarioInputs(
   scenario: ScenarioData,
   newInputs: MortgageInputs
 ): ScenarioData {
+  const now = new Date();
+  const bundle = computeScenarioBundle(newInputs, scenario.assumptions, {
+    calculatorVersion: CALCULATOR_VERSION,
+    calculatedAt: now,
+    preserveOriginal: {
+      originalSnapshot: scenario.originalSnapshot,
+      originalCalculatorVersion: scenario.originalCalculatorVersion,
+    },
+  });
+
   return {
     ...scenario,
     inputs: structuredClone(newInputs),
-    results: calculateMortgage(newInputs, scenario.assumptions),
-    updatedAt: new Date(),
+    results: bundle.results,
+    calculatorVersion: bundle.calculatorVersion,
+    activeSnapshot: bundle.activeSnapshot,
+    activeCalculatorVersion: bundle.activeCalculatorVersion,
+    updatedAt: now,
   };
 }
 
@@ -202,53 +253,59 @@ export interface IntegrityCheckResult {
 }
 
 /**
- * Validate that a scenario's results match recomputation from inputs
+ * Validate that a scenario's active snapshot matches recomputation from inputs
+ * via calculateScenario (authoritative dispatch for all modes).
  */
-export function validateScenarioIntegrity(scenario: ScenarioData): IntegrityCheckResult {
+export function validateScenarioIntegrity(
+  scenario: ScenarioData
+): IntegrityCheckResult {
   const errors: string[] = [];
   const warnings: string[] = [];
-  
-  // Check calculator version
-  if (scenario.calculatorVersion !== CALCULATOR_VERSION) {
+
+  if (scenario.activeCalculatorVersion !== CALCULATOR_VERSION) {
     warnings.push(
-      `Scenario was created with calculator v${scenario.calculatorVersion}, current is v${CALCULATOR_VERSION}`
+      `Scenario active calculator v${scenario.activeCalculatorVersion}, current is v${CALCULATOR_VERSION}`
     );
   }
-  
-  // Recompute and compare key results
-  const recomputed = calculateMortgage(scenario.inputs, scenario.assumptions);
-  
-  const tolerance = 0.01; // Allow for floating point variance
-  
-  if (Math.abs(recomputed.monthlyPrincipalInterest - scenario.results.monthlyPrincipalInterest) > tolerance) {
-    errors.push("Monthly P&I mismatch on recomputation");
+
+  if (scenario.originalCalculatorVersion !== scenario.activeCalculatorVersion) {
+    warnings.push(
+      `Original calculator v${scenario.originalCalculatorVersion} differs from active v${scenario.activeCalculatorVersion}`
+    );
   }
-  
-  if (Math.abs(recomputed.totalInterest - scenario.results.totalInterest) > tolerance) {
-    errors.push("Total interest mismatch on recomputation");
+
+  const recomputed = calculateScenario(scenario.inputs, {
+    pmiRemovalThreshold: scenario.assumptions.pmiRemovalThreshold,
+  });
+  const recomputedSummary = summaryFromUnified(recomputed);
+
+  if (
+    scenario.activeCalculatorVersion === CALCULATOR_VERSION &&
+    !summariesMatch(recomputedSummary, scenario.activeSnapshot.summary)
+  ) {
+    errors.push("Active snapshot mismatch on calculateScenario recomputation");
   }
-  
-  if (Math.abs(recomputed.loanAmount - scenario.results.loanAmount) > tolerance) {
-    errors.push("Loan amount mismatch on recomputation");
-  }
-  
-  // Check required fields
+
   if (!scenario.id) {
     errors.push("Missing scenario ID");
   }
-  
+
   if (!scenario.name) {
     errors.push("Missing scenario name");
   }
-  
+
   if (!scenario.inputs) {
     errors.push("Missing scenario inputs");
   }
-  
+
   if (!scenario.assumptions) {
     errors.push("Missing scenario assumptions");
   }
-  
+
+  if (!scenario.originalSnapshot || !scenario.activeSnapshot) {
+    errors.push("Missing dual-snapshot persistence fields");
+  }
+
   return {
     valid: errors.length === 0,
     errors,
@@ -265,40 +322,48 @@ export function validateDuplicateIndependence(
 ): IntegrityCheckResult {
   const errors: string[] = [];
   const warnings: string[] = [];
-  
-  // Must have different IDs
+
   if (original.id === duplicate.id) {
     errors.push("Duplicate has same ID as original");
   }
-  
-  // Lineage must be set
+
   if (duplicate.sourceScenarioId !== original.id) {
     errors.push("Duplicate does not reference original as source");
   }
-  
-  // Check for shared object references (should be impossible with structuredClone)
+
   if (original.inputs === duplicate.inputs) {
     errors.push("Inputs object is shared (not deep cloned)");
   }
-  
+
   if (original.assumptions === duplicate.assumptions) {
     errors.push("Assumptions object is shared (not deep cloned)");
   }
-  
+
   if (original.results === duplicate.results) {
     errors.push("Results object is shared (not deep cloned)");
   }
-  
-  if (original.results.amortizationSchedule === duplicate.results.amortizationSchedule) {
+
+  if (
+    original.results.amortizationSchedule ===
+    duplicate.results.amortizationSchedule
+  ) {
     errors.push("Amortization schedule array is shared (not deep cloned)");
   }
-  
-  // Verify input values are equal but independent
-  const inputsEqual = JSON.stringify(original.inputs) === JSON.stringify(duplicate.inputs);
+
+  if (original.originalSnapshot === duplicate.originalSnapshot) {
+    errors.push("originalSnapshot object is shared (not deep cloned)");
+  }
+
+  if (original.activeSnapshot === duplicate.activeSnapshot) {
+    errors.push("activeSnapshot object is shared (not deep cloned)");
+  }
+
+  const inputsEqual =
+    JSON.stringify(original.inputs) === JSON.stringify(duplicate.inputs);
   if (!inputsEqual) {
     warnings.push("Duplicate inputs differ from original (may be intentional)");
   }
-  
+
   return {
     valid: errors.length === 0,
     errors,
@@ -311,14 +376,17 @@ export function validateDuplicateIndependence(
  */
 export function runIntegrityTests(scenario: ScenarioData): IntegrityCheckResult {
   const selfCheck = validateScenarioIntegrity(scenario);
-  
-  // Additional checks for computation determinism (DEF-008: apply frozen assumptions)
-  const recomputed1 = calculateMortgage(scenario.inputs, scenario.assumptions);
-  const recomputed2 = calculateMortgage(scenario.inputs, scenario.assumptions);
-  
+
+  const recomputed1 = calculateScenario(scenario.inputs, {
+    pmiRemovalThreshold: scenario.assumptions.pmiRemovalThreshold,
+  });
+  const recomputed2 = calculateScenario(scenario.inputs, {
+    pmiRemovalThreshold: scenario.assumptions.pmiRemovalThreshold,
+  });
+
   if (JSON.stringify(recomputed1) !== JSON.stringify(recomputed2)) {
     selfCheck.errors.push("Non-deterministic computation detected");
   }
-  
+
   return selfCheck;
 }

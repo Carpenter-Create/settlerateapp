@@ -1,11 +1,14 @@
 /**
  * Scenario Store - Supabase-first persistence layer
- * 
+ *
  * Uses Supabase for both anonymous and authenticated users.
  * LocalStorage is only used as an emergency offline fallback.
+ *
+ * Calculation dispatch: all create/update/load paths hydrate through
+ * calculateScenario via scenarioContract / scenarioPersistence (DEF-001).
  */
 
-import { MortgageInputs, calculateMortgage } from "@/lib/mortgage";
+import { MortgageInputs } from "@/lib/mortgage";
 import {
   ScenarioData,
   createScenarioData,
@@ -16,8 +19,11 @@ import {
 } from "@/lib/scenarioContract";
 import {
   migrateScenario,
-  needsMigration,
 } from "@/lib/scenarioMigrations";
+import {
+  hydrateScenarioData,
+  toDerivedPersistencePayload,
+} from "@/lib/scenarioPersistence";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { serializeInputsForSupabase } from "@/lib/scenarioInputSerialization";
@@ -38,16 +44,17 @@ export interface StoreSnapshot {
  */
 function loadAndMigrateScenario(raw: unknown): ScenarioData | null {
   const result = migrateScenario(raw);
-  
+
   if (!result.success) {
     const errorResult = result as { success: false; error: string; details: string[] };
     console.error("[Migration] Failed to migrate scenario:", errorResult.error, errorResult.details);
     return null;
   }
-  
+
   const migrated = result.scenario;
-  
-  const scenario: ScenarioData = {
+  const rawObj = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+
+  return hydrateScenarioData({
     id: migrated.id,
     ownerId: migrated.ownerId ?? null,
     name: migrated.name,
@@ -56,15 +63,19 @@ function loadAndMigrateScenario(raw: unknown): ScenarioData | null {
     sourceScenarioId: migrated.sourceScenarioId ?? null,
     inputs: migrated.inputs,
     assumptions: migrated.assumptions as ScenarioData["assumptions"],
-    results: calculateMortgage(
-      migrated.inputs,
-      migrated.assumptions as ScenarioData["assumptions"]
-    ),
-    calculatorVersion: migrated.calculatorVersion,
     schemaVersion: migrated.schemaVersion,
-  };
-  
-  return scenario;
+    calculatorVersion: migrated.calculatorVersion,
+    results: migrated.results,
+    originalSnapshot: rawObj.originalSnapshot ?? (migrated as unknown as Record<string, unknown>).originalSnapshot,
+    activeSnapshot: rawObj.activeSnapshot ?? (migrated as unknown as Record<string, unknown>).activeSnapshot,
+    originalCalculatorVersion:
+      (rawObj.originalCalculatorVersion as string | undefined) ??
+      ((migrated as unknown as Record<string, unknown>).originalCalculatorVersion as string | undefined),
+    activeCalculatorVersion:
+      (rawObj.activeCalculatorVersion as string | undefined) ??
+      ((migrated as unknown as Record<string, unknown>).activeCalculatorVersion as string | undefined),
+    lazyRecomputeActive: true,
+  });
 }
 
 function loadScenariosFromFallbackStorage(): ScenarioData[] {
@@ -73,14 +84,14 @@ function loadScenariosFromFallbackStorage(): ScenarioData[] {
     if (stored) {
       const parsed = JSON.parse(stored);
       const scenarios: ScenarioData[] = [];
-      
+
       for (const raw of parsed) {
         const migrated = loadAndMigrateScenario(raw);
         if (migrated) {
           scenarios.push(migrated);
         }
       }
-      
+
       return scenarios;
     }
   } catch (e) {
@@ -120,7 +131,8 @@ export function ensureClientId(inputs: MortgageInputs): MortgageInputs {
 }
 
 /**
- * Convert ScenarioData to Supabase row format
+ * Convert ScenarioData to Supabase row format.
+ * Dual snapshots live in the existing JSON `derived` column (no table migration).
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function toSupabaseRow(scenario: ScenarioData, userId: string): any {
@@ -131,22 +143,22 @@ export function toSupabaseRow(scenario: ScenarioData, userId: string): any {
     scenario_type: inputsWithClientId.mode || "purchase",
     schema_version: scenario.schemaVersion,
     inputs: serializeInputsForSupabase(inputsWithClientId),
-    derived: {
-      assumptions: scenario.assumptions,
-      sourceScenarioId: scenario.sourceScenarioId,
-      calculatorVersion: scenario.calculatorVersion,
-    } as unknown,
+    derived: toDerivedPersistencePayload(scenario) as unknown,
     is_archived: false,
   };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function fromSupabaseRow(row: any): ScenarioData {
+export function fromSupabaseRow(row: any): ScenarioData {
   const inputs = row.inputs as MortgageInputs;
-  const derived = row.derived as { 
-    assumptions?: ScenarioData["assumptions"]; 
+  const derived = (row.derived ?? {}) as {
+    assumptions?: ScenarioData["assumptions"];
     sourceScenarioId?: string | null;
     calculatorVersion?: string;
+    originalCalculatorVersion?: string;
+    activeCalculatorVersion?: string;
+    originalSnapshot?: unknown;
+    activeSnapshot?: unknown;
   };
   const assumptions = derived.assumptions ?? {
     amortizationType: "standard" as const,
@@ -156,8 +168,8 @@ function fromSupabaseRow(row: any): ScenarioData {
     taxDeductible: false,
     calculatorVersion: CALCULATOR_VERSION,
   };
-  
-  return {
+
+  return hydrateScenarioData({
     id: row.id,
     ownerId: row.user_id,
     name: row.name,
@@ -166,15 +178,19 @@ function fromSupabaseRow(row: any): ScenarioData {
     sourceScenarioId: derived.sourceScenarioId ?? null,
     inputs,
     assumptions,
-    results: calculateMortgage(inputs, assumptions),
-    calculatorVersion: derived.calculatorVersion ?? CALCULATOR_VERSION,
     schemaVersion: row.schema_version,
-  };
+    calculatorVersion: derived.calculatorVersion ?? CALCULATOR_VERSION,
+    originalSnapshot: derived.originalSnapshot,
+    activeSnapshot: derived.activeSnapshot,
+    originalCalculatorVersion: derived.originalCalculatorVersion,
+    activeCalculatorVersion: derived.activeCalculatorVersion,
+    lazyRecomputeActive: true,
+  });
 }
 
 /**
  * Unified Scenario Store - Supabase-first
- * 
+ *
  * All scenarios are stored in Supabase using auth.uid() (anonymous or real).
  * LocalStorage is only used as offline fallback.
  */
@@ -188,9 +204,9 @@ export class ScenarioStore {
   private fallbackMode = false;
 
   constructor() {
-    this.snapshot = { 
-      scenarios: [], 
-      isLoaded: false, 
+    this.snapshot = {
+      scenarios: [],
+      isLoaded: false,
       isOnline: true,
     };
   }
@@ -271,8 +287,8 @@ export class ScenarioStore {
   };
 
   private notify(): void {
-    this.snapshot = { 
-      scenarios: this.scenarios, 
+    this.snapshot = {
+      scenarios: this.scenarios,
       isLoaded: this.isLoaded,
       isOnline: this.isOnline,
     };
@@ -283,7 +299,7 @@ export class ScenarioStore {
     if (!this.currentUser) throw new Error("Not authenticated");
 
     const row = toSupabaseRow(scenario, this.currentUser.id);
-    
+
     const { data, error } = await supabase
       .from("scenarios")
       .insert(row)
@@ -291,32 +307,26 @@ export class ScenarioStore {
       .single();
 
     if (error) throw error;
-    
+
     return fromSupabaseRow(data);
   }
 
-  private async updateInSupabase(id: string, updates: Partial<{
-    name: string;
-    inputs: MortgageInputs;
-  }>): Promise<void> {
+  private async updateInSupabase(scenario: ScenarioData): Promise<void> {
     if (!this.currentUser) throw new Error("Not authenticated");
 
-    const updatePayload: Database["public"]["Tables"]["scenarios"]["Update"] = {};
-    
-    if (updates.name !== undefined) {
-      updatePayload.name = updates.name;
-    }
-    
-    if (updates.inputs !== undefined) {
-      const inputsWithClientId = ensureClientId(updates.inputs);
-      updatePayload.inputs = serializeInputsForSupabase(inputsWithClientId);
-      updatePayload.scenario_type = inputsWithClientId.mode || "purchase";
-    }
+    const row = toSupabaseRow(scenario, this.currentUser.id);
+    const updatePayload: Database["public"]["Tables"]["scenarios"]["Update"] = {
+      name: row.name,
+      inputs: row.inputs,
+      scenario_type: row.scenario_type,
+      schema_version: row.schema_version,
+      derived: row.derived,
+    };
 
     const { error } = await supabase
       .from("scenarios")
       .update(updatePayload)
-      .eq("id", id)
+      .eq("id", scenario.id)
       .eq("user_id", this.currentUser.id);
 
     if (error) throw error;
@@ -339,15 +349,15 @@ export class ScenarioStore {
   }
 
   async createScenario(
-    name: string, 
-    inputs: MortgageInputs, 
+    name: string,
+    inputs: MortgageInputs,
     sourceScenarioId?: string | null
   ): Promise<ScenarioData> {
     const inputsWithClientId = ensureClientId(inputs);
     const scenario = createScenarioData(
-      name, 
-      inputsWithClientId, 
-      this.currentUser?.id ?? null, 
+      name,
+      inputsWithClientId,
+      this.currentUser?.id ?? null,
       sourceScenarioId ?? null
     );
 
@@ -377,13 +387,15 @@ export class ScenarioStore {
   }
 
   async updateScenario(
-    id: string, 
+    id: string,
     updates: Partial<Pick<ScenarioData, "name" | "inputs">>
   ): Promise<void> {
+    let updatedScenario: ScenarioData | undefined;
+
     // Update local state first for responsiveness
     this.scenarios = this.scenarios.map((s) => {
       if (s.id !== id) return s;
-      
+
       let updated = s;
       if (updates.name !== undefined) {
         updated = updateScenarioName(updated, updates.name);
@@ -391,13 +403,16 @@ export class ScenarioStore {
       if (updates.inputs !== undefined) {
         updated = updateScenarioInputs(updated, updates.inputs);
       }
+      updatedScenario = updated;
       return updated;
     });
     this.notify();
 
+    if (!updatedScenario) return;
+
     if (this.currentUser && !this.fallbackMode) {
       try {
-        await this.updateInSupabase(id, updates);
+        await this.updateInSupabase(updatedScenario);
       } catch (e) {
         console.error("Failed to update scenario in Supabase:", e);
         // Fall back to local storage
@@ -426,7 +441,7 @@ export class ScenarioStore {
 
         // Reload to get the new scenario
         await this.loadFromSupabase(this.currentUser.id);
-        
+
         return this.scenarios.find((s) => s.id === data) ?? null;
       } catch (e) {
         console.error("Failed to duplicate scenario:", e);
