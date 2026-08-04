@@ -74,9 +74,15 @@ Arbitrary client-supplied price IDs are rejected.
 ## Admin bypass
 
 - Server-verified `user_roles` / `has_role(..., 'admin')` only
-- Logged via `log_admin_entitlement_bypass` / `entitlement_bypass_log`
+- Logged via `log_admin_entitlement_bypass` / `entitlement_bypass_log` (**service_role-only** RPC; clients cannot forge bypass rows)
 - Does not modify billing state
 - No localStorage or client override
+
+## Function grants
+
+PostgreSQL retains direct role grants when `REVOKE FROM PUBLIC` is used alone. Phase 6 migration `20260804160000_phase6_privileged_function_grants.sql` explicitly revokes `EXECUTE` from `PUBLIC`, `anon`, and `authenticated` on privileged RPCs, then grants only to approved roles. See `docs/PHASE6_DEPLOYMENT.md` for the grant matrix.
+
+Client-callable entitlement RPCs: `evaluate_entitlement`, `feature_allowed`, `assert_feature_allowed` (`authenticated` + `service_role` only).
 
 ## Enforcement points
 
@@ -88,7 +94,7 @@ Arbitrary client-supplied price IDs are rejected.
 | PDF export | `generate-pdf` → `assert_feature_allowed('pdf_export')` |
 | Share create | `export-share` → `assert_feature_allowed('share_create')` |
 | Entitlement read | `check-subscription` reads `billing` + evaluates |
-| Webhook | Signature required; `stripe_webhook_events` idempotency |
+| Webhook | Signature required; `stripe_webhook_events` idempotency (`claim_stripe_webhook_event` / `release_stripe_webhook_event` are **service_role-only**) |
 | Checkout | Allowlisted prices; maps `stripe_customer_id` ↔ `user_id` |
 | Portal | Prefers `billing.stripe_customer_id` |
 

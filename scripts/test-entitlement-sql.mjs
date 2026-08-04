@@ -101,10 +101,8 @@ async function applyMigrations(client) {
   await client.query(`
     GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated, service_role;
     GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_role;
-    GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO authenticated, service_role;
     GRANT USAGE ON SCHEMA test TO authenticated, service_role;
     GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA test TO authenticated, service_role;
-    REVOKE ALL ON FUNCTION public.log_admin_entitlement_bypass(uuid, text, text, jsonb) FROM authenticated;
     ALTER TABLE public.scenarios FORCE ROW LEVEL SECURITY;
   `);
 }
@@ -112,6 +110,8 @@ async function applyMigrations(client) {
 async function runSqlAssertions(client) {
   process.stdout.write("Running phase6_entitlement.sql assertions...\n");
   await psqlFile(client, join(root, "supabase/tests/phase6_entitlement.sql"));
+  process.stdout.write("Running phase6_function_grants.sql assertions...\n");
+  await psqlFile(client, join(root, "supabase/tests/phase6_function_grants.sql"));
 }
 
 async function runConcurrentLimitTest(client) {
