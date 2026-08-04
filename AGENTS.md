@@ -19,7 +19,7 @@ This repository is the **authenticated SettleRate application** — auth, `/app/
 | Benchmark and defect status | `TEST_BASELINE.md` |
 | Product scope | `docs/APP_SCOPE.md` |
 | Security | `docs/SECURITY_MODEL.md` |
-| Roles and entitlements | `docs/ROLES_AND_ENTITLEMENTS.md` |
+| Roles and entitlements | `docs/ROLES_AND_ENTITLEMENTS.md`, `docs/ENTITLEMENT_CONTRACT.md` |
 | Copy | `docs/COPY_STANDARD.md` |
 | UI | `docs/UI_STANDARD.md`, `docs/PORTAL_UI_STANDARD.md` |
 

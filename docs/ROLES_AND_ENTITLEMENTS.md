@@ -4,6 +4,8 @@
 
 This document defines the role and entitlement system for the SettleRate application.
 
+For the Phase 6 canonical entitlement matrix, Stripe mapping, and enforcement points, see [`docs/ENTITLEMENT_CONTRACT.md`](./ENTITLEMENT_CONTRACT.md) and `src/lib/entitlementContract.ts`.
+
 ---
 
 ## Role Hierarchy
@@ -12,29 +14,46 @@ This document defines the role and entitlement system for the SettleRate applica
 |------|-------------|--------------|
 | `user` | Default authenticated user | Standard app access |
 | `moderator` | Content/support oversight | User access + moderation tools |
-| `admin` | Full administrative access | All features + admin dashboard |
+| `admin` | Full administrative access | All features + admin dashboard (server-verified bypass) |
+| `advisor` | Legacy / future role | **Does not grant Professional features** |
 
 Roles are stored in the `user_roles` table, not on the profile or users table. This prevents privilege escalation attacks.
 
 ---
 
-## Subscription Tiers
+## Subscription Tiers (active)
 
-| Tier | Display Name | Capabilities |
-|------|--------------|--------------|
-| Analytical | Free tier | Core mortgage modeling, limited scenarios |
-| Professional | Paid tier | Unlimited scenarios, exports, income-context views, saved comparisons |
+| Plan code | Display Name | Capabilities |
+|-----------|--------------|--------------|
+| `analytical` | Analytical (free) | All modeling modes; max 3 saved scenarios; view/edit/delete owned scenarios |
+| `professional` | Professional (paid) | Unlimited scenarios, saved comparisons, PDF, share/export, income-context |
+
+Advisor is **not** an active paid tier.
 
 ### Entitlement Mapping
 
 | Feature | Analytical | Professional |
 |---------|------------|--------------|
 | Scenario modeling | ✓ | ✓ |
-| Scenario saving | Limited | Unlimited |
+| Scenario saving | Max 3 (create + duplicate) | Unlimited |
+| Scenario edit / delete | ✓ | ✓ |
 | PDF exports | — | ✓ |
 | Income-context framing | — | ✓ |
 | Saved comparisons | — | ✓ |
-| Advisor-ready outputs | — | ✓ |
+| Share creation | — | ✓ |
+
+---
+
+## Stripe status (summary)
+
+| Stripe | Access |
+|--------|--------|
+| `active` / `trialing` (allowlisted Professional price) | Full Professional |
+| `past_due` / `unpaid` | Read-only + delete + billing portal |
+| `incomplete*` / `canceled` / `paused` / none | Analytical |
+| `cancel_at_period_end` while still active/trialing | Keep Professional until period end |
+
+Trial: 7 days. No custom grace period.
 
 ---
 
@@ -44,11 +63,11 @@ Roles are stored in the `user_roles` table, not on the profile or users table. T
 
 Entitlement enforcement is **server-side** and derived from:
 
-1. Stripe subscription status
-2. Supabase `billing` table
-3. `check-subscription` edge function
+1. Verified Stripe webhook writes to `billing`
+2. DB `evaluate_entitlement` / `feature_allowed` / triggers
+3. Edge functions: `check-subscription`, `generate-pdf`, `export-share`, `create-checkout`, `customer-portal`, `stripe-webhook`
 
-**Never** check entitlements client-side for gating features. Client-side checks are for UI hints only.
+**Never** trust client-supplied plan, Stripe status, success URLs, or localStorage for grants. Client-side checks are UI mirrors only.
 
 ### Role Verification
 
@@ -71,25 +90,20 @@ as $$
 $$;
 ```
 
-This function uses `SECURITY DEFINER` to bypass RLS and prevent recursive policy checks.
+Admin bypass is logged (`entitlement_bypass_log`) and does not modify billing state.
 
 ---
 
 ## Advisor Role (Future)
 
-The `advisor` role is planned but not yet implemented. When implemented:
-
-- Advisors will have permissioned access to client scenarios
-- Multi-client management will require explicit client consent
-- Advisor access will be auditable
-
-Do not implement advisor multi-client features without explicit design approval.
+The `advisor` role may exist for compatibility. Do **not** implement advisor as an active entitlement tier or grant Professional features from advisor Stripe prices or the advisor role without explicit design approval.
 
 ---
 
 ## Implementation Notes
 
 1. Roles are assigned via the `user_roles` table
-2. Subscription status is synced via Stripe webhooks
-3. The `billing` table tracks current subscription state
-4. Edge functions validate subscription status on protected operations
+2. Subscription status is synced via signed, idempotent Stripe webhooks
+3. The `billing` table is the authoritative entitlement source for edge reads
+4. Atomic free-tier scenario limits use advisory locks on create/duplicate
+5. Protected features: `scenario_create`, `scenario_update`, `scenario_duplicate`, `comparison_create`, `pdf_export`, `share_create`, `income_context`, `billing_manage`
