@@ -6,6 +6,10 @@ import {
   isAllowlistedProfessionalPrice,
   resolvePlanCodeFromPrice,
 } from "../_shared/entitlementContract.ts";
+import {
+  extractInvoiceSubscriptionId,
+  extractSubscriptionPeriodEnd,
+} from "../_shared/stripeBillingSnapshot.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -239,10 +243,10 @@ serve(async (req) => {
       subscriptionStatus =
         eventType === "customer.subscription.deleted" ? "canceled" : subscription.status;
       subscriptionId = subscription.id;
-      currentPeriodEnd = subscription.current_period_end;
+      currentPeriodEnd = extractSubscriptionPeriodEnd(subscription);
       cancelAtPeriodEnd = Boolean(subscription.cancel_at_period_end);
       metadataUserId = (subscription.metadata?.user_id as string) || null;
-      if (subscription.items.data.length > 0) {
+      if (subscription.items?.data?.length) {
         priceId = subscription.items.data[0].price.id;
         productId = subscription.items.data[0].price.product as string;
       }
@@ -254,9 +258,9 @@ serve(async (req) => {
       if (subscriptionId) {
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
         subscriptionStatus = sub.status;
-        currentPeriodEnd = sub.current_period_end;
+        currentPeriodEnd = extractSubscriptionPeriodEnd(sub);
         cancelAtPeriodEnd = Boolean(sub.cancel_at_period_end);
-        if (sub.items.data.length > 0) {
+        if (sub.items?.data?.length) {
           priceId = sub.items.data[0].price.id;
           productId = sub.items.data[0].price.product as string;
         }
@@ -264,13 +268,13 @@ serve(async (req) => {
     } else if (eventType.startsWith("invoice")) {
       const invoice = event.data.object as Stripe.Invoice;
       stripeCustomerId = invoice.customer as string;
-      subscriptionId = (invoice.subscription as string) || null;
+      subscriptionId = extractInvoiceSubscriptionId(invoice);
       if (subscriptionId) {
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
         subscriptionStatus = sub.status;
-        currentPeriodEnd = sub.current_period_end;
+        currentPeriodEnd = extractSubscriptionPeriodEnd(sub);
         cancelAtPeriodEnd = Boolean(sub.cancel_at_period_end);
-        if (sub.items.data.length > 0) {
+        if (sub.items?.data?.length) {
           priceId = sub.items.data[0].price.id;
           productId = sub.items.data[0].price.product as string;
         }
