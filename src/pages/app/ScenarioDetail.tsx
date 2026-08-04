@@ -20,6 +20,7 @@ import { ScenarioData } from "@/lib/scenarioContract";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
 import { ScenarioExportButton } from "@/components/export/ExportButtons";
 import { toast } from "sonner";
+import { resolveDuplicateScenarioControl } from "@/lib/duplicateScenarioControl";
 
 /**
  * Format currency for display
@@ -132,7 +133,19 @@ export default function ScenarioDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { scenarios, isLoaded, duplicateScenario, deleteScenario } = useScenarios();
-  const { canDuplicateScenario, canUpdateScenario, entitlementStatus } = useCapabilities();
+  const {
+    canDuplicateScenario,
+    canUpdateScenario,
+    entitlementStatus,
+    isScenarioMutationBlocked,
+    atScenarioLimit,
+  } = useCapabilities();
+  const duplicateControl = resolveDuplicateScenarioControl({
+    canDuplicateScenario,
+    isEntitlementPending: isScenarioMutationBlocked,
+    atScenarioLimit,
+    entitlementStatus,
+  });
   const readOnlyAccount = entitlementStatus === "read_only";
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -148,7 +161,7 @@ export default function ScenarioDetail() {
   }, [isLoaded, scenario, navigate]);
 
   const handleDuplicate = async () => {
-    if (!scenario) return;
+    if (!scenario || !duplicateControl.allowed) return;
     try {
       const duplicated = await duplicateScenario(scenario.id);
       if (duplicated) {
@@ -224,7 +237,8 @@ export default function ScenarioDetail() {
               size="sm"
               onClick={handleDuplicate}
               className="text-muted-foreground"
-              disabled={!canDuplicateScenario}
+              disabled={!duplicateControl.allowed}
+              title={duplicateControl.title}
             >
               <Copy className="mr-2 h-4 w-4" />
               Duplicate
@@ -380,7 +394,7 @@ export default function ScenarioDetail() {
 
       {/* Mobile actions */}
       <div className="flex flex-col gap-2 pt-4 md:hidden">
-        <Button variant="outline" onClick={handleDuplicate} className="w-full" disabled={!canDuplicateScenario}>
+        <Button variant="outline" onClick={handleDuplicate} className="w-full" disabled={!duplicateControl.allowed} title={duplicateControl.title}>
           <Copy className="mr-2 h-4 w-4" />
           Duplicate scenario
         </Button>

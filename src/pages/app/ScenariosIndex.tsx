@@ -396,10 +396,10 @@ export default function ScenariosIndex() {
       )}
 
       {/* Mobile: Floating action button */}
-      {isMobile && canSave && (
+      {isMobile && newScenarioControl.mode === "link" && (
         <div className="fixed bottom-6 right-4 z-50">
           <Link
-            to="/app/calculator"
+            to={newScenarioControl.to}
             className="flex items-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background shadow-lg transition-transform active:scale-95"
           >
             <Plus className="h-4 w-4" strokeWidth={2} />

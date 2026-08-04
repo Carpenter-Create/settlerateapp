@@ -20,6 +20,7 @@ import { calculateAssumption, DEFAULT_ASSUMPTION_INPUTS } from "@/lib/assumption
 import { RateMeta, DEFAULT_RATE_META, isRateLocked } from "@/lib/rateMeta";
 import { Scenario, SaveStatus } from "@/hooks/useScenarios";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { cn } from "@/lib/utils";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
 import { LoanTermInput } from "./LoanTermInput";
@@ -144,11 +145,10 @@ export function ScenarioEditor({
 
   // Start renaming
   const handleStartRename = useCallback(() => {
-    if (activeScenario) {
-      setScenarioName(activeScenario.name);
-      setIsRenamingScenario(true);
-    }
-  }, [activeScenario]);
+    if (!canUpdateScenario || !activeScenario) return;
+    setScenarioName(activeScenario.name);
+    setIsRenamingScenario(true);
+  }, [activeScenario, canUpdateScenario]);
 
   // Save rename
   const handleSaveRename = useCallback(() => {
@@ -219,9 +219,13 @@ export function ScenarioEditor({
                   />
                 ) : (
                   <span 
-                    className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
-                    onClick={handleStartRename}
-                    title="Click to rename"
+                    className={cn(
+                      "text-sm text-muted-foreground",
+                      canUpdateScenario &&
+                        "cursor-pointer hover:text-foreground transition-colors"
+                    )}
+                    onClick={canUpdateScenario ? handleStartRename : undefined}
+                    title={canUpdateScenario ? "Click to rename" : readOnlyTitle}
                   >
                     {activeScenario.name}
                   </span>
