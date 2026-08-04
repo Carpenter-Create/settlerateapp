@@ -9,6 +9,12 @@ import { UpgradeModal } from "@/components/billing/UpgradeModal";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  accountAccessConditionLabel,
+  accountPlanBadgeVariant,
+  accountPlanDescription,
+  planLabelFromCode,
+} from "@/lib/accountPlanDisplay";
 
 export default function Account() {
   const { user } = useAuth();
@@ -19,7 +25,11 @@ export default function Account() {
     isLoading,
     cancelAtPeriodEnd,
     entitlementStatus,
+    planCode,
   } = useSubscription();
+  const planLabel = planLabelFromCode(planCode);
+  const accessCondition = accountAccessConditionLabel(entitlementStatus);
+  const planDescription = accountPlanDescription(planCode, entitlementStatus);
   const { isAdmin, realIsAdmin, isLoading: capabilitiesLoading } = useCapabilities();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
@@ -174,26 +184,25 @@ export default function Account() {
               <CreditCard className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-medium">Current Plan</h3>
-                <Badge variant={isPro ? "default" : "secondary"}>
-                  {isPro ? "Professional" : "Analytical"}
-                </Badge>
+                <Badge variant={accountPlanBadgeVariant(planCode)}>{planLabel}</Badge>
+                {accessCondition && (
+                  <Badge variant="secondary">{accessCondition}</Badge>
+                )}
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {isPro
-                  ? "Full access including exports, saved scenarios, and income-context views."
-                  : "Core mortgage modeling with up to 3 saved scenarios. Upgrade for extended features."}
-              </p>
+              <p className="mt-1 text-sm text-muted-foreground">{planDescription}</p>
 
-              {isPro && subscriptionEnd && (
+              {planCode === "professional" && subscriptionEnd && (
                 <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  {cancelAtPeriodEnd
-                    ? `Access continues through ${formatDate(subscriptionEnd)} (cancellation scheduled)`
-                    : entitlementStatus === "trial_entitled"
-                      ? `Trial ends ${formatDate(subscriptionEnd)}`
-                      : `Renews on ${formatDate(subscriptionEnd)}`}
+                  {entitlementStatus === "read_only"
+                    ? `Period ends ${formatDate(subscriptionEnd)}`
+                    : cancelAtPeriodEnd
+                      ? `Access continues through ${formatDate(subscriptionEnd)} (cancellation scheduled)`
+                      : entitlementStatus === "trial_entitled"
+                        ? `Trial ends ${formatDate(subscriptionEnd)}`
+                        : `Renews on ${formatDate(subscriptionEnd)}`}
                 </div>
               )}
             </div>

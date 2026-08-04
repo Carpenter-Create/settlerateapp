@@ -35,6 +35,7 @@ import { ScenarioData } from "@/lib/scenarioContract";
 import { ScenarioCard } from "@/components/scenarios/ScenarioCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import { resolveNewScenarioControl } from "@/lib/newScenarioControl";
 
 /**
  * Format relative time for display
@@ -128,7 +129,10 @@ export default function ScenariosIndex() {
   const { canSave, canDuplicateScenario, atScenarioLimit, entitlementStatus } = useCapabilities();
   const limitTitle = atScenarioLimit
     ? "Free plan limit reached (3 saved scenarios)."
-    : undefined;
+    : entitlementStatus === "read_only"
+      ? "Scenarios are read-only until billing is updated."
+      : undefined;
+  const newScenarioControl = resolveNewScenarioControl(canSave, limitTitle);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [scenarioToDelete, setScenarioToDelete] = useState<ScenarioData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -204,27 +208,34 @@ export default function ScenariosIndex() {
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
             Create your first scenario to model a purchase or refinance.
           </p>
-          <Button asChild className="mt-6" disabled={!canSave}>
-            <Link to="/app/calculator">
+          {newScenarioControl.mode === "link" ? (
+            <Button asChild className="mt-6">
+              <Link to={newScenarioControl.to}>
+                <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                New scenario
+              </Link>
+            </Button>
+          ) : (
+            <Button className="mt-6" disabled title={newScenarioControl.title}>
               <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
               New scenario
-            </Link>
-          </Button>
+            </Button>
+          )}
         </div>
       </PageShell>
     );
   }
 
   const desktopActions = !isMobile ? (
-    canSave ? (
+    newScenarioControl.mode === "link" ? (
       <Button asChild variant="outline">
-        <Link to="/app/calculator">
+        <Link to={newScenarioControl.to}>
           <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
           New scenario
         </Link>
       </Button>
     ) : (
-      <Button variant="outline" disabled title={limitTitle}>
+      <Button variant="outline" disabled title={newScenarioControl.title}>
         <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
         New scenario
       </Button>
