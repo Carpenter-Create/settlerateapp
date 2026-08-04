@@ -7,6 +7,11 @@ import {
   isAllowlistedProfessionalPrice,
 } from "../_shared/entitlementContract.ts";
 import { resolveAppOrigin } from "../_shared/appOrigin.ts";
+import {
+  billingRowBlocksCheckout,
+  checkoutIdempotencyKey,
+  stripeSubscriptionsBlockCheckout,
+} from "../_shared/professionalSubscriptionGuard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -134,7 +139,7 @@ serve(async (req) => {
 
     const { data: billing } = await supabaseService
       .from("billing")
-      .select("stripe_customer_id")
+      .select("stripe_customer_id, stripe_subscription_id, subscription_status")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -207,6 +212,33 @@ serve(async (req) => {
       );
     }
 
+    if (billingRowBlocksCheckout(billing)) {
+      logStep("Checkout blocked: billing row has active subscription", { userId: user.id });
+      return new Response(
+        JSON.stringify({
+          error: "An existing Professional subscription must be managed before starting checkout",
+          code: "ALREADY_SUBSCRIBED",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
+      );
+    }
+
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "all",
+      limit: 100,
+    });
+    if (stripeSubscriptionsBlockCheckout(subscriptions.data, isAllowlistedProfessionalPrice)) {
+      logStep("Checkout blocked: Stripe has active Professional subscription", { userId: user.id });
+      return new Response(
+        JSON.stringify({
+          error: "An existing Professional subscription must be managed before starting checkout",
+          code: "ALREADY_SUBSCRIBED",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
+      );
+    }
+
     const origin = resolveAppOrigin(req);
 
     const eligibleForTrial = await isEligibleForProfessionalTrial(
@@ -235,6 +267,8 @@ serve(async (req) => {
       client_reference_id: user.id,
       metadata: { user_id: user.id },
       subscription_data: subscriptionData,
+    }, {
+      idempotencyKey: checkoutIdempotencyKey(user.id, priceId),
     });
 
     logStep("Checkout session created", { sessionId: session.id });
