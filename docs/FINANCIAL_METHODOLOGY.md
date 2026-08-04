@@ -1,20 +1,20 @@
 # SettleRate Financial Methodology
 
-**Status:** Founder-approved target for calculator version **2.0.0**  
+**Status:** Founder-approved methodology for calculator version **2.0.0**  
 **Last updated:** 2026-08-03  
-**Scope:** Defines calculation semantics for pre-migration remediation. Distinguishes current **1.0.0** behavior, target **2.0.0** behavior, and **deferred** scope.
+**Scope:** Defines calculation semantics for pre-migration remediation. Distinguishes **implemented 2.0.0 engine behavior**, remaining **deferred** scope (Phase 3+), and historical **1.0.0** gaps where still relevant.
 
 ---
 
 ## 1. Purpose
 
-This document is the authoritative reference for how SettleRate models mortgage scenarios, compares outcomes, and reports financing costs. It governs benchmark tests in `src/lib/__tests__/fixtures/` and future calculator implementation in Phase 2+.
+This document is the authoritative reference for how SettleRate models mortgage scenarios, compares outcomes, and reports financing costs. It governs benchmark tests in `src/lib/__tests__/fixtures/` and calculator implementation.
 
 ---
 
 ## 2. Primary comparison metric: financing cost
 
-### Approved methodology (2.0.0 target)
+### Approved methodology (2.0.0)
 
 **Financing cost over the selected decision horizon** is the **primary** metric for comparisons and “least expensive option” ranking.
 
@@ -36,19 +36,19 @@ Financing cost **excludes**:
 
 ### Prohibited definition
 
-Do **not** define total cost as **loan principal + interest**.
+Do **not** define total cost as **loan principal + interest** for comparison purposes.
 
-### Current behavior (1.0.0)
+### Current implemented behavior (2.0.0 engine)
 
-- `calculateMortgage()` sets `totalCost = loanAmount + totalInterest` (`src/lib/mortgage.ts`).
-- `comparisonSummary.determineLowestCost()` ranks by `results.totalCost` (`src/lib/comparisonSummary.ts`).
-- This conflates principal with financing cost and is **not** approved methodology.
+- `calculateMortgage()` exposes `financingCostOverHorizon` = interest + MI premiums over horizon + refinance closing costs when applicable; **excludes principal**.
+- `principalReductionOverHorizon` is reported separately.
+- `calculateScenario()` maps these fields for purchase, refinance, HELOC, and assumption.
+- Legacy field `totalCost` remains `loanAmount + totalInterest` for compatibility; it is **not** the approved primary comparison metric.
 
-### Target behavior (2.0.0)
+### Still deferred
 
-- Introduce `financingCostOverHorizon` per transaction type.
-- Comparison winner uses financing cost; tie-breakers: total interest → all-in monthly → LTV.
-- Exports label financing cost and principal reduction separately.
+- **Comparison winner logic (Phase 5 / DEF-003):** `comparisonSummary.determineLowestCost()` still ranks by `results.totalCost`.
+- **Exports:** financing cost / principal reduction labeling in export pipelines is not part of Phase 2 closeout.
 
 ---
 
@@ -60,15 +60,15 @@ Do **not** define total cost as **loan principal + interest**.
 | HELOC | Draw period + repayment period | `src/lib/heloc.ts` |
 | Assumption | Assumed loan remaining term (gap instrument costs included over its term) | `src/lib/assumption.ts` |
 
-Horizon must be stated in comparison and export copy (“over the modeled term”).
+Horizon must be stated in comparison and export copy (“over the modeled term”). `decisionHorizonMonths` is exposed on mortgage and unified results.
 
 ---
 
 ## 4. Principal and equity
 
 - Principal is **not** a cost.
-- `principalReductionOverHorizon` = cumulative scheduled + extra principal over the horizon.
-- Equity framing may reference down payment + principal reduction (exports).
+- `principalReductionOverHorizon` = cumulative scheduled + extra + origination principal over the horizon.
+- Equity framing may reference down payment + principal reduction (exports — deferred).
 
 ---
 
@@ -77,28 +77,28 @@ Horizon must be stated in comparison and export copy (“over the modeled term�
 - Escrow (tax, insurance, HOA) affects **all-in monthly housing payment** only when `shared.includeEstimates === true`.
 - **PMI/MI premiums** count toward **financing cost** when required and modeled.
 - PMI required when LTV **exceeds** frozen `ScenarioAssumptions.pmiRemovalThreshold` (default 80%).
-- v1 remediation: static PMI for life of schedule (no mid-schedule removal unless added later).
+- Remediation: static PMI for life of schedule (no mid-schedule removal unless added later).
 
-### Current vs target
+### Current vs historical
 
-| Topic | 1.0.0 | 2.0.0 |
-|-------|-------|-------|
+| Topic | Historical 1.0.0 | Current 2.0.0 |
+|-------|------------------|---------------|
 | PMI threshold | Hardcoded 80% in code | Uses frozen `assumptions.pmiRemovalThreshold` |
-| Assumptions object | Stored, not applied | Applied in calculations |
+| Assumptions object | Stored, not applied | Applied in calculations, sensitivity, and integrity checks |
 
 ---
 
 ## 6. One-time principal timing
 
-**Target (2.0.0):** Apply lump sum at **month 1 before first payment**, reducing opening balance.
+**Current (2.0.0):** Apply lump sum at **month 1 before first payment**, reducing opening balance (`DEF-007` resolved; BM-P05 active).
 
-**Current (1.0.0):** `oneTimePrincipalPayment` collected in UI but **not** applied in amortization (`DEF-007`).
+**Historical (1.0.0):** `oneTimePrincipalPayment` was collected in UI but not applied in amortization.
 
 ---
 
 ## 7. Refinance break-even
 
-**Target (2.0.0):** Requires optional inputs:
+**Current (2.0.0):** Requires optional inputs:
 
 - `currentInterestRate`
 - `currentRemainingTermMonths`
@@ -111,15 +111,18 @@ breakEvenMonths = ceil(closingCosts / (currentPI − newPI))
 
 When absent: **omit** break-even value and narrative.
 
-**Current (1.0.0):** Uses synthetic `baseRate + 1.0%` in `src/lib/rateSensitivity.ts` (`DEF-009`) — **must be removed**.
+Synthetic `baseRate + 1.0%` has been **removed** from `src/lib/rateSensitivity.ts` (`DEF-009` resolved; BM-R04/R05/R06 active).
 
 ---
 
 ## 8. HELOC scope (remediation version)
 
 - **Interest-only draw periods only.**
-- Non-interest-only draw is **deferred** until implemented and benchmark-tested.
-- UI must not offer unsupported draw modes in remediation.
+- Non-interest-only draw math remains **deferred** until implemented and benchmark-tested.
+- **Current enforcement (DEF-010 / BM-H04):**
+  - `calculateHeloc()` **rejects** `interestOnlyDraw=false`.
+  - `HelocInputsPanel` does **not** expose a non-interest-only control.
+  - No additional UI redesign is required for Phase 2.
 
 `calculateHeloc()` in `src/lib/heloc.ts` is the authoritative module for HELOC math.
 
@@ -139,7 +142,7 @@ When absent: **omit** break-even value and narrative.
 - Internal: IEEE double precision; no intermediate rounding.
 - Display: UI formatting rules unchanged.
 - **Benchmark tolerance:** ±$0.01 monetary; exact integer months where specified.
-- Payoff dates: production uses calendar `setMonth`; tests inject fixed `asOfDate` when added (Phase 2+).
+- Payoff dates: production uses calendar `setMonth`; tests may inject fixed `asOfDate` when needed.
 
 ---
 
@@ -149,14 +152,19 @@ Unified projection fields (from `calculateScenario()`):
 
 | Field | Role |
 |-------|------|
-| `financingCostOverHorizon` | Primary rank |
-| `principalReductionOverHorizon` | Separate reporting |
+| `financingCostOverHorizon` | Primary rank (**engine exposed**; UI winner deferred) |
+| `principalReductionOverHorizon` | Separate reporting (**engine exposed**) |
 | `allInMonthlyHousingPayment` | Secondary cash flow |
 | `monthlyPaymentPrimary` | Type-appropriate primary payment |
 | `rateForComparison` | Rate/APR column |
 | `decisionHorizonMonths` | Disclosure |
 
-**Note:** `calculateScenario()` already dispatches correctly for HELOC/assumption; **persistence** and **comparison UI** still use mortgage-shaped stored results (`DEF-001`, `DEF-003`).
+**Note:** `calculateScenario()` dispatches correctly for HELOC/assumption and exposes financing fields.
+
+**Still deferred:**
+
+- **Persistence dispatch (Phase 3 / DEF-001):** save/load still call `calculateMortgage` for all modes (mortgage-shaped stored results).
+- **Comparison UI winner (Phase 5 / DEF-003):** still uses `totalCost` ranking.
 
 ---
 
@@ -164,10 +172,10 @@ Unified projection fields (from `calculateScenario()`):
 
 | Version | Meaning |
 |---------|---------|
-| `1.0.0` | Current production baseline (`CALCULATOR_VERSION` in `src/lib/scenarioContract.ts`) |
-| `2.0.0` | **Major** — financing cost semantics, persistence contract, corrected save/load, break-even, one-time principal, assumptions applied |
+| `1.0.0` | Historical production baseline before Phase 2 semantics |
+| `2.0.0` | **Current** (`CALCULATOR_VERSION` in `src/lib/scenarioContract.ts`) — financing cost metrics, one-time principal, applied assumptions, refinance break-even, HELOC IO enforcement |
 
-### Persistence target (Phase 3 — not implemented in Phase 1)
+### Persistence target (Phase 3 — not implemented)
 
 Persist:
 
@@ -180,15 +188,21 @@ Persist:
 
 Amortization schedules: regenerate on demand; frozen exports may embed immutable schedules.
 
+Phase 2 does **not** implement dual-snapshot persistence, automatic historical recomputation, or Supabase schema changes.
+
 ---
 
-## 13. Deferred scope (not part of remediation)
+## 13. Deferred scope (not part of Phase 2)
 
-- Free-tier scenario save limits
+- Comparison winner logic (`comparisonSummary`) — **Phase 5**
+- `calculateScenario` persistence dispatch — **Phase 3**
+- Original/active snapshot persistence (BM-V01) — **Phase 3**
+- Export pipeline refactors
+- Entitlements / free-tier scenario save limits
+- Supabase schema changes
 - Income context (`IncomeContext` component)
 - HELOC amortizing-draw behavior
-- AWS / Cloudflare migration
-- Supabase schema/export changes (Phase 1)
+- AWS / Cloudflare / Next.js migration
 - OAuth providers
 - Mid-schedule PMI removal modeling
 
@@ -200,3 +214,4 @@ Amortization schedules: regenerate on demand; frozen exports may embed immutable
 - `docs/ROLES_AND_ENTITLEMENTS.md` — entitlements (save limits deferred)
 - `TEST_BASELINE.md` — benchmark status matrix
 - `src/lib/__tests__/fixtures/` — golden fixtures
+- `AGENTS.md` / `.cursor/rules/` — cross-agent governance

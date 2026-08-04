@@ -106,6 +106,12 @@ export function calculateHeloc(inputs: HelocInputs): HelocResults {
     interestOnlyDraw,
   } = inputs;
 
+  if (!interestOnlyDraw) {
+    throw new Error(
+      "Amortizing HELOC draw periods are not supported; interestOnlyDraw must be true"
+    );
+  }
+
   const monthlyRate = apr / 100 / 12;
   
   // Simulate draw period
@@ -125,13 +131,7 @@ export function calculateHeloc(inputs: HelocInputs): HelocResults {
     const monthlyInterest = balance * monthlyRate;
     totalDrawInterest += monthlyInterest;
     
-    if (interestOnlyDraw) {
-      // Interest-only payment
-      drawPayments.push(monthlyInterest);
-    } else {
-      // Would need to amortize - not implemented in v1
-      drawPayments.push(monthlyInterest);
-    }
+    drawPayments.push(monthlyInterest);
   }
   
   // For remaining draw period with no additional draws

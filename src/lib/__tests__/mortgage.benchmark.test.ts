@@ -80,29 +80,35 @@ describe("mortgage.benchmark — active regression (calculator v1.0.0 paths)", (
 });
 
 describe("mortgage.benchmark — pending v2.0.0 target behavior", () => {
-  it.todo(
-    "BM-P05 one-time principal at origination — DEF-007 — Phase 2: apply $10,000 lump sum at month 1; expect totalInterest ≈ 404312.79 and payoffMonths 332"
-  );
-
-  it.todo(
-    "BM-P01 financingCostOverHorizon — Phase 2: expose financing cost metric equal to interest (+ MI/fees when applicable), excluding principal"
-  );
-});
-
-describe("mortgage.benchmark — v1.0.0 defect documentation (non-regression)", () => {
-  it("BM-P05 current code ignores one-time principal (baseline)", () => {
-    const withLump = bmP05.inputs as MortgageInputs;
-    const withoutLump: MortgageInputs = {
-      ...withLump,
-      shared: { ...withLump.shared, oneTimePrincipalPayment: null },
-    };
-    const lumpResults = calculateMortgage(withLump);
-    const baseResults = calculateMortgage(withoutLump);
-
-    expect(lumpResults.totalInterest).toBe(baseResults.totalInterest);
-    expect(lumpResults.payoffMonths).toBe(baseResults.payoffMonths);
+  it("BM-P05 one-time principal at origination", () => {
+    const results = calculateMortgage(bmP05.inputs as MortgageInputs);
+    assertWithinTolerance(results.totalInterest, bmP05.expected.totalInterest);
+    expect(results.payoffMonths).toBe(bmP05.expected.payoffMonths);
+    assertWithinTolerance(
+      results.financingCostOverHorizon,
+      bmP05.expected.financingCostOverHorizon
+    );
+    assertWithinTolerance(
+      results.principalReductionOverHorizon,
+      bmP05.expected.principalReductionOverHorizon
+    );
   });
 
+  it("BM-P01 financing cost excludes principal", () => {
+    const results = calculateMortgage(bmP01.inputs as MortgageInputs);
+    assertWithinTolerance(results.financingCostOverHorizon, results.totalInterest);
+    assertWithinTolerance(results.principalReductionOverHorizon, results.loanAmount);
+    expect(results.decisionHorizonMonths).toBe(results.payoffMonths);
+  });
+
+  it("BM-P03 uses the frozen PMI threshold", () => {
+    const inputs = buildPurchaseInputs(20, { pmiMonthly: 150, includeEstimates: true });
+    expect(calculateMortgage(inputs, { pmiRemovalThreshold: 79 }).requiresPMI).toBe(true);
+    expect(calculateMortgage(inputs, { pmiRemovalThreshold: 80 }).requiresPMI).toBe(false);
+  });
+});
+
+describe("mortgage.benchmark — legacy compatibility", () => {
   it("BM-P01 v1.0.0 totalCost incorrectly includes principal in cost semantics", () => {
     const inputs = bmP01.inputs as MortgageInputs;
     const results = calculateMortgage(inputs);

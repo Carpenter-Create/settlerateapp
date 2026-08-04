@@ -118,6 +118,43 @@ function verifyBmP03() {
   console.log("BM-P03 PASS");
 }
 
+function verifyBmP05() {
+  const fixture = loadFixture("BM-P05");
+  const tol = fixture.tolerance.monetary ?? DEFAULT_MONETARY_TOLERANCE;
+  const loanAmount = 360000;
+  const lumpSum = fixture.inputs.shared.oneTimePrincipalPayment;
+  const scheduledPi = amortizedPayment(loanAmount, fixture.inputs.shared.interestRate, 360);
+  const monthlyRate = fixture.inputs.shared.interestRate / 100 / 12;
+  let balance = loanAmount - lumpSum;
+  let interest = 0;
+  let months = 0;
+
+  while (balance > 0.01 && months < 720) {
+    months += 1;
+    const monthInterest = balance * monthlyRate;
+    const principal = Math.min(scheduledPi - monthInterest, balance);
+    interest += monthInterest;
+    balance = Math.max(0, balance - principal);
+  }
+
+  console.log("BM-P05 intermediates:", {
+    openingBalanceAfterLumpSum: loanAmount - lumpSum,
+    scheduledPi: round2(scheduledPi),
+    interest: round2(interest),
+    payoffMonths: months,
+  });
+
+  assertWithinTolerance(
+    loanAmount - lumpSum,
+    fixture.expected.openingBalanceAfterLumpSum,
+    tol,
+    "BM-P05 openingBalanceAfterLumpSum"
+  );
+  assertWithinTolerance(interest, fixture.expected.totalInterest, tol, "BM-P05 totalInterest");
+  assertExact(months, fixture.expected.payoffMonths, "BM-P05 payoffMonths");
+  console.log("BM-P05 PASS");
+}
+
 function verifyBmR01() {
   const fixture = loadFixture("BM-R01");
   const tol = fixture.tolerance.monetary ?? DEFAULT_MONETARY_TOLERANCE;
@@ -138,6 +175,37 @@ function verifyBmR01() {
   assertWithinTolerance(ltv, fixture.expected.ltvRatio, tol, "BM-R01 ltvRatio");
 
   console.log("BM-R01 PASS");
+}
+
+function verifyBmR04() {
+  const fixture = loadFixture("BM-R04");
+  const tol = fixture.tolerance.monetary ?? DEFAULT_MONETARY_TOLERANCE;
+  const { refinance, shared } = fixture.inputs;
+  const currentPi = amortizedPayment(
+    refinance.currentLoanBalance,
+    refinance.currentInterestRate,
+    refinance.currentRemainingTermMonths
+  );
+  const newPi = amortizedPayment(
+    refinance.currentLoanBalance,
+    shared.interestRate,
+    shared.loanTerm * 12
+  );
+  const monthlySavings = currentPi - newPi;
+  const breakEvenMonths = Math.ceil(refinance.closingCosts / monthlySavings);
+
+  console.log("BM-R04 intermediates:", {
+    currentPi: round2(currentPi),
+    newPi: round2(newPi),
+    monthlySavings: round2(monthlySavings),
+    breakEvenMonths,
+  });
+
+  assertWithinTolerance(currentPi, fixture.expected.currentMonthlyPI, tol, "BM-R04 currentMonthlyPI");
+  assertWithinTolerance(newPi, fixture.expected.newMonthlyPI, tol, "BM-R04 newMonthlyPI");
+  assertWithinTolerance(monthlySavings, fixture.expected.monthlySavings, tol, "BM-R04 monthlySavings");
+  assertExact(breakEvenMonths, fixture.expected.breakEvenMonths, "BM-R04 breakEvenMonths");
+  console.log("BM-R04 PASS");
 }
 
 function verifyBmH02() {
@@ -246,7 +314,9 @@ function main() {
   const benchmarks = [
     { id: "BM-P01", fn: verifyBmP01 },
     { id: "BM-P03", fn: verifyBmP03 },
+    { id: "BM-P05", fn: verifyBmP05 },
     { id: "BM-R01", fn: verifyBmR01 },
+    { id: "BM-R04", fn: verifyBmR04 },
     { id: "BM-H02", fn: verifyBmH02 },
     { id: "BM-A02", fn: verifyBmA02 },
   ];

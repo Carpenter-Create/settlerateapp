@@ -46,6 +46,49 @@ export interface RefiRateSensitivityResult {
   narrative: string;
 }
 
+function calculateMonthlyPrincipalInterest(
+  principal: number,
+  annualRate: number,
+  months: number
+): number {
+  if (principal <= 0 || months <= 0) return 0;
+  const monthlyRate = annualRate / 100 / 12;
+  if (monthlyRate === 0) return principal / months;
+  return (principal * monthlyRate * Math.pow(1 + monthlyRate, months)) /
+    (Math.pow(1 + monthlyRate, months) - 1);
+}
+
+export function calculateRefinanceBreakEven(
+  inputs: MortgageInputs,
+  newMonthlyPrincipalInterest: number
+): number | null {
+  const {
+    closingCosts,
+    currentLoanBalance,
+    currentInterestRate,
+    currentRemainingTermMonths,
+  } = inputs.refinance;
+
+  if (
+    inputs.mode !== "refinance" ||
+    closingCosts <= 0 ||
+    currentInterestRate == null ||
+    currentRemainingTermMonths == null ||
+    currentRemainingTermMonths <= 0
+  ) {
+    return null;
+  }
+
+  const currentMonthlyPrincipalInterest = calculateMonthlyPrincipalInterest(
+    currentLoanBalance,
+    currentInterestRate,
+    currentRemainingTermMonths
+  );
+  const monthlySavings = currentMonthlyPrincipalInterest - newMonthlyPrincipalInterest;
+
+  return monthlySavings > 0 ? Math.ceil(closingCosts / monthlySavings) : null;
+}
+
 /**
  * Generate a rate sensitivity narrative for a set of scenarios.
  * Uses ±0.5% adjustment applied uniformly to all scenarios.
@@ -79,7 +122,7 @@ export function generateRateSensitivityNarrative(
       },
     };
 
-    const adjustedResults = calculateMortgage(adjustedInputs);
+    const adjustedResults = calculateMortgage(adjustedInputs, scenario.assumptions);
     
     return {
       id: scenario.id,
@@ -167,7 +210,7 @@ export function generateRefiRateSensitivity(
       },
     };
 
-    const adjustedResults = calculateMortgage(adjustedInputs);
+    const adjustedResults = calculateMortgage(adjustedInputs, scenario.assumptions);
 
     return {
       rateAdjustment: adj,
@@ -178,31 +221,12 @@ export function generateRefiRateSensitivity(
     };
   });
 
-  // Calculate break-even months if closing costs exist
-  let breakEvenMonths: number | null = null;
+  // Calculate break-even only from explicit current-loan inputs.
   const closingCosts = scenario.inputs.refinance.closingCosts;
-  
-  if (closingCosts > 0) {
-    // Compare to a hypothetical scenario where you don't refinance
-    // Break-even = closingCosts / monthly savings
-    const currentLoanBalance = scenario.inputs.refinance.currentLoanBalance;
-    // Assume current rate is ~1% higher for rough break-even calc
-    const estimatedCurrentRate = baseRate + 1.0;
-    
-    const currentInputs: MortgageInputs = {
-      ...scenario.inputs,
-      shared: {
-        ...scenario.inputs.shared,
-        interestRate: estimatedCurrentRate,
-      },
-    };
-    const currentResults = calculateMortgage(currentInputs);
-    const monthlySavings = currentResults.monthlyPrincipalInterest - scenario.results.monthlyPrincipalInterest;
-    
-    if (monthlySavings > 0) {
-      breakEvenMonths = Math.ceil(closingCosts / monthlySavings);
-    }
-  }
+  const breakEvenMonths = calculateRefinanceBreakEven(
+    scenario.inputs,
+    scenario.results.monthlyPrincipalInterest
+  );
 
   // Generate narrative for 0.5% drop (most common consideration)
   const halfPointDrop = points.find((p) => p.rateAdjustment === -0.50);

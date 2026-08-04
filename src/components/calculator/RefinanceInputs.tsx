@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MortgageInputs, RefinanceInputs as RefinanceInputsType } from "@/lib/mortgage";
 import { CurrencyInput } from "./CurrencyInput";
+import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -15,7 +16,10 @@ export function RefinanceInputs({ inputs, onBatchUpdate }: RefinanceInputsProps)
   const refinance = inputs.refinance;
   
   const [showOptional, setShowOptional] = useState(
-    refinance.cashOutAmount > 0 || refinance.closingCosts > 0
+    refinance.cashOutAmount > 0 ||
+      refinance.closingCosts > 0 ||
+      refinance.currentInterestRate != null ||
+      refinance.currentRemainingTermMonths != null
   );
 
   const updateRefinance = (updates: Partial<RefinanceInputsType>) => {
@@ -106,6 +110,42 @@ export function RefinanceInputs({ inputs, onBatchUpdate }: RefinanceInputsProps)
               </Label>
             </div>
           )}
+
+          <div className="grid gap-5 md:grid-cols-2">
+            <InputField
+              label="Current interest rate"
+              description="Required with remaining term for break-even"
+              optional
+            >
+              <PercentInput
+                value={refinance.currentInterestRate ?? 0}
+                onChange={(v) => updateRefinance({ currentInterestRate: v || null })}
+                min={0}
+                max={25}
+                step={0.125}
+              />
+            </InputField>
+
+            <InputField
+              label="Current remaining term"
+              description="Months remaining on the existing loan"
+              optional
+            >
+              <input
+                type="number"
+                value={refinance.currentRemainingTermMonths ?? ""}
+                onChange={(event) => {
+                  const months = Number.parseInt(event.target.value, 10);
+                  updateRefinance({
+                    currentRemainingTermMonths: Number.isFinite(months) && months > 0 ? months : null,
+                  });
+                }}
+                min={1}
+                max={600}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </InputField>
+          </div>
         </div>
       )}
     </div>

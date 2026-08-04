@@ -36,6 +36,8 @@ describe("scenarioCalculator.benchmark — active dispatch regression", () => {
     assertWithinTolerance(unified.monthlyPaymentPrimary, heloc.paymentRepay);
     assertWithinTolerance(unified.totalInterest, heloc.interestTotal);
     assertWithinTolerance(unified.totalCost, heloc.costTotal);
+    assertWithinTolerance(unified.financingCostOverHorizon, heloc.costTotal);
+    expect(unified.decisionHorizonMonths).toBe(heloc.timelineMonthsTotal);
   });
 
   it("BM-A02 assumption dispatches to assumption calculator", () => {
@@ -51,6 +53,8 @@ describe("scenarioCalculator.benchmark — active dispatch regression", () => {
     expect(unified.type).toBe("assumption");
     assertWithinTolerance(unified.monthlyPaymentPrimary, assumption.paymentTotal);
     assertWithinTolerance(unified.totalInterest, assumption.interestTotal);
+    assertWithinTolerance(unified.financingCostOverHorizon, assumption.costTotal);
+    expect(unified.decisionHorizonMonths).toBe(assumptionInputs.assumed.remainingMonths);
   });
 });
 
@@ -63,9 +67,12 @@ describe("scenarioCalculator.benchmark — pending v2.0.0 cross-type normalizati
     "BM-C02 all-in monthly secondary — DEF-003 — Phase 5: winner must not be determined by allInMonthlyHousingPayment alone"
   );
 
-  it.todo(
-    "BM-C03 principal reduction separate — DEF-001 — Phase 2: unified results expose principalReductionOverHorizon distinct from financing cost"
-  );
+  it("BM-C03 exposes principal reduction separately from financing cost", () => {
+    const unified = calculateScenario(bmP01.inputs as MortgageInputs);
+    expect(unified.principalReductionOverHorizon).toBeCloseTo(unified.principalAmount, 2);
+    expect(unified.financingCostOverHorizon).toBeCloseTo(unified.totalInterest, 2);
+    expect(unified.decisionHorizonMonths).toBe(unified.payoffMonths);
+  });
 });
 
 describe("scenarioCalculator.benchmark — v1.0.0 totalCost semantics on unified purchase path", () => {

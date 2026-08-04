@@ -56,6 +56,8 @@ export interface RefinanceInputs {
   closingCosts: number;
   financeClosingCosts: boolean;
   estimatedHomeValue: number | null;
+  currentInterestRate?: number | null;
+  currentRemainingTermMonths?: number | null;
 }
 
 /**
@@ -187,6 +189,8 @@ export const DEFAULT_REFINANCE_INPUTS: RefinanceInputs = {
   closingCosts: 0,
   financeClosingCosts: false,
   estimatedHomeValue: 400000,
+  currentInterestRate: null,
+  currentRemainingTermMonths: null,
 };
 
 export const DEFAULT_SHARED_INPUTS: SharedInputs = {
@@ -251,6 +255,8 @@ export function migrateLegacyInputs(legacy: LegacyMortgageInputs): MortgageInput
       closingCosts: legacy.closingCosts,
       financeClosingCosts: legacy.financeClosingCosts,
       estimatedHomeValue: legacy.estimatedHomeValue,
+      currentInterestRate: null,
+      currentRemainingTermMonths: null,
     },
     shared: {
       interestRate: legacy.interestRate,
@@ -314,6 +320,14 @@ export interface MortgageResults {
   monthlyTotal: number;
   totalInterest: number;
   totalCost: number;
+  /** Borrowing costs over the modeled term; excludes principal repayment. */
+  financingCostOverHorizon: number;
+  /** Scheduled, recurring-extra, and origination principal repaid over the modeled term. */
+  principalReductionOverHorizon: number;
+  /** P&I plus modeled escrow and housing-cost estimates. */
+  allInMonthlyHousingPayment: number;
+  /** Full modeled payoff horizon. */
+  decisionHorizonMonths: number;
   payoffDate: Date;
   payoffMonths: number;
   amortizationSchedule: AmortizationEntry[];
@@ -325,6 +339,14 @@ export interface MortgageResults {
   cashOutAmount?: number;
   closingCostsIncluded?: number;
 }
+
+export interface MortgageCalculationAssumptions {
+  pmiRemovalThreshold: number;
+}
+
+export const DEFAULT_MORTGAGE_CALCULATION_ASSUMPTIONS: MortgageCalculationAssumptions = {
+  pmiRemovalThreshold: 80,
+};
 
 // =============================================================================
 // CALCULATION HELPERS
@@ -391,7 +413,10 @@ export function calculateLoanAmount(inputs: MortgageInputs): {
 // MAIN CALCULATION
 // =============================================================================
 
-export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
+export function calculateMortgage(
+  inputs: MortgageInputs,
+  assumptions: MortgageCalculationAssumptions = DEFAULT_MORTGAGE_CALCULATION_ASSUMPTIONS
+): MortgageResults {
   const { mode, shared } = inputs;
   const {
     interestRate,
@@ -404,6 +429,7 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
     hoaMonthly,
     pmiMonthly,
     extraMonthlyPayment,
+    oneTimePrincipalPayment,
     usedZipEstimate,
   } = shared;
 
@@ -412,7 +438,7 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
   
   // Calculate LTV ratio
   const ltvRatio = homeValue > 0 ? (loanAmount / homeValue) * 100 : 0;
-  const requiresPMI = ltvRatio > 80;
+  const requiresPMI = ltvRatio > assumptions.pmiRemovalThreshold;
 
   // Monthly interest rate
   const monthlyRate = interestRate / 100 / 12;
@@ -455,9 +481,13 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
 
   // Generate amortization schedule with extra payments
   const amortizationSchedule: AmortizationEntry[] = [];
-  let balance = loanAmount;
+  const originationPrincipalPayment = Math.min(
+    Math.max(oneTimePrincipalPayment ?? 0, 0),
+    loanAmount
+  );
+  let balance = loanAmount - originationPrincipalPayment;
   let totalInterestPaid = 0;
-  let totalPrincipalPaid = 0;
+  let totalPrincipalPaid = originationPrincipalPayment;
   let month = 0;
 
   while (balance > 0.01 && month < totalPayments * 2) {
@@ -516,6 +546,11 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
     monthlyPMI +
     monthlyHOA;
 
+  const mortgageInsuranceOverHorizon = monthlyPMI * payoffMonths;
+  const financingFees = mode === "refinance" ? inputs.refinance.closingCosts : 0;
+  const financingCostOverHorizon = totalInterest + mortgageInsuranceOverHorizon + financingFees;
+  const principalReductionOverHorizon = totalPrincipalPaid;
+
   return {
     loanAmount,
     monthlyPrincipalInterest,
@@ -526,6 +561,10 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
     monthlyTotal,
     totalInterest,
     totalCost,
+    financingCostOverHorizon,
+    principalReductionOverHorizon,
+    allInMonthlyHousingPayment: monthlyTotal,
+    decisionHorizonMonths: payoffMonths,
     payoffDate,
     payoffMonths,
     amortizationSchedule,

@@ -14,7 +14,7 @@ import { MortgageInputs, MortgageResults, calculateMortgage } from "./mortgage";
 
 // Semantic versioning for the mortgage calculator
 // Increment when calculation logic changes to ensure reproducibility
-export const CALCULATOR_VERSION = "1.0.0";
+export const CALCULATOR_VERSION = "2.0.0";
 
 // Schema version for migrations - increment when scenario shape changes
 export const LATEST_SCHEMA_VERSION = 1;
@@ -112,7 +112,7 @@ export function createScenarioData(
     sourceScenarioId,
     inputs: structuredClone(inputs),
     assumptions,
-    results: calculateMortgage(inputs),
+    results: calculateMortgage(inputs, assumptions),
     calculatorVersion: CALCULATOR_VERSION,
     schemaVersion: LATEST_SCHEMA_VERSION,
   };
@@ -144,7 +144,7 @@ export function duplicateScenarioData(
   const clonedAssumptions: ScenarioAssumptions = structuredClone(original.assumptions);
   
   // Recompute results to ensure no shared references in amortization schedule
-  const freshResults = calculateMortgage(clonedInputs);
+  const freshResults = calculateMortgage(clonedInputs, clonedAssumptions);
   
   return {
     id: generateScenarioId(),
@@ -172,7 +172,7 @@ export function updateScenarioInputs(
   return {
     ...scenario,
     inputs: structuredClone(newInputs),
-    results: calculateMortgage(newInputs),
+    results: calculateMortgage(newInputs, scenario.assumptions),
     updatedAt: new Date(),
   };
 }
@@ -216,7 +216,7 @@ export function validateScenarioIntegrity(scenario: ScenarioData): IntegrityChec
   }
   
   // Recompute and compare key results
-  const recomputed = calculateMortgage(scenario.inputs);
+  const recomputed = calculateMortgage(scenario.inputs, scenario.assumptions);
   
   const tolerance = 0.01; // Allow for floating point variance
   
@@ -312,9 +312,9 @@ export function validateDuplicateIndependence(
 export function runIntegrityTests(scenario: ScenarioData): IntegrityCheckResult {
   const selfCheck = validateScenarioIntegrity(scenario);
   
-  // Additional checks for computation determinism
-  const recomputed1 = calculateMortgage(scenario.inputs);
-  const recomputed2 = calculateMortgage(scenario.inputs);
+  // Additional checks for computation determinism (DEF-008: apply frozen assumptions)
+  const recomputed1 = calculateMortgage(scenario.inputs, scenario.assumptions);
+  const recomputed2 = calculateMortgage(scenario.inputs, scenario.assumptions);
   
   if (JSON.stringify(recomputed1) !== JSON.stringify(recomputed2)) {
     selfCheck.errors.push("Non-deterministic computation detected");

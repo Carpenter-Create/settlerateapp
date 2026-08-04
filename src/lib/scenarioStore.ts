@@ -56,7 +56,10 @@ function loadAndMigrateScenario(raw: unknown): ScenarioData | null {
     sourceScenarioId: migrated.sourceScenarioId ?? null,
     inputs: migrated.inputs,
     assumptions: migrated.assumptions as ScenarioData["assumptions"],
-    results: calculateMortgage(migrated.inputs),
+    results: calculateMortgage(
+      migrated.inputs,
+      migrated.assumptions as ScenarioData["assumptions"]
+    ),
     calculatorVersion: migrated.calculatorVersion,
     schemaVersion: migrated.schemaVersion,
   };
@@ -145,6 +148,14 @@ function fromSupabaseRow(row: any): ScenarioData {
     sourceScenarioId?: string | null;
     calculatorVersion?: string;
   };
+  const assumptions = derived.assumptions ?? {
+    amortizationType: "standard" as const,
+    pmiRemovalThreshold: 80,
+    defaultPmiRate: 0.5,
+    assumePrepaymentPenalty: false,
+    taxDeductible: false,
+    calculatorVersion: CALCULATOR_VERSION,
+  };
   
   return {
     id: row.id,
@@ -154,15 +165,8 @@ function fromSupabaseRow(row: any): ScenarioData {
     updatedAt: new Date(row.updated_at),
     sourceScenarioId: derived.sourceScenarioId ?? null,
     inputs,
-    assumptions: derived.assumptions ?? {
-      amortizationType: "standard",
-      pmiRemovalThreshold: 80,
-      defaultPmiRate: 0.5,
-      assumePrepaymentPenalty: false,
-      taxDeductible: false,
-      calculatorVersion: CALCULATOR_VERSION,
-    },
-    results: calculateMortgage(inputs),
+    assumptions,
+    results: calculateMortgage(inputs, assumptions),
     calculatorVersion: derived.calculatorVersion ?? CALCULATOR_VERSION,
     schemaVersion: row.schema_version,
   };

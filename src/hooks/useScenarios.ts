@@ -273,7 +273,7 @@ export function useActiveScenario(scenarioId: string | null) {
     }
   }, [activeScenario]);
 
-  const results = calculateMortgage(draftInputs);
+  const results = calculateMortgage(draftInputs, activeScenario?.assumptions);
 
   return {
     inputs: draftInputs,
