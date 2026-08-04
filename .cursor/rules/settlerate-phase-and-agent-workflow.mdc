@@ -5,14 +5,14 @@ alwaysApply: true
 
 # Phase Boundaries
 
-**Phase 1–2 complete on main.** **Phase 3** (when authorized) = scenario persistence alignment (`calculateScenario` dispatch, dual snapshots, BM-V01 / DEF-001 store paths).
+**Phase 1–3 complete on main.** **Phase 4** (when authorized) = export and report alignment (`docs/EXPORT_CONTRACT.md`).
 
-## Allowed in Phase 3 (when task is authorized)
+## Allowed in Phase 4 (when task is authorized)
 
-- Dual-snapshot persistence per `docs/SCENARIO_PERSISTENCE.md` and methodology §12
-- Making `calculateScenario` authoritative for save/load/create/update/recalculate
-- Client schema version / `derived` JSON shape changes without broad Postgres redesign
-- Activating Phase 3 benchmark tests; focused persistence regression tests
+- Canonical export contract consuming dual snapshots and Phase 2 financial metrics
+- Client print/HTML and server `generate-pdf` / share export field alignment
+- Adapters for legacy flat `derived` without deleting compatibility paths
+- Focused export parity / regression tests; documentation of export semantics
 
 ## Prohibited unless a later phase is explicitly authorized
 
@@ -20,7 +20,7 @@ alwaysApply: true
 - Route changes
 - Visual redesign or unapproved copy changes
 - Broad Supabase DDL redesign
-- Export, entitlement, or billing refactors
+- Entitlement or billing refactors
 - Cross-type comparison winner logic (`comparisonSummary`, Phase 5 / DEF-003)
 - Deferred methodology §13 items (income context, OAuth, free-tier limits, etc.)
 

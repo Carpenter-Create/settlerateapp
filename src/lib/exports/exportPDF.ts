@@ -20,6 +20,7 @@
  */
 
 import type { ScenarioData } from "@/lib/scenarioContract";
+import type { CanonicalExportOptions } from "./exportContract";
 import {
   buildScenarioLayout,
   buildComparisonLayout,
@@ -38,9 +39,13 @@ export { generateScenarioFilename, generateComparisonFilename };
 /**
  * Generate HTML for single scenario export using canonical layout.
  * This HTML is used for in-page printing via window.print().
+ * Defaults to activeSnapshot; pass `{ snapshot: "original" }` explicitly for historical.
  */
-export function generateScenarioHTML(scenario: ScenarioData): string {
-  const layout = buildScenarioLayout(scenario);
+export function generateScenarioHTML(
+  scenario: ScenarioData,
+  options?: CanonicalExportOptions
+): string {
+  const layout = buildScenarioLayout(scenario, options);
   return generateHTMLFromLayout(layout);
 }
 
@@ -48,6 +53,7 @@ export function generateScenarioHTML(scenario: ScenarioData): string {
  * Generate HTML for comparison export using canonical layout.
  * Supports 2 or 3 scenarios.
  * This HTML is used for in-page printing via window.print().
+ * Comparison exports always use each scenario's activeSnapshot.
  */
 export function generateComparisonHTML(
   scenarioA: ScenarioData,
@@ -99,8 +105,11 @@ function openPrintWindow(html: string, _filename: string): void {
 /**
  * Export single scenario - opens print dialog in-place
  */
-export function exportScenarioPDF(scenario: ScenarioData): void {
-  const html = generateScenarioHTML(scenario);
+export function exportScenarioPDF(
+  scenario: ScenarioData,
+  options?: CanonicalExportOptions
+): void {
+  const html = generateScenarioHTML(scenario, options);
   const filename = generateScenarioFilename(scenario);
   openPrintWindow(html, filename);
 }
@@ -121,8 +130,11 @@ export function exportComparisonPDF(
 /**
  * Download single scenario as HTML file
  */
-export function downloadScenarioHTML(scenario: ScenarioData): void {
-  const html = generateScenarioHTML(scenario);
+export function downloadScenarioHTML(
+  scenario: ScenarioData,
+  options?: CanonicalExportOptions
+): void {
+  const html = generateScenarioHTML(scenario, options);
   const filename = generateScenarioFilename(scenario);
   downloadHTML(html, `${filename}.html`);
 }

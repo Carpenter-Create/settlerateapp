@@ -1,0 +1,85 @@
+{
+  "name": "heloc-active",
+  "selection": "active",
+  "mode": "heloc",
+  "row": {
+    "id": "parity-heloc-001",
+    "name": "HELOC BM-H02",
+    "inputs": {
+      "mode": "heloc",
+      "shared": { "loanTerm": 30, "interestRate": 0 },
+      "heloc": {
+        "creditLimit": 50000,
+        "currentBalance": 0,
+        "apr": 8.5,
+        "drawMonths": 120,
+        "repayMonths": 240
+      }
+    },
+    "derived": {
+      "assumptions": { "pmiRemovalThreshold": 80 },
+      "sourceScenarioId": null,
+      "calculatorVersion": "2.0.0",
+      "originalCalculatorVersion": "2.0.0",
+      "activeCalculatorVersion": "2.0.0",
+      "originalSnapshot": {
+        "calculatorVersion": "2.0.0",
+        "calculatedAt": "2026-08-03T00:00:00.000Z",
+        "summary": {
+          "type": "heloc",
+          "monthlyPaymentPrimary": 433.91,
+          "monthlyTotal": 433.91,
+          "totalInterest": 87961.71,
+          "totalCost": 87961.71,
+          "financingCostOverHorizon": 87961.71,
+          "principalReductionOverHorizon": 50000,
+          "allInMonthlyHousingPayment": 433.91,
+          "decisionHorizonMonths": 360,
+          "rateForComparison": 8.5,
+          "ltvRatio": null,
+          "payoffMonths": 360,
+          "principalAmount": 50000
+        }
+      },
+      "activeSnapshot": {
+        "calculatorVersion": "2.0.0",
+        "calculatedAt": "2026-08-03T00:00:00.000Z",
+        "summary": {
+          "type": "heloc",
+          "monthlyPaymentPrimary": 433.91,
+          "monthlyTotal": 433.91,
+          "totalInterest": 87961.71,
+          "totalCost": 87961.71,
+          "financingCostOverHorizon": 87961.71,
+          "principalReductionOverHorizon": 50000,
+          "allInMonthlyHousingPayment": 433.91,
+          "decisionHorizonMonths": 360,
+          "rateForComparison": 8.5,
+          "ltvRatio": null,
+          "payoffMonths": 360,
+          "principalAmount": 50000
+        }
+      }
+    }
+  },
+  "expected": {
+    "financingCostOverHorizon": 87961.71,
+    "principalReductionOverHorizon": 50000,
+    "allInMonthlyHousingPayment": 433.91,
+    "decisionHorizonMonths": 360,
+    "totalInterest": 87961.71,
+    "legacyTotalCost": 87961.71,
+    "monthlyPaymentPrimary": 433.91,
+    "principalAmount": 50000,
+    "ltvRatio": null,
+    "rateForComparison": 8.5,
+    "payoffMonths": 360,
+    "calculatorVersion": "2.0.0",
+    "isLegacyFlat": false,
+    "paymentDrawAvg": null,
+    "assumedPaymentPi": null,
+    "gapPayment": null,
+    "gapAmount": null
+  },
+  "notes": "paymentDrawAvg intentionally absent from PersistedScenarioSummary — both mappers must leave it null"
+}

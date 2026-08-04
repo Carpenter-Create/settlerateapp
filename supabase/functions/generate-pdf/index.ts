@@ -20,6 +20,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
+import {
+  buildScenarioData,
+  type ScenarioData,
+  type ScenarioType,
+} from "./mapDerivedForExport.ts";
 
 // CORS headers
 const corsHeaders = {
@@ -63,76 +68,8 @@ const BRAND = {
 } as const;
 
 // ============================================================================
-// TYPES
+// TYPES (scenario data types live in mapDerivedForExport.ts)
 // ============================================================================
-
-type ScenarioType = "purchase" | "refinance" | "heloc" | "assumption";
-
-interface ScenarioInputs {
-  mode: ScenarioType;
-  shared: {
-    loanTerm: number;
-    interestRate: number;
-    propertyTaxAnnual?: number;
-    homeInsuranceMonthly?: number;
-  };
-  purchase?: {
-    purchasePrice: number;
-    downPayment: number;
-    downPaymentType: "percent" | "amount";
-  };
-  refinance?: {
-    currentLoanBalance: number;
-    estimatedHomeValue?: number;
-  };
-  heloc?: {
-    creditLimit: number;
-    currentBalance: number;
-    apr: number;
-    drawMonths: number;
-    repayMonths: number;
-  };
-  assumption?: {
-    purchasePrice: number;
-    downPaymentCash: number;
-    assumed: {
-      balance: number;
-      apr: number;
-      remainingMonths: number;
-    };
-    gap: {
-      method: "cash" | "second_loan" | "heloc";
-    };
-  };
-}
-
-interface ScenarioResults {
-  loanAmount: number;
-  monthlyPrincipalInterest: number;
-  monthlyTotal: number;
-  monthlyPropertyTax: number;
-  monthlyHomeInsurance: number;
-  monthlyPMI: number;
-  monthlyHOA: number;
-  totalCost: number;
-  totalInterest: number;
-  ltvRatio: number;
-  payoffMonths: number;
-  // HELOC-specific
-  paymentDrawAvg?: number;
-  paymentRepay?: number;
-  // Assumption-specific
-  assumedPaymentPi?: number;
-  gapPayment?: number;
-  gapAmount?: number;
-}
-
-interface ScenarioData {
-  id: string;
-  name: string;
-  inputs: ScenarioInputs;
-  results: ScenarioResults;
-}
 
 interface LayoutRow {
   label: string;
@@ -443,11 +380,19 @@ function buildScenarioLayout(scenario: ScenarioData): ExportLayout {
   
   const shortId = scenario.id.substring(0, 8).toUpperCase();
   const { inputs, results, name } = scenario;
-  const isPurchase = inputs.mode === "purchase";
+  const mode = inputs.mode || "purchase";
+  const isPurchase = mode === "purchase";
+  const isRefinance = mode === "refinance";
+  const isHeloc = mode === "heloc";
+  const isAssumption = mode === "assumption";
   
   const propertyValue = isPurchase 
     ? inputs.purchase?.purchasePrice || 0
-    : (inputs.refinance?.estimatedHomeValue ?? results.loanAmount);
+    : isRefinance
+      ? (inputs.refinance?.estimatedHomeValue ?? results.loanAmount)
+      : isAssumption
+        ? (inputs.assumption?.purchasePrice ?? results.loanAmount)
+        : results.loanAmount;
   
   const downPaymentAmount = isPurchase && inputs.purchase
     ? calculateDownPaymentAmount(
@@ -457,17 +402,13 @@ function buildScenarioLayout(scenario: ScenarioData): ExportLayout {
       )
     : 0;
 
-  const payoffDate = new Date();
-  payoffDate.setMonth(payoffDate.getMonth() + results.payoffMonths);
-  const payoffDateStr = payoffDate.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-  });
-
   const overviewRows: LayoutRow[] = [
-    { label: "Loan type", value: TRANSACTION_TYPE_LABELS[inputs.mode] },
-    { label: "Property value", value: formatCurrency(propertyValue) },
+    { label: "Loan type", value: TRANSACTION_TYPE_LABELS[mode] },
   ];
+
+  if (isPurchase || isRefinance || isAssumption) {
+    overviewRows.push({ label: "Property value", value: formatCurrency(propertyValue) });
+  }
   
   if (isPurchase && inputs.purchase) {
     const dpPercent = propertyValue > 0 ? (downPaymentAmount / propertyValue * 100) : 0;
@@ -475,53 +416,142 @@ function buildScenarioLayout(scenario: ScenarioData): ExportLayout {
       label: "Down payment",
       value: `${formatCurrency(downPaymentAmount)} (${formatPercent(dpPercent)})`,
     });
-  } else if (inputs.refinance) {
+  } else if (isRefinance && inputs.refinance) {
     overviewRows.push({
       label: "Current loan balance",
       value: formatCurrency(inputs.refinance.currentLoanBalance),
     });
+  } else if (isHeloc) {
+    overviewRows.push({
+      label: "Credit limit",
+      value: formatCurrency(inputs.heloc?.creditLimit || 0),
+    });
+  } else if (isAssumption) {
+    overviewRows.push({
+      label: "Assumed loan balance",
+      value: formatCurrency(inputs.assumption?.assumed.balance || 0),
+    });
   }
-  
-  overviewRows.push(
-    { label: "Loan amount", value: formatCurrency(results.loanAmount) },
-    { label: "Loan term", value: `${inputs.shared.loanTerm} years` },
-    { label: "Interest rate (assumed)", value: formatPercent(inputs.shared.interestRate) },
-    { label: "Loan-to-value ratio", value: formatPercent(results.ltvRatio) }
-  );
 
-  const paymentRows: LayoutRow[] = [
-    { label: "Principal & interest", value: formatCurrency(results.monthlyPrincipalInterest) },
+  if (isPurchase || isRefinance) {
+    overviewRows.push(
+      { label: "Loan amount", value: formatCurrency(results.loanAmount) },
+      { label: "Loan term", value: `${inputs.shared.loanTerm} years` },
+      { label: "Interest rate (assumed)", value: formatPercent(inputs.shared.interestRate) },
+      { label: "Loan-to-value ratio", value: formatPercent(results.ltvRatio) }
+    );
+  } else if (isHeloc) {
+    overviewRows.push(
+      {
+        label: "APR (assumed)",
+        value: formatPercent(inputs.heloc?.apr ?? results.rateForComparison),
+      },
+      {
+        label: "Decision horizon",
+        value: `${results.decisionHorizonMonths || results.payoffMonths} months`,
+      }
+    );
+  } else if (isAssumption) {
+    overviewRows.push(
+      {
+        label: "Assumed rate",
+        value: formatPercent(inputs.assumption?.assumed.apr ?? results.rateForComparison),
+      },
+      {
+        label: "Combined principal (modeled)",
+        value: formatCurrency(results.loanAmount),
+      },
+      {
+        label: "Decision horizon",
+        value: `${results.decisionHorizonMonths || results.payoffMonths} months`,
+      }
+    );
+  }
+
+  const paymentRows: LayoutRow[] = [];
+  if (isPurchase || isRefinance) {
+    paymentRows.push({
+      label: "Principal & interest",
+      value: formatCurrency(results.monthlyPrincipalInterest),
+    });
+    if (results.monthlyPropertyTax > 0) {
+      paymentRows.push({ label: "Property tax", value: formatCurrency(results.monthlyPropertyTax) });
+    }
+    if (results.monthlyHomeInsurance > 0) {
+      paymentRows.push({ label: "Home insurance", value: formatCurrency(results.monthlyHomeInsurance) });
+    }
+    if (results.monthlyPMI > 0) {
+      paymentRows.push({ label: "Mortgage insurance (PMI)", value: formatCurrency(results.monthlyPMI) });
+    }
+    if (results.monthlyHOA > 0) {
+      paymentRows.push({ label: "HOA", value: formatCurrency(results.monthlyHOA) });
+    }
+    paymentRows.push({
+      label: "All-in monthly housing payment",
+      value: formatCurrency(results.allInMonthlyHousingPayment || results.monthlyTotal),
+    });
+  } else if (isHeloc) {
+    paymentRows.push({
+      label: "Primary monthly payment (repay period)",
+      value: formatCurrency(results.paymentRepay || results.monthlyPrincipalInterest),
+    });
+    paymentRows.push({
+      label: "All-in monthly housing payment",
+      value: formatCurrency(results.allInMonthlyHousingPayment || results.monthlyTotal),
+    });
+  } else {
+    paymentRows.push({
+      label: "Combined monthly payment",
+      value: formatCurrency(results.monthlyPrincipalInterest),
+    });
+    paymentRows.push({
+      label: "All-in monthly housing payment",
+      value: formatCurrency(results.allInMonthlyHousingPayment || results.monthlyTotal),
+    });
+  }
+
+  const longTermRows: LayoutRow[] = [
+    {
+      label: "Financing cost over modeled term",
+      value: formatCurrency(results.financingCostOverHorizon),
+    },
+    {
+      label: "Principal reduction over modeled term",
+      value: formatCurrency(results.principalReductionOverHorizon),
+    },
+    {
+      label: "Total interest paid",
+      value: formatCurrency(results.totalInterest),
+    },
+    {
+      label: "Decision horizon",
+      value: `${results.decisionHorizonMonths || results.payoffMonths} months`,
+    },
   ];
-  if (results.monthlyPropertyTax > 0) {
-    paymentRows.push({ label: "Property tax", value: formatCurrency(results.monthlyPropertyTax) });
-  }
-  if (results.monthlyHomeInsurance > 0) {
-    paymentRows.push({ label: "Home insurance", value: formatCurrency(results.monthlyHomeInsurance) });
-  }
-  if (results.monthlyPMI > 0) {
-    paymentRows.push({ label: "PMI", value: formatCurrency(results.monthlyPMI) });
-  }
-  if (results.monthlyHOA > 0) {
-    paymentRows.push({ label: "HOA", value: formatCurrency(results.monthlyHOA) });
-  }
-  paymentRows.push({ label: "Total monthly payment", value: formatCurrency(results.monthlyTotal) });
+
+  const snapshotLabel =
+    scenario.snapshotSource === "original"
+      ? "Historical original snapshot"
+      : "Active snapshot";
 
   return {
     brand: BRAND.name,
-    title: "Mortgage Scenario Summary",
-    meta: [`Scenario: ${name || "Untitled"}`, `ID: ${shortId}`],
+    title: "Scenario Summary",
+    meta: [
+      `Scenario: ${name || "Untitled"}`,
+      `ID: ${shortId}`,
+      `Type: ${TRANSACTION_TYPE_LABELS[mode]}`,
+      `Calculator: v${scenario.exportCalculatorVersion}`,
+      snapshotLabel,
+    ],
     generatedDate: dateStr,
     sections: [
       { title: "Scenario Overview", type: "table", rows: overviewRows },
       { title: "Monthly Payment", type: "table", rows: paymentRows },
       {
-        title: "Long-Term Cost Summary",
+        title: "Cost Over the Modeled Term",
         type: "table",
-        rows: [
-          { label: "Total payments over term", value: formatCurrency(results.totalCost) },
-          { label: "Total interest paid", value: formatCurrency(results.totalInterest) },
-          { label: "Projected payoff date", value: payoffDateStr },
-        ],
+        rows: longTermRows,
       },
       {
         title: "Assumptions",
@@ -532,6 +562,17 @@ function buildScenarioLayout(scenario: ScenarioData): ExportLayout {
               { label: "Property taxes (annual)", value: results.monthlyPropertyTax > 0 ? formatCurrency(results.monthlyPropertyTax * 12) : "Not specified" },
               { label: "Home insurance (annual)", value: results.monthlyHomeInsurance > 0 ? formatCurrency(results.monthlyHomeInsurance * 12) : "Not specified" },
             ]
+          : isHeloc
+            ? [
+                { label: "Credit limit", value: formatCurrency(inputs.heloc?.creditLimit || 0) },
+                { label: "APR", value: formatPercent(inputs.heloc?.apr || results.rateForComparison) },
+                { label: "Draw / repay months", value: `${inputs.heloc?.drawMonths ?? "—"} / ${inputs.heloc?.repayMonths ?? "—"}` },
+              ]
+            : isAssumption
+              ? [
+                  { label: "Assumed balance", value: formatCurrency(inputs.assumption?.assumed.balance || 0) },
+                  { label: "Gap method", value: inputs.assumption?.gap.method || "—" },
+                ]
           : [
               { label: "Estimated home value", value: inputs.refinance?.estimatedHomeValue ? formatCurrency(inputs.refinance.estimatedHomeValue) : "Not specified" },
               { label: "Property taxes (annual)", value: results.monthlyPropertyTax > 0 ? formatCurrency(results.monthlyPropertyTax * 12) : "Not specified" },
@@ -540,10 +581,11 @@ function buildScenarioLayout(scenario: ScenarioData): ExportLayout {
       },
     ],
     methodology: [
-      "Calculations are based on standard amortization formulas.",
+      "Figures are taken from the selected persisted calculation snapshot; exports do not recalculate scenarios.",
+      `Snapshot: ${snapshotLabel} (calculator v${scenario.exportCalculatorVersion}).`,
+      "Financing cost excludes principal repayment; principal reduction is reported separately.",
+      "All-in monthly housing payment is a secondary cash-flow metric, not the primary cost ranking metric.",
       "Rates shown are inputs provided by the user or advisor and are not lender quotes.",
-      "Property taxes and insurance are estimates where applicable.",
-      "Results are intended for comparison and planning purposes only.",
       "Summary reflects modeled totals under stated assumptions. Not financial advice.",
     ],
     disclaimer:
@@ -565,12 +607,6 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
   const hasScenarioC = !!c;
   const aVsBDeltas = calculateDeltas(a, b);
   const cVsBDeltas = c ? calculateDeltas(c, b) : null;
-  
-  const getPayoffDate = (scenario: ScenarioData) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() + scenario.results.payoffMonths);
-    return date.toLocaleDateString("en-US", { year: "numeric", month: "short" });
-  };
 
   const nameA = a.name || "Scenario A";
   const nameB = b.name || "Scenario B";
@@ -596,7 +632,7 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
             label: `${nameA} vs ${nameB}`,
             items: [
           { label: "Monthly payment", value: formatDollarFirstDelta(aVsBDeltas.monthlyPaymentDelta, aVsBDeltas.monthlyPaymentPercentDelta, "/mo") },
-              { label: "Total cost over time", value: formatDollarFirstDelta(aVsBDeltas.totalCostDelta, aVsBDeltas.totalCostPercentDelta) },
+              { label: "Total cost (legacy)", value: formatDollarFirstDelta(aVsBDeltas.totalCostDelta, aVsBDeltas.totalCostPercentDelta) },
               { label: "Total interest", value: formatDollarFirstDelta(aVsBDeltas.totalInterestDelta, aVsBDeltas.totalInterestPercentDelta) },
               { label: "Interest rate (assumed)", value: formatSignedRateDelta(aVsBDeltas.interestRateDelta) },
               { label: "Loan size vs home value", value: formatLtvDelta(aVsBDeltas.ltvDelta) },
@@ -606,7 +642,7 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
             label: `${nameC} vs ${nameB}`,
             items: [
               { label: "Monthly payment", value: formatDollarFirstDelta(cVsBDeltas!.monthlyPaymentDelta, cVsBDeltas!.monthlyPaymentPercentDelta, "/mo") },
-              { label: "Total cost over time", value: formatDollarFirstDelta(cVsBDeltas!.totalCostDelta, cVsBDeltas!.totalCostPercentDelta) },
+              { label: "Total cost (legacy)", value: formatDollarFirstDelta(cVsBDeltas!.totalCostDelta, cVsBDeltas!.totalCostPercentDelta) },
               { label: "Total interest", value: formatDollarFirstDelta(cVsBDeltas!.totalInterestDelta, cVsBDeltas!.totalInterestPercentDelta) },
               { label: "Interest rate (assumed)", value: formatSignedRateDelta(cVsBDeltas!.interestRateDelta) },
               { label: "Loan size vs home value", value: formatLtvDelta(cVsBDeltas!.ltvDelta) },
@@ -619,7 +655,7 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
         type: "key-diff",
         items: [
           { label: "Monthly payment", value: formatDollarFirstDelta(aVsBDeltas.monthlyPaymentDelta, aVsBDeltas.monthlyPaymentPercentDelta, "/mo") },
-          { label: "Total cost over time", value: formatDollarFirstDelta(aVsBDeltas.totalCostDelta, aVsBDeltas.totalCostPercentDelta) },
+          { label: "Total cost (legacy)", value: formatDollarFirstDelta(aVsBDeltas.totalCostDelta, aVsBDeltas.totalCostPercentDelta) },
           { label: "Total interest", value: formatDollarFirstDelta(aVsBDeltas.totalInterestDelta, aVsBDeltas.totalInterestPercentDelta) },
           { label: "Interest rate (assumed)", value: formatSignedRateDelta(aVsBDeltas.interestRateDelta) },
           { label: "Loan size vs home value", value: formatLtvDelta(aVsBDeltas.ltvDelta) },
@@ -655,10 +691,11 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
         columns,
         rows: [
           buildRow("Loan type", TRANSACTION_TYPE_LABELS[a.inputs.mode], TRANSACTION_TYPE_LABELS[b.inputs.mode], c ? TRANSACTION_TYPE_LABELS[c.inputs.mode] : undefined),
-          buildRow("Loan amount", formatCurrency(a.results.loanAmount), formatCurrency(b.results.loanAmount), c ? formatCurrency(c.results.loanAmount) : undefined),
-          buildRow("Term", `${a.inputs.shared.loanTerm} years`, `${b.inputs.shared.loanTerm} years`, c ? `${c.inputs.shared.loanTerm} years` : undefined),
-          buildRow("Interest rate (assumed)", formatPercent(a.inputs.shared.interestRate), formatPercent(b.inputs.shared.interestRate), c ? formatPercent(c.inputs.shared.interestRate) : undefined),
-          buildRow("Loan-to-value ratio", formatPercent(a.results.ltvRatio), formatPercent(b.results.ltvRatio), c ? formatPercent(c.results.ltvRatio) : undefined),
+          buildRow("Principal / credit amount", formatCurrency(a.results.loanAmount), formatCurrency(b.results.loanAmount), c ? formatCurrency(c.results.loanAmount) : undefined),
+          buildRow("Decision horizon", `${a.results.decisionHorizonMonths || a.results.payoffMonths} mo`, `${b.results.decisionHorizonMonths || b.results.payoffMonths} mo`, c ? `${c.results.decisionHorizonMonths || c.results.payoffMonths} mo` : undefined),
+          buildRow("Rate (assumed)", formatPercent(a.results.rateForComparison || a.inputs.shared.interestRate), formatPercent(b.results.rateForComparison || b.inputs.shared.interestRate), c ? formatPercent(c.results.rateForComparison || c.inputs.shared.interestRate) : undefined),
+          buildRow("Loan-to-value ratio", a.results.ltvRatio ? formatPercent(a.results.ltvRatio) : "—", b.results.ltvRatio ? formatPercent(b.results.ltvRatio) : "—", c ? (c.results.ltvRatio ? formatPercent(c.results.ltvRatio) : "—") : undefined),
+          buildRow("Calculator version", `v${a.exportCalculatorVersion}`, `v${b.exportCalculatorVersion}`, c ? `v${c.exportCalculatorVersion}` : undefined),
         ],
       },
       {
@@ -666,27 +703,28 @@ function buildComparisonLayout(a: ScenarioData, b: ScenarioData, c?: ScenarioDat
         type: "comparison-table",
         columns: hasScenarioC ? ["Component", nameA, nameB, nameC] : ["Component", nameA, nameB],
         rows: [
-          buildRow("Principal & interest", formatCurrency(a.results.monthlyPrincipalInterest), formatCurrency(b.results.monthlyPrincipalInterest), c ? formatCurrency(c.results.monthlyPrincipalInterest) : undefined),
-          buildRow("Total monthly payment", formatCurrency(a.results.monthlyTotal), formatCurrency(b.results.monthlyTotal), c ? formatCurrency(c.results.monthlyTotal) : undefined),
+          buildRow("Primary monthly payment", formatCurrency(a.results.monthlyPrincipalInterest), formatCurrency(b.results.monthlyPrincipalInterest), c ? formatCurrency(c.results.monthlyPrincipalInterest) : undefined),
+          buildRow("All-in monthly housing payment", formatCurrency(a.results.allInMonthlyHousingPayment || a.results.monthlyTotal), formatCurrency(b.results.allInMonthlyHousingPayment || b.results.monthlyTotal), c ? formatCurrency(c.results.allInMonthlyHousingPayment || c.results.monthlyTotal) : undefined),
         ],
       },
       {
-        title: "Long-Term Cost",
+        title: "Cost Over the Modeled Term",
         type: "comparison-table",
         columns: hasScenarioC ? ["Metric", nameA, nameB, nameC] : ["Metric", nameA, nameB],
         rows: [
-          buildRow("Total payments over term", formatCurrency(a.results.totalCost), formatCurrency(b.results.totalCost), c ? formatCurrency(c.results.totalCost) : undefined),
+          buildRow("Financing cost over modeled term", formatCurrency(a.results.financingCostOverHorizon), formatCurrency(b.results.financingCostOverHorizon), c ? formatCurrency(c.results.financingCostOverHorizon) : undefined),
+          buildRow("Principal reduction over modeled term", formatCurrency(a.results.principalReductionOverHorizon), formatCurrency(b.results.principalReductionOverHorizon), c ? formatCurrency(c.results.principalReductionOverHorizon) : undefined),
           buildRow("Total interest paid", formatCurrency(a.results.totalInterest), formatCurrency(b.results.totalInterest), c ? formatCurrency(c.results.totalInterest) : undefined),
-          buildRow("Projected payoff date", getPayoffDate(a), getPayoffDate(b), c ? getPayoffDate(c) : undefined),
         ],
       },
     ],
     methodology: [
-      "Calculations are based on standard amortization formulas.",
-      "Rates shown are inputs provided by the user or advisor and are not lender quotes.",
-      "Property taxes and insurance are estimates where applicable.",
-      "Results are intended for comparison and planning purposes only.",
-      "Summary reflects modeled totals under stated assumptions. Not financial advice.",
+      "Comparison figures use each scenario's persisted activeSnapshot; exports do not recalculate.",
+      "Financing cost excludes principal repayment; principal reduction is reported separately.",
+      "All-in monthly housing payment is a secondary cash-flow metric.",
+      "Comparison summary narrative may still use legacy total-cost ranking until Phase 5 normalization.",
+      "Rates shown are assumed inputs, not lender quotes.",
+      "No recommendation is implied by the order or presentation of scenarios.",
     ],
     disclaimer:
       "This document is provided for analytical and planning purposes only. SettleRate does not originate, broker, or recommend mortgage products. All figures shown are modeled estimates and do not constitute a loan offer, guarantee, or financial advice.",
@@ -946,6 +984,9 @@ Deno.serve(async (req: Request) => {
     const url = new URL(req.url);
     const type = url.searchParams.get("type");
     const id = url.searchParams.get("id");
+    const snapshotParam = url.searchParams.get("snapshot");
+    const snapshotSource: "active" | "original" =
+      snapshotParam === "original" ? "original" : "active";
 
     if (!type || !id) {
       return new Response(
@@ -957,6 +998,13 @@ Deno.serve(async (req: Request) => {
     if (type !== "scenario" && type !== "comparison") {
       return new Response(
         JSON.stringify({ error: "Invalid type. Must be 'scenario' or 'comparison'" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (snapshotParam && snapshotParam !== "active" && snapshotParam !== "original") {
+      return new Response(
+        JSON.stringify({ error: "Invalid snapshot. Must be 'active' or 'original'" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -1000,7 +1048,7 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      const scenarioData = buildScenarioData(scenario);
+      const scenarioData = buildScenarioData(scenario, snapshotSource);
       const layout = buildScenarioLayout(scenarioData);
       pdfBytes = renderLayoutToPDF(layout);
       filename = generateScenarioFilename(scenarioData);
@@ -1059,9 +1107,9 @@ Deno.serve(async (req: Request) => {
         ? scenarios.find(s => s.id === comparison.scenario_c_id) 
         : null;
 
-      const dataA = buildScenarioData(scenarioA);
-      const dataB = buildScenarioData(scenarioB);
-      const dataC = scenarioC ? buildScenarioData(scenarioC) : null;
+      const dataA = buildScenarioData(scenarioA, snapshotSource);
+      const dataB = buildScenarioData(scenarioB, snapshotSource);
+      const dataC = scenarioC ? buildScenarioData(scenarioC, snapshotSource) : null;
       
       const layout = buildComparisonLayout(dataA, dataB, dataC);
       pdfBytes = renderLayoutToPDF(layout);
@@ -1101,41 +1149,5 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-// ============================================================================
-// DATA BUILDER HELPER
-// ============================================================================
+// Scenario row → export ScenarioData mapping: ./mapDerivedForExport.ts
 
-interface ScenarioRow {
-  id: string;
-  name?: string;
-  inputs?: ScenarioInputs;
-  derived?: ScenarioResults;
-}
-
-function buildScenarioData(s: ScenarioRow): ScenarioData {
-  const inputs = (s.inputs || {}) as ScenarioInputs;
-  const derived = (s.derived || {}) as ScenarioResults;
-  return {
-    id: s.id,
-    name: s.name || "Untitled",
-    inputs: {
-      mode: inputs.mode || "purchase",
-      shared: inputs.shared || { loanTerm: 30, interestRate: 0 },
-      purchase: inputs.purchase,
-      refinance: inputs.refinance,
-    },
-    results: {
-      loanAmount: derived.loanAmount || 0,
-      monthlyPrincipalInterest: derived.monthlyPrincipalInterest || 0,
-      monthlyTotal: derived.monthlyTotal || 0,
-      monthlyPropertyTax: derived.monthlyPropertyTax || 0,
-      monthlyHomeInsurance: derived.monthlyHomeInsurance || 0,
-      monthlyPMI: derived.monthlyPMI || 0,
-      monthlyHOA: derived.monthlyHOA || 0,
-      totalCost: derived.totalCost || 0,
-      totalInterest: derived.totalInterest || 0,
-      ltvRatio: derived.ltvRatio || 0,
-      payoffMonths: derived.payoffMonths || 360,
-    },
-  };
-}

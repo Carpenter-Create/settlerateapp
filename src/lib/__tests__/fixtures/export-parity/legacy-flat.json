@@ -1,0 +1,47 @@
+{
+  "name": "legacy-flat",
+  "selection": "active",
+  "mode": "purchase",
+  "row": {
+    "id": "parity-legacy-001",
+    "name": "Legacy flat derived",
+    "inputs": {
+      "mode": "purchase",
+      "shared": { "loanTerm": 30, "interestRate": 6.5 }
+    },
+    "derived": {
+      "loanAmount": 320000,
+      "monthlyPrincipalInterest": 2000,
+      "monthlyTotal": 2500,
+      "totalInterest": 100000,
+      "totalCost": 420000,
+      "financingCostOverHorizon": 100000,
+      "principalReductionOverHorizon": 320000,
+      "allInMonthlyHousingPayment": 2500,
+      "decisionHorizonMonths": 360,
+      "payoffMonths": 360,
+      "ltvRatio": 80,
+      "rateForComparison": 6.5,
+      "calculatorVersion": "1.0.0"
+    }
+  },
+  "expected": {
+    "isLegacyFlat": true,
+    "financingCostOverHorizon": 100000,
+    "principalReductionOverHorizon": 320000,
+    "allInMonthlyHousingPayment": 2500,
+    "decisionHorizonMonths": 360,
+    "totalInterest": 100000,
+    "legacyTotalCost": 420000,
+    "monthlyPaymentPrimary": 2000,
+    "principalAmount": 320000,
+    "ltvRatio": 80,
+    "rateForComparison": 6.5,
+    "payoffMonths": 360,
+    "calculatorVersion": "1.0.0",
+    "paymentDrawAvg": null,
+    "assumedPaymentPi": null,
+    "gapPayment": null,
+    "gapAmount": null
+  }
+}
