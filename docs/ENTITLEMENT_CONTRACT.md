@@ -98,7 +98,7 @@ Client-callable entitlement RPCs: `evaluate_entitlement`, `feature_allowed`, `as
 | Entitlement read | `check-subscription` reads `billing` + evaluates |
 | Webhook | Signature required; `stripe_webhook_events` idempotency (`claim_stripe_webhook_event` / `release_stripe_webhook_event` are **service_role-only**) |
 | Checkout | Allowlisted prices; maps `stripe_customer_id` ↔ `user_id` |
-| Portal | Prefers `billing.stripe_customer_id` |
+| Portal | Requires authoritative `billing.stripe_customer_id` for authenticated user; no email discovery |
 
 Success URLs never grant entitlement. Verified webhook state is authoritative.
 
