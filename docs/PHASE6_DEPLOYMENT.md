@@ -97,7 +97,7 @@ Deploy **after** all five migrations are verified:
 
 The legacy `admin-assign-advisor` edge function is **deprecated** and returns HTTP 410 with no billing or role mutation. Do not deploy for new operations.
 
-SettleRate supports two customer plans: **Analytical** and **Professional**. Administrative permissions are role-based and are not a billing tier.
+SettleRate supports two customer plans: **SettleRate Free** and **SettleRate Professional**. Administrative permissions are role-based and are not a billing tier.
 
 ## Frontend
 

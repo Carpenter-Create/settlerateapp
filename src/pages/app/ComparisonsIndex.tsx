@@ -2,7 +2,7 @@
  * Comparisons Index Page
  * 
  * A dedicated workspace for reviewing and managing scenario comparisons.
- * Professional Review tier and admin only.
+ * SettleRate Professional tier and admin only.
  * 
  * PRODUCTION-HARDENED:
  * - Explicit loading/empty/error states
@@ -311,7 +311,7 @@ function LockedState() {
         Comparisons
       </h1>
       <p className="mt-3 max-w-md text-sm text-muted-foreground">
-        Side-by-side scenario comparison is available on the Professional Review tier.
+        Side-by-side scenario comparison is available on SettleRate Professional.
       </p>
       <Button 
         variant="outline" 
@@ -471,7 +471,7 @@ export default function ComparisonsIndex() {
     return <LoadingState />;
   }
 
-  // Access control: Professional Review tier and admin only
+  // Access control: SettleRate Professional tier and admin only
   // Free users without create rights see upgrade lock; read_only may list/delete
   if (!canViewComparisonsArea) {
     return <LockedState />;

@@ -16,7 +16,7 @@
  * - Consistent spacing: 48-64px page margins, 24-28px sections
  * 
  * Access Control:
- * - Professional Review tier and admin only
+ * - SettleRate Professional tier and admin only
  */
 
 import type { ScenarioData } from "@/lib/scenarioContract";

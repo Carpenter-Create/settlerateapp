@@ -2,7 +2,7 @@
  * Authorization utilities for SettleRate
  *
  * Server-verified admin role is the only administrative authority.
- * Customer plans (Analytical / Professional) do not grant admin access.
+ * Customer plans (SettleRate Free / SettleRate Professional) do not grant admin access.
  */
 
 import { supabase } from "@/integrations/supabase/client";

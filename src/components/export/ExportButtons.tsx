@@ -2,7 +2,7 @@
  * Export Button Components
  * 
  * Professional export actions for scenarios and comparisons.
- * Access control: Professional Review tier and admin only.
+ * SettleRate Professional tier and admin only.
  */
 
 import { useState } from "react";

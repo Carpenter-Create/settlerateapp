@@ -1,15 +1,17 @@
 /**
  * Stripe Configuration for SettleRate
  *
- * Active customer plans: Analytical (free) and Professional (paid).
+ * Customer plans: SettleRate Free (internal analytical) and SettleRate Professional (paid).
  * Legacy Advisor product IDs resolve to free — see LEGACY_ADVISOR_* in entitlementContract.
  */
 
 import { LEGACY_ADVISOR_PRICE_IDS } from "@/lib/entitlementContract";
 
-export const STRIPE_PRO_MONTHLY_PRICE_ID = "price_1Sod4a3ppKk8xETz9TzPFn8P";
-export const STRIPE_PRO_ANNUAL_PRICE_ID = "price_1Sod513ppKk8xETzwcEPnT51";
-export const STRIPE_PRO_PRODUCT_ID = "prod_TmBRSW3mqUk9l9";
+export const STRIPE_PRO_MONTHLY_PRICE_ID = "price_1U0k4DC2Fmi7ZUCbSniiEewZ";
+export const STRIPE_PRO_ANNUAL_PRICE_ID = "price_1U0kFVC2Fmi7ZUCb6g0mXIRC";
+export const STRIPE_PRO_PRODUCT_ID = "prod_V0lUMpnsvxSxP1";
+export const STRIPE_PRO_MONTHLY_LOOKUP_KEY = "settlerate_professional_monthly";
+export const STRIPE_PRO_ANNUAL_LOOKUP_KEY = "settlerate_professional_annual";
 
 /** @deprecated Legacy Advisor product — maps to free/analytical only. */
 export const LEGACY_ADVISOR_PRODUCT_ID = "prod_TmBSkiojosKhTo";
@@ -78,7 +80,7 @@ export function getFeatureAccess(tier: SubscriptionTier): FeatureAccess {
 export function getTierFromProductId(productId: string | null): SubscriptionTier {
   if (!productId) return "free";
 
-  if (productId === STRIPE_PRO_PRODUCT_ID || productId === "prod_TmBRGPUBjfB7DR") {
+  if (productId === STRIPE_PRO_PRODUCT_ID) {
     return "pro";
   }
 

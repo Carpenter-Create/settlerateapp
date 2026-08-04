@@ -16,7 +16,7 @@ For the Phase 6 canonical entitlement matrix, Stripe mapping, and enforcement po
 | `moderator` | Content/support oversight | User access + moderation tools |
 | `admin` | Full administrative access | All features + admin dashboard (server-verified bypass) |
 
-SettleRate supports **two customer plans**: **Analytical** and **Professional**. Administrative permissions are **role-based** and are **not** a billing tier.
+SettleRate supports **two customer plans**: **SettleRate Free** and **SettleRate Professional**. Administrative permissions are **role-based** and are **not** a billing tier.
 
 The legacy `advisor` enum value and `user_roles.advisor` rows may exist for historical audit only. They **must not** grant Professional features, admin authority, or locked-rate editing.
 
@@ -28,14 +28,14 @@ Roles are stored in the `user_roles` table, not on the profile or users table. T
 
 | Plan code | Display Name | Capabilities |
 |-----------|--------------|--------------|
-| `analytical` | Analytical (free) | All modeling modes; max 3 saved scenarios; view/edit/delete owned scenarios |
-| `professional` | Professional (paid) | Unlimited scenarios, saved comparisons, PDF, share/export, income-context |
+| `analytical` | SettleRate Free | All modeling modes; max 3 saved scenarios; view/edit/delete owned scenarios |
+| `professional` | SettleRate Professional (paid) | Unlimited scenarios, saved comparisons, PDF, share/export, income-context |
 
 Advisor is **not** an active paid tier.
 
 ### Entitlement Mapping
 
-| Feature | Analytical | Professional |
+| Feature | SettleRate Free | SettleRate Professional |
 |---------|------------|--------------|
 | Scenario modeling | ✓ | ✓ |
 | Scenario saving | Max 3 (create + duplicate) | Unlimited |
@@ -53,7 +53,7 @@ Advisor is **not** an active paid tier.
 |--------|--------|
 | `active` / `trialing` (allowlisted Professional price) | Full Professional |
 | `past_due` / `unpaid` | Read-only + delete + billing portal |
-| `incomplete*` / `canceled` / `paused` / none | Analytical |
+| `incomplete*` / `canceled` / `paused` / none | SettleRate Free |
 | `cancel_at_period_end` while still active/trialing | Keep Professional until period end |
 
 Trial: 7 days. No custom grace period.

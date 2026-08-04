@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   FREE_SCENARIO_LIMIT,
+  LEGACY_DELETED_PROFESSIONAL_PRICE_IDS,
   PROFESSIONAL_PRICE_IDS,
   evaluateEntitlement,
   featureAccessFromDecision,
@@ -9,15 +10,21 @@ import {
   resolvePlanCodeFromPrice,
 } from "@/lib/entitlementContract";
 
-const proPrice = PROFESSIONAL_PRICE_IDS[0];
+const proMonthlyPrice = PROFESSIONAL_PRICE_IDS[0];
+const proAnnualPrice = PROFESSIONAL_PRICE_IDS[1];
 const advisorPrice = "price_1Sod5F3ppKk8xETzl9EDOR6I";
+const deletedProMonthlyPrice = LEGACY_DELETED_PROFESSIONAL_PRICE_IDS[0];
+const deletedProAnnualPrice = LEGACY_DELETED_PROFESSIONAL_PRICE_IDS[1];
 const now = new Date("2026-08-04T12:00:00.000Z");
 const future = "2026-09-01T00:00:00.000Z";
 const past = "2026-07-01T00:00:00.000Z";
 
 describe("entitlementContract", () => {
   it("maps only allowlisted professional prices", () => {
-    expect(resolvePlanCodeFromPrice(proPrice)).toBe("professional");
+    expect(resolvePlanCodeFromPrice(proMonthlyPrice)).toBe("professional");
+    expect(resolvePlanCodeFromPrice(proAnnualPrice)).toBe("professional");
+    expect(resolvePlanCodeFromPrice(deletedProMonthlyPrice)).toBe("analytical");
+    expect(resolvePlanCodeFromPrice(deletedProAnnualPrice)).toBe("analytical");
     expect(resolvePlanCodeFromPrice(advisorPrice)).toBe("analytical");
     expect(resolvePlanCodeFromPrice("price_unknown")).toBe("analytical");
   });
@@ -25,7 +32,7 @@ describe("entitlementContract", () => {
   it("grants entitled for active professional subscription", () => {
     const d = evaluateEntitlement({
       stripeStatus: "active",
-      priceId: proPrice,
+      priceId: proMonthlyPrice,
       currentPeriodEndsAt: future,
       now,
     });
@@ -37,7 +44,7 @@ describe("entitlementContract", () => {
   it("grants trial_entitled for trialing professional subscription", () => {
     const d = evaluateEntitlement({
       stripeStatus: "trialing",
-      priceId: proPrice,
+      priceId: proMonthlyPrice,
       currentPeriodEndsAt: future,
       now,
     });
@@ -48,7 +55,7 @@ describe("entitlementContract", () => {
   it("keeps professional access when cancel_at_period_end while still active", () => {
     const d = evaluateEntitlement({
       stripeStatus: "active",
-      priceId: proPrice,
+      priceId: proMonthlyPrice,
       currentPeriodEndsAt: future,
       cancelAtPeriodEnd: true,
       now,
@@ -61,7 +68,7 @@ describe("entitlementContract", () => {
   it("revokes when period end is in the past even if status still active", () => {
     const d = evaluateEntitlement({
       stripeStatus: "active",
-      priceId: proPrice,
+      priceId: proMonthlyPrice,
       currentPeriodEndsAt: past,
       cancelAtPeriodEnd: true,
       now,
@@ -73,7 +80,7 @@ describe("entitlementContract", () => {
   it("does not grant professional when currentPeriodEndsAt is null", () => {
     const d = evaluateEntitlement({
       stripeStatus: "active",
-      priceId: proPrice,
+      priceId: proMonthlyPrice,
       currentPeriodEndsAt: null,
       now,
     });
@@ -85,7 +92,7 @@ describe("entitlementContract", () => {
     for (const stripeStatus of ["past_due", "unpaid"] as const) {
       const d = evaluateEntitlement({
         stripeStatus,
-        priceId: proPrice,
+        priceId: proMonthlyPrice,
         currentPeriodEndsAt: future,
         now,
       });
@@ -108,7 +115,7 @@ describe("entitlementContract", () => {
     ] as const) {
       const d = evaluateEntitlement({
         stripeStatus,
-        priceId: proPrice,
+        priceId: proMonthlyPrice,
         now,
       });
       expect(d.entitlementStatus).toBe("free");
@@ -154,7 +161,7 @@ describe("entitlementContract", () => {
   it("professional has unlimited scenarios and paid features", () => {
     const d = evaluateEntitlement({
       stripeStatus: "active",
-      priceId: proPrice,
+      priceId: proMonthlyPrice,
       currentPeriodEndsAt: future,
       now,
     });

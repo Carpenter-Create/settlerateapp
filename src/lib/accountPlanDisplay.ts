@@ -1,8 +1,12 @@
 import type { EntitlementStatus, PlanCode } from "@/lib/entitlementContract";
 
+/** Customer-facing plan names (internal planCode values unchanged). */
+export const PLAN_LABEL_FREE = "SettleRate Free";
+export const PLAN_LABEL_PROFESSIONAL = "SettleRate Professional";
+
 /** Plan identity from canonical planCode (not current feature access). */
 export function planLabelFromCode(planCode: PlanCode): string {
-  return planCode === "professional" ? "Professional" : "Analytical";
+  return planCode === "professional" ? PLAN_LABEL_PROFESSIONAL : PLAN_LABEL_FREE;
 }
 
 /**
