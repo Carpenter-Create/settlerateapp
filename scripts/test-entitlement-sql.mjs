@@ -8,6 +8,11 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import {
+  removeDockerContainer,
+  startPostgresContainer,
+  waitForPostgresReady,
+} from "./lib/postgresDockerReadiness.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -37,41 +42,47 @@ function psqlFile(client, filePath) {
   return client.query(sql);
 }
 
-async function ensureDockerPostgres() {
+function assertDockerAvailable() {
   try {
     run("docker info >/dev/null 2>&1");
   } catch {
     throw new Error("Docker is required for test:entitlement-sql");
   }
+}
 
-  const existing = run(`docker ps -a --filter name=^/${containerName}$ --format '{{.Names}}'`);
-  if (existing === containerName) {
-    const running = run(`docker ps --filter name=^/${containerName}$ --format '{{.Names}}'`);
-    if (running !== containerName) {
-      run(`docker start ${containerName}`);
-    }
-  } else {
-    run(
-      `docker run -d --name ${containerName} -e POSTGRES_PASSWORD=${dbPass} -p ${dbPort}:5432 postgres:16-alpine`
-    );
-  }
+async function ensureDockerPostgres() {
+  assertDockerAvailable();
 
-  for (let i = 0; i < 30; i++) {
-    try {
-      run(`docker exec ${containerName} pg_isready -U ${dbUser} -d postgres`, { stdio: "pipe" });
-      break;
-    } catch {
-      await new Promise((r) => setTimeout(r, 1000));
-      if (i === 29) throw new Error("Postgres container failed to become ready");
-    }
-  }
+  startPostgresContainer({
+    containerName,
+    password: dbPass,
+    hostPort: dbPort,
+    exec: run,
+  });
+
+  await waitForPostgresReady({
+    containerName,
+    user: dbUser,
+    exec: run,
+    onAttemptFailure: ({ attempt, lastError }) => {
+      if (attempt === 0 || attempt % 10 === 0) {
+        process.stderr.write(
+          `[test:entitlement-sql] waiting for Postgres (${attempt + 1}): ${lastError}\n`
+        );
+      }
+    },
+  });
 
   run(
-    `docker exec ${containerName} psql -U ${dbUser} -d postgres -c "DROP DATABASE IF EXISTS ${dbName};"`
+    `docker exec ${containerName} psql -U ${dbUser} -d postgres -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS ${dbName};"`
   );
   run(
-    `docker exec ${containerName} psql -U ${dbUser} -d postgres -c "CREATE DATABASE ${dbName};"`
+    `docker exec ${containerName} psql -U ${dbUser} -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE ${dbName};"`
   );
+}
+
+function cleanupDockerPostgres() {
+  removeDockerContainer(containerName, run);
 }
 
 async function applyMigrations(client) {
@@ -279,25 +290,29 @@ function verifyDenoMirror() {
 
 async function main() {
   verifyDenoMirror();
-  await ensureDockerPostgres();
-
-  const client = new pg.Client({
-    host: "127.0.0.1",
-    port: dbPort,
-    user: dbUser,
-    password: dbPass,
-    database: dbName,
-  });
-  await client.connect();
-
   try {
-    await applyMigrations(client);
-    await runSqlAssertions(client);
-    await runConcurrentLimitTest(client);
-    await runParityTests(client);
-    process.stdout.write("\n✓ test:entitlement-sql passed\n");
+    await ensureDockerPostgres();
+
+    const client = new pg.Client({
+      host: "127.0.0.1",
+      port: dbPort,
+      user: dbUser,
+      password: dbPass,
+      database: dbName,
+    });
+    await client.connect();
+
+    try {
+      await applyMigrations(client);
+      await runSqlAssertions(client);
+      await runConcurrentLimitTest(client);
+      await runParityTests(client);
+      process.stdout.write("\n✓ test:entitlement-sql passed\n");
+    } finally {
+      await client.end();
+    }
   } finally {
-    await client.end();
+    cleanupDockerPostgres();
   }
 }
 

@@ -34,6 +34,9 @@ jobs:
       - name: Test
         run: npm run test:run
 
+      - name: Remove stale entitlement test container
+        run: docker rm -f settlerate-entitlement-test 2>/dev/null || true
+
       - name: Entitlement SQL authority tests
         run: npm run test:entitlement-sql
 
