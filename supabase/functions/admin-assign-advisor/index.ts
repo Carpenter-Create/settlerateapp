@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { LEGACY_ADVISOR_PRICE_IDS } from "../_shared/entitlementContract.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,6 +60,14 @@ serve(async (req) => {
       throw new Error("Missing required fields: request_id, email, price_id");
     }
     logStep("Request parsed", { request_id, email, price_id });
+
+    if (!(LEGACY_ADVISOR_PRICE_IDS as readonly string[]).includes(price_id)) {
+      logStep("Rejected non-allowlisted advisor price", { price_id });
+      return new Response(
+        JSON.stringify({ error: "Invalid price", code: "PRICE_NOT_ALLOWED" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
 
     // Initialize Stripe
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });

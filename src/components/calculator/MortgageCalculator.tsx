@@ -13,6 +13,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { MortgageInputs, DEFAULT_INPUTS, TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
 import { useActiveScenario, useScenarios } from "@/hooks/useScenarios";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { useScenarioRoute } from "@/hooks/useScenarioRoute";
 import { shouldShowFirstRun, dismissFirstRun } from "@/lib/firstRunExperience";
 import { SUCCESS_COPY, ERROR_COPY, LOADING_COPY } from "@/lib/calculatorCopy";
@@ -42,6 +43,7 @@ export function MortgageCalculator() {
   } = useActiveScenario(scenarioId);
 
   const { scenarios, deleteScenario, updateScenario, createScenario } = useScenarios();
+  const { canSave } = useCapabilities();
 
   const [showGuidedStart, setShowGuidedStart] = useState(false);
   const [hasCheckedAutoOpen, setHasCheckedAutoOpen] = useState(false);
@@ -69,6 +71,10 @@ export function MortgageCalculator() {
   }, []);
 
   const handleGuidedStartComplete = useCallback(async (guidedInputs: MortgageInputs, name: string) => {
+    if (!canSave) {
+      toast.error("Cannot save more scenarios on your current plan.");
+      return;
+    }
     try {
       dismissFirstRun("calculator");
       const newScenario = await createScenario(name, guidedInputs, null);
@@ -81,7 +87,7 @@ export function MortgageCalculator() {
     } catch (error) {
       toast(ERROR_COPY.invalidInputs);
     }
-  }, [createScenario, navigateToScenario]);
+  }, [canSave, createScenario, navigateToScenario]);
 
   const handleOpenGuidedStart = useCallback(() => {
     setShowGuidedStart(true);

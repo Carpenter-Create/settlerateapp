@@ -108,7 +108,22 @@ export function ScenarioEditor({
   const [saveAsName, setSaveAsName] = useState("");
 
   const { user } = useAuth();
-  const { isAdvisor, canUseAdvisor } = useCapabilities();
+  const {
+    isAdvisor,
+    canUseAdvisor,
+    canSave,
+    canUpdateScenario,
+    canDuplicateScenario,
+    atScenarioLimit,
+    entitlementStatus,
+  } = useCapabilities();
+  const readOnlyAccount = entitlementStatus === "read_only";
+  const limitTitle = atScenarioLimit
+    ? "Free plan limit reached (3 saved scenarios). Upgrade to save more."
+    : undefined;
+  const readOnlyTitle = readOnlyAccount
+    ? "Your subscription is past due. Update billing to edit scenarios."
+    : undefined;
   const rateMeta = inputs.rateMeta ?? DEFAULT_RATE_META;
 
   // Check if the mortgage rate is locked (for purchase/refinance)
@@ -363,6 +378,13 @@ export function ScenarioEditor({
           </div>
 
           {/* Actions - minimal */}
+          {(atScenarioLimit || readOnlyAccount) && (
+            <p className="text-sm text-muted-foreground">
+              {readOnlyAccount
+                ? "Scenarios are read-only until billing is updated. You may still delete scenarios."
+                : "You have reached the free plan limit of 3 saved scenarios. Upgrade to save more."}
+            </p>
+          )}
           <div className="flex flex-wrap items-center gap-2">
             {isEditing ? (
               <>
@@ -370,8 +392,8 @@ export function ScenarioEditor({
                   onClick={onSave} 
                   size="sm" 
                   className="gap-1.5"
-                  disabled={!isDirty}
-                  title="Save current changes"
+                  disabled={!isDirty || !canUpdateScenario}
+                  title={readOnlyTitle ?? "Save current changes"}
                 >
                   <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
                   Save scenario
@@ -384,15 +406,15 @@ export function ScenarioEditor({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={handleOpenSaveAs}>
+                    <DropdownMenuItem onClick={handleOpenSaveAs} disabled={!canSave} title={limitTitle}>
                       <FilePlus className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
                       Save as new
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={onDuplicate}>
+                    <DropdownMenuItem onClick={onDuplicate} disabled={!canDuplicateScenario} title={limitTitle}>
                       <Copy className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
                       Duplicate
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleStartRename}>
+                    <DropdownMenuItem onClick={handleStartRename} disabled={!canUpdateScenario} title={readOnlyTitle}>
                       <Pencil className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
                       Rename
                     </DropdownMenuItem>
@@ -416,7 +438,13 @@ export function ScenarioEditor({
               </>
             ) : (
               <>
-                <Button onClick={onSave} size="sm" className="gap-1.5">
+                <Button
+                  onClick={onSave}
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={!canSave}
+                  title={limitTitle}
+                >
                   <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
                   Save scenario
                 </Button>
@@ -484,7 +512,7 @@ export function ScenarioEditor({
                   onSaveAsNew(saveAsName.trim());
                 }
               }} 
-              disabled={!saveAsName.trim()}
+              disabled={!saveAsName.trim() || !canSave}
             >
               Save
             </Button>

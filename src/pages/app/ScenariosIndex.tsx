@@ -30,6 +30,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageShell } from "@/components/layout/PageShell";
 import { useScenarios } from "@/hooks/useScenarios";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { ScenarioCard } from "@/components/scenarios/ScenarioCard";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -124,6 +125,10 @@ export default function ScenariosIndex() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { scenarios, isLoaded, duplicateScenario, deleteScenario } = useScenarios();
+  const { canSave, canDuplicateScenario, atScenarioLimit, entitlementStatus } = useCapabilities();
+  const limitTitle = atScenarioLimit
+    ? "Free plan limit reached (3 saved scenarios)."
+    : undefined;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [scenarioToDelete, setScenarioToDelete] = useState<ScenarioData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -199,7 +204,7 @@ export default function ScenariosIndex() {
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
             Create your first scenario to model a purchase or refinance.
           </p>
-          <Button asChild className="mt-6">
+          <Button asChild className="mt-6" disabled={!canSave}>
             <Link to="/app/calculator">
               <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
               New scenario
@@ -211,12 +216,19 @@ export default function ScenariosIndex() {
   }
 
   const desktopActions = !isMobile ? (
-    <Button asChild variant="outline">
-      <Link to="/app/calculator">
+    canSave ? (
+      <Button asChild variant="outline">
+        <Link to="/app/calculator">
+          <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
+          New scenario
+        </Link>
+      </Button>
+    ) : (
+      <Button variant="outline" disabled title={limitTitle}>
         <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
         New scenario
-      </Link>
-    </Button>
+      </Button>
+    )
   ) : undefined;
 
   return (
@@ -225,6 +237,16 @@ export default function ScenariosIndex() {
       subtitle="Saved mortgage models for comparison and export."
       actions={desktopActions}
     >
+      {entitlementStatus === "read_only" && (
+        <p className="mb-4 text-sm text-muted-foreground">
+          Your subscription is past due. Scenarios are read-only until billing is updated. You may still delete scenarios.
+        </p>
+      )}
+      {atScenarioLimit && entitlementStatus === "free" && (
+        <p className="mb-4 text-sm text-muted-foreground">
+          You have reached the free plan limit of 3 saved scenarios.
+        </p>
+      )}
       {/* Mobile: Card-based layout */}
       {isMobile ? (
         <div className="space-y-3 pb-20">
@@ -296,7 +318,10 @@ export default function ScenariosIndex() {
                             <FileEdit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(scenario); }}>
+                          <DropdownMenuItem
+                            onClick={(e) => { e.stopPropagation(); handleDuplicate(scenario); }}
+                            disabled={!canDuplicateScenario}
+                          >
                             <Copy className="mr-2 h-4 w-4" />
                             Duplicate
                           </DropdownMenuItem>
@@ -320,7 +345,7 @@ export default function ScenariosIndex() {
       )}
 
       {/* Mobile: Floating action button */}
-      {isMobile && (
+      {isMobile && canSave && (
         <div className="fixed bottom-6 right-4 z-50">
           <Link
             to="/app/calculator"

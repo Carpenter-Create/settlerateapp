@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useScenarios } from "@/hooks/useScenarios";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/mortgage";
 import { ScenarioExportButton } from "@/components/export/ExportButtons";
@@ -131,6 +132,8 @@ export default function ScenarioDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { scenarios, isLoaded, duplicateScenario, deleteScenario } = useScenarios();
+  const { canDuplicateScenario, canUpdateScenario, entitlementStatus } = useCapabilities();
+  const readOnlyAccount = entitlementStatus === "read_only";
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -221,6 +224,7 @@ export default function ScenarioDetail() {
               size="sm"
               onClick={handleDuplicate}
               className="text-muted-foreground"
+              disabled={!canDuplicateScenario}
             >
               <Copy className="mr-2 h-4 w-4" />
               Duplicate
@@ -251,14 +255,26 @@ export default function ScenarioDetail() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 pt-2">
-          <Button asChild className="rounded-md">
-            <Link to={`/app/calculator?scenario=${scenario.id}`}>
+          {canUpdateScenario ? (
+            <Button asChild className="rounded-md">
+              <Link to={`/app/calculator?scenario=${scenario.id}`}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit scenario
+              </Link>
+            </Button>
+          ) : (
+            <Button className="rounded-md" disabled title={readOnlyAccount ? "Read-only until billing is updated" : undefined}>
               <Pencil className="mr-2 h-4 w-4" />
               Edit scenario
-            </Link>
-          </Button>
+            </Button>
+          )}
           <ScenarioExportButton scenario={scenario} />
         </div>
+        {readOnlyAccount && (
+          <p className="text-sm text-muted-foreground">
+            This scenario is read-only until billing is updated. You may still delete it.
+          </p>
+        )}
       </div>
 
       <Separator />
@@ -364,7 +380,7 @@ export default function ScenarioDetail() {
 
       {/* Mobile actions */}
       <div className="flex flex-col gap-2 pt-4 md:hidden">
-        <Button variant="outline" onClick={handleDuplicate} className="w-full">
+        <Button variant="outline" onClick={handleDuplicate} className="w-full" disabled={!canDuplicateScenario}>
           <Copy className="mr-2 h-4 w-4" />
           Duplicate scenario
         </Button>
