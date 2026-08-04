@@ -1,10 +1,11 @@
 # SettleRate Financial Benchmark Baseline
 
-**Branch:** `feat/phase2-calculator-semantics`  
-**Phase:** 2 — Financial-engine v2.0.0 calculator semantics (closeout)  
-**Calculator version:** 2.0.0 (`CALCULATOR_VERSION` in `src/lib/scenarioContract.ts`)  
+**Branch:** `feat/phase3-scenario-persistence`  
+**Phase:** 3 — Scenario persistence alignment (dual snapshots + `calculateScenario` dispatch)  
+**Calculator version:** 2.0.0 (`CALCULATOR_VERSION` in `src/lib/calculatorVersion.ts`)  
+**Schema version:** 2 (dual-snapshot persistence shape)  
 **Baseline date:** 2026-08-03  
-**Status:** CI green — lint (0 errors), typecheck, verify:benchmarks, test:run (**33 passed | 4 todo**), build all pass
+**Status:** CI green on branch — lint (0 errors), typecheck, verify:benchmarks, test:run (**47 passed | 2 todo**), build all pass
 
 ---
 
@@ -25,15 +26,14 @@ Reproducible script; does **not** import production calculator code.
 | BM-R05 | — | Omission rule asserted in Vitest | — | No |
 | BM-R06 | — | Source grep asserted in Vitest (no `baseRate + 1.0`) | — | No |
 | BM-M01 | — | Migration field check (non-monetary) | — | N/A |
-| BM-V01 | — | Specification-only contract (Phase 3) | — | N/A |
+| BM-V01 | — | Dual-snapshot + lazy recompute asserted in Vitest | — | N/A |
 
 Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P01, P03, P05, R01, R04, H02, A02).
 
 | Category | Count |
 |----------|-------|
-| Active Vitest tests passed | 33 |
-| Remaining `it.todo` | 4 |
 | Independently verified (`verify:benchmarks`) | 7 |
+| Remaining `it.todo` | 2 (BM-C01, BM-C02 — Phase 5) |
 | **Total benchmark fixtures** | **16** |
 
 ---
@@ -42,12 +42,12 @@ Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P0
 
 | ID | Description | Phase | Status on this branch |
 |----|-------------|-------|------------------------|
-| DEF-001 | Persistence still uses `calculateMortgage` for all modes; dual snapshots absent; comparison still ranks by `totalCost` | Phase 3 (store) / Phase 5 (winner) | Engine metrics exposed; store/winner deferred |
+| DEF-001 | Persistence used `calculateMortgage` for all modes; dual snapshots absent; comparison still ranks by `totalCost` | Phase 3 (store) / Phase 5 (winner) | **Store dispatch resolved** — dual snapshots + `calculateScenario`; winner still Phase 5 |
 | DEF-003 | Comparison winner uses `totalCost` / all-in monthly instead of financing cost | Phase 5 | Open |
-| DEF-007 | `oneTimePrincipalPayment` ignored in amortization | Phase 2 | **Resolved** — applied at month 1 before first payment |
-| DEF-008 | `ScenarioAssumptions` stored but not applied | Phase 2 | **Resolved** — PMI threshold and integrity paths apply assumptions |
-| DEF-009 | Synthetic break-even rate `baseRate + 1.0%`; missing current-loan inputs | Phase 2 | **Resolved** — explicit inputs; synthetic rate removed |
-| DEF-010 | HELOC non-interest-only draw not blocked | Phase 2 | **Resolved** — engine rejects; UI offers no non-IO control |
+| DEF-007 | `oneTimePrincipalPayment` ignored in amortization | Phase 2 | **Resolved** |
+| DEF-008 | `ScenarioAssumptions` stored but not applied | Phase 2 | **Resolved** |
+| DEF-009 | Synthetic break-even rate `baseRate + 1.0%`; missing current-loan inputs | Phase 2 | **Resolved** |
+| DEF-010 | HELOC non-interest-only draw not blocked | Phase 2 | **Resolved** |
 
 ---
 
@@ -76,74 +76,73 @@ Run: `npm run verify:benchmarks` — **7** independently verified benchmarks (P0
 | ID | Type | Status | Target behavior | Current observed behavior | Defect | Phase | Verification |
 |----|------|--------|-----------------|---------------------------|--------|-------|--------------|
 | **BM-H02** | heloc | **active** | IO draw capped at limit; end draw $50k; interest total ≈ $87,961.71 | `calculateHeloc` matches | — | — | ✅ `verify:benchmarks` |
-| **BM-H04** | heloc | **active** (engine) | Interest-only draw only | `calculateHeloc` throws if `interestOnlyDraw=false`; `HelocInputsPanel` does not expose a non-IO control; no UI redesign required | DEF-010 | Phase 2 | ✅ Vitest engine rejection |
+| **BM-H04** | heloc | **active** (engine) | Interest-only draw only | Engine rejects non-IO; UI has no non-IO control | DEF-010 | Phase 2 | ✅ Vitest |
 
 ### Assumption
 
 | ID | Type | Status | Target behavior | Current observed behavior | Defect | Phase | Verification |
 |----|------|--------|-----------------|---------------------------|--------|-------|--------------|
 | **BM-A02** | assumption | **active** | Second-loan gap financing matches fixture | `calculateAssumption` matches; `calculateScenario` dispatches | — | — | ✅ `verify:benchmarks` |
-| *(BM-A02 persist)* | assumption | **pending** | Save/load uses assumption results | Store still uses `calculateMortgage` | DEF-001 | Phase 3 | Deferred |
+| *(BM-A02 persist)* | assumption | **active** | Save/load uses assumption results | Round-trip via dual snapshots + `calculateScenario` | DEF-001 | Phase 3 | ✅ Vitest persistence |
 
 ### Cross-type comparison
 
 | ID | Type | Status | Target behavior | Current observed behavior | Defect | Phase | Verification |
 |----|------|--------|-----------------|---------------------------|--------|-------|--------------|
-| **BM-C01** | cross | **pending** | Rank by `financingCostOverHorizon` across P01/H02/A02 | Still ranks by `totalCost` | DEF-001, DEF-003 | Phase 5 | ✅ Expected values in fixtures |
+| **BM-C01** | cross | **pending** | Rank by `financingCostOverHorizon` across P01/H02/A02 | Still ranks by `totalCost` | DEF-003 | Phase 5 | ✅ Expected values in fixtures |
 | **BM-C02** | cross | **pending** | All-in monthly is secondary tie-breaker only | Winner may still use all-in / totalCost | DEF-003 | Phase 5 | Specification |
-| **BM-C03** | cross | **active** | `principalReductionOverHorizon` separate from financing cost | Exposed on mortgage + unified results | DEF-001 (metric) | Phase 2 | ✅ Vitest |
+| **BM-C03** | cross | **active** | `principalReductionOverHorizon` separate from financing cost | Exposed on mortgage + unified results | — | Phase 2 | ✅ Vitest |
 
 ### Migration and versioning
 
 | ID | Type | Status | Target behavior | Current observed behavior | Defect | Phase | Verification |
 |----|------|--------|-----------------|---------------------------|--------|-------|--------------|
-| **BM-M01** | migration | **active** | Legacy flat `inputs` → canonical namespaced v1 | `migrateScenario` preserves values | — | — | ✅ Pipeline inspection |
-| **BM-V01** | versioning | **specification-only** | Dual snapshots; lazy recompute; `calculatedAt` metadata | Single results blob; overwrite on load | DEF-001 | Phase 3 | Contract documented; no API yet |
+| **BM-M01** | migration | **active** | Legacy flat `inputs` → canonical namespaced schema (now v2) | `migrateScenario` preserves values through v0→v1→v2 | — | — | ✅ Pipeline inspection |
+| **BM-V01** | versioning | **active** | Dual snapshots; lazy recompute; `calculatedAt` metadata | `originalSnapshot` preserved; active updates on recompute | DEF-001 | Phase 3 | ✅ Vitest + `docs/SCENARIO_PERSISTENCE.md` |
 
 ---
 
-## Active tests (passing — 33)
+## Active tests
 
 | Test file | Benchmark / topic |
 |-----------|-------------------|
-| `mortgage.benchmark.test.ts` | BM-P01, BM-P03 (×2), BM-R01; BM-P05; financing cost; frozen PMI; legacy `totalCost` |
+| `mortgage.benchmark.test.ts` | BM-P01, BM-P03, BM-R01; BM-P05; financing cost; frozen PMI; legacy `totalCost` |
 | `heloc.benchmark.test.ts` | BM-H02; BM-H04 engine rejection |
 | `assumption.benchmark.test.ts` | BM-A02 |
 | `scenarioCalculator.benchmark.test.ts` | BM-P01/H02/A02 dispatch + financing fields; BM-C03; unified `totalCost` baseline |
 | `scenarioMigrations.test.ts` | BM-M01 |
+| `scenarioPersistence.test.ts` | DEF-001 dispatch; BM-V01 dual snapshots; round trips; legacy hydration; serialization parity |
 | `financingCost.composition.test.ts` | BM-P06, BM-P03 MI, BM-C03, BM-R04–R06, frozen assumptions in sensitivity |
 | `scenarioInputSerialization.test.ts` | Create/update Supabase persistence parity |
 
 ---
 
-## Remaining pending tests (`it.todo` — 4)
+## Remaining pending tests (`it.todo` — 2)
 
 | Benchmark / defect | Exact todo summary | Phase |
 |--------------------|--------------------|-------|
 | **BM-C01** | Comparison normalization — `financingCostOverHorizon` ranks BM-P01 lowest among P01/H02/A02 | Phase 5 |
 | **BM-C02** | All-in monthly secondary — winner must not be determined by `allInMonthlyHousingPayment` alone | Phase 5 |
-| **DEF-001 store dispatch** | `scenarioStore` / `scenarioContract` must use `calculateScenario` — save/load still call `calculateMortgage` for all modes | Phase 3 |
-| **BM-V01** | Original snapshot preserved after lazy recompute — dual-snapshot persistence | Phase 3 |
 
 ---
 
 ## Unresolved expected values
 
-None for Phase 2. Remaining fixtures for Phase 3/5 are specification-only or deferred (BM-V01, BM-C01/C02 winner logic).
+None for Phase 3 persistence. Phase 5 comparison winner fixtures remain specification-only until that phase.
 
 ---
 
 ## Methodology vs implementation gaps
 
-| Topic | Approved (2.0.0) | Current (2.0.0 engine on this branch) | Deferred |
-|-------|------------------|----------------------------------------|----------|
+| Topic | Approved | Current on this branch | Deferred |
+|-------|----------|------------------------|----------|
 | Financing cost metric | `financingCostOverHorizon` | Exposed on mortgage + unified results | Comparison UI winner (Phase 5) |
 | Principal | Reported separately | `principalReductionOverHorizon` exposed | Export labeling (later) |
 | Break-even | Explicit current rate + term | Implemented; synthetic rate removed | — |
 | HELOC draw | Interest-only only | Engine rejects non-IO; UI has no non-IO control | Amortizing draw math |
 | Assumptions | Frozen at save, applied | Applied in calc / sensitivity / integrity | — |
-| Calculator version | 2.0.0 | `CALCULATOR_VERSION = "2.0.0"` | Dual-snapshot persistence (Phase 3) |
-| Persistence | Dual snapshots, `calculateScenario` dispatch | Still mortgage-shaped save/load | Phase 3 |
+| Calculator version | 2.0.0 | `CALCULATOR_VERSION = "2.0.0"` | — |
+| Persistence | Dual snapshots, `calculateScenario` dispatch | Implemented (`docs/SCENARIO_PERSISTENCE.md`) | Broad schema redesign |
 | Comparison winner | Financing cost primary | Still `totalCost` in `comparisonSummary` | Phase 5 |
 | Save limits / income context | Deferred | Unchanged | — |
 
@@ -166,6 +165,7 @@ Full-repository lint with strict rules restored. **Ignored paths:** `dist` only.
 ## Related files
 
 - `docs/FINANCIAL_METHODOLOGY.md` — approved vs current vs deferred semantics
+- `docs/SCENARIO_PERSISTENCE.md` — dual-snapshot persistence contract
 - `src/lib/__tests__/fixtures/` — golden JSON fixtures
 - `vitest.config.ts` — Node environment, `@/` alias
 - `AGENTS.md` / `.cursor/rules/` — cross-agent governance
@@ -174,12 +174,11 @@ Full-repository lint with strict rules restored. **Ignored paths:** `dist` only.
 
 ## Confirmation: out-of-scope items unchanged
 
-- Supabase migrations — not modified  
+- Supabase DDL migrations — not modified  
 - Supabase edge functions — not modified  
 - Export pipelines — not modified  
 - Routes — not modified  
 - Approved copy — not modified  
 - Visual redesign — not modified  
 - Comparison winner logic — not modified (Phase 5)  
-- Dual-snapshot persistence — not modified (Phase 3)  
 - AWS / Next.js migration — not started  
