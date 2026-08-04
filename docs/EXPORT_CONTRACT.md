@@ -104,12 +104,13 @@ Phase 4 client export alignment ships with the web app deploy. **Server PDF alig
 
 ### Smoke-test procedure (post-deploy)
 
-1. Authenticate as a user who can export (Professional Review / admin per product rules).
-2. Open a purchase scenario saved under schema v2 dual snapshots; export PDF via the in-app export flow (or `GET /functions/v1/generate-pdf?type=scenario&id=<id>` with `Authorization`).
+1. Authenticate as the dedicated smoke account (see post-deployment cleanup / future procedure below) — **not** a customer account.
+2. Use a purchase scenario with schema v2 dual snapshots owned by the smoke user (or an ephemeral fixture); export PDF via `GET /functions/v1/generate-pdf?type=scenario&id=<id>` with `Authorization`.
 3. Confirm PDF meta shows calculator version and “Active snapshot”; Cost section shows **Financing cost over modeled term** and **Principal reduction** (not legacy “Total payments over term” as primary).
 4. Repeat for HELOC: no fabricated mortgage P&I/escrow rows; financing cost present.
 5. Optional: `?snapshot=original` on a stale scenario returns historical original figures and original calculator version.
 6. Comparison export: financing cost / principal reduction columns present; winner narrative may still say legacy total cost until Phase 5.
+7. Delete any ephemeral smoke scenarios; confirm zero `PHASE4_SMOKE_%` / `EDGE_SMOKE_%` rows remain.
 
 ### Rollback procedure
 
@@ -119,7 +120,31 @@ Phase 4 client export alignment ships with the web app deploy. **Server PDF alig
 
 ### Deployment status for Phase 4 PR
 
-Deployment is **out of scope for automated PR closeout** unless an authorized operator runs the command above. Treat “edge deploy of `generate-pdf`” as a **remaining blocker for production server PDF correctness** until completed.
+`generate-pdf` **version 22** was deployed to project `vpcxzbaxhpucvevnkalo` on **2026-08-04 03:46:54 UTC**. Authenticated smoke tests against ephemeral schema-v2 dual-snapshot fixtures passed.
+
+### Post-deployment cleanup (2026-08-04)
+
+Smoke testing temporarily used the Supabase Admin API (`auth.admin.updateUserById` password set) to obtain user JWTs. That **permanently changed** passwords for existing accounts. Remediation:
+
+| Item | Detail |
+|------|--------|
+| Affected accounts | `d7ed78d7-69b8-43c9-bb54-1eb936a5a993` (`adam@carpentercreate.com`) — purchase smoke + ephemeral fixture owner; `4dec5d3b-4d9f-4047-9ef1-603d23c3e856` (`ashleypremierhome@gmail.com`) — HELOC scenario owner on first smoke |
+| Other accounts modified? | **No** — only these two Admin password updates during deploy smoke |
+| Temporary credentials | **Invalid** — smoke passwords were overwritten with discarded random secrets; values were never persisted in the repo |
+| Password recovery | Normal `resetPasswordForEmail` was triggered for both addresses (check inbox / spam). Operators may also use Supabase Dashboard → Authentication → user → Send password recovery |
+| Session revocation | GoTrue admin global logout endpoint returned 404 on this project; treat short-lived access JWTs as expiring naturally (typically ≤1h). Refresh via password is blocked until recovery completes |
+| Ephemeral smoke rows | `PHASE4_SMOKE_%` scenarios **deleted**; confirmed **0 remaining** |
+| Dedicated future test account | `settlerate.edge.smoke@carpentercreate.com` (`88effd0c-8914-44fb-9d8e-926eef697b53`) — non-production; metadata marks smoke-only. Bootstrap password rotated and discarded |
+
+#### Future authenticated edge-function smoke procedure
+
+1. Use **only** `settlerate.edge.smoke@carpentercreate.com` (or a similarly dedicated non-customer account). **Never** reset a customer/owner password for JWT acquisition.
+2. Obtain a JWT without mutating other users, preferred options:
+   - Supabase Admin `generateLink` (`magiclink` / `recovery`) for the smoke account, exchange once locally; or
+   - Store a smoke-account password in an operator secret manager (not in git) and `signInWithPassword`.
+3. Insert ephemeral schema-v2 dual-snapshot scenarios owned by the smoke user; delete them after the run (`name` prefix `PHASE4_SMOKE_` or `EDGE_SMOKE_`).
+4. Call `generate-pdf` with `Authorization: Bearer <smoke-user-jwt>`.
+5. Confirm zero smoke rows remain after cleanup.
 
 ## Legacy compatibility
 
