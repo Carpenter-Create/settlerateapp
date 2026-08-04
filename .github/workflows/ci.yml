@@ -34,5 +34,12 @@ jobs:
       - name: Test
         run: npm run test:run
 
+      - name: Entitlement SQL authority tests
+        run: npm run test:entitlement-sql
+
+      - name: Cleanup entitlement test container
+        if: always()
+        run: docker rm -f settlerate-entitlement-test 2>/dev/null || true
+
       - name: Build
         run: npm run build
