@@ -11,6 +11,18 @@
 - Stripe webhook endpoint can be briefly unavailable during ordered deploy
 - Dedicated smoke-test account (non-admin) available
 
+## Legacy `public.subscriptions` dependency
+
+The three Phase 6 entitlement-authority migrations (`20260804120000`, `20260804130000`, `20260804140000`) do **not** require `public.subscriptions`. Entitlement evaluation, RLS enforcement, webhook idempotency, and export ownership all use `public.billing` and related Phase 6 objects.
+
+`public.subscriptions` is a **legacy, best-effort** table used by older sync paths. The local SQL harness stubs it in `supabase/tests/00_auth_stub.sql` because an earlier migration in the repository chain references it without creating the table on a greenfield database.
+
+Before production migration apply:
+
+1. Confirm whether `public.subscriptions` already exists in the target project.
+2. If applying the **complete** repository migration chain to a greenfield database, resolve the pre-existing subscriptions-table gap (stub, backfill, or skip the legacy migration) before relying on legacy sync.
+3. Do not assume legacy subscription sync is authoritative; `public.billing` remains the entitlement source of truth after Phase 6.
+
 ## Migration order (apply in sequence)
 
 1. `20260804120000_phase6_entitlement_hardening.sql`

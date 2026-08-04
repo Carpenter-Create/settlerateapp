@@ -94,6 +94,7 @@ async function applyMigrations(client) {
     GRANT USAGE ON SCHEMA test TO authenticated, service_role;
     GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA test TO authenticated, service_role;
     REVOKE ALL ON FUNCTION public.log_admin_entitlement_bypass(uuid, text, text, jsonb) FROM authenticated;
+    ALTER TABLE public.scenarios FORCE ROW LEVEL SECURITY;
   `);
 }
 
@@ -162,9 +163,15 @@ async function runParityTests(client) {
   const { evaluateEntitlement, isFeatureAllowed } = await import(
     join(root, "src/lib/entitlementContract.ts")
   );
+  const { resolveBillingRow, resolveEntitlementInput } = await import(
+    join(root, "src/lib/__fixtures__/resolveEntitlementCase.ts")
+  );
   const cases = JSON.parse(
     readFileSync(join(root, "src/lib/__fixtures__/entitlementCases.json"), "utf8")
   );
+
+  const { rows: nowRows } = await client.query(`SELECT now() AS n`);
+  const referenceNow = nowRows[0].n;
 
   for (const c of cases) {
     await client.query(`INSERT INTO auth.users (id, email) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [
@@ -178,7 +185,11 @@ async function runParityTests(client) {
         [c.userId]
       );
       await client.query(`DELETE FROM public.billing WHERE user_id = $1`, [c.userId]);
+    } else if (c.billing === null) {
+      await client.query(`DELETE FROM public.user_roles WHERE user_id = $1`, [c.userId]);
+      await client.query(`DELETE FROM public.billing WHERE user_id = $1`, [c.userId]);
     } else if (c.billing) {
+      const row = resolveBillingRow(c, referenceNow);
       await client.query(
         `INSERT INTO public.billing (user_id, subscription_status, price_id, current_period_end, cancel_at_period_end)
          VALUES ($1, $2, $3, $4, $5)
@@ -189,10 +200,10 @@ async function runParityTests(client) {
            cancel_at_period_end = EXCLUDED.cancel_at_period_end`,
         [
           c.userId,
-          c.billing.subscription_status,
-          c.billing.price_id,
-          c.billing.current_period_end,
-          c.billing.cancel_at_period_end ?? false,
+          row.subscription_status,
+          row.price_id,
+          row.current_period_end,
+          row.cancel_at_period_end,
         ]
       );
     }
@@ -202,14 +213,7 @@ async function runParityTests(client) {
     ]);
     const sqlDecision = rows[0].d;
 
-    const tsDecision = evaluateEntitlement({
-      stripeStatus: c.billing?.subscription_status ?? null,
-      priceId: c.billing?.price_id ?? null,
-      currentPeriodEndsAt: c.billing?.current_period_end ?? null,
-      cancelAtPeriodEnd: c.billing?.cancel_at_period_end ?? false,
-      isAdmin: c.isAdmin ?? false,
-      now: new Date(c.now),
-    });
+    const tsDecision = evaluateEntitlement(resolveEntitlementInput(c, referenceNow));
 
     for (const key of [
       "entitlementStatus",

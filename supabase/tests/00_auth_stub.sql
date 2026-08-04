@@ -116,6 +116,7 @@ GRANT SELECT ON auth.users TO authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, authenticated, service_role;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, authenticated, service_role;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO postgres, authenticated, service_role;
+GRANT authenticated TO authenticator;
 
 CREATE SCHEMA IF NOT EXISTS test;
 

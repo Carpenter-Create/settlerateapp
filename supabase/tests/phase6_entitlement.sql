@@ -10,6 +10,8 @@ DECLARE
   v_user_b uuid := 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
   v_scenario uuid;
   v_scenario_b uuid;
+  v_read_only_scenario uuid;
+  v_free_delete_scenario uuid;
   v_comparison uuid;
   v_decision jsonb;
   v_pro_price constant text := 'price_1Sod4a3ppKk8xETz9TzPFn8P';
@@ -96,6 +98,32 @@ BEGIN
   END;
   PERFORM test.reset_auth();
 
+  SELECT id INTO v_read_only_scenario
+  FROM public.scenarios
+  WHERE user_id = v_read_only AND name = 'RO1'
+  LIMIT 1;
+
+  PERFORM test.set_auth(v_read_only);
+  DELETE FROM public.scenarios WHERE id = v_read_only_scenario;
+  PERFORM test.assert_true(
+    'read_only delete allowed',
+    NOT EXISTS (SELECT 1 FROM public.scenarios WHERE id = v_read_only_scenario)
+  );
+  PERFORM test.reset_auth();
+
+  SELECT id INTO v_free_delete_scenario
+  FROM public.scenarios
+  WHERE user_id = v_free AND name = 'Seed 2'
+  LIMIT 1;
+
+  PERFORM test.set_auth(v_free);
+  DELETE FROM public.scenarios WHERE id = v_free_delete_scenario;
+  PERFORM test.assert_true(
+    'free delete allowed',
+    NOT EXISTS (SELECT 1 FROM public.scenarios WHERE id = v_free_delete_scenario)
+  );
+  PERFORM test.reset_auth();
+
   PERFORM test.set_auth(v_free);
   PERFORM test.assert_raises(
     'free user_comparisons insert denied',
@@ -152,6 +180,23 @@ BEGIN
     RAISE NOTICE 'ASSERT_OK: cross-user evaluate denied (%).', SQLERRM;
   END;
   PERFORM test.reset_auth();
+
+  EXECUTE 'SET SESSION AUTHORIZATION authenticator';
+  PERFORM set_config('request.jwt.claim.sub', v_free::text, false);
+  PERFORM set_config('request.jwt.claim.role', 'authenticated', false);
+  PERFORM set_config(
+    'request.jwt.claims',
+    json_build_object('sub', v_free, 'role', 'authenticated')::text,
+    false
+  );
+  SET ROLE authenticated;
+  DELETE FROM public.scenarios WHERE id = v_scenario_b;
+  RESET ROLE;
+  EXECUTE 'RESET SESSION AUTHORIZATION';
+  PERFORM test.assert_true(
+    'cross-user delete blocked by RLS',
+    EXISTS (SELECT 1 FROM public.scenarios WHERE id = v_scenario_b)
+  );
 
   PERFORM test.set_auth(v_free);
   BEGIN

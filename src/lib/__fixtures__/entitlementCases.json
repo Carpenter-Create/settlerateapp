@@ -5,11 +5,10 @@
     "billing": {
       "subscription_status": "active",
       "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
-      "current_period_end": "2026-09-01T00:00:00.000Z",
+      "periodEndOffsetDays": 30,
       "cancel_at_period_end": false
     },
     "isAdmin": false,
-    "now": "2026-08-04T12:00:00.000Z",
     "expect": {
       "entitlementStatus": "entitled",
       "planCode": "professional",
@@ -23,11 +22,10 @@
     "billing": {
       "subscription_status": "trialing",
       "price_id": "price_1Sod513ppKk8xETzwcEPnT51",
-      "current_period_end": "2026-09-01T00:00:00.000Z",
+      "periodEndOffsetDays": 30,
       "cancel_at_period_end": false
     },
     "isAdmin": false,
-    "now": "2026-08-04T12:00:00.000Z",
     "expect": {
       "entitlementStatus": "trial_entitled",
       "planCode": "professional",
@@ -41,11 +39,10 @@
     "billing": {
       "subscription_status": "past_due",
       "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
-      "current_period_end": "2026-09-01T00:00:00.000Z",
+      "periodEndOffsetDays": 30,
       "cancel_at_period_end": false
     },
     "isAdmin": false,
-    "now": "2026-08-04T12:00:00.000Z",
     "expect": {
       "entitlementStatus": "read_only",
       "planCode": "professional",
@@ -59,11 +56,10 @@
     "billing": {
       "subscription_status": "unpaid",
       "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
-      "current_period_end": "2026-09-01T00:00:00.000Z",
+      "periodEndOffsetDays": 30,
       "cancel_at_period_end": false
     },
     "isAdmin": false,
-    "now": "2026-08-04T12:00:00.000Z",
     "expect": {
       "entitlementStatus": "read_only",
       "planCode": "professional",
@@ -77,11 +73,90 @@
     "billing": {
       "subscription_status": "canceled",
       "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
-      "current_period_end": "2026-09-01T00:00:00.000Z",
+      "periodEndOffsetDays": 30,
       "cancel_at_period_end": false
     },
     "isAdmin": false,
-    "now": "2026-08-04T12:00:00.000Z",
+    "expect": {
+      "entitlementStatus": "free",
+      "planCode": "analytical",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "paused free",
+    "userId": "55555555-5555-5555-5555-555555555555",
+    "billing": {
+      "subscription_status": "paused",
+      "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
+      "periodEndOffsetDays": 30,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "free",
+      "planCode": "analytical",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "incomplete free",
+    "userId": "66666666-6666-6666-6666-666666666666",
+    "billing": {
+      "subscription_status": "incomplete",
+      "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
+      "periodEndOffsetDays": 30,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "free",
+      "planCode": "analytical",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "incomplete_expired free",
+    "userId": "77777777-7777-7777-7777-777777777777",
+    "billing": {
+      "subscription_status": "incomplete_expired",
+      "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
+      "periodEndOffsetDays": 30,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "free",
+      "planCode": "analytical",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "unknown price active maps free",
+    "userId": "88888888-8888-8888-8888-888888888888",
+    "billing": {
+      "subscription_status": "active",
+      "price_id": "price_unknown_not_allowlisted",
+      "periodEndOffsetDays": 30,
+      "cancel_at_period_end": false
+    },
+    "isAdmin": false,
+    "expect": {
+      "entitlementStatus": "free",
+      "planCode": "analytical",
+      "hasProfessionalAccess": false,
+      "cancelAtPeriodEnd": false
+    }
+  },
+  {
+    "label": "no billing row free",
+    "userId": "99999999-9999-9999-9999-999999999999",
+    "billing": null,
+    "isAdmin": false,
     "expect": {
       "entitlementStatus": "free",
       "planCode": "analytical",
@@ -95,11 +170,10 @@
     "billing": {
       "subscription_status": "active",
       "price_id": "price_1Sod5F3ppKk8xETzl9EDOR6I",
-      "current_period_end": "2026-09-01T00:00:00.000Z",
+      "periodEndOffsetDays": 30,
       "cancel_at_period_end": false
     },
     "isAdmin": false,
-    "now": "2026-08-04T12:00:00.000Z",
     "expect": {
       "entitlementStatus": "free",
       "planCode": "analytical",
@@ -113,11 +187,10 @@
     "billing": {
       "subscription_status": "active",
       "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
-      "current_period_end": null,
+      "periodEndOffsetDays": null,
       "cancel_at_period_end": false
     },
     "isAdmin": false,
-    "now": "2026-08-04T12:00:00.000Z",
     "expect": {
       "entitlementStatus": "free",
       "planCode": "analytical",
@@ -131,11 +204,10 @@
     "billing": {
       "subscription_status": "active",
       "price_id": "price_1Sod4a3ppKk8xETz9TzPFn8P",
-      "current_period_end": "2026-07-01T00:00:00.000Z",
+      "periodEndOffsetDays": -30,
       "cancel_at_period_end": true
     },
     "isAdmin": false,
-    "now": "2026-08-04T12:00:00.000Z",
     "expect": {
       "entitlementStatus": "free",
       "planCode": "analytical",
@@ -148,7 +220,6 @@
     "userId": "44444444-4444-4444-4444-444444444444",
     "billing": null,
     "isAdmin": true,
-    "now": "2026-08-04T12:00:00.000Z",
     "expect": {
       "entitlementStatus": "entitled",
       "planCode": "professional",
