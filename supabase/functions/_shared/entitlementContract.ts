@@ -44,13 +44,16 @@ export const PROFESSIONAL_TRIAL_DAYS = 7;
 
 /** Allowlisted Professional price IDs (server must reject others). */
 export const PROFESSIONAL_PRICE_IDS = [
-  "price_1Sod4a3ppKk8xETz9TzPFn8P", // monthly
-  "price_1Sod513ppKk8xETzwcEPnT51", // annual
+  "price_1U0k4DC2Fmi7ZUCbSniiEewZ", // monthly — lookup: settlerate_professional_monthly
+  "price_1U0kFVC2Fmi7ZUCb6g0mXIRC", // annual — lookup: settlerate_professional_annual
 ] as const;
 
-export const PROFESSIONAL_PRODUCT_IDS = [
-  "prod_TmBRSW3mqUk9l9",
-  "prod_TmBRGPUBjfB7DR", // legacy product id retained for mapping only
+export const PROFESSIONAL_PRODUCT_IDS = ["prod_V0lUMpnsvxSxP1"] as const;
+
+/** Deleted-account Professional price IDs — never grant features. */
+export const LEGACY_DELETED_PROFESSIONAL_PRICE_IDS = [
+  "price_1Sod4a3ppKk8xETz9TzPFn8P",
+  "price_1Sod513ppKk8xETzwcEPnT51",
 ] as const;
 
 /** Legacy Advisor Stripe IDs — never grant features. */

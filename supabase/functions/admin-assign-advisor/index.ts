@@ -18,7 +18,7 @@ serve(async (req) => {
 
   return new Response(
     JSON.stringify({
-      error: "Advisor plan removed. SettleRate supports Analytical and Professional only.",
+      error: "Advisor plan removed. SettleRate supports SettleRate Free and SettleRate Professional only.",
       code: "ADVISOR_PLAN_DEPRECATED",
     }),
     {

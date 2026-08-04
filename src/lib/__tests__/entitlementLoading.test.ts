@@ -11,7 +11,9 @@ import {
   unresolvedFeatureAccess,
 } from "@/lib/entitlementLoading";
 
-const PRO_PRICE = "price_1Sod4a3ppKk8xETz9TzPFn8P";
+import { PROFESSIONAL_PRICE_IDS } from "@/lib/entitlementContract";
+
+const PRO_PRICE = PROFESSIONAL_PRICE_IDS[0];
 const future = new Date("2026-12-01T00:00:00.000Z");
 
 function resolvedFeatures(

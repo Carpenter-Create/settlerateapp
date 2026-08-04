@@ -190,7 +190,7 @@ export default function AdminAccess() {
               
               <p className="mt-4 text-xs text-muted-foreground">
                 The user must have an existing account. Admin access is immediate and grants
-                full Professional Review access without billing.
+                full SettleRate Professional access without billing.
               </p>
             </CardContent>
           </Card>

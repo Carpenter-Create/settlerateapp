@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  PROFESSIONAL_PRICE_IDS,
   evaluateEntitlement,
   featureAccessFromDecision,
   resolvePlanCodeFromPrice,
@@ -13,7 +14,7 @@ import {
 import { canEditLockedRatesCapability } from "@/lib/adminLockedRateCapability";
 
 const advisorPrice = "price_1Sod5F3ppKk8xETzl9EDOR6I";
-const proPrice = "price_1Sod4a3ppKk8xETz9TzPFn8P";
+const proPrice = PROFESSIONAL_PRICE_IDS[0];
 const future = new Date("2026-12-01T00:00:00.000Z");
 
 describe("advisor product model removal", () => {
@@ -25,7 +26,7 @@ describe("advisor product model removal", () => {
     expect(resolvePlanCodeFromPrice(proPrice)).toBe("professional");
   });
 
-  it("maps legacy Advisor price to Analytical/free without Professional access", () => {
+  it("maps legacy Advisor price to analytical/free without Professional access", () => {
     const decision = evaluateEntitlement({
       stripeStatus: "active",
       priceId: advisorPrice,

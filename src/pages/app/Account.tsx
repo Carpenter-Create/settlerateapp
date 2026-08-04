@@ -241,7 +241,7 @@ export default function Account() {
                 className="rounded-sm"
                 onClick={() => setShowUpgradeModal(true)}
               >
-                Upgrade to Professional Access
+                Upgrade to SettleRate Professional
               </Button>
             )}
           </div>

@@ -9,12 +9,12 @@ Server enforcement is authoritative. Client gates mirror only.
 
 | Code | Display | Notes |
 |------|---------|-------|
-| `analytical` | Analytical (free) | Active free tier |
-| `professional` | Professional (paid) | Active paid tier |
+| `analytical` | SettleRate Free | Active free tier |
+| `professional` | SettleRate Professional (paid) | Active paid tier |
 
 Advisor is **not** an active tier. Legacy advisor Stripe price IDs and `user_roles.advisor` must not grant Professional features or admin authority.
 
-SettleRate supports two customer plans: **Analytical** and **Professional**. Administrative permissions are role-based and are not a billing tier.
+SettleRate supports two customer plans: **SettleRate Free** and **SettleRate Professional**. Administrative permissions are role-based and are not a billing tier.
 
 ## Entitlement statuses
 
@@ -23,7 +23,7 @@ SettleRate supports two customer plans: **Analytical** and **Professional**. Adm
 | `entitled` | Full Professional |
 | `trial_entitled` | Full Professional (Stripe `trialing`) |
 | `read_only` | Read + delete + billing portal; deny paid writes |
-| `free` | Analytical |
+| `free` | SettleRate Free |
 | `denied` | No product access (reserved) |
 
 ## Feature matrix
@@ -66,8 +66,10 @@ No custom grace period.
 
 Only these price IDs grant Professional:
 
-- `price_1Sod4a3ppKk8xETz9TzPFn8P` (monthly)
-- `price_1Sod513ppKk8xETzwcEPnT51` (annual)
+- `price_1U0k4DC2Fmi7ZUCbSniiEewZ` (monthly — lookup `settlerate_professional_monthly`)
+- `price_1U0kFVC2Fmi7ZUCb6g0mXIRC` (annual — lookup `settlerate_professional_annual`)
+
+Product: `prod_V0lUMpnsvxSxP1` (SettleRate Professional, sandbox account `acct_1U0isCC2Fmi7ZUCb`).
 
 Arbitrary client-supplied price IDs are rejected.
 

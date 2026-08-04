@@ -94,7 +94,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center">Professional Access</DialogTitle>
+          <DialogTitle className="text-center">SettleRate Professional</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
@@ -166,7 +166,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
             ) : isAnonymous ? (
               "Sign in to subscribe"
             ) : (
-              "Upgrade to Professional Access"
+              "Upgrade to SettleRate Professional"
             )}
           </Button>
 
