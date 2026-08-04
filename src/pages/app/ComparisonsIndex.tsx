@@ -55,6 +55,8 @@ import { RenameComparisonDialog } from "@/components/comparisons/RenameCompariso
 import { useScenarios } from "@/hooks/useScenarios";
 import { useComparisons, SavedComparison } from "@/hooks/useComparisons";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { resolveComparisonUpdateControl } from "@/lib/comparisonUpdateControl";
+import { cn } from "@/lib/utils";
 import { ScenarioData } from "@/lib/scenarioContract";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SwipeToDelete } from "@/components/mobile/SwipeToDelete";
@@ -351,7 +353,7 @@ interface MobileComparisonCardProps {
   comparison: SavedComparison;
   onView: () => void;
   onDelete: () => void;
-  onRename: () => void;
+  onRename?: () => void;
   isDeleting: boolean;
 }
 
@@ -386,12 +388,19 @@ export default function ComparisonsIndex() {
   const {
     isLoading: capsLoading,
     canSaveComparison,
+    canUpdateComparison,
     entitlementStatus,
+    isEntitlementPending,
     isAdmin,
   } = useCapabilities();
   const canCreateComparisons = canSaveComparison || isAdmin;
   const canViewComparisonsArea =
     canCreateComparisons || entitlementStatus === "read_only";
+  const renameControl = resolveComparisonUpdateControl({
+    canUpdateComparison,
+    isEntitlementPending,
+    entitlementStatus,
+  });
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [comparisonToDelete, setComparisonToDelete] = useState<SavedComparison | null>(null);
@@ -401,16 +410,17 @@ export default function ComparisonsIndex() {
 
   // Open rename dialog
   const openRenameDialog = (comparison: SavedComparison) => {
+    if (!renameControl.allowed) return;
     setComparisonToRename(comparison);
     setRenameDialogOpen(true);
   };
 
   // Rename handler
   const handleRename = useCallback(async (newName: string) => {
-    if (!comparisonToRename) return;
+    if (!renameControl.allowed || !comparisonToRename) return;
     await renameComparison({ id: comparisonToRename.id, name: newName });
     toast.success("Comparison renamed.");
-  }, [comparisonToRename, renameComparison]);
+  }, [comparisonToRename, renameComparison, renameControl.allowed]);
 
   // Sort scenarios by updated_at desc
   const sortedScenarios = [...scenarios].sort(
@@ -578,7 +588,7 @@ export default function ComparisonsIndex() {
                 comparison={comparison}
                 onView={() => navigate(`/app/comparisons/${comparison.id}`)}
                 onDelete={() => handleDeleteClick(comparison)}
-                onRename={() => openRenameDialog(comparison)}
+                onRename={renameControl.allowed ? () => openRenameDialog(comparison) : undefined}
                 isDeleting={isDeleting}
               />
             ))}
@@ -617,11 +627,20 @@ export default function ComparisonsIndex() {
                     >
                       <TableCell 
                         className="py-4 px-4"
-                        onClick={(e) => { e.stopPropagation(); openRenameDialog(comparison); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (renameControl.allowed) {
+                            openRenameDialog(comparison);
+                          }
+                        }}
                       >
                         <span 
-                          className="text-sm font-medium text-foreground cursor-pointer hover:text-muted-foreground transition-colors truncate block"
-                          title="Click to rename"
+                          className={cn(
+                            "text-sm font-medium text-foreground truncate block",
+                            renameControl.allowed &&
+                              "cursor-pointer hover:text-muted-foreground transition-colors"
+                          )}
+                          title={renameControl.allowed ? "Click to rename" : undefined}
                         >
                           {comparison.name}
                         </span>
@@ -663,6 +682,8 @@ export default function ComparisonsIndex() {
                                   e.stopPropagation(); 
                                   openRenameDialog(comparison);
                                 }}
+                                disabled={!renameControl.allowed}
+                                title={renameControl.title}
                               >
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Rename

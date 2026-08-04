@@ -6,6 +6,7 @@ import {
 } from "@/lib/entitlementContract";
 import {
   isAuthenticatedEntitlementPending,
+  isUsageRefreshPending,
   resolveEffectiveFeatureAccess,
   unresolvedFeatureAccess,
 } from "@/lib/entitlementLoading";
@@ -67,6 +68,35 @@ describe("entitlementLoading", () => {
     expect(flags.canViewIncomeContext).toBe(false);
     expect(flags.canModel).toBe(true);
     expect(flags.canCompareInSession).toBe(true);
+  });
+
+  it("marks usage refresh as pending only after initial success", () => {
+    expect(
+      isUsageRefreshPending({
+        hasUser: true,
+        isAnonymous: false,
+        isSubscriptionSuccess: true,
+        isSubscriptionFetching: true,
+      })
+    ).toBe(true);
+    expect(
+      isUsageRefreshPending({
+        hasUser: true,
+        isAnonymous: false,
+        isSubscriptionSuccess: false,
+        isSubscriptionFetching: true,
+      })
+    ).toBe(false);
+  });
+
+  it("resolved features stay available during usage refresh", () => {
+    const professional = resolvedFeatures("active", PRO_PRICE, 2);
+    const effective = resolveEffectiveFeatureAccess({
+      isEntitlementPending: false,
+      resolvedFeatures: professional,
+    });
+    expect(effective.canUpdateScenario).toBe(true);
+    expect(effective.canSaveScenario).toBe(true);
   });
 
   it("loading state cannot create, duplicate, or use paid features", () => {

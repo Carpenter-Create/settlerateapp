@@ -115,7 +115,10 @@ export function ScenarioEditor({
     canDuplicateScenario,
     atScenarioLimit,
     entitlementStatus,
+    isUsageRefreshPending,
   } = useCapabilities();
+  const canCreateScenario = canSave && !isUsageRefreshPending;
+  const canDuplicateNow = canDuplicateScenario && !isUsageRefreshPending;
   const readOnlyAccount = entitlementStatus === "read_only";
   const limitTitle = atScenarioLimit
     ? "Free plan limit reached (3 saved scenarios). Upgrade to save more."
@@ -402,11 +405,11 @@ export function ScenarioEditor({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={handleOpenSaveAs} disabled={!canSave} title={limitTitle}>
+                    <DropdownMenuItem onClick={handleOpenSaveAs} disabled={!canCreateScenario} title={limitTitle}>
                       <FilePlus className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
                       Save as new
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={onDuplicate} disabled={!canDuplicateScenario} title={limitTitle}>
+                    <DropdownMenuItem onClick={onDuplicate} disabled={!canDuplicateNow} title={limitTitle}>
                       <Copy className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
                       Duplicate
                     </DropdownMenuItem>
@@ -438,7 +441,7 @@ export function ScenarioEditor({
                   onClick={onSave}
                   size="sm"
                   className="gap-1.5"
-                  disabled={!canSave}
+                  disabled={!canCreateScenario}
                   title={limitTitle}
                 >
                   <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
@@ -508,7 +511,7 @@ export function ScenarioEditor({
                   onSaveAsNew(saveAsName.trim());
                 }
               }} 
-              disabled={!saveAsName.trim() || !canSave}
+              disabled={!saveAsName.trim() || !canCreateScenario}
             >
               Save
             </Button>

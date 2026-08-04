@@ -26,7 +26,10 @@ export function useCapabilities() {
     isAdminBypass,
     isEntitlementPending,
     isEntitlementResolved,
+    isUsageRefreshPending,
   } = useSubscription();
+
+  const isScenarioMutationBlocked = isEntitlementPending || isUsageRefreshPending;
 
   // Advisor role is retained for compatibility only — does not grant features
   const advisorQuery = useQuery({
@@ -64,6 +67,8 @@ export function useCapabilities() {
     isLoading,
     isEntitlementPending,
     isEntitlementResolved,
+    isUsageRefreshPending,
+    isScenarioMutationBlocked: isEntitlementPending || isUsageRefreshPending,
     realIsAdmin,
     isAdmin: realIsAdmin,
     isAdvisor: isAdvisorRole,
@@ -94,6 +99,7 @@ export function useCapabilities() {
     canCreateShare: features.canCreateShare,
     canUpdateScenario: features.canUpdateScenario,
     canDuplicateScenario: features.canDuplicateScenario,
+    canUpdateComparison: features.canSaveComparison,
     atScenarioLimit: features.atScenarioLimit,
     scenarioLimit: features.scenarioLimit,
     scenariosRemaining: features.scenariosRemaining,

@@ -37,6 +37,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { resolveNewScenarioControl } from "@/lib/newScenarioControl";
 import { resolveDuplicateScenarioControl } from "@/lib/duplicateScenarioControl";
+import { resolveScenarioEditControl } from "@/lib/scenarioEditControl";
 
 /**
  * Format relative time for display
@@ -127,20 +128,36 @@ export default function ScenariosIndex() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { scenarios, isLoaded, duplicateScenario, deleteScenario } = useScenarios();
-  const { canSave, canDuplicateScenario, atScenarioLimit, entitlementStatus, isEntitlementPending } =
-    useCapabilities();
-  const limitTitle = isEntitlementPending
+  const {
+    canSave,
+    canDuplicateScenario,
+    canUpdateScenario,
+    atScenarioLimit,
+    entitlementStatus,
+    isEntitlementPending,
+    isUsageRefreshPending,
+    isScenarioMutationBlocked,
+  } = useCapabilities();
+  const limitTitle = isScenarioMutationBlocked
     ? undefined
     : atScenarioLimit
       ? "Free plan limit reached (3 saved scenarios)."
       : entitlementStatus === "read_only"
         ? "Scenarios are read-only until billing is updated."
         : undefined;
-  const newScenarioControl = resolveNewScenarioControl(canSave, limitTitle);
+  const newScenarioControl = resolveNewScenarioControl(
+    canSave && !isUsageRefreshPending,
+    limitTitle
+  );
   const duplicateControl = resolveDuplicateScenarioControl({
     canDuplicateScenario,
-    isEntitlementPending,
+    isEntitlementPending: isScenarioMutationBlocked,
     atScenarioLimit,
+    entitlementStatus,
+  });
+  const editControl = resolveScenarioEditControl({
+    canUpdateScenario,
+    isEntitlementPending,
     entitlementStatus,
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -338,7 +355,16 @@ export default function ScenariosIndex() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/app/calculator?scenario=${scenario.id}`); }}>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (editControl.allowed) {
+                                navigate(`/app/calculator?scenario=${scenario.id}`);
+                              }
+                            }}
+                            disabled={!editControl.allowed}
+                            title={editControl.title}
+                          >
                             <FileEdit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>

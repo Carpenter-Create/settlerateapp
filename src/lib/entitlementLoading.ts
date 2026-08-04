@@ -33,6 +33,39 @@ export function isAuthenticatedEntitlementPending(options: {
   return options.isSubscriptionLoading || !options.isSubscriptionSuccess;
 }
 
+export function isUsageRefreshPending(options: {
+  hasUser: boolean;
+  isAnonymous: boolean;
+  isSubscriptionSuccess: boolean;
+  isSubscriptionFetching: boolean;
+}): boolean {
+  if (!options.hasUser || options.isAnonymous) return false;
+  return options.isSubscriptionSuccess && options.isSubscriptionFetching;
+}
+
+export function isEntitlementStatePending(options: {
+  hasUser: boolean;
+  isAnonymous: boolean;
+  isSubscriptionLoading: boolean;
+  isSubscriptionSuccess: boolean;
+  isSubscriptionFetching: boolean;
+}): boolean {
+  return (
+    isAuthenticatedEntitlementPending({
+      hasUser: options.hasUser,
+      isAnonymous: options.isAnonymous,
+      isSubscriptionLoading: options.isSubscriptionLoading,
+      isSubscriptionSuccess: options.isSubscriptionSuccess,
+    }) ||
+    isUsageRefreshPending({
+      hasUser: options.hasUser,
+      isAnonymous: options.isAnonymous,
+      isSubscriptionSuccess: options.isSubscriptionSuccess,
+      isSubscriptionFetching: options.isSubscriptionFetching,
+    })
+  );
+}
+
 export function resolveEffectiveFeatureAccess(options: {
   isEntitlementPending: boolean;
   resolvedFeatures: FeatureAccessFlags;

@@ -18,7 +18,9 @@ import {
   buildAnonymousEntitlementState,
   buildUnresolvedEntitlementState,
   isAuthenticatedEntitlementPending,
+  isUsageRefreshPending,
 } from "@/lib/entitlementLoading";
+import { subscriptionQueryKey } from "@/lib/entitlementUsageRefresh";
 
 interface CheckSubscriptionResponse {
   subscribed: boolean;
@@ -124,7 +126,7 @@ export function useSubscription() {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["subscription", user?.id],
+    queryKey: subscriptionQueryKey(user?.id),
     queryFn: async (): Promise<EntitlementState> => {
       if (!session?.access_token || isAnonymous) {
         return freeState();
@@ -139,12 +141,12 @@ export function useSubscription() {
 
   useEffect(() => {
     if (session?.access_token && !isAnonymous) {
-      queryClient.invalidateQueries({ queryKey: ["subscription", user?.id] });
+      queryClient.invalidateQueries({ queryKey: subscriptionQueryKey(user?.id) });
     }
   }, [session?.access_token, isAnonymous, user?.id, queryClient]);
 
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["subscription", user?.id] });
+    queryClient.invalidateQueries({ queryKey: subscriptionQueryKey(user?.id) });
   }, [queryClient, user?.id]);
 
   const isEntitlementPending = isAuthenticatedEntitlementPending({
@@ -152,6 +154,13 @@ export function useSubscription() {
     isAnonymous,
     isSubscriptionLoading: query.isLoading,
     isSubscriptionSuccess: query.isSuccess,
+  });
+
+  const isUsageRefreshPendingFlag = isUsageRefreshPending({
+    hasUser: Boolean(user),
+    isAnonymous,
+    isSubscriptionSuccess: query.isSuccess,
+    isSubscriptionFetching: query.isFetching,
   });
 
   const state = query.data ?? (isEntitlementPending ? unresolvedState() : freeState());
@@ -174,6 +183,7 @@ export function useSubscription() {
     featureAccess,
     isEntitlementResolved,
     isEntitlementPending,
+    isUsageRefreshPending: isUsageRefreshPendingFlag,
     refresh,
   };
 }

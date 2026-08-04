@@ -43,7 +43,8 @@ export function MortgageCalculator() {
   } = useActiveScenario(scenarioId);
 
   const { scenarios, deleteScenario, updateScenario, createScenario } = useScenarios();
-  const { canSave } = useCapabilities();
+  const { canSave, isUsageRefreshPending } = useCapabilities();
+  const canCreateScenario = canSave && !isUsageRefreshPending;
 
   const [showGuidedStart, setShowGuidedStart] = useState(false);
   const [hasCheckedAutoOpen, setHasCheckedAutoOpen] = useState(false);
@@ -71,7 +72,7 @@ export function MortgageCalculator() {
   }, []);
 
   const handleGuidedStartComplete = useCallback(async (guidedInputs: MortgageInputs, name: string) => {
-    if (!canSave) {
+    if (!canCreateScenario) {
       toast.error("Cannot save more scenarios on your current plan.");
       return;
     }
@@ -87,7 +88,7 @@ export function MortgageCalculator() {
     } catch (error) {
       toast(ERROR_COPY.invalidInputs);
     }
-  }, [canSave, createScenario, navigateToScenario]);
+  }, [canCreateScenario, createScenario, navigateToScenario]);
 
   const handleOpenGuidedStart = useCallback(() => {
     setShowGuidedStart(true);
