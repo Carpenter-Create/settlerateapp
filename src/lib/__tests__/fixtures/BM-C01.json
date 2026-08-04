@@ -2,18 +2,21 @@
   "id": "BM-C01",
   "description": "Cross-type comparison normalization uses financing cost as primary metric",
   "scenarioType": "cross-type",
-  "status": "pending-v2",
+  "status": "active",
   "calculatorVersionTarget": "2.0.0",
   "scenarios": ["BM-P01", "BM-H02", "BM-A02"],
   "expected": {
     "primaryRankingMetric": "financingCostOverHorizon",
-    "lowestFinancingCostId": "BM-P01"
+    "lowestFinancingCostId": "BM-H02",
+    "comparisonHorizonMonths": 360,
+    "excludedScenarioIds": ["BM-A02"],
+    "exclusionReason": "horizon_mismatch"
   },
   "verification": {
-    "method": "Independent financing costs: P01≈459160, H02≈87962, A02≈136290; purchase lowest",
+    "method": "Independent financing costs: P01≈459160 (360 mo), H02≈87962 (360 mo), A02≈167236 (300 mo). Shared-horizon winner is H02; A02 excluded for horizon mismatch. Prior fixture incorrectly listed P01 as lowest.",
     "verificationDate": "2026-08-03"
   },
   "defectIds": ["DEF-001", "DEF-003"],
   "remediationPhase": "Phase 5",
-  "currentBehaviorNotes": "calculateScenario exists but persistence/comparison layers use calculateMortgage results."
+  "currentBehaviorNotes": "Canonical comparison reads activeSnapshot financingCostOverHorizon; does not recalculate."
 }
