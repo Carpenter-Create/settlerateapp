@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { handleCustomerPortalRequest } from "./handler.ts";
+import { stripeCustomerMetadataSearchQuery } from "../_shared/stripeCustomerResolve.ts";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -57,6 +58,20 @@ serve(async (req) => {
         .eq("user_id", userId)
         .maybeSingle();
       return billing?.stripe_customer_id ?? null;
+    },
+    searchCustomersByUserId: async (userId) => {
+      const result = await stripe.customers.search({
+        query: stripeCustomerMetadataSearchQuery(userId),
+        limit: 100,
+      });
+      return result.data;
+    },
+    upsertBillingCustomerId: async (userId, customerId) => {
+      const { error } = await supabaseClient.from("billing").upsert(
+        { user_id: userId, stripe_customer_id: customerId },
+        { onConflict: "user_id" }
+      );
+      if (error) throw new Error(`Failed to repair billing profile: ${error.message}`);
     },
     createPortalSession: async (customerId, returnUrl) => {
       logStep("Found Stripe customer", { customerId });

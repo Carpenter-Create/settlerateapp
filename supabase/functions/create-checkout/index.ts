@@ -13,6 +13,10 @@ import {
   checkoutIdempotencyKey,
   stripeSubscriptionsBlockCheckout,
 } from "../_shared/professionalSubscriptionGuard.ts";
+import {
+  resolveStripeCustomerByUserId,
+  stripeCustomerMetadataSearchQuery,
+} from "../_shared/stripeCustomerResolve.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -147,18 +151,33 @@ serve(async (req) => {
     let customerId: string | undefined = billing?.stripe_customer_id ?? undefined;
 
     if (!customerId) {
-      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-      if (customers.data.length > 0) {
-        const candidate = customers.data[0];
+      const customers = await stripe.customers.search({
+        query: stripeCustomerMetadataSearchQuery(user.id),
+        limit: 100,
+      });
+      const resolution = resolveStripeCustomerByUserId(customers.data, user.id);
+
+      if (resolution.kind === "ambiguous") {
+        return new Response(
+          JSON.stringify({
+            error: "Multiple billing profiles found",
+            code: "CUSTOMER_AMBIGUOUS",
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
+        );
+      }
+
+      if (resolution.kind === "unique") {
+        const candidateId = resolution.customerId;
         // Fail closed if this Stripe customer is already bound to another app user
         const { data: owner } = await supabaseService
           .from("billing")
           .select("user_id")
-          .eq("stripe_customer_id", candidate.id)
+          .eq("stripe_customer_id", candidateId)
           .maybeSingle();
         if (owner?.user_id && owner.user_id !== user.id) {
           logStep("Customer already bound to another user", {
-            customerId: candidate.id,
+            customerId: candidateId,
             ownerUserId: owner.user_id,
           });
           return new Response(
@@ -169,18 +188,7 @@ serve(async (req) => {
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
           );
         }
-        // Only adopt when metadata matches or is unset
-        const metaUser = candidate.metadata?.user_id;
-        if (metaUser && metaUser !== user.id) {
-          return new Response(
-            JSON.stringify({
-              error: "Billing profile conflict",
-              code: "CUSTOMER_BOUND_ELSEWHERE",
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
-          );
-        }
-        customerId = candidate.id;
+        customerId = candidateId;
       }
     }
 
@@ -192,9 +200,6 @@ serve(async (req) => {
       customerId = created.id;
       logStep("Created Stripe customer", { customerId });
     } else {
-      await stripe.customers.update(customerId, {
-        metadata: { user_id: user.id },
-      });
       logStep("Using Stripe customer", { customerId });
     }
 

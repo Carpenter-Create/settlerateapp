@@ -40,6 +40,8 @@ function makeDeps(overrides: Partial<CustomerPortalDeps> = {}): CustomerPortalDe
     isAdmin: vi.fn(async () => false),
     logAdminBypass: vi.fn(async () => undefined),
     getBillingCustomerId: vi.fn(async () => null),
+    searchCustomersByUserId: vi.fn(async () => []),
+    upsertBillingCustomerId: vi.fn(async () => undefined),
     createPortalSession: vi.fn(async (_customerId, returnUrl) => ({
       url: `https://billing.stripe.com/session/test?return=${encodeURIComponent(returnUrl)}`,
       id: "bps_test",
@@ -79,20 +81,28 @@ describe("handleCustomerPortalRequest", () => {
     expect(response.status).toBe(200);
     expect(body.code).toBe("NO_STRIPE_CUSTOMER");
     expect(body.url).toBeUndefined();
+    expect(deps.searchCustomersByUserId).toHaveBeenCalledWith(USER_A);
     expect(deps.createPortalSession).not.toHaveBeenCalled();
   });
 
-  it("returns NO_STRIPE_CUSTOMER when billing row has no stripe_customer_id", async () => {
+  it("repairs a missing billing mapping from one metadata-bound Stripe customer", async () => {
     const deps = makeDeps({
       getBillingCustomerId: vi.fn(async () => null),
+      searchCustomersByUserId: vi.fn(async (userId) => [
+        { id: CUSTOMER_A, metadata: { user_id: userId } },
+      ]),
     });
 
     const response = await handleCustomerPortalRequest(requestWithAuth("valid-token"), deps);
     const body = await readJson(response);
 
     expect(response.status).toBe(200);
-    expect(body.code).toBe("NO_STRIPE_CUSTOMER");
-    expect(deps.createPortalSession).not.toHaveBeenCalled();
+    expect(body.url).toBeDefined();
+    expect(deps.upsertBillingCustomerId).toHaveBeenCalledWith(USER_A, CUSTOMER_A);
+    expect(deps.createPortalSession).toHaveBeenCalledWith(
+      CUSTOMER_A,
+      `${DEFAULT_APP_ORIGIN}/app/account`
+    );
   });
 
   it("creates a portal session when billing.stripe_customer_id is present for the user", async () => {
@@ -115,6 +125,25 @@ describe("handleCustomerPortalRequest", () => {
     expect(deps.createPortalSession).toHaveBeenCalledWith(
       CUSTOMER_A,
       "https://app.settlerate.com/app/account"
+    );
+  });
+
+  it("does not require an email address to resolve a metadata-bound billing customer", async () => {
+    const deps = makeDeps({
+      getUserFromToken: vi.fn(async () => ({ user: { id: USER_A }, error: null })),
+      getBillingCustomerId: vi.fn(async () => null),
+      searchCustomersByUserId: vi.fn(async () => [
+        { id: CUSTOMER_A, metadata: { user_id: USER_A } },
+      ]),
+    });
+
+    const response = await handleCustomerPortalRequest(requestWithAuth("valid-token"), deps);
+
+    expect(response.status).toBe(200);
+    expect(deps.upsertBillingCustomerId).toHaveBeenCalledWith(USER_A, CUSTOMER_A);
+    expect(deps.createPortalSession).toHaveBeenCalledWith(
+      CUSTOMER_A,
+      `${DEFAULT_APP_ORIGIN}/app/account`
     );
   });
 
@@ -160,27 +189,21 @@ describe("handleCustomerPortalRequest", () => {
     expect(deps.createPortalSession).not.toHaveBeenCalled();
   });
 
-  it("does not establish ownership from a matching Stripe email without billing binding", async () => {
-    const listCustomersByEmail = vi.fn(async () => ({
-      data: [{ id: CUSTOMER_A, metadata: { user_id: USER_A } }],
-    }));
-
+  it("fails closed when metadata search finds multiple Stripe customers", async () => {
     const deps = makeDeps({
       getBillingCustomerId: vi.fn(async () => null),
-      createPortalSession: vi.fn(async () => {
-        throw new Error("portal session must not be created without billing binding");
-      }),
+      searchCustomersByUserId: vi.fn(async () => [
+        { id: CUSTOMER_A, metadata: { user_id: USER_A } },
+        { id: CUSTOMER_B, metadata: { user_id: USER_A } },
+      ]),
     });
 
-    const response = await handleCustomerPortalRequest(
-      requestWithAuth("valid-token"),
-      deps
-    );
+    const response = await handleCustomerPortalRequest(requestWithAuth("valid-token"), deps);
     const body = await readJson(response);
 
-    expect(response.status).toBe(200);
-    expect(body.code).toBe("NO_STRIPE_CUSTOMER");
-    expect(listCustomersByEmail).not.toHaveBeenCalled();
+    expect(response.status).toBe(409);
+    expect(body.code).toBe("CUSTOMER_AMBIGUOUS");
+    expect(deps.upsertBillingCustomerId).not.toHaveBeenCalled();
     expect(deps.createPortalSession).not.toHaveBeenCalled();
   });
 
