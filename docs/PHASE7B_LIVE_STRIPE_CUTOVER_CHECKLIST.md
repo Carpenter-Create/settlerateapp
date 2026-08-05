@@ -35,9 +35,10 @@
 
 - [ ] **Founder** — Authorize Phase 7B execution for this window  
   - Evidence: written approval (chat/email) with window UTC  
-- [ ] **Founder** — Accept beta trial policy (sandbox users may get a **new** 7-day live trial)  
-  - Evidence: explicit “accepted” note  
-- [ ] **Founder** — Fill live worksheet (IDs only; no secrets in git):
+- [x] **Founder** — Accept beta trial policy  
+  - **Policy:** New live customers receive the standard **7-day Professional trial** (application-controlled via `create-checkout` / `PROFESSIONAL_TRIAL_DAYS`). Sandbox-era history is not used to deny a first live trial.  
+  - Evidence: recorded in this checklist (2026-08-04)  
+- [ ] **Founder** — Fill live worksheet window times (IDs already recorded; no secrets in git):
 
 ```text
 Live account id:           acct_1U0irnC56u2NxRIt
@@ -48,6 +49,7 @@ Live webhook endpoint id:  we_1U0tp5C56u2NxRItISK9qakr
 Live portal config id:     bpc_1U0trlC56u2NxRIt8ypZMHAR
 Window start (UTC):        ____________________
 Window end target (UTC):   ____________________
+Operator / rollback:       Founder / Adam Carpenter
 ```
 
 - [x] **Founder** — Live account ID recorded — `acct_1U0irnC56u2NxRIt`  
@@ -77,25 +79,18 @@ Dashboard: [Stripe Dashboard](https://dashboard.stripe.com) → ensure **Live** 
 
 ### 0.3 Repo / CI
 
-- [ ] **Cursor** — Cutover PR ready: live allowlists (TS ×2 + `stripe.ts`), SQL migration, docs, **maintenance `503 CHECKOUT_MAINTENANCE`**, tests green  
-  - Evidence: PR URL; CI green  
-  - Maintenance gate: server env/secret `CHECKOUT_MAINTENANCE` (`true`/`1`/`on`/`yes`) on project `vpcxzbaxhpucvevnkalo`; `create-checkout` returns **503** + `code: CHECKOUT_MAINTENANCE`. Default unset = off. Never client-controlled.  
-- [ ] **Cursor** — Local validation green on cutover branch:
-
-```bash
-npm run lint && npm run typecheck && npm run verify:benchmarks && npm run test:run && npm run build
-npm run test:entitlement-sql
-```
-
-  - Evidence: command exit 0  
+- [x] **Cursor** — Cutover code on `main`: live allowlists (PR #18), Free limit 2 (PR #19), maintenance gate (PR #20), cutover docs (PR #21/#22)  
+  - Evidence: `main` @ merge of PRs #18–#22; CI validate green on those PRs  
+  - Maintenance gate: server env/secret `CHECKOUT_MAINTENANCE` (`true`/`1`/`on`/`yes`) on project `vpcxzbaxhpucvevnkalo`; `create-checkout` returns **503** + `code: CHECKOUT_MAINTENANCE`. Default unset = off. Never client-controlled. **Not enabled in production until G0.**  
+- [x] **Cursor** — Validation green on merged cutover commits (PR CI)  
 
 ### 0.4 Backup and roles
 
 - [ ] **Founder / Supabase** — Database backup / PITR note for project `vpcxzbaxhpucvevnkalo`  
   - Evidence: backup timestamp or Dashboard confirmation  
   - Location: Supabase Dashboard → Project → Database → Backups  
-- [ ] **Founder** — Rollback operator named and available for the window  
-  - Evidence: name on worksheet  
+- [x] **Founder** — Rollback operator named and available for the window  
+  - Evidence: **Founder / Adam Carpenter**  
 
 **STOP if Section 0 incomplete — do not enter maintenance.**
 
@@ -458,9 +453,9 @@ Do not announce. Fix forward (webhook secret, allowlist, replay) per plan §6.
 
 | Role | Name | Time (UTC) | Result |
 |------|------|------------|--------|
-| Founder | | | GO / NO-GO / ABORT |
+| Founder / rollback | Adam Carpenter | | GO / NO-GO / ABORT |
 | Cursor operator | | | |
-| Notes | | | |
+| Notes | Trial policy accepted: new live customers get standard 7-day Professional trial. | | |
 
 **Worksheet IDs used in production (copy at end of window):**
 

@@ -68,11 +68,15 @@ Any `public.billing` rows whose `stripe_customer_id` / `stripe_subscription_id` 
 
 ### Beta trial policy (founder decision — documented)
 
-**Decision for closed beta cutover:** Users who previously held sandbox trials or sandbox Professional subscriptions are **eligible for a new 7-day live trial** when they first subscribe in live mode.
+**Decision for closed beta cutover:** New live customers receive the standard **7-day Professional trial** (application-controlled via `create-checkout` / `PROFESSIONAL_TRIAL_DAYS`).
+
+Users who previously held sandbox trials or sandbox Professional subscriptions are **eligible for that same first live trial** when they first subscribe in live mode (sandbox history is not used to deny it).
 
 Rationale: sandbox history is discarded with billing cleanup; live Stripe customers are new objects; `create-checkout` trial eligibility will not see sandbox Stripe subscription history under `sk_live_`.
 
 **Not in scope for cutover:** denying live trial based on sandbox history. If product later needs “one trial per human forever,” that requires a separate durable store and is a later phase.
+
+**Accepted:** Founder / Adam Carpenter (recorded in Phase 7B checklist §0.1, 2026-08-04).
 
 ---
 
@@ -157,7 +161,7 @@ Live annual price id:      price_1U0t2jC56u2NxRItM185AYK9
 Live webhook endpoint id:  we_1U0tp5C56u2NxRItISK9qakr
 Live portal config id:     bpc_1U0trlC56u2NxRIt8ypZMHAR
 Cutover window (UTC):      ____________________
-Operator:                  ____________________
+Operator / rollback:       Founder / Adam Carpenter
 ```
 
 ---
@@ -267,14 +271,14 @@ Never: live key + sandbox allowlist, or sandbox key + live allowlist, outside th
 
 ### 4.0 Preconditions (before maintenance window)
 
-- [ ] Phase 7A merged and deployed; sandbox smoke green
-- [ ] Founder worksheet (§1.7) complete with live IDs
-- [ ] Founder accepts **beta trial policy** (sandbox users may get a new live trial)
+- [x] Phase 7A merged and deployed; sandbox smoke green
+- [ ] Founder worksheet (§1.7) complete with live IDs **and window UTC**
+- [x] Founder accepts **beta trial policy** — new live customers get standard 7-day Professional trial
 - [ ] Database backup taken
-- [ ] Cutover PR ready (live allowlist TS + SQL migration + docs + **mandatory** Checkout maintenance switch)
-- [ ] Full CI green on cutover branch: `lint`, `typecheck`, `verify:benchmarks`, `test:run`, `build`, `test:entitlement-sql`
+- [x] Cutover code on `main` (live allowlist TS + SQL migration + docs + Checkout maintenance switch; PRs #18–#22)
+- [x] Full CI green on cutover commits
 - [ ] Maintenance messaging ready
-- [ ] Rollback operator available (§6)
+- [x] Rollback operator available — Founder / Adam Carpenter (§6)
 
 ### 4.1 Gate — sandbox billing cleanup (MANDATORY before SQL)
 
