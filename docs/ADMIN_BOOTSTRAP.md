@@ -13,12 +13,11 @@ admin exists.
 
 As of Epic 1 PR 2 (migration `20260807010000_remove_legacy_admin_trigger.sql`),
 the legacy `grant_admin_on_signup()` trigger that auto-granted admin to
-`adam@carpentercreate.com` on signup has been removed from the schema. This
-procedure is now the **only** way to create an admin where none exists. (In
-any environment where PR 2's migration has not yet been applied, that legacy
-trigger may still be present and active — check for it directly with
-`select to_regprocedure('public.grant_admin_on_signup()');` before relying on
-this being the only path.)
+`adam@carpentercreate.com` on signup has been removed. That removal is
+**deployed and effective in production** (`vpcxzbaxhpucvevnkalo`): the
+explicit bootstrap path below is live, and no hardcoded-email auto-grant
+path remains active. This procedure is the **only** way to create an admin
+where none exists.
 
 ## Procedure
 

@@ -17,7 +17,7 @@ alwaysApply: true
 
 ## Current epic focus
 
-**Epic 1 — Admin Provisioning Security** is **complete on `main`** (PR 0 governance, PR 1 explicit bootstrap, PR 2 legacy trigger removal). Next epic is **Epic 2 — Environment and Origin Hygiene**, which requires separate founder authorization. Do not begin Epic 2 automatically.
+**Epic 1 — Admin Provisioning Security** is **complete on `main` and fully effective in production** (PR 0 governance; PR 1 explicit bootstrap merged and deployed; PR 2 legacy trigger removal merged and deployed). Next epic is **Epic 2 — Environment and Origin Hygiene**, which requires separate founder authorization. Do not begin Epic 2 automatically.
 
 ## Prohibited unless explicitly authorized
 
