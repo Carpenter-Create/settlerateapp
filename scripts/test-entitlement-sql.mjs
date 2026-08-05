@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Applies repo migrations to ephemeral Postgres and runs Phase 6 SQL + parity checks.
+ * Applies repo migrations to ephemeral Postgres and runs Phase 6 SQL + parity
+ * checks, plus Epic 1 (Phase 8.1) admin bootstrap SQL assertions.
  */
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -108,6 +109,10 @@ async function applyMigrations(client) {
 }
 
 async function runSqlAssertions(client) {
+  // Runs before the Phase 6 fixtures below, which seed an admin user; the
+  // Epic 1 bootstrap assertions require a zero-admin starting state.
+  process.stdout.write("Running epic1_admin_bootstrap.sql assertions...\n");
+  await psqlFile(client, join(root, "supabase/tests/epic1_admin_bootstrap.sql"));
   process.stdout.write("Running phase6_entitlement.sql assertions...\n");
   await psqlFile(client, join(root, "supabase/tests/phase6_entitlement.sql"));
   process.stdout.write("Running phase6_function_grants.sql assertions...\n");
