@@ -37,7 +37,7 @@ Detailed agent rules: `.cursor/rules/`.
 
 **Phase 8.1** is the current authorized phase — production hardening and decoupling. See `docs/PHASE8_1_EXECUTION_CHARTER.md`.
 
-**Epic 1 (Admin Provisioning Security)** is **complete on `main`** (PR 0 governance alignment, PR 1 explicit admin bootstrap, PR 2 legacy auto-grant trigger removal). Do **not** begin Epic 2 or later epics unless explicitly authorized.
+**Epic 1 (Admin Provisioning Security)** is **complete on `main` and fully effective in production** (PR 0 governance alignment; PR 1 explicit admin bootstrap merged and deployed; PR 2 legacy auto-grant trigger removal merged and deployed). Do **not** begin Epic 2 or later epics unless explicitly authorized.
 
 Do not begin AWS / Cloudflare / Next.js platform migration unless explicitly authorized.
 

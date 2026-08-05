@@ -10,7 +10,8 @@ forward later-epic work to “finish related items.”
 
 ## Epic 1 — Admin Provisioning Security
 
-**Status:** Complete on `main` (PR 0, PR 1, and PR 2 merged).
+**Status:** Complete on `main` and fully effective in production (PR 0, PR 1,
+and PR 2 merged; PR 1 and PR 2 migrations deployed).
 
 **Goal:** Replace implicit/automatic admin grant risk with an explicit,
 controlled bootstrap process.
@@ -18,11 +19,12 @@ controlled bootstrap process.
 ### Completed work
 
 - Explicit admin bootstrap mechanism (`docs/ADMIN_BOOTSTRAP.md`,
-  `docs/adr/0001-admin-provisioning-model.md`)
+  `docs/adr/0001-admin-provisioning-model.md`) — live in production
 - Tests for the bootstrap process and legacy-trigger removal
 - Verification of existing admin access before removing legacy grant paths
 - Removal of the automatic admin grant trigger after bootstrap existed and
-  was tested
+  was tested — deployed; legacy hardcoded-email path removed in production
+- Existing admin access preserved; admin promotion unchanged
 - Documentation and ADRs for the admin provisioning model
 
 ### Historical prohibitions (kept for audit; Epic 1 closed)
@@ -43,12 +45,11 @@ controlled bootstrap process.
 | PR | Scope | Status |
 |----|--------|--------|
 | **PR 0** | Governance only (`AGENTS.md`, `.cursor/rules/*`, `docs/PHASE8_1_*`, `docs/adr/README.md`) | Complete / merged |
-| **PR 1** | Controlled admin bootstrap mechanism (implementation) | Complete / merged |
-| **PR 2** | Legacy admin auto-grant trigger removal (tests + docs) | Complete / merged |
+| **PR 1** | Controlled admin bootstrap mechanism (implementation) | Complete / merged and deployed |
+| **PR 2** | Legacy admin auto-grant trigger removal (tests + docs) | Complete / merged and deployed |
 
-Epic 1 repository work is complete. Do **not** begin Epic 2 unless the founder
-explicitly authorizes it. Applying Epic 1 migrations to production remains a
-separate, explicitly authorized deployment step (see ADR 0001).
+Epic 1 is complete in the repository and fully effective in production. Do
+**not** begin Epic 2 unless the founder explicitly authorizes it.
 
 ---
 
