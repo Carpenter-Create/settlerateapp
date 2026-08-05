@@ -44,15 +44,17 @@ Live account id:           acct_1U0irnC56u2NxRIt
 Live product id:           prod_V0usthAF9WnoGJ
 Live monthly price id:     price_1U0t2QC56u2NxRItya8dElyg
 Live annual price id:      price_1U0t2jC56u2NxRItM185AYK9
-Live webhook endpoint id:  we___________________
-Live portal config id:     bpc__________________
+Live webhook endpoint id:  we_1U0tp5C56u2NxRItISK9qakr
+Live portal config id:     bpc_1U0trlC56u2NxRIt8ypZMHAR
 Window start (UTC):        ____________________
 Window end target (UTC):   ____________________
 ```
 
 - [x] **Founder** — Live account ID recorded — `acct_1U0irnC56u2NxRIt`  
 - [x] **Founder** — Live product + prices created (Phase 7B.1) — IDs above  
-  - Evidence: Stripe Live Dashboard product `prod_V0usthAF9WnoGJ`
+  - Evidence: Stripe Live Dashboard product `prod_V0usthAF9WnoGJ`  
+- [x] **Founder** — Live webhook endpoint ID recorded — `we_1U0tp5C56u2NxRItISK9qakr`  
+- [x] **Founder** — Live Customer Portal config ID recorded — `bpc_1U0trlC56u2NxRIt8ypZMHAR`
 
 ### 0.2 Live Stripe catalog (Live mode toggle ON)
 
@@ -463,5 +465,5 @@ Do not announce. Fix forward (webhook secret, allowlist, replay) per plan §6.
 **Worksheet IDs used in production (copy at end of window):**
 
 ```text
-acct: acct_1U0irnC56u2NxRIt  prod: prod_V0usthAF9WnoGJ  price_mo: price_1U0t2QC56u2NxRItya8dElyg  price_yr: price_1U0t2jC56u2NxRItM185AYK9  we: ________
+acct: acct_1U0irnC56u2NxRIt  prod: prod_V0usthAF9WnoGJ  price_mo: price_1U0t2QC56u2NxRItya8dElyg  price_yr: price_1U0t2jC56u2NxRItM185AYK9  we: we_1U0tp5C56u2NxRItISK9qakr  bpc: bpc_1U0trlC56u2NxRIt8ypZMHAR
 ```

@@ -154,8 +154,8 @@ Live account id:           acct_1U0irnC56u2NxRIt
 Live product id:           prod_V0usthAF9WnoGJ
 Live monthly price id:     price_1U0t2QC56u2NxRItya8dElyg
 Live annual price id:      price_1U0t2jC56u2NxRItM185AYK9
-Live webhook endpoint id:  we___________________
-Live portal config id:     bpc__________________  (if used)
+Live webhook endpoint id:  we_1U0tp5C56u2NxRItISK9qakr
+Live portal config id:     bpc_1U0trlC56u2NxRIt8ypZMHAR
 Cutover window (UTC):      ____________________
 Operator:                  ____________________
 ```
