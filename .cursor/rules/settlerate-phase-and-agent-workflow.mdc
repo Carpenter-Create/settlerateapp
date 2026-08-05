@@ -17,11 +17,14 @@ alwaysApply: true
 
 ## Current epic focus
 
-**Epic 1 — Admin Provisioning Security** is **complete on `main` and fully effective in production** (PR 0 governance; PR 1 explicit bootstrap merged and deployed; PR 2 legacy trigger removal merged and deployed). Next epic is **Epic 2 — Environment and Origin Hygiene**, which requires separate founder authorization. Do not begin Epic 2 automatically.
+**Epic 1 — Admin Provisioning Security** is **complete on `main` and fully effective in production**.
+
+**Epic 2 — Environment and Origin Hygiene** — **PR 0 is authorized** (ADR 0002 secrets/environment policy). Epic 2 PR 1+ implementation and later epics require separate founder authorization. Do not begin Epic 2 PR 1+ automatically.
 
 ## Prohibited unless explicitly authorized
 
-- Beginning Epic 2 or later Phase 8.1 epics ahead of sequence / dependency gates
+- Epic 2 PR 1+ implementation without founder authorization after PR 0
+- Beginning Epic 3 or later Phase 8.1 epics ahead of sequence / dependency gates
 - Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
 - Next.js platform migration
