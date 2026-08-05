@@ -71,6 +71,11 @@ Do not perform these steps until the founder explicitly authorizes live catalog 
 That change does **not** authorize applying the migration, rotating secrets, or deploying
 until the Phase 7B maintenance-window checklist is executed.
 
+**Checkout maintenance gate:** `create-checkout` honors server secret `CHECKOUT_MAINTENANCE`
+(`true`/`1`/`on`/`yes` → HTTP 503 + `CHECKOUT_MAINTENANCE`). See
+`docs/PHASE7B_LIVE_STRIPE_CUTOVER_CHECKLIST.md` §1 (G0). Do not enable in production outside
+the authorized cutover window.
+
 Until live cutover execution is authorized, production secrets and deployed allowlists may
 still reflect sandbox mode — follow `docs/PHASE7B_LIVE_STRIPE_CUTOVER_CHECKLIST.md`.
 

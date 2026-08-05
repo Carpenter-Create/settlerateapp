@@ -17,6 +17,10 @@ import {
   resolveCheckoutCustomer,
   stripeCustomerMetadataSearchQuery,
 } from "../_shared/stripeCustomerResolve.ts";
+import {
+  checkoutMaintenancePayload,
+  isCheckoutMaintenanceEnabled,
+} from "../_shared/checkoutMaintenance.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -87,6 +91,15 @@ const PRICE_BY_TYPE: Record<string, string> = {
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Server env only — never read maintenance flags from the request.
+  if (isCheckoutMaintenanceEnabled(Deno.env.get("CHECKOUT_MAINTENANCE"))) {
+    logStep("Checkout maintenance enabled — rejecting");
+    return new Response(JSON.stringify(checkoutMaintenancePayload()), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 503,
+    });
   }
 
   const supabaseAnon = createClient(

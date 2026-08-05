@@ -303,11 +303,12 @@ Never: live key + sandbox allowlist, or sandbox key + live allowlist, outside th
 
 Maintenance **must** remain on from before sandbox cleanup completion through secret redeploy checkpoint, and should stay on until the “before beta opening” checkpoint passes.
 
-Required controls (implement in cutover PR):
+Required controls:
 
-1. `create-checkout` returns `503` with `code: "CHECKOUT_MAINTENANCE"` (or equivalent hard disable).
-2. Upgrade / Subscribe CTAs hidden or disabled in the deployed frontend used during the window (banner acceptable).
+1. **Server env** `CHECKOUT_MAINTENANCE` (`true` / `1` / `on` / `yes`) on Supabase Edge secrets. When enabled, `create-checkout` returns **HTTP 503** with `code: "CHECKOUT_MAINTENANCE"` before auth/Stripe work. Unset/off by default. Request body/headers must not control this gate (`src/lib/checkoutMaintenance.ts` + edge `_shared` mirror).
+2. Upgrade / Subscribe CTAs hidden or disabled in the deployed frontend used during the window (banner acceptable; UI is complementary — server gate is authoritative).
 3. Operators do not manually create live Checkout Sessions for real users until maintenance ends.
+4. After enabling/disabling the secret, **redeploy `create-checkout`** so isolates load the new value.
 
 ### 4.3 Gate — sandbox Checkout drain (MANDATORY before secret swap)
 
