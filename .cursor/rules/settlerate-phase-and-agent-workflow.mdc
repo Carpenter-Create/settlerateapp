@@ -17,12 +17,11 @@ alwaysApply: true
 
 ## Current epic focus
 
-**Epic 1 — Admin Provisioning Security** is first. **PR 0** = governance alignment only. **PR 1+** (bootstrap implementation, trigger removal) require separate authorization.
+**Epic 1 — Admin Provisioning Security** is **complete on `main`** (PR 0 governance, PR 1 explicit bootstrap, PR 2 legacy trigger removal). Next epic is **Epic 2 — Environment and Origin Hygiene**, which requires separate founder authorization. Do not begin Epic 2 automatically.
 
 ## Prohibited unless explicitly authorized
 
-- Epic 1 PR 1+ implementation without founder authorization after PR 0
-- Later Phase 8.1 epics ahead of sequence / dependency gates
+- Beginning Epic 2 or later Phase 8.1 epics ahead of sequence / dependency gates
 - Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
 - Next.js platform migration
