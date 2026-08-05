@@ -45,10 +45,9 @@ BEGIN
   VALUES (v_free, 'Seed 1', 'purchase', '{}'::jsonb, '{}'::jsonb)
   RETURNING id INTO v_scenario;
 
+  -- Free limit is 2 (including archived). Seed one archived row so count = 2.
   INSERT INTO public.scenarios (user_id, name, scenario_type, inputs, derived, is_archived)
-  VALUES
-    (v_free, 'Seed 2', 'purchase', '{}'::jsonb, '{}'::jsonb, false),
-    (v_free, 'Seed 3 archived', 'purchase', '{}'::jsonb, '{}'::jsonb, true);
+  VALUES (v_free, 'Seed 2 archived', 'purchase', '{}'::jsonb, '{}'::jsonb, true);
 
   INSERT INTO public.scenarios (user_id, name, scenario_type, inputs, derived)
   VALUES (v_user_a, 'A1', 'purchase', '{}'::jsonb, '{}'::jsonb);
@@ -64,9 +63,9 @@ BEGIN
 
   PERFORM test.set_auth(v_free);
   PERFORM test.assert_raises(
-    'free fourth scenario denied',
+    'free third scenario denied',
     $sql$INSERT INTO public.scenarios (user_id, name, scenario_type, inputs, derived)
-      VALUES ('11111111-1111-1111-1111-111111111111'::uuid, 'Fourth', 'purchase', '{}'::jsonb, '{}'::jsonb)$sql$
+      VALUES ('11111111-1111-1111-1111-111111111111'::uuid, 'Third', 'purchase', '{}'::jsonb, '{}'::jsonb)$sql$
   );
   PERFORM test.assert_raises(
     'archived rows count toward limit',
@@ -84,6 +83,21 @@ BEGIN
   PERFORM test.set_auth(v_free);
   UPDATE public.scenarios SET name = 'Seed 1 updated' WHERE id = v_scenario;
   PERFORM test.assert_true('free update allowed', true);
+  PERFORM test.reset_auth();
+
+  -- Comparison denied while free user still has two scenarios (for join)
+  PERFORM test.set_auth(v_free);
+  PERFORM test.assert_raises(
+    'free user_comparisons insert denied',
+    format(
+      $sql$INSERT INTO public.user_comparisons (user_id, name, scenario_a_id, scenario_b_id)
+        SELECT %L::uuid, 'cmp', s1.id, s2.id
+        FROM public.scenarios s1, public.scenarios s2
+        WHERE s1.user_id = %L::uuid AND s2.user_id = %L::uuid AND s1.id <> s2.id
+        LIMIT 1$sql$,
+      v_free, v_free, v_free
+    )
+  );
   PERFORM test.reset_auth();
 
   PERFORM test.set_auth(v_read_only);
@@ -113,7 +127,7 @@ BEGIN
 
   SELECT id INTO v_free_delete_scenario
   FROM public.scenarios
-  WHERE user_id = v_free AND name = 'Seed 2'
+  WHERE user_id = v_free AND name = 'Seed 2 archived'
   LIMIT 1;
 
   PERFORM test.set_auth(v_free);
@@ -121,20 +135,6 @@ BEGIN
   PERFORM test.assert_true(
     'free delete allowed',
     NOT EXISTS (SELECT 1 FROM public.scenarios WHERE id = v_free_delete_scenario)
-  );
-  PERFORM test.reset_auth();
-
-  PERFORM test.set_auth(v_free);
-  PERFORM test.assert_raises(
-    'free user_comparisons insert denied',
-    format(
-      $sql$INSERT INTO public.user_comparisons (user_id, name, scenario_a_id, scenario_b_id)
-        SELECT %L::uuid, 'cmp', s1.id, s2.id
-        FROM public.scenarios s1, public.scenarios s2
-        WHERE s1.user_id = %L::uuid AND s2.user_id = %L::uuid
-        LIMIT 1$sql$,
-      v_free, v_free, v_free
-    )
   );
   PERFORM test.reset_auth();
 

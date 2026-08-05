@@ -28,7 +28,7 @@ Roles are stored in the `user_roles` table, not on the profile or users table. T
 
 | Plan code | Display Name | Capabilities |
 |-----------|--------------|--------------|
-| `analytical` | SettleRate Free | All modeling modes; max 3 saved scenarios; view/edit/delete owned scenarios |
+| `analytical` | SettleRate Free | All modeling modes; max 2 saved scenarios; view/edit/delete owned scenarios |
 | `professional` | SettleRate Professional (paid) | Unlimited scenarios, saved comparisons, PDF, share/export, income-context |
 
 Advisor is **not** an active paid tier.
@@ -38,7 +38,7 @@ Advisor is **not** an active paid tier.
 | Feature | SettleRate Free | SettleRate Professional |
 |---------|------------|--------------|
 | Scenario modeling | ✓ | ✓ |
-| Scenario saving | Max 3 (create + duplicate) | Unlimited |
+| Scenario saving | Max 2 (create + duplicate) | Unlimited |
 | Scenario edit / delete | ✓ | ✓ |
 | PDF exports | — | ✓ |
 | Income-context framing | — | ✓ |

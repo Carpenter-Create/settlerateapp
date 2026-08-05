@@ -31,9 +31,9 @@ SettleRate supports two customer plans: **SettleRate Free** and **SettleRate Pro
 | Feature | entitled / trial_entitled | read_only | free (analytical) |
 |---------|---------------------------|-----------|-------------------|
 | Calculator / modeling modes | ✓ | ✓ (view) | ✓ |
-| `scenario_create` | ✓ unlimited | — | ✓ max 3 |
+| `scenario_create` | ✓ unlimited | — | ✓ max 2 |
 | `scenario_update` | ✓ | — | ✓ |
-| `scenario_duplicate` | ✓ | — | counts toward 3 |
+| `scenario_duplicate` | ✓ | — | counts toward 2 |
 | Scenario delete | ✓ | ✓ | ✓ |
 | `comparison_create` | ✓ | — | — |
 | `pdf_export` | ✓ | — | — |

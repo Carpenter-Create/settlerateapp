@@ -121,14 +121,13 @@ async function runConcurrentLimitTest(client) {
     "concurrent@test.local",
   ]);
 
+  // Free limit is 2: seed 1, then two concurrent creates → one success, one deny, final count 2.
   await client.query(`SELECT set_config('app.skip_scenario_entitlement', '1', true)`);
-  for (let i = 0; i < 2; i++) {
-    await client.query(
-      `INSERT INTO public.scenarios (user_id, name, scenario_type, inputs, derived)
-       VALUES ($1, $2, 'purchase', '{}'::jsonb, '{}'::jsonb)`,
-      [userId, `Concurrent seed ${i + 1}`]
-    );
-  }
+  await client.query(
+    `INSERT INTO public.scenarios (user_id, name, scenario_type, inputs, derived)
+     VALUES ($1, $2, 'purchase', '{}'::jsonb, '{}'::jsonb)`,
+    [userId, "Concurrent seed 1"]
+  );
   await client.query(`SELECT set_config('app.skip_scenario_entitlement', '0', true)`);
 
   const insertSql = `INSERT INTO public.scenarios (user_id, name, scenario_type, inputs, derived)
@@ -161,7 +160,7 @@ async function runConcurrentLimitTest(client) {
   );
   const count = rows[0].n;
 
-  if (count > 3) {
+  if (count > 2) {
     throw new Error(`Concurrent limit failed: count=${count}, results=${a},${b}`);
   }
   if (a !== "ok" && b !== "ok") {

@@ -42,6 +42,6 @@ describe("accountPlanDisplay", () => {
     expect(planLabelFromCode("analytical")).toBe("SettleRate Free");
     expect(accountAccessConditionLabel("free")).toBeNull();
     expect(accountPlanBadgeVariant("analytical")).toBe("secondary");
-    expect(accountPlanDescription("analytical", "free")).toMatch(/3 saved scenarios/);
+    expect(accountPlanDescription("analytical", "free")).toMatch(/2 saved scenarios/);
   });
 });

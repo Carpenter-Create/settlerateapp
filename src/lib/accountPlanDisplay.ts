@@ -1,4 +1,8 @@
-import type { EntitlementStatus, PlanCode } from "@/lib/entitlementContract";
+import {
+  FREE_SCENARIO_LIMIT,
+  type EntitlementStatus,
+  type PlanCode,
+} from "@/lib/entitlementContract";
 
 /** Customer-facing plan names (internal planCode values unchanged). */
 export const PLAN_LABEL_FREE = "SettleRate Free";
@@ -34,7 +38,7 @@ export function accountPlanDescription(
     }
     return "Full access including exports, saved scenarios, and income-context views.";
   }
-  return "Core mortgage modeling with up to 3 saved scenarios. Upgrade for extended features.";
+  return `Core mortgage modeling with up to ${FREE_SCENARIO_LIMIT} saved scenarios. Upgrade for extended features.`;
 }
 
 export function accountPlanBadgeVariant(

@@ -412,7 +412,7 @@ Use a **dedicated non-admin live smoke account** (not a founder admin). Prefer a
 
 | # | Scenario | Pass criteria |
 |---|----------|----------------|
-| 1 | New signup | Create account; Free tier; ≤3 scenarios |
+| 1 | New signup | Create account; Free tier; ≤2 scenarios |
 | 2 | Checkout | Upgrade → Stripe Checkout (live) for monthly or annual; allowlisted live price only |
 | 3 | Trial creation | Eligible user gets 7-day trial; Stripe sub `trialing` |
 | 4 | Professional entitlement | Webhook projects billing; `trial_entitled` or `entitled`; PDF/share/comparison allowed |

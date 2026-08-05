@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import { resolveNewScenarioControl } from "@/lib/newScenarioControl";
 import { resolveDuplicateScenarioControl } from "@/lib/duplicateScenarioControl";
 import { resolveScenarioEditControl } from "@/lib/scenarioEditControl";
+import { FREE_SCENARIO_LIMIT } from "@/lib/entitlementContract";
 
 /**
  * Format relative time for display
@@ -141,7 +142,7 @@ export default function ScenariosIndex() {
   const limitTitle = isScenarioMutationBlocked
     ? undefined
     : atScenarioLimit
-      ? "Free plan limit reached (3 saved scenarios)."
+      ? `Free plan limit reached (${FREE_SCENARIO_LIMIT} saved scenarios).`
       : entitlementStatus === "read_only"
         ? "Scenarios are read-only until billing is updated."
         : undefined;
@@ -283,7 +284,7 @@ export default function ScenariosIndex() {
       )}
       {atScenarioLimit && entitlementStatus === "free" && (
         <p className="mb-4 text-sm text-muted-foreground">
-          You have reached the free plan limit of 3 saved scenarios.
+          You have reached the free plan limit of {FREE_SCENARIO_LIMIT} saved scenarios.
         </p>
       )}
       {/* Mobile: Card-based layout */}

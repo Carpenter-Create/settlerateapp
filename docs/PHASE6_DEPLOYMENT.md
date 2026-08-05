@@ -108,7 +108,7 @@ Deploy app bundle after edge functions when webhook/checkout changes are live (s
 
 ## Smoke test checklist (human)
 
-1. **Free account:** create 3 scenarios OK; 4th blocked server-side; UI disables create/duplicate at limit.
+1. **Free account:** create 2 scenarios OK; 3rd blocked server-side; UI disables create/duplicate at limit.
 2. **Returning subscriber:** checkout session omits `trial_period_days` (verify in Stripe Dashboard).
 3. **New subscriber:** checkout includes 7-day trial.
 4. **read_only (past_due):** can list/delete scenarios; update denied; comparisons list/delete only.
