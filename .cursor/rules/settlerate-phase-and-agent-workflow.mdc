@@ -28,8 +28,23 @@ alwaysApply: true
 - Next.js platform migration
 - Calculator formula changes without DEF-*/BM-* gates (Phase 2 authority unchanged)
 - Persistence dual-snapshot semantics changes without authorization
+- **Export field semantics changes** without explicit architectural approval (see Export fence below)
 - Broad entitlement/billing redesign outside the authorized epic
 - Weakening CI, RLS, or financial benchmarks
+
+## Export fence (Phase 8.1 hard rule)
+
+Authority: `docs/EXPORT_CONTRACT.md`. Protected surfaces include:
+
+- `docs/EXPORT_CONTRACT.md`
+- `supabase/functions/generate-pdf/mapDerivedForExport.ts`
+- `src/lib/exports/`
+
+**During Phase 8.1, export field semantics changes are prohibited without explicit architectural approval.**
+
+That means: do not redefine export fields, field meanings, omission rules, snapshot-selection behavior, or other contract behavior.
+
+**Epic 5 clarification:** when Shared Core Package work is authorized, Epic 5 **may** relocate export-related code and update imports. Epic 5 **may not** redefine export fields, meanings, or contract behavior.
 
 **Never begin the next phase, epic, or PR automatically.**
 

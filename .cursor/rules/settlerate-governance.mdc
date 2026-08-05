@@ -11,7 +11,7 @@ Use the authoritative document for each domain. Do not invent a universal rankin
 |--------|-----------|
 | Financial methodology | `docs/FINANCIAL_METHODOLOGY.md` |
 | Scenario persistence | `docs/SCENARIO_PERSISTENCE.md` |
-| Export contract | `docs/EXPORT_CONTRACT.md` |
+| Export contract | `docs/EXPORT_CONTRACT.md` (Phase 8.1: field semantics frozen without architectural approval; see phase workflow Export fence) |
 | Comparison contract | `docs/COMPARISON_CONTRACT.md` |
 | Benchmark and defect status | `TEST_BASELINE.md` |
 | Product scope | `docs/APP_SCOPE.md` |

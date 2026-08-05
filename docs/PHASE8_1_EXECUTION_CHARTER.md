@@ -68,6 +68,16 @@ Phase 8.1 requires architecture decision records listed in
 implementation PR that first depends on them. Do not invent ADR outcomes in
 code without an ADR (or explicit founder decision).
 
+## Export fence (Phase 8.1)
+
+Export field semantics are frozen without explicit architectural approval.
+
+Protected: `docs/EXPORT_CONTRACT.md`,
+`supabase/functions/generate-pdf/mapDerivedForExport.ts`, `src/lib/exports/`.
+
+Epic 5 may relocate export code and update imports; it may **not** redefine
+export fields, meanings, or contract behavior.
+
 ## Pre-beta bar (roadmap)
 
 Before beta: security issues resolved; RLS coverage expanded; schema

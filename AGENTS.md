@@ -62,3 +62,5 @@ npm run build
 ## Phase boundaries
 
 Do not cross epic or phase boundaries to "finish related work." If a task touches a later-epic concern, stop and report. Follow `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
+
+**Export fence:** During Phase 8.1, do not change export field semantics in `docs/EXPORT_CONTRACT.md`, `supabase/functions/generate-pdf/mapDerivedForExport.ts`, or `src/lib/exports/` without explicit architectural approval. Epic 5 may relocate code and update imports only — not redefine fields, meanings, or contract behavior.

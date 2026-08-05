@@ -83,6 +83,18 @@ billing snapshots.
 Goal: prevent business-logic drift. Do not change formula semantics while
 moving code unless a DEF-* is authorized.
 
+**Export fence (hard rule during Phase 8.1):** Authority
+`docs/EXPORT_CONTRACT.md`. Protected surfaces:
+`docs/EXPORT_CONTRACT.md`,
+`supabase/functions/generate-pdf/mapDerivedForExport.ts`,
+`src/lib/exports/`.
+
+- Epic 5 **may** relocate export-related code and update imports.
+- Epic 5 **may not** redefine export fields, meanings, omission rules,
+  snapshot-selection behavior, or other contract behavior.
+- Any export field semantics change requires **explicit architectural
+  approval** (not implied by Epic 5 authorization alone).
+
 ---
 
 ## Epic 6 — Schema Reconciliation
@@ -131,3 +143,7 @@ Allowed when authorized: confirm backups, restore test, document recovery.
 - Resume Phase 7B live customer smoke / beta / public checkout without founder
   re-authorization after infrastructure deployment
 - Cross epic boundaries to “finish related work”
+- Change export field semantics (`docs/EXPORT_CONTRACT.md`,
+  `mapDerivedForExport.ts`, `src/lib/exports/`) without explicit
+  architectural approval — relocation/import updates under Epic 5 do not
+  authorize semantic redefinition
