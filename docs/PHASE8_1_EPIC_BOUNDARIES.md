@@ -10,19 +10,22 @@ forward later-epic work to “finish related items.”
 
 ## Epic 1 — Admin Provisioning Security
 
+**Status:** Complete on `main` (PR 0, PR 1, and PR 2 merged).
+
 **Goal:** Replace implicit/automatic admin grant risk with an explicit,
 controlled bootstrap process.
 
-### Allowed (when Epic 1 implementation PR is authorized)
+### Completed work
 
-- Create an explicit admin bootstrap mechanism
-- Add tests for the bootstrap process
-- Verify existing admin access before removing legacy grant paths
-- Remove the automatic admin grant trigger **only after** bootstrap exists,
-  is tested, and existing admin access is verified
+- Explicit admin bootstrap mechanism (`docs/ADMIN_BOOTSTRAP.md`,
+  `docs/adr/0001-admin-provisioning-model.md`)
+- Tests for the bootstrap process and legacy-trigger removal
+- Verification of existing admin access before removing legacy grant paths
+- Removal of the automatic admin grant trigger after bootstrap existed and
+  was tested
 - Documentation and ADRs for the admin provisioning model
 
-### Prohibited in Epic 1
+### Historical prohibitions (kept for audit; Epic 1 closed)
 
 - Removing the admin trigger before replacement is proven
 - Broad roles/entitlements redesign beyond admin provisioning
@@ -37,14 +40,15 @@ controlled bootstrap process.
 
 ### Epic 1 PR sequence
 
-| PR | Scope |
-|----|--------|
-| **PR 0** | Governance only (`AGENTS.md`, `.cursor/rules/*`, `docs/PHASE8_1_*`, `docs/adr/README.md`) |
-| **PR 1** | Controlled admin bootstrap mechanism (implementation) — requires separate authorization |
-| Later | Tests, verification of existing admins, trigger removal under explicit go |
+| PR | Scope | Status |
+|----|--------|--------|
+| **PR 0** | Governance only (`AGENTS.md`, `.cursor/rules/*`, `docs/PHASE8_1_*`, `docs/adr/README.md`) | Complete / merged |
+| **PR 1** | Controlled admin bootstrap mechanism (implementation) | Complete / merged |
+| **PR 2** | Legacy admin auto-grant trigger removal (tests + docs) | Complete / merged |
 
-**PR 0 does not authorize PR 1.** Stop after governance alignment until founder
-authorizes the next PR.
+Epic 1 repository work is complete. Do **not** begin Epic 2 unless the founder
+explicitly authorizes it. Applying Epic 1 migrations to production remains a
+separate, explicitly authorized deployment step (see ADR 0001).
 
 ---
 

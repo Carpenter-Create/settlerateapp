@@ -41,7 +41,7 @@ re-authorizes live smoke / beta opening.
 
 Follow the roadmap epic sequence. Do not skip dependency gates:
 
-1. Epic 1 — Admin Provisioning Security  
+1. Epic 1 — Admin Provisioning Security (**complete on `main`**)  
 2. Epic 2 — Environment and Origin Hygiene  
 3. Epic 3 — Observability  
 4. Epic 4 — RLS Security Test Expansion (**before** schema reconciliation)  
@@ -56,10 +56,12 @@ Follow the roadmap epic sequence. Do not skip dependency gates:
 
 | PR | Intent | Status |
 |----|--------|--------|
-| **PR 0** | Governance alignment (agent rules, Phase 8.1 docs, ADR index) | This charter’s enabling PR |
-| **PR 1+** | Admin bootstrap implementation and follow-ons | **Not authorized by PR 0 alone** |
+| **PR 0** | Governance alignment (agent rules, Phase 8.1 docs, ADR index) | Complete / merged |
+| **PR 1** | Explicit admin bootstrap mechanism | Complete / merged |
+| **PR 2** | Legacy admin auto-grant trigger removal | Complete / merged |
 
-**Never begin the next epic or the next PR automatically.**
+Epic 1 is complete on `main`. **Never begin the next epic or the next PR
+automatically** — Epic 2 requires separate founder authorization.
 
 ## Required ADRs
 
