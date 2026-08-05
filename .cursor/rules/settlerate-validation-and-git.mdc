@@ -29,8 +29,9 @@ Do not claim completion or push without a green run.
 
 - Work on a **dedicated branch**; never commit directly to `main`
 - Keep commits bounded and why-focused
-- Use **draft PRs** for active phase work
+- Use **draft PRs** for active phase / epic work
 - Confirm working tree is clean before and after git operations
-- Branch naming: `feat/`, `fix/`, `test/` prefixes per repo convention
+- Branch naming: `feat/`, `fix/`, `test/`, `docs/` prefixes per repo convention
+- Stay inside the authorized Phase 8.1 epic/PR scope (`docs/PHASE8_1_EPIC_BOUNDARIES.md`)
 
-Push and draft-PR creation are allowed by default (see `settlerate-phase-and-agent-workflow.mdc`). Merge, ready-for-review, and branch deletion require explicit authorization.
+Push and draft-PR creation are allowed by default (see `settlerate-phase-and-agent-workflow.mdc`). Merge, ready-for-review, branch deletion, and beginning the next epic/PR require explicit authorization.

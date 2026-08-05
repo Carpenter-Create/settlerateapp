@@ -22,6 +22,10 @@ This repository is the **authenticated SettleRate application** — auth, `/app/
 | Roles and entitlements | `docs/ROLES_AND_ENTITLEMENTS.md`, `docs/ENTITLEMENT_CONTRACT.md` |
 | Copy | `docs/COPY_STANDARD.md` |
 | UI | `docs/UI_STANDARD.md`, `docs/PORTAL_UI_STANDARD.md` |
+| Phase 8.1 execution | `docs/PHASE8_1_EXECUTION_CHARTER.md`, `docs/PHASE8_1_EPIC_BOUNDARIES.md` |
+| Phase 8.1 roadmap | `docs/roadmap/PHASE8.1_PRODUCTION_HARDENING_AND_DECOUPLING_ROADMAP.md` |
+| ADRs | `docs/adr/README.md` |
+| Phase 7B (paused) | `docs/PHASE7B_LIVE_STRIPE_CUTOVER_PLAN.md`, `docs/PHASE7B_LIVE_STRIPE_CUTOVER_CHECKLIST.md` |
 
 Documentation defines **approved target behavior**. Source code and **active tests** define **current implemented behavior**. When they conflict, report the conflict — do not silently reconcile.
 
@@ -29,9 +33,13 @@ Detailed agent rules: `.cursor/rules/`.
 
 ## Current phase
 
-**Phase 1–4 are complete on main.** Confirm the current branch and repository state before assuming later-phase work has begun. **Phase 5** (when authorized) is comparison normalization and winner logic — see `docs/COMPARISON_CONTRACT.md`.
+**Phase 1–7A are complete on main.** **Phase 7B is PAUSED** (live Stripe activation pending final application infrastructure deployment; keep `CHECKOUT_MAINTENANCE=true`).
 
-Do not begin Phase 6+ work (entitlements, Next.js migration, AWS migration) unless explicitly authorized.
+**Phase 8.1** is the current authorized phase — production hardening and decoupling. See `docs/PHASE8_1_EXECUTION_CHARTER.md`.
+
+**Epic 1 (Admin Provisioning Security)** is the first execution epic. **Epic 1 PR 0** is governance alignment only. Do **not** begin Epic 1 PR 1 (admin bootstrap implementation) or later epics unless explicitly authorized.
+
+Do not begin AWS / Cloudflare / Next.js platform migration unless explicitly authorized.
 
 ## Required validation
 
@@ -47,10 +55,10 @@ npm run build
 
 ## Branch and PR safety
 
-**Allowed by default:** inspect the repo, create a dedicated branch, edit within authorized scope, run validation, create bounded commits, push the branch, open or update a **draft** PR.
+**Allowed by default:** inspect the repo, create a dedicated branch, edit within authorized phase/epic/PR scope, run validation, create bounded commits, push the branch, open or update a **draft** PR.
 
-**Requires explicit authorization:** commit to `main`, mark a draft PR ready, approve, merge, delete branches after merge, begin the next phase.
+**Requires explicit authorization:** commit to `main`, mark a draft PR ready, approve, merge, delete branches after merge, begin the next epic or PR, resume Phase 7B live smoke / beta / public checkout.
 
 ## Phase boundaries
 
-Do not cross phase boundaries to "finish related work." If a task touches a later-phase concern, stop and report.
+Do not cross epic or phase boundaries to "finish related work." If a task touches a later-epic concern, stop and report. Follow `docs/PHASE8_1_EPIC_BOUNDARIES.md`.

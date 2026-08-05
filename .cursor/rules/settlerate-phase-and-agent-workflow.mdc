@@ -5,30 +5,33 @@ alwaysApply: true
 
 # Phase Boundaries
 
-**Phase 1–4 complete on main.** **Phase 5** (when authorized) = comparison normalization and winner logic (`docs/COMPARISON_CONTRACT.md`, DEF-003, BM-C01/C02).
+**Phase 1–7A complete on main.** **Phase 7B PAUSED** — live Stripe cutover pending application infrastructure deployment; keep Checkout maintenance on until founder re-authorizes (`docs/PHASE7B_LIVE_STRIPE_CUTOVER_PLAN.md`).
 
-## Allowed in Phase 5 (when task is authorized)
+**Phase 8.1** (current, when task is authorized) = production hardening and decoupling per `docs/PHASE8_1_EXECUTION_CHARTER.md` and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 
-- Canonical comparison participant + winner contracts
-- Routing UI/export/PDF narrative through financing-cost winner under a shared horizon
-- Activating BM-C01/BM-C02; focused comparison regression tests
-- Material label corrections when prior labels are methodologically false
-- Documentation of horizon rules, tie tolerance, stale/snapshot behavior
+## Allowed in Phase 8.1 (when the matching epic/PR is authorized)
 
-## Prohibited unless a later phase is explicitly authorized
+- Epic work listed as allowed in `docs/PHASE8_1_EPIC_BOUNDARIES.md` for the authorized epic only
+- ADRs under `docs/adr/` when required by the authorized epic
+- Governance and documentation updates that keep agents aligned with Phase 8.1
 
+## Current epic focus
+
+**Epic 1 — Admin Provisioning Security** is first. **PR 0** = governance alignment only. **PR 1+** (bootstrap implementation, trigger removal) require separate authorization.
+
+## Prohibited unless explicitly authorized
+
+- Epic 1 PR 1+ implementation without founder authorization after PR 0
+- Later Phase 8.1 epics ahead of sequence / dependency gates
+- Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
-- Next.js migration
-- Route changes unrelated to comparison correctness
-- Visual redesign or unapproved copy changes
-- Broad Supabase DDL redesign
-- Entitlement or billing refactors
-- Calculator formula changes from Phase 2
-- Persistence dual-snapshot semantics changes from Phase 3
-- Export field semantics changes from Phase 4 except consuming the canonical comparison result
-- Deferred methodology items (income context, OAuth, free-tier limits, etc.)
+- Next.js platform migration
+- Calculator formula changes without DEF-*/BM-* gates (Phase 2 authority unchanged)
+- Persistence dual-snapshot semantics changes without authorization
+- Broad entitlement/billing redesign outside the authorized epic
+- Weakening CI, RLS, or financial benchmarks
 
-**Never begin the next phase automatically.**
+**Never begin the next phase, epic, or PR automatically.**
 
 # Agent Autonomy
 
@@ -36,7 +39,7 @@ Unless a prompt says otherwise, agents **may**:
 
 - Inspect the repository
 - Create a dedicated branch
-- Edit files within authorized phase scope
+- Edit files within authorized phase / epic / PR scope
 - Run the full validation sequence
 - Create bounded, descriptive commits
 - Push the dedicated branch
@@ -48,7 +51,8 @@ Agents **may not** without explicit authorization:
 - Mark a draft PR ready for review
 - Approve or merge a PR
 - Delete branches after merge
-- Begin the next phase
+- Begin the next phase, epic, or PR
+- Disable `CHECKOUT_MAINTENANCE` or open public Checkout while Phase 7B is paused
 
 # Conduct
 
