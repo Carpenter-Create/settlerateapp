@@ -12,10 +12,50 @@
 | **Operator** | Founder / Adam Carpenter |
 | **Scope** | Live Stripe activation only |
 | **Pre-window gates** | All Section 0 gates completed (founder confirmation) |
-| **Execution state** | **Cutover has not yet started** — G0 (Section 1) and later remain unchecked |
-| **Procedure** | Proceed **G0 → G1 → G2 → W → C → D1 → E → D2 → G → I** (then Section 11 → H) sequentially; verify after each gate before continuing |
+| **Execution state** | **PAUSED** — see pause record below |
+| **Procedure** | When resumed: complete remaining smoke (I) → Section 11 → H only under new founder authorization |
 
 **Do not treat authorization as execution.** No secrets, SQL apply, edge deploy, or maintenance enable until the corresponding checklist step is performed and verified.
+
+### Pause record (current)
+
+| Field | Value |
+|-------|-------|
+| **Status** | **PAUSED — production Stripe activation pending final application infrastructure deployment** |
+| **Reason** | SettleRate frontend and infrastructure architecture migration pending |
+| **Operator** | Founder / Adam Carpenter |
+| **Recorded** | 2026-08-04 |
+
+**Completed before pause**
+- Live Stripe catalog migration (C) — live Professional prices accepted; sandbox rejected; Free scenario limit = 2
+- Live Stripe secrets configured (E) — production using live key + live webhook signing secret
+- Edge functions validated (D1/D2) — live allowlist code deployed; isolates redeployed after secrets
+- Controlled smoke authorization completed — AUTHORIZED FOR CONTROLLED SMOKE TEST; I.1 maintenance OFF verified reachable, then restored
+- Maintenance restored — `CHECKOUT_MAINTENANCE=true`
+
+**Not completed**
+- Live customer smoke subscription (Checkout → webhook → billing → entitlement → portal → cancel-at-period-end)
+- Beta launch (Section 12 / H)
+- Public checkout opening
+
+**Current safety state**
+- `CHECKOUT_MAINTENANCE=true`
+- `create-checkout` returns HTTP **503** with `code: CHECKOUT_MAINTENANCE`
+
+**Resume rule:** Do not disable maintenance, run live smoke, open beta, or announce until founder re-authorizes after application infrastructure deployment.
+
+### Smoke authorization (Section 10 / I) — historical
+
+| Field | Value |
+|-------|-------|
+| **Status** | Was **AUTHORIZED FOR CONTROLLED SMOKE TEST** (superseded by pause) |
+| **Operator** | Founder / Adam Carpenter |
+| **Scope** | Temporarily disable Checkout maintenance **only** for production billing smoke validation |
+| **Out of scope** | No beta opening · No public announcement · No Section 12 (H) |
+| **I.1 outcome** | Maintenance briefly set `false` + `create-checkout` redeployed; path reachable (non-503). **Restored** to `true` / 503 before pause |
+| **Recorded** | 2026-08-04 |
+
+**Paused:** Do not proceed with further smoke or maintenance OFF until founder re-authorizes after infrastructure migration.
 
 ### Global STOP conditions (any time)
 
@@ -388,8 +428,16 @@ Prefer: briefly disable maintenance **only for smoke account path**, or turn mai
 
 ### 10.1 Enable Checkout for smoke only when Founder ready
 
-- [ ] **Founder** — Authorize maintenance OFF for smoke  
-- [ ] **Cursor** — Maintenance OFF  
+- [x] **Founder** — Authorize maintenance OFF for smoke  
+  - **Status:** AUTHORIZED FOR CONTROLLED SMOKE TEST (then **PAUSED**)  
+  - **Operator:** Founder / Adam Carpenter  
+  - **Scope:** Temporarily disable checkout maintenance only for production billing smoke validation  
+  - **Not authorized:** beta opening · public announcement  
+- [x] **Cursor** — Maintenance OFF for I.1 only (temporary)  
+  - Evidence: `CHECKOUT_MAINTENANCE=false` + `create-checkout` redeploy; path reachable (non-503 auth path)  
+- [x] **Cursor** — Maintenance **restored** after I.1  
+  - Evidence: `CHECKOUT_MAINTENANCE=true` + `create-checkout` redeploy; HTTP **503** / `CHECKOUT_MAINTENANCE`  
+- [ ] **Cursor** — Further smoke / maintenance OFF — **blocked until pause lifted**
 
 Record:
 
