@@ -24,21 +24,21 @@ Create one file per decision under `docs/adr/` using
 `NNNN-kebab-title.md` (four-digit sequence). Until a file exists, the decision
 is **unresolved** — do not invent the outcome in code.
 
-| # | Topic | Suggested filename | Primary epic |
-|---|--------|-------------------|--------------|
-| 0001 | Admin provisioning model | `0001-admin-provisioning-model.md` | Epic 1 |
-| 0002 | Secrets and environment policy | `0002-secrets-and-environment-policy.md` | Epic 2 |
-| 0003 | Observability policy | `0003-observability-policy.md` | Epic 3 |
-| 0004 | RLS testing standard | `0004-rls-testing-standard.md` | Epic 4 |
-| 0005 | Shared package architecture | `0005-shared-package-architecture.md` | Epic 5 |
-| 0006 | Database schema source of truth | `0006-database-schema-source-of-truth.md` | Epic 6 |
-| 0007 | Legacy schema disposition | `0007-legacy-schema-disposition.md` | Epic 6 |
-| 0008 | Environment topology | `0008-environment-topology.md` | Epic 7 |
-| 0009 | Billing recovery guarantee | `0009-billing-recovery-guarantee.md` | Epic 8 |
-| 0010 | Backup and restore policy | `0010-backup-and-restore-policy.md` | Epic 10 |
-| 0011 | Advisor model decision | `0011-advisor-model-decision.md` | Cross-cutting |
-| 0012 | Entitlement logic location | `0012-entitlement-logic-location.md` | Epic 5 |
-| 0013 | Analytics and tracking restrictions | `0013-analytics-and-tracking-restrictions.md` | Epic 3 |
+| # | Topic | Filename | Primary epic | Status |
+|---|--------|----------|--------------|--------|
+| 0001 | Admin provisioning model | `0001-admin-provisioning-model.md` | Epic 1 | accepted |
+| 0002 | Secrets and environment policy | `0002-secrets-and-environment-policy.md` | Epic 2 | accepted (Epic 2 PR 0) |
+| 0003 | Observability policy | `0003-observability-policy.md` | Epic 3 | required / not yet written |
+| 0004 | RLS testing standard | `0004-rls-testing-standard.md` | Epic 4 | required / not yet written |
+| 0005 | Shared package architecture | `0005-shared-package-architecture.md` | Epic 5 | required / not yet written |
+| 0006 | Database schema source of truth | `0006-database-schema-source-of-truth.md` | Epic 6 | required / not yet written |
+| 0007 | Legacy schema disposition | `0007-legacy-schema-disposition.md` | Epic 6 | required / not yet written |
+| 0008 | Environment topology | `0008-environment-topology.md` | Epic 7 | required / not yet written |
+| 0009 | Billing recovery guarantee | `0009-billing-recovery-guarantee.md` | Epic 8 | required / not yet written |
+| 0010 | Backup and restore policy | `0010-backup-and-restore-policy.md` | Epic 10 | required / not yet written |
+| 0011 | Advisor model decision | `0011-advisor-model-decision.md` | Cross-cutting | required / not yet written |
+| 0012 | Entitlement logic location | `0012-entitlement-logic-location.md` | Epic 5 | required / not yet written |
+| 0013 | Analytics and tracking restrictions | `0013-analytics-and-tracking-restrictions.md` | Epic 3 | required / not yet written |
 
 ## Template
 

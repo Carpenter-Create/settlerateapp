@@ -48,18 +48,45 @@ controlled bootstrap process.
 | **PR 1** | Controlled admin bootstrap mechanism (implementation) | Complete / merged and deployed |
 | **PR 2** | Legacy admin auto-grant trigger removal (tests + docs) | Complete / merged and deployed |
 
-Epic 1 is complete in the repository and fully effective in production. Do
-**not** begin Epic 2 unless the founder explicitly authorizes it.
+Epic 1 is complete in the repository and fully effective in production.
 
 ---
 
 ## Epic 2 — Environment and Origin Hygiene
 
-Allowed when authorized: environment handling policy, `.env.example`, remove
-development artifacts / obsolete origins, unused dependencies and duplicate
-lockfiles.  
-Prohibited until authorized: secret rotation in production, Stripe live cutover
-resume, unrelated refactors.
+**Status:** PR 0 authorized. Authority: `docs/adr/0002-secrets-and-environment-policy.md`.
+
+### Allowed (when the matching Epic 2 PR is authorized)
+
+- Environment handling policy and ADR 0002 (PR 0)
+- `.env.example`, stop tracking `.env`, `.gitignore` updates (later PR)
+- Remove obsolete origins (Lovable) and development artifacts (later PRs)
+- Derive Edge Function base URL from `VITE_SUPABASE_URL` via validated helper
+  (later PR; behavior-preserving in production)
+- Lightweight client env fail-fast for public `VITE_*` vars (later PR)
+- Gated auth-redirect changes per ADR 0002 (later gated PR)
+- Remove unused dependencies / `bun.lockb`; standardize on npm (later PR)
+
+### Prohibited in Epic 2
+
+- Secret rotation in production
+- Phase 7B live smoke / beta / public checkout / disabling
+  `CHECKOUT_MAINTENANCE`
+- CORS redesign (preserve `Access-Control-Allow-Origin: *` on existing Edge
+  Functions)
+- Staging or preview deployment topology (Epic 7 / ADR 0008)
+- Git history scrub of `.env`
+- Unrelated refactors; financial / entitlement / persistence / export changes
+
+### Epic 2 PR sequence
+
+| PR | Scope | Status |
+|----|--------|--------|
+| **PR 0** | ADR 0002 + minimum governance status updates | Authorized (this work) |
+| **PR 1+** | Implementation of ADR 0002 decisions | Requires separate authorization |
+
+**PR 0 does not authorize PR 1.** Stop after policy/governance until the
+founder authorizes the next PR.
 
 ---
 

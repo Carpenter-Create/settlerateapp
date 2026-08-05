@@ -42,7 +42,7 @@ re-authorizes live smoke / beta opening.
 Follow the roadmap epic sequence. Do not skip dependency gates:
 
 1. Epic 1 — Admin Provisioning Security (**complete on `main` and fully effective in production**)  
-2. Epic 2 — Environment and Origin Hygiene  
+2. Epic 2 — Environment and Origin Hygiene (**PR 0 authorized**; see ADR 0002)  
 3. Epic 3 — Observability  
 4. Epic 4 — RLS Security Test Expansion (**before** schema reconciliation)  
 5. Epic 5 — Shared Core Package  
@@ -62,8 +62,17 @@ Follow the roadmap epic sequence. Do not skip dependency gates:
 
 Epic 1 is complete on `main` and fully effective in production (explicit
 bootstrap live; legacy hardcoded-email auto-grant removed; existing admin
-and promotion unchanged). **Never begin the next epic or the next PR
-automatically** — Epic 2 requires separate founder authorization.
+and promotion unchanged).
+
+## PR discipline for Epic 2
+
+| PR | Intent | Status |
+|----|--------|--------|
+| **PR 0** | Secrets/environment policy ADR + minimum governance status | Authorized |
+| **PR 1+** | `.env` hygiene, origins, Edge URL helper, validation, gated auth redirects, cleanup | **Not authorized by PR 0 alone** |
+
+Authority: `docs/adr/0002-secrets-and-environment-policy.md`. **Never begin
+the next epic or the next PR automatically.**
 
 ## Required ADRs
 
