@@ -76,6 +76,7 @@ Dashboard: [Stripe Dashboard](https://dashboard.stripe.com) → ensure **Live** 
 
 - [ ] **Cursor** — Cutover PR ready: live allowlists (TS ×2 + `stripe.ts`), SQL migration, docs, **maintenance `503 CHECKOUT_MAINTENANCE`**, tests green  
   - Evidence: PR URL; CI green  
+  - Maintenance gate: server env/secret `CHECKOUT_MAINTENANCE` (`true`/`1`/`on`/`yes`) on project `vpcxzbaxhpucvevnkalo`; `create-checkout` returns **503** + `code: CHECKOUT_MAINTENANCE`. Default unset = off. Never client-controlled.  
 - [ ] **Cursor** — Local validation green on cutover branch:
 
 ```bash
@@ -100,7 +101,15 @@ npm run test:entitlement-sql
 ## 1. Enter maintenance window (G0)
 
 - [ ] **Cursor / Founder** — Enable Checkout maintenance (`create-checkout` → `503` + `CHECKOUT_MAINTENANCE`; Upgrade CTA disabled/banner)  
-  - How: merge/deploy maintenance path per cutover PR; confirm via:
+  - How: deploy `create-checkout` with maintenance gate code (if not already), then set server secret (no client flag):
+
+```bash
+supabase secrets set CHECKOUT_MAINTENANCE=true --project-ref vpcxzbaxhpucvevnkalo
+# Redeploy create-checkout so isolates load the secret (same D2 discipline as Stripe secrets)
+supabase functions deploy create-checkout --project-ref vpcxzbaxhpucvevnkalo
+```
+
+  - Confirm via:
 
 ```bash
 curl -sS -o /tmp/co.json -w "%{http_code}" \
@@ -109,11 +118,12 @@ curl -sS -o /tmp/co.json -w "%{http_code}" \
   -H "apikey: <ANON_KEY>" \
   -H "Content-Type: application/json" \
   -H "Origin: https://app.settlerate.com" \
-  -d '{"priceType":"annual"}'
-# Expect: HTTP 503 and code CHECKOUT_MAINTENANCE
+  -d '{"priceType":"annual","maintenance":false}'
+# Expect: HTTP 503 and code CHECKOUT_MAINTENANCE (body flag ignored)
 ```
 
   - Evidence: HTTP 503 + JSON `code`  
+  - Disable after cutover: `supabase secrets unset CHECKOUT_MAINTENANCE --project-ref vpcxzbaxhpucvevnkalo` (or set `false`) + redeploy `create-checkout`
 - [ ] **Founder** — Announce freeze (no Checkout / no billing changes)  
 
 **Rollback decision:** If maintenance cannot be enforced → **Abort window** (no SQL, no secret changes).
