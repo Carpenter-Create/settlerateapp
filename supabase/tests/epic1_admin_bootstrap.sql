@@ -1,9 +1,16 @@
 -- Epic 1 (Admin Provisioning Security) — admin bootstrap mechanism assertions.
 -- Proves the bootstrap path works end-to-end and fails closed in every
--- adversarial case, without touching the legacy grant_admin_on_signup()
--- trigger. Run against a fresh (zero-admin) database by
+-- adversarial case. Run against a fresh (zero-admin) database by
 -- scripts/test-entitlement-sql.mjs before the Phase 6 entitlement fixtures
--- (which seed an admin user) run.
+-- (which seed an admin user) run, and before
+-- supabase/tests/epic1_remove_admin_trigger.sql (PR 2), which depends on
+-- the admin this file creates since no admin can ever be fully removed
+-- again once one exists (see public.protect_admin_role_deletion_trigger).
+--
+-- As of Epic 1 PR 2 (migration 20260807010000_remove_legacy_admin_trigger.sql),
+-- the legacy grant_admin_on_signup() trigger this file used to assert was
+-- "untouched" has been removed; see the assertion below and
+-- supabase/tests/epic1_remove_admin_trigger.sql for the full removal proof.
 
 DO $grants$
 BEGIN
@@ -157,10 +164,13 @@ BEGIN
   END;
   RESET ROLE;
 
-  -- Legacy trigger function is untouched by this migration.
+  -- Legacy trigger function was removed by Epic 1 PR 2
+  -- (20260807010000_remove_legacy_admin_trigger.sql). See
+  -- supabase/tests/epic1_remove_admin_trigger.sql for the full removal proof
+  -- (new signups no longer auto-granted, bootstrap and promotion still work).
   PERFORM test.assert_true(
-    'legacy grant_admin_on_signup trigger function still exists',
-    EXISTS (
+    'legacy grant_admin_on_signup trigger function no longer exists',
+    NOT EXISTS (
       SELECT 1 FROM pg_proc
       WHERE proname = 'grant_admin_on_signup' AND pronamespace = 'public'::regnamespace
     )

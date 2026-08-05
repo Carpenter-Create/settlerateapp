@@ -1,0 +1,32 @@
+-- Epic 1 (Admin Provisioning Security) — PR 2: remove legacy implicit admin
+-- auto-grant trigger now that the explicit bootstrap mechanism (PR 1,
+-- migration 20260806010000_admin_bootstrap.sql) exists, is tested, and
+-- existing admin access has been verified.
+--
+-- Preconditions verified before this migration was written (see PR 2
+-- review / commit message, not enforced here since this file only runs
+-- once): production public.user_roles already has an 'admin' row for
+-- adam@carpentercreate.com, granted 2026-01-12 by the one-time seed INSERT
+-- in migration 20260112073255_b843502b-023c-47cf-9db8-5fbc6d281c66.sql.
+-- That row is untouched by this migration.
+--
+-- This migration removes ONLY the ongoing, hardcoded-email auto-grant path:
+--   - Drops trigger on_auth_user_created_grant_admin on auth.users.
+--   - Drops function public.grant_admin_on_signup().
+--
+-- Explicitly out of scope / unaffected:
+--   - Existing public.user_roles rows are not modified or deleted — no
+--     admin is deprovisioned by this migration.
+--   - The historical seed migration (20260112073255_...sql) is not edited;
+--     its one-time effect (the existing admin row) stands.
+--   - public.promote_to_admin(), public.has_role(), and all RLS policies
+--     are unchanged.
+--   - The PR 1 bootstrap mechanism (public.issue_admin_bootstrap_token,
+--     public.claim_admin_bootstrap, public.admin_bootstrap_tokens) is
+--     unchanged and remains the sole path to create an admin where none
+--     exists.
+--
+-- See docs/adr/0001-admin-provisioning-model.md.
+
+DROP TRIGGER IF EXISTS on_auth_user_created_grant_admin ON auth.users;
+DROP FUNCTION IF EXISTS public.grant_admin_on_signup();

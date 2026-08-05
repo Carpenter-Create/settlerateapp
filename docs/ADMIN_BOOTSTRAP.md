@@ -11,12 +11,14 @@ with `role = 'admin'`. If an admin already exists, use normal in-app admin
 management instead — the bootstrap functions below refuse to run once any
 admin exists.
 
-This does **not** replace the legacy `grant_admin_on_signup()` trigger that
-auto-grants admin to `adam@carpentercreate.com` on signup. That trigger still
-exists and still runs; removing it is a separate, explicitly authorized PR
-(Epic 1 PR 2+). This procedure is for environments where that trigger either
-doesn't apply (different founder email, a new environment) or has already
-been removed.
+As of Epic 1 PR 2 (migration `20260807010000_remove_legacy_admin_trigger.sql`),
+the legacy `grant_admin_on_signup()` trigger that auto-granted admin to
+`adam@carpentercreate.com` on signup has been removed from the schema. This
+procedure is now the **only** way to create an admin where none exists. (In
+any environment where PR 2's migration has not yet been applied, that legacy
+trigger may still be present and active — check for it directly with
+`select to_regprocedure('public.grant_admin_on_signup()');` before relying on
+this being the only path.)
 
 ## Procedure
 
