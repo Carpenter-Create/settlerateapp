@@ -114,7 +114,7 @@ describe("entitlementLoading", () => {
   });
 
   it("resolved free user below limit receives create and duplicate", () => {
-    const flags = resolvedFeatures(null, null, 2);
+    const flags = resolvedFeatures(null, null, 1);
     const effective = resolveEffectiveFeatureAccess({
       isEntitlementPending: false,
       resolvedFeatures: flags,
@@ -125,7 +125,7 @@ describe("entitlementLoading", () => {
   });
 
   it("resolved free user at limit does not receive create or duplicate", () => {
-    const flags = resolvedFeatures(null, null, 3);
+    const flags = resolvedFeatures(null, null, 2);
     const effective = resolveEffectiveFeatureAccess({
       isEntitlementPending: false,
       resolvedFeatures: flags,

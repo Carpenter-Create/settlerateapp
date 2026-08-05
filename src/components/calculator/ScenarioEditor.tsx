@@ -20,6 +20,7 @@ import { calculateAssumption, DEFAULT_ASSUMPTION_INPUTS } from "@/lib/assumption
 import { RateMeta, DEFAULT_RATE_META, isRateLocked } from "@/lib/rateMeta";
 import { Scenario, SaveStatus } from "@/hooks/useScenarios";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { FREE_SCENARIO_LIMIT } from "@/lib/entitlementContract";
 import { cn } from "@/lib/utils";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";
@@ -122,7 +123,7 @@ export function ScenarioEditor({
   const canDuplicateNow = canDuplicateScenario && !isUsageRefreshPending;
   const readOnlyAccount = entitlementStatus === "read_only";
   const limitTitle = atScenarioLimit
-    ? "Free plan limit reached (3 saved scenarios). Upgrade to save more."
+    ? `Free plan limit reached (${FREE_SCENARIO_LIMIT} saved scenarios). Upgrade to save more.`
     : undefined;
   const readOnlyTitle = readOnlyAccount
     ? "Your subscription is past due. Update billing to edit scenarios."
@@ -385,7 +386,7 @@ export function ScenarioEditor({
             <p className="text-sm text-muted-foreground">
               {readOnlyAccount
                 ? "Scenarios are read-only until billing is updated. You may still delete scenarios."
-                : "You have reached the free plan limit of 3 saved scenarios. Upgrade to save more."}
+                : `You have reached the free plan limit of ${FREE_SCENARIO_LIMIT} saved scenarios. Upgrade to save more.`}
             </p>
           )}
           <div className="flex flex-wrap items-center gap-2">

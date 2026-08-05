@@ -1,4 +1,7 @@
-import type { EntitlementStatus } from "@/lib/entitlementContract";
+import {
+  FREE_SCENARIO_LIMIT,
+  type EntitlementStatus,
+} from "@/lib/entitlementContract";
 
 export interface DuplicateScenarioControl {
   allowed: boolean;
@@ -24,7 +27,7 @@ export function resolveDuplicateScenarioControl(options: {
     if (options.atScenarioLimit) {
       return {
         allowed: false,
-        title: "Free plan limit reached (3 saved scenarios).",
+        title: `Free plan limit reached (${FREE_SCENARIO_LIMIT} saved scenarios).`,
       };
     }
     return { allowed: false };

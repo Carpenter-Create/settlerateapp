@@ -150,16 +150,17 @@ describe("entitlementContract", () => {
     expect(d.hasProfessionalAccess).toBe(true);
   });
 
-  it("enforces free scenario limit of 3 for create/duplicate", () => {
+  it("enforces free scenario limit of 2 for create/duplicate", () => {
     const d = evaluateEntitlement({
       stripeStatus: "none",
       priceId: null,
       now,
     });
-    expect(isFeatureAllowed(d, "scenario_create", { scenarioCount: 2 })).toBe(true);
-    expect(isFeatureAllowed(d, "scenario_create", { scenarioCount: 3 })).toBe(false);
-    expect(isFeatureAllowed(d, "scenario_duplicate", { scenarioCount: 3 })).toBe(false);
-    expect(isFeatureAllowed(d, "scenario_update", { scenarioCount: 3 })).toBe(true);
+    expect(FREE_SCENARIO_LIMIT).toBe(2);
+    expect(isFeatureAllowed(d, "scenario_create", { scenarioCount: 1 })).toBe(true);
+    expect(isFeatureAllowed(d, "scenario_create", { scenarioCount: 2 })).toBe(false);
+    expect(isFeatureAllowed(d, "scenario_duplicate", { scenarioCount: 2 })).toBe(false);
+    expect(isFeatureAllowed(d, "scenario_update", { scenarioCount: 2 })).toBe(true);
   });
 
   it("professional has unlimited scenarios and paid features", () => {

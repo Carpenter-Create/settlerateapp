@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { FREE_SCENARIO_LIMIT } from "@/lib/entitlementContract";
 import { resolveNewScenarioControl } from "@/lib/newScenarioControl";
 
 describe("resolveNewScenarioControl", () => {
@@ -10,13 +11,11 @@ describe("resolveNewScenarioControl", () => {
   });
 
   it("blocks navigation with a disabled control when creation is not allowed", () => {
-    const control = resolveNewScenarioControl(
-      false,
-      "Free plan limit reached (3 saved scenarios)."
-    );
+    const limitTitle = `Free plan limit reached (${FREE_SCENARIO_LIMIT} saved scenarios).`;
+    const control = resolveNewScenarioControl(false, limitTitle);
     expect(control).toEqual({
       mode: "disabled",
-      title: "Free plan limit reached (3 saved scenarios).",
+      title: limitTitle,
     });
     expect(control.mode).toBe("disabled");
     if (control.mode === "disabled") {

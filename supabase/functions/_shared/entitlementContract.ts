@@ -39,7 +39,7 @@ export type StripeSubscriptionStatus =
   | "none"
   | string;
 
-export const FREE_SCENARIO_LIMIT = 3;
+export const FREE_SCENARIO_LIMIT = 2;
 export const PROFESSIONAL_TRIAL_DAYS = 7;
 
 /** Allowlisted Professional price IDs (server must reject others). Live catalog. */
