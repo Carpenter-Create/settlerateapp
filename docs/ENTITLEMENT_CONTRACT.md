@@ -64,12 +64,21 @@ No custom grace period.
 
 ## Price allowlist
 
-Only these price IDs grant Professional:
+Only these **live** price IDs grant Professional (Phase 7B catalog):
 
-- `price_1U0k4DC2Fmi7ZUCbSniiEewZ` (monthly — lookup `settlerate_professional_monthly`)
-- `price_1U0kFVC2Fmi7ZUCb6g0mXIRC` (annual — lookup `settlerate_professional_annual`)
+- `price_1U0t2QC56u2NxRItya8dElyg` (monthly — lookup `settlerate_professional_monthly` · $19/mo)
+- `price_1U0t2jC56u2NxRItM185AYK9` (annual — lookup `settlerate_professional_annual` · $190/yr)
 
-Product: `prod_V0lUMpnsvxSxP1` (SettleRate Professional, sandbox account `acct_1U0isCC2Fmi7ZUCb`).
+Product: `prod_V0usthAF9WnoGJ` (SettleRate Professional, live Stripe account).
+
+### Never grant (retired / legacy)
+
+| Category | IDs |
+|----------|-----|
+| Retired sandbox Professional prices | `price_1U0k4DC2Fmi7ZUCbSniiEewZ`, `price_1U0kFVC2Fmi7ZUCb6g0mXIRC` |
+| Retired sandbox Professional product | `prod_V0lUMpnsvxSxP1` (account `acct_1U0isCC2Fmi7ZUCb`) |
+| Deleted-account Professional prices | see `LEGACY_DELETED_PROFESSIONAL_PRICE_IDS` |
+| Legacy Advisor prices | see `LEGACY_ADVISOR_PRICE_IDS` |
 
 Arbitrary client-supplied price IDs are rejected.
 

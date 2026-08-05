@@ -3,6 +3,7 @@ import {
   FREE_SCENARIO_LIMIT,
   LEGACY_DELETED_PROFESSIONAL_PRICE_IDS,
   PROFESSIONAL_PRICE_IDS,
+  SANDBOX_RETIRED_PROFESSIONAL_PRICE_IDS,
   evaluateEntitlement,
   featureAccessFromDecision,
   isFeatureAllowed,
@@ -27,6 +28,9 @@ describe("entitlementContract", () => {
     expect(resolvePlanCodeFromPrice(deletedProAnnualPrice)).toBe("analytical");
     expect(resolvePlanCodeFromPrice(advisorPrice)).toBe("analytical");
     expect(resolvePlanCodeFromPrice("price_unknown")).toBe("analytical");
+    for (const sandboxPrice of SANDBOX_RETIRED_PROFESSIONAL_PRICE_IDS) {
+      expect(resolvePlanCodeFromPrice(sandboxPrice)).toBe("analytical");
+    }
   });
 
   it("grants entitled for active professional subscription", () => {

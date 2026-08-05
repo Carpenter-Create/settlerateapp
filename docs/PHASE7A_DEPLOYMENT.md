@@ -66,10 +66,18 @@ Do not perform these steps until the founder explicitly authorizes live catalog 
 5. Set the live Stripe Customer Portal return URL to `https://app.settlerate.com/app/account`.
 6. Run the applicable smoke checklist against live mode before announcing availability.
 
-Until that authorization, retain the current sandbox catalog configuration and use the sandbox smoke checklist only.
+**Phase 7B.1 catalog (code/SQL only):** Live product/price IDs are recorded in
+`docs/ENTITLEMENT_CONTRACT.md` and migration `20260805010000_phase7b_live_stripe_catalog.sql`.
+That change does **not** authorize applying the migration, rotating secrets, or deploying
+until the Phase 7B maintenance-window checklist is executed.
+
+Until live cutover execution is authorized, production secrets and deployed allowlists may
+still reflect sandbox mode — follow `docs/PHASE7B_LIVE_STRIPE_CUTOVER_CHECKLIST.md`.
 
 ## Related documents
 
 - `docs/PHASE6_DEPLOYMENT.md` — Phase 6 migration, SQL verification, and entitlement deployment details
+- `docs/PHASE7B_LIVE_STRIPE_CUTOVER_PLAN.md` — live cutover plan
+- `docs/PHASE7B_LIVE_STRIPE_CUTOVER_CHECKLIST.md` — maintenance-window operator checklist
 - `docs/ENTITLEMENT_CONTRACT.md` — price allowlist and entitlement status contract
 - `docs/SECURITY_MODEL.md` — authorization and secret-handling requirements

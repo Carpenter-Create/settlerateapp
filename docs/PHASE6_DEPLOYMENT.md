@@ -34,7 +34,7 @@ Before production migration apply:
 
 Apply via Supabase SQL migration workflow or `supabase db push` against the target project **after** review. Do not apply out of order.
 
-The sandbox catalog migration is required: it sets the current Professional-price allowlist in the entitlement SQL functions. For Phase 7A billing-hardening deployment, sandbox smoke checks, and the explicitly deferred live-cutover procedure, see `docs/PHASE7A_DEPLOYMENT.md`.
+The sandbox catalog migration (`20260804170000_phase6_stripe_sandbox_catalog.sql`) is required in the historical Phase 6 chain. Phase 7B replaces the allowlist with live prices via `20260805010000_phase7b_live_stripe_catalog.sql` (apply only during the authorized cutover window). For Phase 7A billing-hardening and the live-cutover procedure, see `docs/PHASE7A_DEPLOYMENT.md` and `docs/PHASE7B_LIVE_STRIPE_CUTOVER_CHECKLIST.md`.
 
 ### Privileged function grants (Step 5)
 

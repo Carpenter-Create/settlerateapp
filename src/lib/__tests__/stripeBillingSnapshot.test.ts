@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   PROFESSIONAL_PRICE_IDS,
+  PROFESSIONAL_PRODUCT_IDS,
+  SANDBOX_RETIRED_PROFESSIONAL_PRICE_IDS,
   evaluateEntitlement,
 } from "@/lib/entitlementContract";
 import {
@@ -11,6 +13,7 @@ import {
 } from "@/lib/stripeBillingSnapshot";
 
 const proMonthlyPrice = PROFESSIONAL_PRICE_IDS[0];
+const proProductId = PROFESSIONAL_PRODUCT_IDS[0];
 const now = new Date("2026-08-04T12:00:00.000Z");
 const periodStartUnix = Math.floor(new Date("2026-08-04T00:00:00.000Z").getTime() / 1000);
 const periodEndUnix = Math.floor(new Date("2026-09-04T00:00:00.000Z").getTime() / 1000);
@@ -24,7 +27,7 @@ describe("stripeBillingSnapshot — Basil/Dahlia period mapping", () => {
           {
             current_period_start: periodStartUnix,
             current_period_end: periodEndUnix,
-            price: { id: proMonthlyPrice, product: "prod_V0lUMpnsvxSxP1" },
+            price: { id: proMonthlyPrice, product: proProductId },
           },
         ],
       },
@@ -70,7 +73,7 @@ describe("stripeBillingSnapshot — Basil/Dahlia period mapping", () => {
           {
             current_period_start: periodStartUnix,
             current_period_end: periodEndUnix,
-            price: { id: proMonthlyPrice, product: "prod_V0lUMpnsvxSxP1" },
+            price: { id: proMonthlyPrice, product: proProductId },
           },
         ],
       },
@@ -83,7 +86,7 @@ describe("stripeBillingSnapshot — Basil/Dahlia period mapping", () => {
     const decision = evaluateEntitlement({
       stripeStatus: "active",
       priceId: proMonthlyPrice,
-      productId: "prod_V0lUMpnsvxSxP1",
+      productId: proProductId,
       currentPeriodEndsAt: new Date(periodEnd! * 1000).toISOString(),
       cancelAtPeriodEnd: false,
       now,
@@ -223,9 +226,10 @@ describe("stripeBillingSnapshot — retrieved subscription authority", () => {
 describe("stripeBillingSnapshot — catalog and advisor invariants unchanged", () => {
   it("does not alter allowlisted Professional prices or advisor denial", () => {
     expect(PROFESSIONAL_PRICE_IDS).toEqual([
-      "price_1U0k4DC2Fmi7ZUCbSniiEewZ",
-      "price_1U0kFVC2Fmi7ZUCb6g0mXIRC",
+      "price_1U0t2QC56u2NxRItya8dElyg",
+      "price_1U0t2jC56u2NxRItM185AYK9",
     ]);
+    expect(PROFESSIONAL_PRODUCT_IDS).toEqual(["prod_V0usthAF9WnoGJ"]);
 
     const advisor = evaluateEntitlement({
       stripeStatus: "active",
@@ -235,5 +239,16 @@ describe("stripeBillingSnapshot — catalog and advisor invariants unchanged", (
     });
     expect(advisor.entitlementStatus).toBe("free");
     expect(advisor.hasProfessionalAccess).toBe(false);
+
+    for (const sandboxPrice of SANDBOX_RETIRED_PROFESSIONAL_PRICE_IDS) {
+      const retired = evaluateEntitlement({
+        stripeStatus: "active",
+        priceId: sandboxPrice,
+        currentPeriodEndsAt: new Date(periodEndUnix * 1000).toISOString(),
+        now,
+      });
+      expect(retired.hasProfessionalAccess).toBe(false);
+      expect(retired.planCode).toBe("analytical");
+    }
   });
 });
