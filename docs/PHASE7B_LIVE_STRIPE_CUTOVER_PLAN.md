@@ -1,7 +1,8 @@
 # Phase 7B — Live Stripe Cutover Plan
 
-**Status:** Phase 7B.1 live catalog **created in Stripe**; code/SQL allowlist PR prepares live IDs.  
-**Production cutover (secrets, deploy, SQL apply):** **not executed** until checklist maintenance window.  
+**Status:** Phase 7B.1 live catalog **created in Stripe**; cutover code on `main`. Checklist Section 0 complete.  
+**Cutover authorization:** **AUTHORIZED TO BEGIN CUTOVER** — Operator: Founder / Adam Carpenter. Scope: **live Stripe activation only**.  
+**Production cutover (secrets, deploy, SQL apply):** **not executed** — proceed G0→I sequentially per checklist; verify after each gate.  
 **Scope:** Move SettleRate production billing from Stripe **sandbox/test** to Stripe **live**.  
 **Operator checklist (maintenance window):** `docs/PHASE7B_LIVE_STRIPE_CUTOVER_CHECKLIST.md`
 
@@ -272,13 +273,14 @@ Never: live key + sandbox allowlist, or sandbox key + live allowlist, outside th
 ### 4.0 Preconditions (before maintenance window)
 
 - [x] Phase 7A merged and deployed; sandbox smoke green
-- [ ] Founder worksheet (§1.7) complete with live IDs **and window UTC**
+- [x] Founder worksheet (§1.7) complete with live IDs; window opens at G0 (authorized; cutover not started)
 - [x] Founder accepts **beta trial policy** — new live customers get standard 7-day Professional trial
-- [ ] Database backup taken
+- [x] Database backup / PITR confirmed (founder pre-window)
 - [x] Cutover code on `main` (live allowlist TS + SQL migration + docs + Checkout maintenance switch; PRs #18–#22)
 - [x] Full CI green on cutover commits
-- [ ] Maintenance messaging ready
+- [x] Maintenance messaging ready (G0 procedure in checklist)
 - [x] Rollback operator available — Founder / Adam Carpenter (§6)
+- [x] **AUTHORIZED TO BEGIN CUTOVER** — live Stripe activation only; proceed G0→I with verification after each gate
 
 ### 4.1 Gate — sandbox billing cleanup (MANDATORY before SQL)
 

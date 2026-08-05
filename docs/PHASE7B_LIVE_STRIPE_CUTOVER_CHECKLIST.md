@@ -2,8 +2,20 @@
 
 **Authority:** `docs/PHASE7B_LIVE_STRIPE_CUTOVER_PLAN.md`  
 **Project:** Supabase `vpcxzbaxhpucvevnkalo` · App `https://app.settlerate.com`  
-**Do not start the maintenance window until Section 0 is complete.**  
 **Owners:** Founder = human decision / Stripe Dashboard / secret custody · Cursor = repo PR / deploys / SQL checks (when authorized) · Supabase = Dashboard SQL / secrets / function host · Stripe = Live & Test Dashboards / API
+
+### Cutover authorization (pre-window)
+
+| Field | Value |
+|-------|-------|
+| **Status** | **AUTHORIZED TO BEGIN CUTOVER** |
+| **Operator** | Founder / Adam Carpenter |
+| **Scope** | Live Stripe activation only |
+| **Pre-window gates** | All Section 0 gates completed (founder confirmation) |
+| **Execution state** | **Cutover has not yet started** — G0 (Section 1) and later remain unchecked |
+| **Procedure** | Proceed **G0 → G1 → G2 → W → C → D1 → E → D2 → G → I** (then Section 11 → H) sequentially; verify after each gate before continuing |
+
+**Do not treat authorization as execution.** No secrets, SQL apply, edge deploy, or maintenance enable until the corresponding checklist step is performed and verified.
 
 ### Global STOP conditions (any time)
 
@@ -33,12 +45,15 @@
 
 ### 0.1 Decisions and worksheet
 
-- [ ] **Founder** — Authorize Phase 7B execution for this window  
-  - Evidence: written approval (chat/email) with window UTC  
+- [x] **Founder** — Authorize Phase 7B execution for this window  
+  - **Status:** AUTHORIZED TO BEGIN CUTOVER  
+  - **Operator:** Founder / Adam Carpenter  
+  - **Scope:** Live Stripe activation only  
+  - Evidence: founder authorization recorded in this checklist (2026-08-04); cutover not started  
 - [x] **Founder** — Accept beta trial policy  
   - **Policy:** New live customers receive the standard **7-day Professional trial** (application-controlled via `create-checkout` / `PROFESSIONAL_TRIAL_DAYS`). Sandbox-era history is not used to deny a first live trial.  
   - Evidence: recorded in this checklist (2026-08-04)  
-- [ ] **Founder** — Fill live worksheet window times (IDs already recorded; no secrets in git):
+- [x] **Founder** — Live worksheet complete (IDs recorded; no secrets in git):
 
 ```text
 Live account id:           acct_1U0irnC56u2NxRIt
@@ -47,8 +62,8 @@ Live monthly price id:     price_1U0t2QC56u2NxRItya8dElyg
 Live annual price id:      price_1U0t2jC56u2NxRItM185AYK9
 Live webhook endpoint id:  we_1U0tp5C56u2NxRItISK9qakr
 Live portal config id:     bpc_1U0trlC56u2NxRIt8ypZMHAR
-Window start (UTC):        ____________________
-Window end target (UTC):   ____________________
+Window start (UTC):        opens at G0 execution (authorized; not started)
+Window end target (UTC):   after Section 12 (H) / founder close
 Operator / rollback:       Founder / Adam Carpenter
 ```
 
@@ -62,20 +77,21 @@ Operator / rollback:       Founder / Adam Carpenter
 
 Dashboard: [Stripe Dashboard](https://dashboard.stripe.com) → ensure **Live** (not Test)
 
-- [ ] **Founder / Stripe** — Product “SettleRate Professional” created + metadata `app=settlerate`, `plan_code=professional`, `environment=live`  
-  - Evidence: `prod_…` on worksheet; screenshot or Dashboard URL  
-- [ ] **Founder / Stripe** — Monthly price $19 (`settlerate_professional_monthly`, 1900 USD/month)  
-  - Evidence: `price_…` on worksheet  
-- [ ] **Founder / Stripe** — Annual price $190 (`settlerate_professional_annual`, 19000 USD/year)  
-  - Evidence: `price_…` on worksheet  
-- [ ] **Founder / Stripe** — No Price-level trial (app controls 7-day trial)  
-  - Evidence: price settings show no trial  
-- [ ] **Founder / Stripe** — Customer Portal: cancel at period end (or Flexible equiv.), payment methods, invoices; plan switch **off**; `default_return_url` = `https://app.settlerate.com/app/account`  
-  - Evidence: Portal settings screenshot / config id `bpc_…`  
-- [ ] **Founder / Stripe** — Live webhook endpoint → `https://vpcxzbaxhpucvevnkalo.supabase.co/functions/v1/stripe-webhook`  
+- [x] **Founder / Stripe** — Product “SettleRate Professional” created + metadata `app=settlerate`, `plan_code=professional`, `environment=live`  
+  - Evidence: `prod_V0usthAF9WnoGJ` on worksheet; founder pre-window confirmation  
+- [x] **Founder / Stripe** — Monthly price $19 (`settlerate_professional_monthly`, 1900 USD/month)  
+  - Evidence: `price_1U0t2QC56u2NxRItya8dElyg` on worksheet  
+- [x] **Founder / Stripe** — Annual price $190 (`settlerate_professional_annual`, 19000 USD/year)  
+  - Evidence: `price_1U0t2jC56u2NxRItM185AYK9` on worksheet  
+- [x] **Founder / Stripe** — No Price-level trial (app controls 7-day trial)  
+  - Evidence: founder pre-window confirmation  
+- [x] **Founder / Stripe** — Customer Portal: cancel at period end (or Flexible equiv.), payment methods, invoices; plan switch **off**; `default_return_url` = `https://app.settlerate.com/app/account`  
+  - Evidence: config id `bpc_1U0trlC56u2NxRIt8ypZMHAR`; founder pre-window confirmation  
+- [x] **Founder / Stripe** — Live webhook endpoint → `https://vpcxzbaxhpucvevnkalo.supabase.co/functions/v1/stripe-webhook`  
   - Events: `checkout.session.completed`, `customer.subscription.created|updated|deleted`, `invoice.paid`, `invoice.payment_failed`  
-  - Evidence: `we_…` on worksheet; signing secret stored in founder secret store (**not** pasted into chat/git)  
-- [ ] **Founder / Stripe** — Live secret key available (`sk_live_…`, restricted preferred) in founder secret store  
+  - Evidence: `we_1U0tp5C56u2NxRItISK9qakr` on worksheet; signing secret in founder secret store (**not** pasted into chat/git)  
+- [x] **Founder / Stripe** — Live secret key available (`sk_live_…`, restricted preferred) in founder secret store  
+  - Evidence: founder pre-window confirmation (secret values never recorded in git)
 
 ### 0.3 Repo / CI
 
@@ -86,13 +102,13 @@ Dashboard: [Stripe Dashboard](https://dashboard.stripe.com) → ensure **Live** 
 
 ### 0.4 Backup and roles
 
-- [ ] **Founder / Supabase** — Database backup / PITR note for project `vpcxzbaxhpucvevnkalo`  
-  - Evidence: backup timestamp or Dashboard confirmation  
+- [x] **Founder / Supabase** — Database backup / PITR note for project `vpcxzbaxhpucvevnkalo`  
+  - Evidence: founder pre-window confirmation (Dashboard Backups / PITR)  
   - Location: Supabase Dashboard → Project → Database → Backups  
 - [x] **Founder** — Rollback operator named and available for the window  
   - Evidence: **Founder / Adam Carpenter**  
 
-**STOP if Section 0 incomplete — do not enter maintenance.**
+**Section 0 complete. AUTHORIZED TO BEGIN CUTOVER. Cutover not started — begin at Section 1 (G0) only when operator is ready; verify after each subsequent gate.**
 
 ---
 
@@ -453,9 +469,9 @@ Do not announce. Fix forward (webhook secret, allowlist, replay) per plan §6.
 
 | Role | Name | Time (UTC) | Result |
 |------|------|------------|--------|
-| Founder / rollback | Adam Carpenter | | GO / NO-GO / ABORT |
+| Founder / rollback | Adam Carpenter | | AUTHORIZED TO BEGIN CUTOVER (pre-window); final GO / NO-GO / ABORT at Section 11–12 |
 | Cursor operator | | | |
-| Notes | Trial policy accepted: new live customers get standard 7-day Professional trial. | | |
+| Notes | Trial policy accepted. Scope: live Stripe activation only. Cutover not started at authorization record. | | |
 
 **Worksheet IDs used in production (copy at end of window):**
 
