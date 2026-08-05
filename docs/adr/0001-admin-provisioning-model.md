@@ -13,10 +13,11 @@ Admin role grants are stored in `public.user_roles` and verified server-side via
 an admin to `INSERT`/`DELETE` role rows, which is correct for steady-state
 operation but creates a bootstrapping problem: there is currently no way to
 create the *first* admin except a hardcoded-email trigger
-(`grant_admin_on_signup()`, migration `20260112073631_...sql`) that
-auto-grants `admin` to any `auth.users` row with
-`email = 'adam@carpentercreate.com'` on signup, plus a one-time seed `INSERT`
-for that same email.
+(`grant_admin_on_signup()`, migration
+`20260112073255_b843502b-023c-47cf-9db8-5fbc6d281c66.sql`) that auto-grants
+`admin` to any `auth.users` row with `email = 'adam@carpentercreate.com'` on
+signup, plus a one-time seed `INSERT` for that same email in the same
+migration.
 
 This implicit, email-hardcoded bootstrap is the risk Epic 1 exists to retire
 (`docs/PHASE8_1_EPIC_BOUNDARIES.md` — "Replace implicit/automatic admin grant
@@ -96,3 +97,47 @@ bootstrap path):
   guarantees or test coverage; the RPC pair formalizes and tests the same
   trust boundary instead of relying on an operator remembering the right raw
   SQL.
+
+## Update — Epic 1 PR 2 (legacy trigger removal)
+
+- Date: 2026-08-05
+- Migration: `supabase/migrations/20260807010000_remove_legacy_admin_trigger.sql`
+
+**Deployment sequencing (required in every environment, including
+production):**
+
+1. The Epic 1 PR 1 migration (`20260806010000_admin_bootstrap.sql`) **must
+   be applied before** the Epic 1 PR 2 migration
+   (`20260807010000_remove_legacy_admin_trigger.sql`). Applying PR 2 first
+   would remove the legacy auto-grant path before the explicit bootstrap
+   path exists, leaving an environment with zero admin-provisioning paths.
+2. PR 2 removes the legacy implicit bootstrap path (the
+   `grant_admin_on_signup()` trigger) **only after** the explicit bootstrap
+   path from PR 1 (`issue_admin_bootstrap_token` / `claim_admin_bootstrap`)
+   exists and is tested — this is the ordering PR 1's ADR text above
+   required before removal was authorized.
+3. **No production migration has been applied by this repository change.**
+   This PR only adds a migration file to the repository; applying it (and
+   PR 1's migration, which also has not been applied to production — see
+   below) to the live Supabase project is a separate, explicitly authorized
+   deployment step, not part of this PR.
+
+Precondition verified in production (`vpcxzbaxhpucvevnkalo`) before writing
+this migration: exactly one admin exists —
+`adam@carpentercreate.com` (`d7ed78d7-69b8-43c9-bb54-1eb936a5a993`), with an
+`admin` row granted `2026-01-12 07:37:48 UTC` by the one-time seed `INSERT`
+in `20260112073255_...sql`. That row is independent of the trigger and is
+untouched by the removal migration, so existing admin access survives
+trigger removal. Production had **not yet had the PR 1 bootstrap migration
+(`20260806010000_admin_bootstrap.sql`) applied** at the time this check ran —
+that migration must be applied before the PR 2 removal migration in any
+environment, so bootstrap is never absent alongside the legacy trigger.
+
+Per the decision above, this migration drops only
+`on_auth_user_created_grant_admin` (trigger) and `grant_admin_on_signup()`
+(function). It does not edit the historical seed migration, does not modify
+`user_roles` rows, and does not change `promote_to_admin()` or any RLS
+policy. See `supabase/tests/epic1_remove_admin_trigger.sql` for the
+automated proof that: new signups using the legacy hardcoded email are no
+longer auto-granted admin; the PR 1 bootstrap mechanism still works after
+removal; and existing admin promotion (`promote_to_admin`) still works.
