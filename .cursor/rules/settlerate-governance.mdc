@@ -11,7 +11,7 @@ Use the authoritative document for each domain. Do not invent a universal rankin
 |--------|-----------|
 | Financial methodology | `docs/FINANCIAL_METHODOLOGY.md` |
 | Scenario persistence | `docs/SCENARIO_PERSISTENCE.md` |
-| Export contract | `docs/EXPORT_CONTRACT.md` |
+| Export contract | `docs/EXPORT_CONTRACT.md` (Phase 8.1: field semantics frozen without architectural approval; see phase workflow Export fence) |
 | Comparison contract | `docs/COMPARISON_CONTRACT.md` |
 | Benchmark and defect status | `TEST_BASELINE.md` |
 | Product scope | `docs/APP_SCOPE.md` |
@@ -19,6 +19,10 @@ Use the authoritative document for each domain. Do not invent a universal rankin
 | Roles and entitlements | `docs/ROLES_AND_ENTITLEMENTS.md` |
 | Copy | `docs/COPY_STANDARD.md` |
 | UI | `docs/UI_STANDARD.md`, `docs/PORTAL_UI_STANDARD.md` |
+| Phase 8.1 execution | `docs/PHASE8_1_EXECUTION_CHARTER.md`, `docs/PHASE8_1_EPIC_BOUNDARIES.md` |
+| Phase 8.1 roadmap | `docs/roadmap/PHASE8.1_PRODUCTION_HARDENING_AND_DECOUPLING_ROADMAP.md` |
+| Architecture decisions | `docs/adr/README.md` and accepted `docs/adr/*.md` |
+| Phase 7B cutover (paused) | `docs/PHASE7B_LIVE_STRIPE_CUTOVER_PLAN.md`, `docs/PHASE7B_LIVE_STRIPE_CUTOVER_CHECKLIST.md` |
 | Current implemented behavior | Source code and **active tests** |
 
 ## Documentation vs implementation
@@ -31,3 +35,7 @@ Use the authoritative document for each domain. Do not invent a universal rankin
 ## Before financial work
 
 Read `docs/FINANCIAL_METHODOLOGY.md` and the relevant DEF-*/BM-* rows in `TEST_BASELINE.md`.
+
+## Before Phase 8.1 work
+
+Read `docs/PHASE8_1_EXECUTION_CHARTER.md` and the authorized epic section in `docs/PHASE8_1_EPIC_BOUNDARIES.md`. Do not implement against a missing required ADR when the change depends on that decision — stop and report.
