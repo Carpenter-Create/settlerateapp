@@ -40,7 +40,7 @@
 - [ ] **Founder** — Fill live worksheet (IDs only; no secrets in git):
 
 ```text
-Live account id:           acct________________  (founder: fill full acct_ id)
+Live account id:           acct_1U0irnC56u2NxRIt
 Live product id:           prod_V0usthAF9WnoGJ
 Live monthly price id:     price_1U0t2QC56u2NxRItya8dElyg
 Live annual price id:      price_1U0t2jC56u2NxRItM185AYK9
@@ -50,6 +50,7 @@ Window start (UTC):        ____________________
 Window end target (UTC):   ____________________
 ```
 
+- [x] **Founder** — Live account ID recorded — `acct_1U0irnC56u2NxRIt`  
 - [x] **Founder** — Live product + prices created (Phase 7B.1) — IDs above  
   - Evidence: Stripe Live Dashboard product `prod_V0usthAF9WnoGJ`
 
@@ -462,5 +463,5 @@ Do not announce. Fix forward (webhook secret, allowlist, replay) per plan §6.
 **Worksheet IDs used in production (copy at end of window):**
 
 ```text
-acct: ________  prod: ________  price_mo: ________  price_yr: ________  we: ________
+acct: acct_1U0irnC56u2NxRIt  prod: prod_V0usthAF9WnoGJ  price_mo: price_1U0t2QC56u2NxRItya8dElyg  price_yr: price_1U0t2jC56u2NxRItM185AYK9  we: ________
 ```

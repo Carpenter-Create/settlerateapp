@@ -19,7 +19,7 @@ Success URLs, client plan flags, and localStorage never grant access.
 
 | Item | Live (grant after cutover) | Retired sandbox (never grant) |
 |------|----------------------------|-------------------------------|
-| Stripe account | Live account (founder worksheet) | `acct_1U0isCC2Fmi7ZUCb` |
+| Stripe account | `acct_1U0irnC56u2NxRIt` | `acct_1U0isCC2Fmi7ZUCb` |
 | Professional product | `prod_V0usthAF9WnoGJ` | `prod_V0lUMpnsvxSxP1` |
 | Monthly price | `price_1U0t2QC56u2NxRItya8dElyg` · `settlerate_professional_monthly` · **$19/mo** | `price_1U0k4DC2Fmi7ZUCbSniiEewZ` |
 | Annual price | `price_1U0t2jC56u2NxRItM185AYK9` · `settlerate_professional_annual` · **$190/yr** | `price_1U0kFVC2Fmi7ZUCb6g0mXIRC` |
@@ -150,7 +150,7 @@ Verify Dashboard shows **Live mode** (not Test) when creating all of the above.
 ### 1.7 Founder worksheet (fill before any deploy)
 
 ```text
-Live account id:           acct________________  (founder: fill full acct_ id)
+Live account id:           acct_1U0irnC56u2NxRIt
 Live product id:           prod_V0usthAF9WnoGJ
 Live monthly price id:     price_1U0t2QC56u2NxRItya8dElyg
 Live annual price id:      price_1U0t2jC56u2NxRItM185AYK9
