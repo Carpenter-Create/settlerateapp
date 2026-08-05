@@ -77,6 +77,15 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
 
       if (!response.ok) {
         const error = await response.json();
+        if (response.status === 409 && error.code === "ALREADY_SUBSCRIBED") {
+          onOpenChange(false);
+          toast("Subscription already exists.", {
+            description: "Manage billing from your Account page.",
+          });
+          navigate("/app/account");
+          setIsLoading(false);
+          return;
+        }
         throw new Error(error.error || "Subscription request failed");
       }
 

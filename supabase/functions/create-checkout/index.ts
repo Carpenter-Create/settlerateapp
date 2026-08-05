@@ -7,6 +7,16 @@ import {
   isAllowlistedProfessionalPrice,
 } from "../_shared/entitlementContract.ts";
 import { resolveAppOrigin } from "../_shared/appOrigin.ts";
+import {
+  CHECKOUT_BLOCKING_SUBSCRIPTION_STATUSES,
+  billingRowBlocksCheckout,
+  checkoutIdempotencyKey,
+  stripeSubscriptionsBlockCheckout,
+} from "../_shared/professionalSubscriptionGuard.ts";
+import {
+  resolveCheckoutCustomer,
+  stripeCustomerMetadataSearchQuery,
+} from "../_shared/stripeCustomerResolve.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -134,76 +144,103 @@ serve(async (req) => {
 
     const { data: billing } = await supabaseService
       .from("billing")
-      .select("stripe_customer_id")
+      .select("stripe_customer_id, stripe_subscription_id, subscription_status, price_id")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    let customerId: string | undefined = billing?.stripe_customer_id ?? undefined;
-
-    if (!customerId) {
-      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-      if (customers.data.length > 0) {
-        const candidate = customers.data[0];
-        // Fail closed if this Stripe customer is already bound to another app user
-        const { data: owner } = await supabaseService
-          .from("billing")
-          .select("user_id")
-          .eq("stripe_customer_id", candidate.id)
-          .maybeSingle();
-        if (owner?.user_id && owner.user_id !== user.id) {
-          logStep("Customer already bound to another user", {
-            customerId: candidate.id,
-            ownerUserId: owner.user_id,
+    const customerResolution = await resolveCheckoutCustomer(
+      { userId: user.id, email: user.email },
+      {
+        getBillingCustomerId: async () => billing?.stripe_customer_id ?? null,
+        findCustomersByUserMetadata: async (userId) => {
+          const customers = await stripe.customers.search({
+            query: stripeCustomerMetadataSearchQuery(userId),
+            limit: 100,
           });
-          return new Response(
-            JSON.stringify({
-              error: "Billing profile conflict",
-              code: "CUSTOMER_BOUND_ELSEWHERE",
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
-          );
-        }
-        // Only adopt when metadata matches or is unset
-        const metaUser = candidate.metadata?.user_id;
-        if (metaUser && metaUser !== user.id) {
-          return new Response(
-            JSON.stringify({
-              error: "Billing profile conflict",
-              code: "CUSTOMER_BOUND_ELSEWHERE",
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
-          );
-        }
-        customerId = candidate.id;
+          return customers.data;
+        },
+        isCustomerBoundToOtherUser: async (customerId, userId) => {
+          const { data: owner } = await supabaseService
+            .from("billing")
+            .select("user_id")
+            .eq("stripe_customer_id", customerId)
+            .maybeSingle();
+          return Boolean(owner?.user_id && owner.user_id !== userId);
+        },
+        createCustomer: async ({ email, userId }) => {
+          const created = await stripe.customers.create({
+            email,
+            metadata: { user_id: userId },
+          });
+          logStep("Created Stripe customer", { customerId: created.id });
+          return created.id;
+        },
+      }
+    );
+
+    if (customerResolution.kind === "ambiguous") {
+      return new Response(
+        JSON.stringify({ error: "Multiple billing profiles found", code: "CUSTOMER_AMBIGUOUS" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
+      );
+    }
+
+    if (customerResolution.kind === "bound_elsewhere") {
+      return new Response(
+        JSON.stringify({ error: "Billing profile conflict", code: "CUSTOMER_BOUND_ELSEWHERE" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
+      );
+    }
+
+    const customerId = customerResolution.customerId;
+    logStep("Using Stripe customer", { customerId });
+
+    if (customerResolution.requiresBillingMapUpsert) {
+      const { error: mapError } = await supabaseService.from("billing").upsert(
+        {
+          user_id: user.id,
+          stripe_customer_id: customerId,
+        },
+        { onConflict: "user_id" }
+      );
+      if (mapError) {
+        logStep("Billing map upsert failed", { error: mapError.message });
+        return new Response(
+          JSON.stringify({ error: "Failed to bind billing profile", code: "BILLING_MAP_FAILED" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        );
       }
     }
 
-    if (!customerId) {
-      const created = await stripe.customers.create({
-        email: user.email,
-        metadata: { user_id: user.id },
-      });
-      customerId = created.id;
-      logStep("Created Stripe customer", { customerId });
-    } else {
-      await stripe.customers.update(customerId, {
-        metadata: { user_id: user.id },
-      });
-      logStep("Using Stripe customer", { customerId });
+    if (billingRowBlocksCheckout(billing, isAllowlistedProfessionalPrice)) {
+      logStep("Checkout blocked: billing row has active subscription", { userId: user.id });
+      return new Response(
+        JSON.stringify({
+          error: "An existing Professional subscription must be managed before starting checkout",
+          code: "ALREADY_SUBSCRIBED",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
+      );
     }
 
-    const { error: mapError } = await supabaseService.from("billing").upsert(
-      {
-        user_id: user.id,
-        stripe_customer_id: customerId,
-      },
-      { onConflict: "user_id" }
+    const subscriptionLists = await Promise.all(
+      CHECKOUT_BLOCKING_SUBSCRIPTION_STATUSES.map((status) =>
+        stripe.subscriptions.list({
+          customer: customerId,
+          status,
+          limit: 100,
+        })
+      )
     );
-    if (mapError) {
-      logStep("Billing map upsert failed", { error: mapError.message });
+    const subscriptions = subscriptionLists.flatMap(({ data }) => data);
+    if (stripeSubscriptionsBlockCheckout(subscriptions, isAllowlistedProfessionalPrice)) {
+      logStep("Checkout blocked: Stripe has active Professional subscription", { userId: user.id });
       return new Response(
-        JSON.stringify({ error: "Failed to bind billing profile", code: "BILLING_MAP_FAILED" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        JSON.stringify({
+          error: "An existing Professional subscription must be managed before starting checkout",
+          code: "ALREADY_SUBSCRIBED",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
       );
     }
 
@@ -235,6 +272,8 @@ serve(async (req) => {
       client_reference_id: user.id,
       metadata: { user_id: user.id },
       subscription_data: subscriptionData,
+    }, {
+      idempotencyKey: checkoutIdempotencyKey(user.id, priceId),
     });
 
     logStep("Checkout session created", { sessionId: session.id });

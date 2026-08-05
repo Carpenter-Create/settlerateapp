@@ -33,7 +33,9 @@ export default function Account() {
   const { isAdmin, realIsAdmin, isLoading: capabilitiesLoading } = useCapabilities();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [billingError, setBillingError] = useState<"NO_STRIPE_CUSTOMER" | null>(null);
+  const [billingError, setBillingError] = useState<
+    "NO_STRIPE_CUSTOMER" | "CUSTOMER_AMBIGUOUS" | "CUSTOMER_BOUND_ELSEWHERE" | null
+  >(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Success URL never grants entitlement — refresh from verified billing state
@@ -83,6 +85,24 @@ export default function Account() {
 
       if (data.code === "NO_STRIPE_CUSTOMER") {
         setBillingError("NO_STRIPE_CUSTOMER");
+        setPortalLoading(false);
+        return;
+      }
+
+      if (data.code === "CUSTOMER_AMBIGUOUS") {
+        setBillingError("CUSTOMER_AMBIGUOUS");
+        toast("Unable to open billing portal.", {
+          description: "Multiple billing profiles require support review.",
+        });
+        setPortalLoading(false);
+        return;
+      }
+
+      if (data.code === "CUSTOMER_BOUND_ELSEWHERE") {
+        setBillingError("CUSTOMER_BOUND_ELSEWHERE");
+        toast("Unable to open billing portal.", {
+          description: "This billing profile is linked to another account.",
+        });
         setPortalLoading(false);
         return;
       }
@@ -221,6 +241,23 @@ export default function Account() {
                 >
                   Subscribe to manage access.
                 </button>
+              </p>
+            </div>
+          )}
+          {billingError === "CUSTOMER_AMBIGUOUS" && (
+            <div className="rounded-sm border border-border bg-muted/30 p-3 text-sm">
+              <p className="text-muted-foreground">
+                Multiple billing profiles were found. Please contact support to resolve the billing
+                profile before managing your subscription.
+              </p>
+            </div>
+          )}
+
+          {billingError === "CUSTOMER_BOUND_ELSEWHERE" && (
+            <div className="rounded-sm border border-border bg-muted/30 p-3 text-sm">
+              <p className="text-muted-foreground">
+                This billing profile is linked to another account. Please contact support before
+                managing your subscription.
               </p>
             </div>
           )}

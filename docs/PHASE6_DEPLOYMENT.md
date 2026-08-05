@@ -30,8 +30,11 @@ Before production migration apply:
 3. `20260804140000_phase6_stage2_hardening.sql`
 4. `20260804150000_phase6_remove_advisor_product_model.sql`
 5. `20260804160000_phase6_privileged_function_grants.sql`
+6. `20260804170000_phase6_stripe_sandbox_catalog.sql`
 
 Apply via Supabase SQL migration workflow or `supabase db push` against the target project **after** review. Do not apply out of order.
+
+The sandbox catalog migration is required: it sets the current Professional-price allowlist in the entitlement SQL functions. For Phase 7A billing-hardening deployment, sandbox smoke checks, and the explicitly deferred live-cutover procedure, see `docs/PHASE7A_DEPLOYMENT.md`.
 
 ### Privileged function grants (Step 5)
 
@@ -82,7 +85,7 @@ npm run test:entitlement-sql
 
 ## Edge function deploy order
 
-Deploy **after** all five migrations are verified:
+Deploy **after** all six migrations are verified:
 
 | Function | Stage 2 change | Required |
 |----------|----------------|----------|
@@ -122,4 +125,5 @@ Deploy app bundle after edge functions when webhook/checkout changes are live (s
 ## Related docs
 
 - `docs/ENTITLEMENT_CONTRACT.md` — canonical entitlement contract
+- `docs/PHASE7A_DEPLOYMENT.md` — Phase 7A billing-hardening and deferred live-cutover runbook
 - `docs/ROLES_AND_ENTITLEMENTS.md` — product policy

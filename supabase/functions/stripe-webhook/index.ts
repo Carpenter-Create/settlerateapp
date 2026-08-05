@@ -9,6 +9,8 @@ import {
 import {
   extractInvoiceSubscriptionId,
   extractSubscriptionPeriodEnd,
+  mapSubscriptionToBillingSnapshot,
+  resolveSubscriptionBillingSnapshot,
 } from "../_shared/stripeBillingSnapshot.ts";
 
 const corsHeaders = {
@@ -238,17 +240,37 @@ serve(async (req) => {
     let metadataUserId: string | null = null;
 
     if (eventType.startsWith("customer.subscription")) {
-      const subscription = event.data.object as Stripe.Subscription;
-      stripeCustomerId = subscription.customer as string;
-      subscriptionStatus =
-        eventType === "customer.subscription.deleted" ? "canceled" : subscription.status;
-      subscriptionId = subscription.id;
-      currentPeriodEnd = extractSubscriptionPeriodEnd(subscription);
-      cancelAtPeriodEnd = Boolean(subscription.cancel_at_period_end);
-      metadataUserId = (subscription.metadata?.user_id as string) || null;
-      if (subscription.items?.data?.length) {
-        priceId = subscription.items.data[0].price.id;
-        productId = subscription.items.data[0].price.product as string;
+      const eventSubscription = event.data.object as Stripe.Subscription;
+      if (eventSubscription.id) {
+        try {
+          const snapshot = await resolveSubscriptionBillingSnapshot(
+            eventSubscription,
+            stripe.subscriptions.retrieve.bind(stripe.subscriptions)
+          );
+          stripeCustomerId = snapshot.stripeCustomerId;
+          subscriptionStatus = snapshot.subscriptionStatus;
+          subscriptionId = snapshot.subscriptionId;
+          currentPeriodEnd = snapshot.currentPeriodEnd;
+          cancelAtPeriodEnd = snapshot.cancelAtPeriodEnd;
+          priceId = snapshot.priceId;
+          productId = snapshot.productId;
+          metadataUserId = (eventSubscription.metadata?.user_id as string) || null;
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          await releaseClaim();
+          logWebhook({
+            event_type: eventType,
+            stripe_customer_id: null,
+            app_user_id: null,
+            user_role: null,
+            action_taken: "subscription_retrieve_failed",
+            details: { error: errorMessage, subscription_id: eventSubscription.id, event_id: event.id },
+          });
+          return new Response(JSON.stringify({ error: "Subscription retrieval failed" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
     } else if (eventType === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;

@@ -1,4 +1,8 @@
 import { resolveAppOrigin } from "../_shared/appOrigin.ts";
+import {
+  resolveStripeCustomerByUserId,
+  type StripeCustomerLike,
+} from "../_shared/stripeCustomerResolve.ts";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,6 +22,12 @@ export interface CustomerPortalDeps {
   logAdminBypass: (userId: string) => Promise<void>;
   /** Authoritative billing.stripe_customer_id for the authenticated user only. */
   getBillingCustomerId: (userId: string) => Promise<string | null | undefined>;
+  /** Metadata-only Stripe search candidates for the authenticated user. */
+  searchCustomersByUserId: (userId: string) => Promise<StripeCustomerLike[]>;
+  /** True when stripe_customer_id is already mapped to a different app user. */
+  isCustomerBoundToOtherUser: (customerId: string, userId: string) => Promise<boolean>;
+  /** Repairs the authenticated user's billing mapping after a unique metadata match. */
+  upsertBillingCustomerId: (userId: string, customerId: string) => Promise<void>;
   createPortalSession: (customerId: string, returnUrl: string) => Promise<{ url: string; id: string }>;
 }
 
@@ -43,7 +53,7 @@ export async function handleCustomerPortalRequest(
     const token = authHeader.replace("Bearer ", "");
     const { user, error: userError } = await deps.getUserFromToken(token);
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    if (!user?.email) throw new Error("User not authenticated or email not available");
+    if (!user) throw new Error("User not authenticated");
 
     if (await deps.isAdmin(user.id)) {
       await deps.logAdminBypass(user.id);
@@ -53,13 +63,38 @@ export async function handleCustomerPortalRequest(
       );
     }
 
-    // Authoritative billing mapping only — never discover or bind via Stripe email search.
-    const customerId = (await deps.getBillingCustomerId(user.id)) ?? null;
+    let customerId = (await deps.getBillingCustomerId(user.id)) ?? null;
     if (!customerId) {
-      return jsonResponse(
-        { code: "NO_STRIPE_CUSTOMER", error: "No billing profile found" },
-        200
+      const resolution = resolveStripeCustomerByUserId(
+        await deps.searchCustomersByUserId(user.id),
+        user.id
       );
+
+      if (resolution.kind === "ambiguous") {
+        return jsonResponse(
+          { code: "CUSTOMER_AMBIGUOUS", error: "Multiple billing profiles found" },
+          409
+        );
+      }
+
+      if (resolution.kind === "none") {
+        return jsonResponse(
+          { code: "NO_STRIPE_CUSTOMER", error: "No billing profile found" },
+          200
+        );
+      }
+
+      customerId = resolution.customerId;
+      if (await deps.isCustomerBoundToOtherUser(customerId, user.id)) {
+        return jsonResponse(
+          {
+            code: "CUSTOMER_BOUND_ELSEWHERE",
+            error: "Billing profile is already linked to another account",
+          },
+          409
+        );
+      }
+      await deps.upsertBillingCustomerId(user.id, customerId);
     }
 
     const origin = resolveAppOrigin(req);

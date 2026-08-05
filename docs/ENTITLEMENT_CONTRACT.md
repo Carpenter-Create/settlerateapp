@@ -117,3 +117,4 @@ Authoritative `pdf_export` enforcement is the `generate-pdf` edge function (`ass
 ## Deployment
 
 See `docs/PHASE6_DEPLOYMENT.md` for migration order, function deploy sequence, and smoke checks.
+See `docs/PHASE7A_DEPLOYMENT.md` for Phase 7A billing-hardening deployment, sandbox smoke checks, and the **NOT YET AUTHORIZED** live catalog cutover procedure.

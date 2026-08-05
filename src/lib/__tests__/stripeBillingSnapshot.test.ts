@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   PROFESSIONAL_PRICE_IDS,
   evaluateEntitlement,
@@ -7,6 +7,7 @@ import {
   extractInvoiceSubscriptionId,
   extractSubscriptionPeriodEnd,
   extractSubscriptionPeriodStart,
+  resolveSubscriptionBillingSnapshot,
 } from "@/lib/stripeBillingSnapshot";
 
 const proMonthlyPrice = PROFESSIONAL_PRICE_IDS[0];
@@ -165,6 +166,57 @@ describe("stripeBillingSnapshot — invoice subscription mapping", () => {
       },
     };
     expect(extractInvoiceSubscriptionId(invoice)).toBe("sub_parent");
+  });
+});
+
+describe("stripeBillingSnapshot — retrieved subscription authority", () => {
+  it("retrieves and maps the current subscription instead of a stale active event snapshot", async () => {
+    const staleEventSubscription = {
+      id: "sub_current",
+      customer: "cus_current",
+      status: "active",
+      cancel_at_period_end: false,
+      items: {
+        data: [
+          {
+            current_period_end: periodEndUnix,
+            price: { id: proMonthlyPrice, product: "prod_stale" },
+          },
+        ],
+      },
+    };
+    const retrievedSubscription = {
+      id: "sub_current",
+      customer: { id: "cus_current" },
+      status: "canceled",
+      cancel_at_period_end: true,
+      items: {
+        data: [
+          {
+            current_period_end: periodEndUnix + 86_400,
+            price: { id: "price_current", product: { id: "prod_current" } },
+          },
+        ],
+      },
+    };
+
+    const retrieve = vi.fn().mockResolvedValue(retrievedSubscription);
+    const billingSnapshot = await resolveSubscriptionBillingSnapshot(
+      staleEventSubscription,
+      retrieve
+    );
+
+    expect(retrieve).toHaveBeenCalledOnce();
+    expect(retrieve).toHaveBeenCalledWith("sub_current");
+    expect(billingSnapshot).toMatchObject({
+      subscriptionId: "sub_current",
+      stripeCustomerId: "cus_current",
+      subscriptionStatus: "canceled",
+      cancelAtPeriodEnd: true,
+      currentPeriodEnd: periodEndUnix + 86_400,
+      priceId: "price_current",
+      productId: "prod_current",
+    });
   });
 });
 
