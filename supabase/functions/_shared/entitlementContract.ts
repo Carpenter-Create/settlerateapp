@@ -42,13 +42,26 @@ export type StripeSubscriptionStatus =
 export const FREE_SCENARIO_LIMIT = 3;
 export const PROFESSIONAL_TRIAL_DAYS = 7;
 
-/** Allowlisted Professional price IDs (server must reject others). */
+/** Allowlisted Professional price IDs (server must reject others). Live catalog. */
 export const PROFESSIONAL_PRICE_IDS = [
-  "price_1U0k4DC2Fmi7ZUCbSniiEewZ", // monthly — lookup: settlerate_professional_monthly
-  "price_1U0kFVC2Fmi7ZUCb6g0mXIRC", // annual — lookup: settlerate_professional_annual
+  "price_1U0t2QC56u2NxRItya8dElyg", // monthly — lookup: settlerate_professional_monthly
+  "price_1U0t2jC56u2NxRItM185AYK9", // annual — lookup: settlerate_professional_annual
 ] as const;
 
-export const PROFESSIONAL_PRODUCT_IDS = ["prod_V0lUMpnsvxSxP1"] as const;
+export const PROFESSIONAL_PRODUCT_IDS = ["prod_V0usthAF9WnoGJ"] as const;
+
+/**
+ * Retired sandbox Professional price IDs — never grant features after Phase 7B.
+ * Kept for regression tests and inventory (must stay out of PROFESSIONAL_PRICE_IDS).
+ */
+export const SANDBOX_RETIRED_PROFESSIONAL_PRICE_IDS = [
+  "price_1U0k4DC2Fmi7ZUCbSniiEewZ",
+  "price_1U0kFVC2Fmi7ZUCb6g0mXIRC",
+] as const;
+
+export const SANDBOX_RETIRED_PROFESSIONAL_PRODUCT_IDS = [
+  "prod_V0lUMpnsvxSxP1",
+] as const;
 
 /** Deleted-account Professional price IDs — never grant features. */
 export const LEGACY_DELETED_PROFESSIONAL_PRICE_IDS = [

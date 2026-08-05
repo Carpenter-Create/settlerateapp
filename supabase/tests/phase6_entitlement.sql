@@ -14,7 +14,7 @@ DECLARE
   v_free_delete_scenario uuid;
   v_comparison uuid;
   v_decision jsonb;
-  v_pro_price constant text := 'price_1U0k4DC2Fmi7ZUCbSniiEewZ';
+  v_pro_price constant text := 'price_1U0t2QC56u2NxRItya8dElyg';
   v_advisor_price constant text := 'price_1Sod5F3ppKk8xETzl9EDOR6I';
   v_future timestamptz := now() + interval '30 days';
 BEGIN
