@@ -185,6 +185,192 @@ describe("redactEvent — fail-closed", () => {
     expect(redactEvent(null)).toBeNull();
     expect(redactEvent(undefined)).toBeNull();
   });
+
+  it("preserves stacktrace frames (location/identity fields) required for symbolication", () => {
+    const event: MinimalSentryEvent = {
+      exception: {
+        values: [
+          {
+            type: "TypeError",
+            value: "Cannot read properties of undefined",
+            stacktrace: {
+              frames: [
+                {
+                  filename: "https://app.settlerate.com/assets/index-abc123.js",
+                  function: "handleSubmit",
+                  module: "index",
+                  platform: "javascript",
+                  lineno: 42,
+                  colno: 17,
+                  abs_path: "https://app.settlerate.com/assets/index-abc123.js",
+                  in_app: true,
+                  instruction_addr: "0x1a2b",
+                  addr_mode: "abs",
+                  debug_id: "11111111-1111-1111-1111-111111111111",
+                },
+              ],
+            },
+          },
+        ],
+      },
+    };
+    const result = redactEvent(event);
+    expect(result?.exception?.values?.[0].stacktrace).toEqual({
+      frames: [
+        {
+          filename: "https://app.settlerate.com/assets/index-abc123.js",
+          function: "handleSubmit",
+          module: "index",
+          platform: "javascript",
+          lineno: 42,
+          colno: 17,
+          abs_path: "https://app.settlerate.com/assets/index-abc123.js",
+          in_app: true,
+          instruction_addr: "0x1a2b",
+          addr_mode: "abs",
+          debug_id: "11111111-1111-1111-1111-111111111111",
+        },
+      ],
+    });
+  });
+
+  it("preserves mechanism (type/handled/synthetic) but drops arbitrary mechanism.data", () => {
+    const event: MinimalSentryEvent = {
+      exception: {
+        values: [
+          {
+            type: "Error",
+            value: "boom",
+            mechanism: {
+              type: "onerror",
+              handled: false,
+              synthetic: true,
+              data: { arbitrary: "detail", target: "<button>" },
+            },
+          },
+        ],
+      },
+    };
+    const result = redactEvent(event);
+    expect(result?.exception?.values?.[0].mechanism).toEqual({
+      type: "onerror",
+      handled: false,
+      synthetic: true,
+    });
+  });
+
+  it("drops prohibited stack-frame fields: vars, context_line, pre_context, post_context", () => {
+    const event: MinimalSentryEvent = {
+      exception: {
+        values: [
+          {
+            type: "Error",
+            value: "boom",
+            stacktrace: {
+              frames: [
+                {
+                  filename: "app.js",
+                  lineno: 1,
+                  vars: { loanAmount: 400000, email: "jane@example.com" },
+                  context_line: "  const loanAmount = 400000;",
+                  pre_context: ["function calc() {"],
+                  post_context: ["}"],
+                },
+              ],
+            },
+          },
+        ],
+      },
+    };
+    const result = redactEvent(event);
+    const frame = result?.exception?.values?.[0].stacktrace?.frames?.[0];
+    expect(frame).toEqual({ filename: "app.js", lineno: 1 });
+    expect(frame).not.toHaveProperty("vars");
+    expect(frame).not.toHaveProperty("context_line");
+    expect(frame).not.toHaveProperty("pre_context");
+    expect(frame).not.toHaveProperty("post_context");
+  });
+
+  it("still scrubs the exception message/value even when stacktrace/mechanism are present", () => {
+    const event: MinimalSentryEvent = {
+      exception: {
+        values: [
+          {
+            type: "Error",
+            value: "Failed for jane@example.com with token Bearer abc123",
+            stacktrace: { frames: [{ filename: "app.js", lineno: 1 }] },
+            mechanism: { type: "generic", handled: true },
+          },
+        ],
+      },
+    };
+    const result = redactEvent(event);
+    const value = result?.exception?.values?.[0];
+    expect(value?.value).toBe("Failed for [REDACTED] with token [REDACTED]");
+    expect(value?.stacktrace).toEqual({ frames: [{ filename: "app.js", lineno: 1 }] });
+    expect(value?.mechanism).toEqual({ type: "generic", handled: true });
+  });
+
+  it("fails closed on a malformed/circular stacktrace without throwing, and drops the event rather than emit unscrubbed data", () => {
+    const circularFrame: Record<string, unknown> = { filename: "app.js", lineno: 1 };
+    circularFrame.self = circularFrame;
+    const event: MinimalSentryEvent = {
+      exception: {
+        values: [
+          {
+            type: "Error",
+            value: "boom",
+            stacktrace: { frames: [circularFrame] },
+          },
+        ],
+      },
+    };
+    expect(() => redactEvent(event)).not.toThrow();
+    const result = redactEvent(event);
+    // A circular self-reference on an allowlisted-out key is not itself
+    // fatal (we never touch `self`), so the event still comes through with
+    // the frame's safe fields preserved.
+    expect(result?.exception?.values?.[0].stacktrace).toEqual({
+      frames: [{ filename: "app.js", lineno: 1 }],
+    });
+  });
+
+  it("fails closed when stacktrace.frames is not an array — drops the stacktrace, not the whole event", () => {
+    const event: MinimalSentryEvent = {
+      exception: {
+        values: [
+          {
+            type: "Error",
+            value: "boom",
+            // @ts-expect-error — intentionally malformed input for fail-closed test
+            stacktrace: { frames: "not-an-array" },
+          },
+        ],
+      },
+    };
+    expect(() => redactEvent(event)).not.toThrow();
+    const result = redactEvent(event);
+    expect(result?.exception?.values?.[0]).not.toHaveProperty("stacktrace");
+    expect(result?.exception?.values?.[0].type).toBe("Error");
+  });
+
+  it("fails closed when mechanism is a hostile non-object — drops the mechanism, not the whole event", () => {
+    const event: MinimalSentryEvent = {
+      exception: {
+        values: [
+          {
+            type: "Error",
+            value: "boom",
+            // @ts-expect-error — intentionally malformed input for fail-closed test
+            mechanism: "not-an-object",
+          },
+        ],
+      },
+    };
+    expect(() => redactEvent(event)).not.toThrow();
+    const result = redactEvent(event);
+    expect(result?.exception?.values?.[0]).not.toHaveProperty("mechanism");
+  });
 });
 
 describe("observabilityRedaction mirror sync", () => {

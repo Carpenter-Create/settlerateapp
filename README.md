@@ -132,11 +132,31 @@ the repository but **inert by default**:
 - A top-level React error boundary (`src/components/system/ErrorBoundary.tsx`)
   shows a minimal "Something went wrong. Reload the page to continue."
   fallback on render-time failures — never technical details.
+- Browser exception events retain a privacy-safe stack trace (frame
+  filename/function/line/column/`in_app`/debug-ID fields only — never
+  captured local variables or inlined source-code context) and a
+  deterministic release identifier (`VERCEL_GIT_COMMIT_SHA` in
+  production, `GITHUB_SHA` in CI, undefined locally —
+  `src/lib/observabilityRelease.ts`), so an uploaded source map has a
+  matching event to resolve.
+
+**Source maps — production build is authoritative.** The app is built
+and deployed by **Vercel**, not GitHub Actions. The Sentry Vite plugin
+(`vite.config.ts`) uploads hidden source maps whenever
+`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, and `SENTRY_PROJECT` are present as
+**server-side build environment variables** — this must include the
+Vercel Project → Settings → Environment Variables (Production scope,
+never prefixed `VITE_`) in addition to the GitHub Actions repository
+secrets already configured for CI validation builds. A CI build's own
+source maps are for that (non-deployed) validation build only; only the
+Vercel build's upload corresponds to what a user's browser actually
+loads.
 
 **Not yet done** (separate, founder-authorized steps): creating a Sentry
-account/project, setting `VITE_SENTRY_DSN` / `SENTRY_DSN`, CI secrets for
-source-map upload, alert configuration, and production activation/smoke
-verification.
+account/project, setting `VITE_SENTRY_DSN` / `SENTRY_DSN`, configuring
+`SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` as Vercel build
+environment variables, alert configuration, and production
+activation/smoke verification.
 
 ### Environment and origin controls (summary)
 

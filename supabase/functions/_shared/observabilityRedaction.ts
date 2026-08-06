@@ -168,10 +168,140 @@ export function redactBreadcrumb(
   }
 }
 
+export interface MinimalStackFrame {
+  filename?: string;
+  function?: string;
+  module?: string;
+  platform?: string;
+  lineno?: number;
+  colno?: number;
+  abs_path?: string;
+  in_app?: boolean;
+  instruction_addr?: string;
+  addr_mode?: string;
+  debug_id?: string;
+  [key: string]: unknown;
+}
+
+export interface MinimalStacktrace {
+  frames?: MinimalStackFrame[];
+  [key: string]: unknown;
+}
+
+export interface MinimalMechanism {
+  type?: string;
+  handled?: boolean;
+  synthetic?: boolean;
+  [key: string]: unknown;
+}
+
 export interface MinimalExceptionValue {
   type?: string;
   value?: string;
+  mechanism?: MinimalMechanism;
+  stacktrace?: MinimalStacktrace;
   [key: string]: unknown;
+}
+
+/**
+ * Stack-frame fields required for symbolication (location + identity) or
+ * safe, low-cardinality metadata. Deliberately excludes `vars` (captured
+ * local variable values — could hold mortgage inputs, financial figures,
+ * or other sensitive runtime state) and `context_line`/`pre_context`/
+ * `post_context` (raw inlined source-code text, unnecessary once the
+ * uploaded source map resolves the frame and not needed for symbolication
+ * itself). String fields are still passed through `scrubString` as
+ * defense-in-depth even though they are expected to be source locations,
+ * not user data.
+ */
+const ALLOWED_STACK_FRAME_KEYS = [
+  "filename",
+  "function",
+  "module",
+  "platform",
+  "lineno",
+  "colno",
+  "abs_path",
+  "in_app",
+  "instruction_addr",
+  "addr_mode",
+  "debug_id",
+] as const;
+
+const STACK_FRAME_STRING_KEYS = new Set<string>([
+  "filename",
+  "function",
+  "module",
+  "platform",
+  "abs_path",
+  "instruction_addr",
+  "addr_mode",
+  "debug_id",
+]);
+
+/** Allowlist-filters one stack frame. Fail-closed: any internal error → empty frame. */
+function redactStackFrame(frame: MinimalStackFrame | null | undefined): MinimalStackFrame {
+  if (!isPlainObject(frame)) return {};
+  try {
+    const result: Record<string, unknown> = {};
+    for (const key of ALLOWED_STACK_FRAME_KEYS) {
+      const value = frame[key];
+      if (value === undefined) continue;
+      if (STACK_FRAME_STRING_KEYS.has(key)) {
+        if (typeof value === "string") result[key] = scrubString(value);
+      } else if (key === "lineno" || key === "colno") {
+        if (typeof value === "number") result[key] = value;
+      } else if (key === "in_app") {
+        if (typeof value === "boolean") result[key] = value;
+      }
+    }
+    return result as MinimalStackFrame;
+  } catch {
+    return {};
+  }
+}
+
+/** Allowlist-filters a stacktrace's frames. Fail-closed: any internal error → undefined (frame list dropped, not the whole event). */
+function redactStacktrace(
+  stacktrace: MinimalStacktrace | null | undefined
+): MinimalStacktrace | undefined {
+  if (!isPlainObject(stacktrace) || !Array.isArray(stacktrace.frames)) return undefined;
+  try {
+    return { frames: stacktrace.frames.map((frame) => redactStackFrame(frame)) };
+  } catch {
+    return undefined;
+  }
+}
+
+const ALLOWED_MECHANISM_KEYS = ["type", "handled", "synthetic"] as const;
+
+/**
+ * Allowlist-filters exception mechanism metadata. Deliberately excludes
+ * `data` (vendor docs describe it as "arbitrary data ... associated with
+ * the mechanism", e.g. DOM event-handler/target detail — unbounded shape,
+ * not required for symbolication or the "handled" / "unhandled" signal).
+ * Fail-closed: any internal error → undefined (mechanism dropped, not the
+ * whole event).
+ */
+function redactMechanism(
+  mechanism: MinimalMechanism | null | undefined
+): MinimalMechanism | undefined {
+  if (!isPlainObject(mechanism)) return undefined;
+  try {
+    const result: MinimalMechanism = {};
+    for (const key of ALLOWED_MECHANISM_KEYS) {
+      const value = mechanism[key];
+      if (value === undefined) continue;
+      if (key === "type" && typeof value === "string") {
+        result.type = scrubString(value);
+      } else if ((key === "handled" || key === "synthetic") && typeof value === "boolean") {
+        result[key] = value;
+      }
+    }
+    return result;
+  } catch {
+    return undefined;
+  }
 }
 
 export interface MinimalSentryEvent {
@@ -208,13 +338,20 @@ export function redactEvent(
 
     if (redacted.exception?.values) {
       redacted.exception = {
-        values: redacted.exception.values.map((exceptionValue) => ({
-          type: exceptionValue.type,
-          value:
-            typeof exceptionValue.value === "string"
-              ? scrubString(exceptionValue.value)
-              : exceptionValue.value,
-        })),
+        values: redacted.exception.values.map((exceptionValue) => {
+          const result: MinimalExceptionValue = {
+            type: exceptionValue.type,
+            value:
+              typeof exceptionValue.value === "string"
+                ? scrubString(exceptionValue.value)
+                : exceptionValue.value,
+          };
+          const stacktrace = redactStacktrace(exceptionValue.stacktrace);
+          if (stacktrace) result.stacktrace = stacktrace;
+          const mechanism = redactMechanism(exceptionValue.mechanism);
+          if (mechanism) result.mechanism = mechanism;
+          return result;
+        }),
       };
     }
 
