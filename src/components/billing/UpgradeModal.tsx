@@ -13,6 +13,7 @@ import { Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { buildEdgeFunctionUrl } from "@/lib/edgeFunctionUrl";
 import { PRICING } from "@/lib/stripe";
 
 /**
@@ -62,7 +63,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
       }
 
       const response = await fetch(
-        `https://vpcxzbaxhpucvevnkalo.supabase.co/functions/v1/create-checkout`,
+        buildEdgeFunctionUrl(import.meta.env.VITE_SUPABASE_URL, "create-checkout"),
         {
           method: "POST",
           headers: {

@@ -8,6 +8,7 @@ import { CreditCard, Calendar, ExternalLink, User, Shield } from "lucide-react";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { buildEdgeFunctionUrl } from "@/lib/edgeFunctionUrl";
 import { toast } from "sonner";
 import {
   accountAccessConditionLabel,
@@ -71,7 +72,7 @@ export default function Account() {
       }
 
       const response = await fetch(
-        `https://vpcxzbaxhpucvevnkalo.supabase.co/functions/v1/customer-portal`,
+        buildEdgeFunctionUrl(import.meta.env.VITE_SUPABASE_URL, "customer-portal"),
         {
           method: "POST",
           headers: {

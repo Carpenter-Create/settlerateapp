@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import { buildEdgeFunctionUrl } from "@/lib/edgeFunctionUrl";
 import {
   SubscriptionState,
   SubscriptionTier,
@@ -62,7 +63,7 @@ function flagsToLegacyFeatureAccess(flags: FeatureAccessFlags): FeatureAccess {
 
 async function checkSubscription(accessToken: string): Promise<EntitlementState> {
   const response = await fetch(
-    `https://vpcxzbaxhpucvevnkalo.supabase.co/functions/v1/check-subscription`,
+    buildEdgeFunctionUrl(import.meta.env.VITE_SUPABASE_URL, "check-subscription"),
     {
       method: "POST",
       headers: {
