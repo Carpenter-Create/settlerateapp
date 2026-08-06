@@ -47,14 +47,16 @@ export default defineConfig(({ mode }) => {
                 // Edge Function source maps are explicitly out of scope.
                 filesToDeleteAfterUpload: ["./dist/**/*.map"],
               },
-              // Never let an upload failure (bad token, network error, etc.)
-              // print the raw Sentry CLI error — which can otherwise
-              // include request/response detail — to CI logs. Replace it
-              // with a generic, credential-free message and keep default
-              // fail-the-build behavior for a real configuration problem.
+              // A source-map upload problem (bad token, org/project not yet
+              // provisioned, transient network error, etc.) must never
+              // break the application build — the shipped JS bundle itself
+              // does not depend on this step succeeding. Never print the
+              // raw Sentry CLI error, which can otherwise include request/
+              // response detail; emit a fixed, credential-free warning
+              // instead and let the build continue.
               errorHandler: (_error) => {
-                throw new Error(
-                  "Sentry source-map upload failed. Verify SENTRY_AUTH_TOKEN/SENTRY_ORG/SENTRY_PROJECT and the Sentry project configuration (details intentionally omitted from CI logs)."
+                console.warn(
+                  "[sentry] Source-map upload failed; continuing build. Verify SENTRY_AUTH_TOKEN/SENTRY_ORG/SENTRY_PROJECT and that the Sentry project exists (details intentionally omitted from CI logs)."
                 );
               },
             }),
