@@ -15,9 +15,17 @@ AS $$
   SELECT public.gen_random_bytes(p_len);
 $$;
 
+-- email is character varying(255), matching Supabase's real auth.users
+-- schema exactly (not `text`). This distinction matters: fix/admin-rpc-return-types
+-- (supabase/migrations/20260808010000_fix_admin_rpc_return_types.sql) fixes a
+-- production defect that only reproduces when this column's type differs
+-- from the `text` columns declared in RETURNS TABLE signatures that select
+-- from it (e.g. public.list_admins, public.list_recent_admin_promotions).
+-- Using `text` here would silently hide that entire defect class in
+-- test:entitlement-sql.
 CREATE TABLE IF NOT EXISTS auth.users (
   id uuid PRIMARY KEY,
-  email text,
+  email character varying(255),
   raw_user_meta_data jsonb NOT NULL DEFAULT '{}'::jsonb,
   created_at timestamptz NOT NULL DEFAULT now()
 );
