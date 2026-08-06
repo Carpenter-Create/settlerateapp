@@ -52,12 +52,13 @@ and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 production** (activated and verified 2026-08-06). See
 `docs/adr/0003-observability-policy.md`.
 
-**Epic 4 (RLS Security Test Expansion)** is **In progress — ADR-first**.
-PR 0 establishes ADR 0004 (RLS testing standard), explicit acceptance
-criteria, and the later implementation PR sequence. Do **not** write RLS
-tests, change policies/migrations, or modify application code until a
-later Epic 4 implementation PR is explicitly authorized. Authority:
-`docs/adr/0004-rls-testing-standard.md` and
+**Epic 4 (RLS Security Test Expansion)** is **In progress — PR 1**.
+ADR 0004 is accepted. PR 1 adds the RLS coverage inventory
+(`docs/security/RLS_COVERAGE_INVENTORY.md`), harness wiring, and the core
+user-owned owner / non-owner / anon matrix
+(`supabase/tests/epic4_pr1_core_rls.sql` via `npm run test:entitlement-sql`).
+Do **not** change policies/migrations, begin PR 2–3, or begin Epic 5+
+automatically. Authority: `docs/adr/0004-rls-testing-standard.md` and
 `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 **Epic 5 and later have not begun and still require separate explicit
 authorization.**

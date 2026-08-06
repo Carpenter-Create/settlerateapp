@@ -1,0 +1,176 @@
+# RLS Coverage Inventory
+
+**Authority:** `docs/adr/0004-rls-testing-standard.md`  
+**Generated from:** ephemeral Postgres after full repository migration chain  
+**Epic 4 PR:** PR 1 (core user-owned matrix)  
+**Date:** 2026-08-06
+
+## Summary
+
+- RLS-enabled relations: **19**
+- Policies: **55**
+- PR 1 behavioral coverage: core user-owned class only
+- PR 2 deferred: export/share, billing/entitlement support, roles/admin, public-ish, storage (+ admin path matrix)
+
+## Classification
+
+| Schema | Relation | RLS enabled | RLS forced | Class | PR coverage | Deferral reason |
+|--------|----------|-------------|------------|-------|-------------|-----------------|
+| `public` | `admin_audit_log` | true | false | roles/admin | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `admin_bootstrap_tokens` | true | false | roles/admin | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `advisor_access_requests` | true | false | roles/admin | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `billing` | true | false | billing/entitlement support | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `comparison_items` | true | false | core user-owned | PR 1 executable | — |
+| `public` | `comparison_shares` | true | false | export/share | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `comparison_versions` | true | false | core user-owned | PR 1 executable | — |
+| `public` | `contact_messages` | true | false | public-ish | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `entitlement_bypass_log` | true | false | billing/entitlement support | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `export_files` | true | false | export/share | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `export_shares` | true | false | export/share | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `pdf_exports` | true | false | export/share | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `profiles` | true | false | core user-owned | PR 1 executable | — |
+| `public` | `saved_comparisons` | true | false | core user-owned | PR 1 executable | — |
+| `public` | `scenarios` | true | false | core user-owned | PR 1 executable | — |
+| `public` | `stripe_webhook_events` | true | false | billing/entitlement support | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `user_comparisons` | true | false | core user-owned | PR 1 executable | — |
+| `public` | `user_roles` | true | false | roles/admin | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `storage` | `objects` | true | false | storage | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+
+## Policies (effective)
+
+### `public.admin_audit_log`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `admin_audit_log_select_admin` | SELECT | authenticated | `has_role(auth.uid(), 'admin'::app_role)` | `—` |
+### `public.advisor_access_requests`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `advisor_requests_delete_admin` | DELETE | PUBLIC | `is_admin(auth.uid())` | `—` |
+| `advisor_requests_insert_own` | INSERT | PUBLIC | `—` | `(auth.uid() = user_id)` |
+| `advisor_requests_select` | SELECT | PUBLIC | `((auth.uid() = user_id) OR is_admin(auth.uid()))` | `—` |
+| `advisor_requests_update_admin` | UPDATE | PUBLIC | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
+### `public.billing`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `billing_select_own` | SELECT | authenticated | `(auth.uid() = user_id)` | `—` |
+### `public.comparison_items`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `comparison_items_delete_parent_owner` | DELETE | PUBLIC | `(EXISTS ( SELECT 1    FROM saved_comparisons sc   WHERE ((sc.id = comparison_items.comparison_id) AND (sc.user_id = auth.uid()))))` | `—` |
+| `comparison_items_insert_parent_owner` | INSERT | PUBLIC | `—` | `(EXISTS ( SELECT 1    FROM saved_comparisons sc   WHERE ((sc.id = comparison_items.comparison_id) AND (sc.user_id = auth.uid()))))` |
+| `comparison_items_select_parent_owner` | SELECT | PUBLIC | `(EXISTS ( SELECT 1    FROM saved_comparisons sc   WHERE ((sc.id = comparison_items.comparison_id) AND (sc.user_id = auth.uid()))))` | `—` |
+| `comparison_items_update_parent_owner` | UPDATE | PUBLIC | `(EXISTS ( SELECT 1    FROM saved_comparisons sc   WHERE ((sc.id = comparison_items.comparison_id) AND (sc.user_id = auth.uid()))))` | `(EXISTS ( SELECT 1    FROM saved_comparisons sc   WHERE ((sc.id = comparison_items.comparison_id) AND (sc.user_id = auth.uid()))))` |
+### `public.comparison_shares`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `comparison_shares_delete_owner` | DELETE | authenticated | `(EXISTS ( SELECT 1    FROM saved_comparisons c   WHERE ((c.id = comparison_shares.comparison_id) AND (c.user_id = auth.uid()))))` | `—` |
+| `comparison_shares_insert_owner` | INSERT | authenticated | `—` | `((created_by = auth.uid()) AND (EXISTS ( SELECT 1    FROM saved_comparisons c   WHERE ((c.id = comparison_shares.comparison_id) AND (c.user_id = auth.uid())))))` |
+| `comparison_shares_select_owner` | SELECT | authenticated | `(EXISTS ( SELECT 1    FROM saved_comparisons c   WHERE ((c.id = comparison_shares.comparison_id) AND (c.user_id = auth.uid()))))` | `—` |
+| `comparison_shares_update_owner` | UPDATE | authenticated | `(EXISTS ( SELECT 1    FROM saved_comparisons c   WHERE ((c.id = comparison_shares.comparison_id) AND (c.user_id = auth.uid()))))` | `(EXISTS ( SELECT 1    FROM saved_comparisons c   WHERE ((c.id = comparison_shares.comparison_id) AND (c.user_id = auth.uid()))))` |
+### `public.comparison_versions`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `comparison_versions_delete_parent_owner` | DELETE | PUBLIC | `(EXISTS ( SELECT 1    FROM saved_comparisons sc   WHERE ((sc.id = comparison_versions.comparison_id) AND (sc.user_id = auth.uid()))))` | `—` |
+| `comparison_versions_insert_parent_owner` | INSERT | PUBLIC | `—` | `((auth.uid() = created_by) AND (EXISTS ( SELECT 1    FROM saved_comparisons sc   WHERE ((sc.id = comparison_versions.comparison_id) AND (sc.user_id = auth.uid())))))` |
+| `comparison_versions_select_parent_owner` | SELECT | PUBLIC | `(EXISTS ( SELECT 1    FROM saved_comparisons sc   WHERE ((sc.id = comparison_versions.comparison_id) AND (sc.user_id = auth.uid()))))` | `—` |
+### `public.contact_messages`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `contact_messages_insert_public` | INSERT | anon, authenticated | `—` | `true` |
+| `contact_messages_select_admin` | SELECT | authenticated | `has_role(auth.uid(), 'admin'::app_role)` | `—` |
+| `contact_messages_update_admin` | UPDATE | authenticated | `has_role(auth.uid(), 'admin'::app_role)` | `has_role(auth.uid(), 'admin'::app_role)` |
+### `public.export_files`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `export_files_delete_own` | DELETE | PUBLIC | `(auth.uid() = owner_user_id)` | `—` |
+| `export_files_insert_own` | INSERT | PUBLIC | `—` | `(auth.uid() = owner_user_id)` |
+| `export_files_select_own` | SELECT | PUBLIC | `(auth.uid() = owner_user_id)` | `—` |
+### `public.export_shares`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `export_shares_delete_own` | DELETE | PUBLIC | `(EXISTS ( SELECT 1    FROM export_files ef   WHERE ((ef.id = export_shares.export_file_id) AND (ef.owner_user_id = auth.uid()))))` | `—` |
+| `export_shares_insert_own` | INSERT | PUBLIC | `—` | `((auth.uid() = created_by_user_id) AND (EXISTS ( SELECT 1    FROM export_files ef   WHERE ((ef.id = export_shares.export_file_id) AND (ef.owner_user_id = auth.uid())))))` |
+| `export_shares_select_own` | SELECT | PUBLIC | `(EXISTS ( SELECT 1    FROM export_files ef   WHERE ((ef.id = export_shares.export_file_id) AND (ef.owner_user_id = auth.uid()))))` | `—` |
+| `export_shares_update_own` | UPDATE | PUBLIC | `(EXISTS ( SELECT 1    FROM export_files ef   WHERE ((ef.id = export_shares.export_file_id) AND (ef.owner_user_id = auth.uid()))))` | `—` |
+### `public.pdf_exports`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `pdf_exports_delete_own` | DELETE | authenticated | `(auth.uid() = user_id)` | `—` |
+| `pdf_exports_insert_own` | INSERT | authenticated | `—` | `((auth.uid() = user_id) AND assert_export_source_owned_by_user(kind, source_id, user_id))` |
+| `pdf_exports_select_own` | SELECT | authenticated | `(auth.uid() = user_id)` | `—` |
+| `pdf_exports_update_own` | UPDATE | authenticated | `(auth.uid() = user_id)` | `((auth.uid() = user_id) AND assert_export_source_owned_by_user(kind, source_id, user_id))` |
+### `public.profiles`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `profiles_insert_own` | INSERT | authenticated | `—` | `(auth.uid() = id)` |
+| `profiles_select_own` | SELECT | authenticated | `(auth.uid() = id)` | `—` |
+| `profiles_update_own` | UPDATE | authenticated | `(auth.uid() = id)` | `(auth.uid() = id)` |
+### `public.saved_comparisons`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `saved_comparisons_delete_own` | DELETE | PUBLIC | `(auth.uid() = user_id)` | `—` |
+| `saved_comparisons_insert_own` | INSERT | PUBLIC | `—` | `(auth.uid() = user_id)` |
+| `saved_comparisons_select_own` | SELECT | PUBLIC | `(auth.uid() = user_id)` | `—` |
+| `saved_comparisons_update_own` | UPDATE | PUBLIC | `(auth.uid() = user_id)` | `(auth.uid() = user_id)` |
+### `public.scenarios`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `scenarios_delete_own` | DELETE | PUBLIC | `(auth.uid() = user_id)` | `—` |
+| `scenarios_insert_own` | INSERT | PUBLIC | `—` | `(auth.uid() = user_id)` |
+| `scenarios_select_own` | SELECT | PUBLIC | `(auth.uid() = user_id)` | `—` |
+| `scenarios_update_own` | UPDATE | PUBLIC | `(auth.uid() = user_id)` | `(auth.uid() = user_id)` |
+### `public.user_comparisons`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `Users can create their own comparisons` | INSERT | PUBLIC | `—` | `(auth.uid() = user_id)` |
+| `Users can delete their own comparisons` | DELETE | PUBLIC | `(auth.uid() = user_id)` | `—` |
+| `Users can update their own comparisons` | UPDATE | PUBLIC | `(auth.uid() = user_id)` | `—` |
+| `Users can view their own comparisons` | SELECT | PUBLIC | `(auth.uid() = user_id)` | `—` |
+### `public.user_roles`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `Admins can delete roles` | DELETE | authenticated | `has_role(auth.uid(), 'admin'::app_role)` | `—` |
+| `Admins can insert roles` | INSERT | authenticated | `—` | `has_role(auth.uid(), 'admin'::app_role)` |
+| `Admins can view all roles` | SELECT | authenticated | `has_role(auth.uid(), 'admin'::app_role)` | `—` |
+### `storage.objects`
+
+| Policy | Command | Roles | USING | WITH CHECK |
+|--------|---------|-------|-------|------------|
+| `exports_bucket_insert_own_folder` | INSERT | authenticated | `—` | `((bucket_id = 'exports'::text) AND (split_part(name, '/'::text, 1) = (auth.uid())::text))` |
+| `exports_bucket_read_own_folder` | SELECT | authenticated | `((bucket_id = 'exports'::text) AND (split_part(name, '/'::text, 1) = (auth.uid())::text))` | `—` |
+| `exports_bucket_update_own_folder` | UPDATE | authenticated | `((bucket_id = 'exports'::text) AND (split_part(name, '/'::text, 1) = (auth.uid())::text))` | `((bucket_id = 'exports'::text) AND (split_part(name, '/'::text, 1) = (auth.uid())::text))` |
+| `exports_delete_own` | DELETE | PUBLIC | `((bucket_id = 'exports'::text) AND ((auth.uid())::text = (storage.foldername(name))[1]))` | `—` |
+| `exports_insert_own` | INSERT | PUBLIC | `—` | `((bucket_id = 'exports'::text) AND ((auth.uid())::text = (storage.foldername(name))[1]))` |
+| `exports_select_own` | SELECT | PUBLIC | `((bucket_id = 'exports'::text) AND ((auth.uid())::text = (storage.foldername(name))[1]))` | `—` |
+
+## PR 1 operation notes (core class)
+
+| Relation | SELECT | INSERT | UPDATE | DELETE | Notes |
+|----------|--------|--------|--------|--------|-------|
+| `scenarios` | owner yes / non-owner no / anon no | own `user_id` only | own; transfer denied (RLS WITH CHECK) | own yes | Entitlement trigger skipped only for privileged fixture seed + ownership-transfer isolation assert |
+| `profiles` | owner yes / non-owner no / anon no | own `id` only | own yes | **no DELETE policy** (0 rows) | Policies `TO authenticated` |
+| `saved_comparisons` | owner yes / non-owner no / anon no | own `user_id` only | own; transfer denied | own yes | Comparison entitlement applies on write; Professional billing used in fixtures |
+| `user_comparisons` | owner yes / non-owner no / anon no | own `user_id` only | own; transfer denied | own yes | Additional ownership trigger on referenced scenarios (not used as RLS evidence) |
+| `comparison_items` | via parent `saved_comparisons` | parent owner only | parent owner; cross-parent re-parent denied | parent owner | Indirect ownership |
+| `comparison_versions` | via parent | parent owner **and** `created_by = auth.uid()` | **UPDATE revoked** from `anon`/`authenticated` | parent owner | Immutable versions |
+
+## Notes
+
+- Inventory is catalog-derived (`pg_class` / `pg_policy`); not from production.
+- Harness grants test-only `SELECT/INSERT/UPDATE/DELETE` to `anon` so anonymous denials are RLS-attributable.
+- `public.scenarios` is `FORCE ROW LEVEL SECURITY` in the harness (existing Phase 6 practice).

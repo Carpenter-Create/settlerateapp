@@ -206,11 +206,11 @@ and do not reopen Epic 3. Do not begin Epic 4 automatically.
 
 ## Epic 4 — RLS Security Test Expansion
 
-**Status:** **In progress — ADR-first.** PR 0 (ADR 0004 + minimum governance
-status updates) is the authorized slice. RLS tests, policy/migration
-changes, and application code changes are **not** authorized until a later
-Epic 4 implementation PR is explicitly authorized. Authority:
-`docs/adr/0004-rls-testing-standard.md`.
+**Status:** **In progress — PR 1.** ADR 0004 accepted (PR 0 merged). PR 1
+adds the authoritative RLS coverage inventory, harness wiring, and the
+core user-owned owner / non-owner / anon matrix. PR 2–3 remain unauthorized.
+Authority: `docs/adr/0004-rls-testing-standard.md`,
+`docs/security/RLS_COVERAGE_INVENTORY.md`.
 
 **Goal:** Expand automated RLS security tests so owner, non-owner, and
 administrative isolation paths are proven in CI against the repository
@@ -259,12 +259,12 @@ Epic 4 is complete only when all of the following are true:
 
 | PR | Scope | Status |
 |----|--------|--------|
-| **PR 0** | ADR 0004 + minimum governance status updates | **In progress** (this slice) |
-| **PR 1** | Coverage inventory + harness wiring; owner / non-owner / anon matrix for core user-owned tables | Not authorized — requires separate founder authorization |
+| **PR 0** | ADR 0004 + minimum governance status updates | Complete / merged |
+| **PR 1** | Coverage inventory + harness wiring; owner / non-owner / anon matrix for core user-owned tables | **In progress** (this slice) |
 | **PR 2** | Remaining in-scope relations + administrative path assertions | Not authorized — requires separate founder authorization |
 | **PR 3** | CI gate completion / acceptance-criteria gap closure (if needed) | Not authorized — requires separate founder authorization |
 
-**Epic 4 is in progress (ADR-first). Do not begin PR 1–3 or Epic 5+
+**Epic 4 is in progress (PR 1). Do not begin PR 2–3 or Epic 5+
 automatically.**
 
 ---

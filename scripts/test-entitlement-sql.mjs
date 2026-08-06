@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
- * Applies repo migrations to ephemeral Postgres and runs Phase 6 SQL + parity
- * checks, plus Epic 1 (Phase 8.1) admin bootstrap and legacy trigger removal
- * SQL assertions, plus fix/admin-rpc-return-types admin RPC return-type
- * assertions.
+ * Applies repo migrations to ephemeral Postgres and runs:
+ * - Epic 4 PR 1 RLS inventory + core owner/non-owner/anon matrix
+ * - Epic 1 admin bootstrap / legacy trigger removal / admin RPC return types
+ * - Phase 6 entitlement + function-grant SQL assertions
+ * - Concurrent free-tier limit + TS↔SQL entitlement parity
  */
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -104,20 +105,26 @@ async function applyMigrations(client) {
   await client.query(`
     GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated, service_role;
     GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_role;
-    GRANT USAGE ON SCHEMA test TO authenticated, service_role;
-    GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA test TO authenticated, service_role;
+    -- Test-only: grant anon table DML so anonymous denials are attributable to
+    -- RLS / privilege checks under SET ROLE anon, not missing GRANT (ADR 0004 §5).
+    GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon;
+    GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon;
+    GRANT USAGE ON SCHEMA test TO authenticated, service_role, anon;
+    GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA test TO authenticated, service_role, anon;
     ALTER TABLE public.scenarios FORCE ROW LEVEL SECURITY;
   `);
 }
 
 async function runSqlAssertions(client) {
-  // Runs before the Phase 6 fixtures below, which seed an admin user.
-  // epic1_admin_bootstrap.sql must run first: it requires a true zero-admin
-  // starting state to prove the fresh bootstrap happy path. Once it creates
-  // an admin, that admin can never be fully removed again in this test run
-  // (public.protect_admin_role_deletion_trigger permanently blocks deleting
-  // the last admin role), so epic1_remove_admin_trigger.sql runs second and
-  // reuses that admin rather than trying to restore a zero-admin state.
+  // Epic 4 PR 1 must run before Epic 1 / Phase 6 fixtures so admin and
+  // entitlement seeds cannot contaminate the core RLS matrix.
+  process.stdout.write("Running epic4_pr1_core_rls.sql assertions...\n");
+  await psqlFile(client, join(root, "supabase/tests/epic4_pr1_core_rls.sql"));
+
+  // epic1_admin_bootstrap.sql requires a true zero-admin starting state.
+  // Once it creates an admin, that admin can never be fully removed again in
+  // this test run (public.protect_admin_role_deletion_trigger), so
+  // epic1_remove_admin_trigger.sql runs second and reuses that admin.
   process.stdout.write("Running epic1_admin_bootstrap.sql assertions...\n");
   await psqlFile(client, join(root, "supabase/tests/epic1_admin_bootstrap.sql"));
   process.stdout.write("Running epic1_remove_admin_trigger.sql assertions...\n");
