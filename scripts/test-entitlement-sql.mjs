@@ -2,7 +2,8 @@
 /**
  * Applies repo migrations to ephemeral Postgres and runs Phase 6 SQL + parity
  * checks, plus Epic 1 (Phase 8.1) admin bootstrap and legacy trigger removal
- * SQL assertions.
+ * SQL assertions, plus fix/admin-rpc-return-types admin RPC return-type
+ * assertions.
  */
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -121,6 +122,8 @@ async function runSqlAssertions(client) {
   await psqlFile(client, join(root, "supabase/tests/epic1_admin_bootstrap.sql"));
   process.stdout.write("Running epic1_remove_admin_trigger.sql assertions...\n");
   await psqlFile(client, join(root, "supabase/tests/epic1_remove_admin_trigger.sql"));
+  process.stdout.write("Running fix_admin_rpc_return_types.sql assertions...\n");
+  await psqlFile(client, join(root, "supabase/tests/fix_admin_rpc_return_types.sql"));
   process.stdout.write("Running phase6_entitlement.sql assertions...\n");
   await psqlFile(client, join(root, "supabase/tests/phase6_entitlement.sql"));
   process.stdout.write("Running phase6_function_grants.sql assertions...\n");
