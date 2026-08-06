@@ -127,9 +127,19 @@ Required preserve constraints for all Epic 2 work:
 
 ## Epic 2 PR sequence (binding)
 
-| PR | Scope | Authorization |
-|----|--------|---------------|
-| **PR 0** | This ADR + minimum governance status updates | Authorized (this PR) |
-| **PR 1+** | `.env.example`, `.gitignore`, stop tracking `.env`, origin hygiene, Edge URL helper, client env validation, auth redirects (gated), artifact cleanup | Require separate founder authorization; implement only decisions above |
+| PR | Scope | Status |
+|----|--------|--------|
+| **PR 0** | This ADR + minimum governance status updates | Complete / merged |
+| **PR 1** | `.env.example`, `.gitignore`, stop tracking `.env`, README setup | Complete / merged |
+| **PR 2** | Remove obsolete Lovable origin from Stripe return-origin allowlist | Complete / merged |
+| **PR 3** | Derive Edge Function base URL from `VITE_SUPABASE_URL` via validated helper | Complete / merged |
+| **PR 4** | Client env fail-fast validation; npm standardization; Lovable tooling/doc cleanup | Complete / merged |
+| **PR 5** | Auth-redirect hygiene (`src/lib/authRedirect.ts`, optional `VITE_APP_ORIGIN`, §3) | Complete / merged |
 
-**Never begin the next Epic 2 PR automatically.**
+## Update — Epic 2 closed
+
+Epic 2 repository work is complete (PR 0–5 merged to `main`). No Supabase
+Auth Dashboard redirect-allowlist change was required for the default
+production behavior. Any future local-development redirect additions remain
+a separate founder-authorized operational action under §3. Epic 3 has not
+begun and still requires explicit founder authorization.
