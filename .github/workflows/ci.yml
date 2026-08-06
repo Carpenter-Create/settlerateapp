@@ -51,4 +51,18 @@ jobs:
         run: docker rm -f settlerate-entitlement-test 2>/dev/null || true
 
       - name: Build
+        # Sentry source-map upload (Phase 8.1 Epic 3 / ADR 0003 §7). These
+        # secrets are scoped to this step only — no other step in this job
+        # receives them. GitHub Actions does not pass repository secrets to
+        # `pull_request` workflow runs triggered from forks, so these
+        # resolve to empty strings there; `vite.config.ts` already treats a
+        # missing/empty SENTRY_AUTH_TOKEN/SENTRY_ORG/SENTRY_PROJECT as
+        # "upload disabled" and builds unchanged in that case. Never
+        # printed: `npm run build` does not echo env values, and the Sentry
+        # Vite plugin's errorHandler (vite.config.ts) suppresses the raw
+        # upload error on failure so credentials cannot appear in CI logs.
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         run: npm run build
