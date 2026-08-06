@@ -9,6 +9,12 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    # Public client placeholders only (ADR 0002). Not production secrets.
+    # Required so Vitest/Vite can import the Supabase client after `.env`
+    # is no longer tracked in git.
+    env:
+      VITE_SUPABASE_URL: https://example.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: public-anon-key-for-ci-only
     steps:
       - name: Checkout
         uses: actions/checkout@v4

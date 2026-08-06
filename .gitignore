@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Local environment (public Vite client vars). Use `.env.example` as the template.
+# Never commit real `.env` values. Server secrets do not belong here.
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
