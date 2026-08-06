@@ -113,13 +113,19 @@ Supabase Edge Function secrets, never in client code or `.env`.
 
 Authority: [`docs/adr/0003-observability-policy.md`](docs/adr/0003-observability-policy.md).
 
+**Epic 3 status:** Complete — production activated; browser ingestion,
+browser symbolication, Edge ingestion, and privacy redaction verification
+passed for the tested event paths (2026-08-06). Full verification record
+and operational baseline live in ADR 0003. Do not paste DSNs or auth tokens
+into documentation.
+
 Client (`src/lib/observability.ts`) and Edge Function
-(`supabase/functions/_shared/sentry.ts`) error monitoring foundations are in
-the repository but **inert by default**:
+(`supabase/functions/_shared/sentry.ts`) error monitoring:
 
 - The client only sends events in a production build (`MODE === "production"`)
   with a structurally valid `VITE_SENTRY_DSN`; local development never sends
-  events regardless of configuration.
+  events regardless of configuration. Without a DSN, the client remains
+  inert.
 - Each of the six covered Edge Functions (`create-checkout`, `stripe-webhook`,
   `customer-portal`, `check-subscription`, `generate-pdf`, `export-share`)
   only sends events when the `SENTRY_DSN` platform secret is set.
@@ -140,6 +146,10 @@ the repository but **inert by default**:
   `src/lib/observabilityRelease.ts`), so an uploaded source map has a
   matching event to resolve.
 
+**Production projects (authoritative IDs):** browser `settlerate-web`
+(`4511862124904448`); Edge `settlerate-edge-functions`
+(`4511862129623040`). Issue short IDs are not separate projects.
+
 **Source maps — production build is authoritative.** The app is built
 and deployed by **Vercel**, not GitHub Actions. The Sentry Vite plugin
 (`vite.config.ts`) uploads hidden source maps whenever
@@ -150,13 +160,17 @@ never prefixed `VITE_`) in addition to the GitHub Actions repository
 secrets already configured for CI validation builds. A CI build's own
 source maps are for that (non-deployed) validation build only; only the
 Vercel build's upload corresponds to what a user's browser actually
-loads.
+loads. Edge Functions must be redeployed after observability code changes.
 
-**Not yet done** (separate, founder-authorized steps): creating a Sentry
-account/project, setting `VITE_SENTRY_DSN` / `SENTRY_DSN`, configuring
-`SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` as Vercel build
-environment variables, alert configuration, and production
-activation/smoke verification.
+**Operational baseline (names only; no secret values):** Vercel Production
+retains `VITE_SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG=e8-holdings-llc`,
+`SENTRY_PROJECT=settlerate-web`. Supabase Production retains `SENTRY_DSN`
+for `settlerate-edge-functions`. No further DSN changes are required for
+Epic 3 closure.
+
+**Non-blocking follow-ups** (do not reopen Epic 3): production alert rules;
+IP-derived geography privacy review; dedicated Edge probe path; browser
+breadcrumb policy review — see ADR 0003.
 
 ### Environment and origin controls (summary)
 
@@ -171,7 +185,7 @@ for the authoritative decisions:
 | CORS | `Access-Control-Allow-Origin` on Edge Function responses | Set per Edge Function (e.g. `supabase/functions/*/index.ts`) |
 | Stripe return-origin validation | Which browser `Origin` values are trusted for Checkout/Portal return URLs | `supabase/functions/_shared/appOrigin.ts` (exact-match allowlist) |
 | Auth email redirect origin | Which origin Supabase Auth emails (signup, magic-link, password reset) redirect back to | `src/lib/authRedirect.ts` (exact-match allowlist; optional `VITE_APP_ORIGIN` for local dev only) |
-| Observability (Sentry) | Client/Edge Function error monitoring — inert without `VITE_SENTRY_DSN` / `SENTRY_DSN` | `src/lib/observability.ts`, `supabase/functions/_shared/sentry.ts` (see [Observability](#observability-sentry) above) |
+| Observability (Sentry) | Client/Edge Function error monitoring — production activated (Epic 3 complete); inert without `VITE_SENTRY_DSN` / `SENTRY_DSN` | `src/lib/observability.ts`, `supabase/functions/_shared/sentry.ts` (see [Observability](#observability-sentry) above) |
 
 ## Local Development
 

@@ -48,17 +48,21 @@ local-development redirect additions remain a separate founder-authorized
 operational action. See `docs/adr/0002-secrets-and-environment-policy.md`
 and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 
-**Epic 3 (Observability)** — PR 0 (ADR 0003 + minimum governance status
-updates) and PR 1 (bundled repository implementation) merged. Scope:
-Sentry (errors/exceptions only; no session replay, analytics, tracking, or
+**Epic 3 (Observability)** is **complete on `main` and fully effective in
+production** (activated and verified 2026-08-06). Scope: Sentry
+(errors/exceptions only; no session replay, analytics, tracking, or
 performance tracing) for the React/Vite client and six named Edge Functions
 (`create-checkout`, `stripe-webhook`, `customer-portal`,
-`check-subscription`, `generate-pdf`, `export-share`), with a shared
-fail-closed redaction policy and a top-level React error boundary. The
-implementation is inert — no `VITE_SENTRY_DSN` / `SENTRY_DSN` is configured
-anywhere. See `docs/adr/0003-observability-policy.md`. Sentry vendor-account
-creation, secret configuration, and production activation each require
-separate explicit founder authorization.
+`check-subscription`, `generate-pdf`, `export-share`), shared fail-closed
+redaction, top-level React error boundary, browser symbolication via
+Vercel-build source-map upload. Browser project `settlerate-web`
+(`4511862124904448`); Edge project `settlerate-edge-functions`
+(`4511862129623040`). Repository code remains fail-soft when DSNs are
+absent; production DSNs live only in Vercel / Supabase platform
+configuration. Verification record and operational baseline:
+`docs/adr/0003-observability-policy.md`. Non-blocking follow-ups (alerts,
+IP-geography privacy review, dedicated Edge probe, breadcrumb policy) do
+not reopen Epic 3.
 **Later epics have not begun and still require separate explicit
 authorization.**
 

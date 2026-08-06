@@ -109,18 +109,19 @@ Authority: `docs/adr/0002-secrets-and-environment-policy.md`.
 | **PR 4** | Client env fail-fast validation; npm standardization (`bun.lockb` removal); Lovable tooling/doc cleanup; doc reconciliation | Complete / merged |
 | **PR 5** | Auth-redirect hygiene: `src/lib/authRedirect.ts`, optional `VITE_APP_ORIGIN` local-dev override, exact-match allowlist, no `window.location.origin` | Complete / merged |
 
-**Epic 2 repository work is complete.** Epic 3 has not begun and still
-requires explicit founder authorization.
+**Epic 2 repository work is complete.** Epic 3 is complete on `main` and
+production-activated (see below). Later epics still require separate
+explicit founder authorization.
 
 ---
 
 ## Epic 3 — Observability
 
-**Status:** PR 0 (ADR 0003 + minimum governance status updates) and PR 1
-(bundled repository implementation) complete and merged. The repository
-implementation is inert without DSNs. Vendor-account creation, secret
-configuration, and production activation each require separate explicit
-founder authorization. Authority: `docs/adr/0003-observability-policy.md`.
+**Status:** **Complete.** Production activated. Browser ingestion verified.
+Browser symbolication verified. Edge ingestion verified. Privacy redaction
+verification passed for the tested event paths. Authority:
+`docs/adr/0003-observability-policy.md` (includes the production
+verification record and operational baseline).
 
 ### Completed work
 
@@ -132,10 +133,22 @@ founder authorization. Authority: `docs/adr/0003-observability-policy.md`.
   observability foundation (`supabase/functions/_shared/observability.ts`,
   `supabase/functions/_shared/sentry.ts`) wired into all six covered
   functions, hidden-source-map / conditional Sentry Vite plugin
-  configuration, and focused tests. No DSN is configured anywhere — the
-  entire implementation remains inert (byte-identical current behavior).
+  configuration, and focused tests. Repository remains fail-soft when DSNs
+  are absent.
+- CI source-map upload secrets wired; browser symbolication fix merged
+  (privacy-safe stack frames, deterministic release, Vercel-build upload).
+- Founder-authorized production activation: Vercel `VITE_SENTRY_DSN` +
+  source-map upload vars; Supabase `SENTRY_DSN` for Edge Functions; six
+  covered functions redeployed from
+  `059624e178ac51e4ec218ff2ac0a750a564e185b`.
+- Production verification on **2026-08-06** (see ADR 0003 verification
+  record): browser issue `SETTLERATE-WEB-2` / event
+  `440718be6636413593e3630592e4bb26` (project `settlerate-web` /
+  `4511862124904448`); Edge issue `SETTLERATE-EDGE-FUNCTIONS-3` / event
+  `ac07d9cd30004cc28f1f68789f6069f7` (project `settlerate-edge-functions` /
+  `4511862129623040`). No further DSN changes are required.
 
-### Accepted scope (binding for PR 1 when authorized)
+### Accepted scope (binding)
 
 - Vendor: Sentry, limited to errors and exceptions only. No session replay,
   product analytics, advertising tracking, user-behavior telemetry, request/
@@ -155,9 +168,11 @@ founder authorization. Authority: `docs/adr/0003-observability-policy.md`.
 - Top-level React error boundary with a minimal, neutral fallback ("Something
   went wrong. Reload the page to continue." + Reload button); no technical
   error detail shown to users.
-- Hidden production source maps uploaded via CI with a scoped Sentry auth
-  token never exposed to the client bundle.
-- Full prohibited-data list and alert/retention/access decisions: see
+- Hidden production source maps uploaded from the authoritative Vercel
+  production build (and optionally CI validation builds) with a scoped
+  Sentry auth token never exposed to the client bundle.
+- Full prohibited-data list, alert/retention/access decisions, production
+  verification record, and operational baseline: see
   `docs/adr/0003-observability-policy.md`.
 
 ### Prohibited in Epic 3
@@ -171,8 +186,8 @@ founder authorization. Authority: `docs/adr/0003-observability-policy.md`.
 - Database migrations, RLS changes, or an audit-trail schema as part of
   Epic 3
 - Widening captured data beyond ADR 0003 §4 without a new ADR
-- Creating a Sentry account, adding secrets, or activating production
-  monitoring without separate founder authorization
+- Changing production DSNs, Sentry project routing, or capture scope without
+  separate founder authorization
 
 ### Epic 3 PR sequence
 
@@ -180,12 +195,12 @@ founder authorization. Authority: `docs/adr/0003-observability-policy.md`.
 |----|--------|--------|
 | **PR 0** | ADR 0003 + minimum governance status updates | Complete / merged |
 | **PR 1** | Bundled repository implementation (client + Edge Function SDK wiring, error boundary, redaction, source maps), inert without DSNs | Complete / merged |
-| Vendor/secret/production steps | Sentry account creation, DSN/token configuration, production activation and verification | Each requires separate founder authorization; not code PRs |
+| Vendor/secret/production steps | Sentry account creation, DSN/token configuration, production activation and verification | **Complete** — activated and verified 2026-08-06 |
 
-**Epic 3 repository implementation (PR 0–1) is complete and inert. Vendor
-account creation, secret configuration, and production activation each
-require separate founder authorization. Never activate live monitoring
-automatically.**
+**Epic 3 is complete on `main` and fully effective in production.**
+Non-blocking follow-ups (alert rules, IP-geography privacy review,
+dedicated Edge probe, breadcrumb policy review) are recorded in ADR 0003
+and do not reopen Epic 3. Do not begin Epic 4 automatically.
 
 ---
 

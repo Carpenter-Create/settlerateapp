@@ -28,7 +28,7 @@ is **unresolved** — do not invent the outcome in code.
 |---|--------|----------|--------------|--------|
 | 0001 | Admin provisioning model | `0001-admin-provisioning-model.md` | Epic 1 | accepted |
 | 0002 | Secrets and environment policy | `0002-secrets-and-environment-policy.md` | Epic 2 | accepted (Epic 2 complete) |
-| 0003 | Observability policy | `0003-observability-policy.md` | Epic 3 | accepted (Epic 3 PR 0–1 complete; inert without DSNs) |
+| 0003 | Observability policy | `0003-observability-policy.md` | Epic 3 | accepted (Epic 3 complete; production activated and verified 2026-08-06) |
 | 0004 | RLS testing standard | `0004-rls-testing-standard.md` | Epic 4 | required / not yet written |
 | 0005 | Shared package architecture | `0005-shared-package-architecture.md` | Epic 5 | required / not yet written |
 | 0006 | Database schema source of truth | `0006-database-schema-source-of-truth.md` | Epic 6 | required / not yet written |
