@@ -49,21 +49,17 @@ operational action. See `docs/adr/0002-secrets-and-environment-policy.md`
 and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 
 **Epic 3 (Observability)** is **complete on `main` and fully effective in
-production** (activated and verified 2026-08-06). Scope: Sentry
-(errors/exceptions only; no session replay, analytics, tracking, or
-performance tracing) for the React/Vite client and six named Edge Functions
-(`create-checkout`, `stripe-webhook`, `customer-portal`,
-`check-subscription`, `generate-pdf`, `export-share`), shared fail-closed
-redaction, top-level React error boundary, browser symbolication via
-Vercel-build source-map upload. Browser project `settlerate-web`
-(`4511862124904448`); Edge project `settlerate-edge-functions`
-(`4511862129623040`). Repository code remains fail-soft when DSNs are
-absent; production DSNs live only in Vercel / Supabase platform
-configuration. Verification record and operational baseline:
-`docs/adr/0003-observability-policy.md`. Non-blocking follow-ups (alerts,
-IP-geography privacy review, dedicated Edge probe, breadcrumb policy) do
-not reopen Epic 3.
-**Later epics have not begun and still require separate explicit
+production** (activated and verified 2026-08-06). See
+`docs/adr/0003-observability-policy.md`.
+
+**Epic 4 (RLS Security Test Expansion)** is **In progress — ADR-first**.
+PR 0 establishes ADR 0004 (RLS testing standard), explicit acceptance
+criteria, and the later implementation PR sequence. Do **not** write RLS
+tests, change policies/migrations, or modify application code until a
+later Epic 4 implementation PR is explicitly authorized. Authority:
+`docs/adr/0004-rls-testing-standard.md` and
+`docs/PHASE8_1_EPIC_BOUNDARIES.md`.
+**Epic 5 and later have not begun and still require separate explicit
 authorization.**
 
 Do not begin AWS / Cloudflare / Next.js platform migration unless explicitly authorized.

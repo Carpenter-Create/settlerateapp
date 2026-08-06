@@ -206,9 +206,66 @@ and do not reopen Epic 3. Do not begin Epic 4 automatically.
 
 ## Epic 4 — RLS Security Test Expansion
 
-Allowed when authorized: validate RLS policies; owner / non-owner /
-administrative path tests.  
+**Status:** **In progress — ADR-first.** PR 0 (ADR 0004 + minimum governance
+status updates) is the authorized slice. RLS tests, policy/migration
+changes, and application code changes are **not** authorized until a later
+Epic 4 implementation PR is explicitly authorized. Authority:
+`docs/adr/0004-rls-testing-standard.md`.
+
+**Goal:** Expand automated RLS security tests so owner, non-owner, and
+administrative isolation paths are proven in CI against the repository
+migration chain — before Epic 6 schema reconciliation.
+
 **Dependency:** complete before Epic 6 schema reconciliation.
+
+### Acceptance criteria (binding)
+
+Epic 4 is complete only when all of the following are true:
+
+1. ADR 0004 is accepted and remains the binding RLS testing standard.
+2. An explicit coverage inventory exists for RLS-enabled in-scope relations
+   derived from current migrations (per ADR 0004 §4).
+3. Automated SQL tests assert, for each in-scope relation, the applicable
+   owner / non-owner authenticated / anon / administrative matrix
+   (ADR 0004 §5).
+4. Tests run against ephemeral Postgres applying the repository migration
+   chain (same family as `npm run test:entitlement-sql`); they are not
+   satisfied by production probing or client-only mocks.
+5. The RLS suite is gated in CI (via `test:entitlement-sql` and/or a
+   dedicated companion script invoked by CI).
+6. No RLS policy was weakened to obtain green CI; confirmed isolation
+   defects were fixed only under separately authorized implementation PRs
+   that preserve `docs/SECURITY_MODEL.md` isolation intent.
+7. Phase 8.1 validation suite remains green:
+   `npm run lint`, `npm run typecheck`, `npm run verify:benchmarks`,
+   `npm run test:run`, `npm run build`, plus the SQL/RLS harness
+   command(s).
+
+### Prohibited in Epic 4
+
+- Writing or merging RLS tests in PR 0 (governance only)
+- General RLS redesign unrelated to confirmed defects
+- Schema reconciliation or consolidated schema baseline (Epic 6)
+- Staging topology (Epic 7), billing recovery (Epic 8), shared core package
+  (Epic 5)
+- Production database probing as acceptance evidence
+- Disabling RLS, skipping failing isolation assertions, or weakening CI /
+  financial benchmarks for green builds
+- Resuming Phase 7B live smoke / public checkout / disabling
+  `CHECKOUT_MAINTENANCE`
+- Beginning Epic 5 or later automatically
+
+### Epic 4 PR sequence
+
+| PR | Scope | Status |
+|----|--------|--------|
+| **PR 0** | ADR 0004 + minimum governance status updates | **In progress** (this slice) |
+| **PR 1** | Coverage inventory + harness wiring; owner / non-owner / anon matrix for core user-owned tables | Not authorized — requires separate founder authorization |
+| **PR 2** | Remaining in-scope relations + administrative path assertions | Not authorized — requires separate founder authorization |
+| **PR 3** | CI gate completion / acceptance-criteria gap closure (if needed) | Not authorized — requires separate founder authorization |
+
+**Epic 4 is in progress (ADR-first). Do not begin PR 1–3 or Epic 5+
+automatically.**
 
 ---
 

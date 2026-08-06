@@ -41,6 +41,9 @@ AWS migration is intentionally deferred until a forcing reason exists.
 
 ### Epic 4 --- RLS Security Test Expansion
 
+**Status: In progress — ADR-first** (ADR 0004; see
+`docs/adr/0004-rls-testing-standard.md`). RLS tests not yet implemented.
+
 -   Validate all RLS policies.
 -   Test owner access.
 -   Test non-owner restrictions.
@@ -127,9 +130,12 @@ deployment process documented - backups verified - monitoring available
 
 ## Next Approved Execution Step
 
-Begin Epic 1 --- Admin Provisioning Security.
+Epic 1–3 are complete. Epic 4 is **in progress — ADR-first**
+(ADR 0004 merged with this governance slice).
 
-First step: Create the controlled admin bootstrap mechanism.
+**Next implementation step (requires separate founder authorization):**
+Epic 4 PR 1 — RLS coverage inventory + harness wiring and owner /
+non-owner / anon matrix for core user-owned tables.
 
-Do not remove the existing admin trigger until: - bootstrap exists -
-bootstrap is tested - existing admin access is verified
+Do not begin Epic 4 PR 1–3, Epic 5, or later epics automatically.
+Do not write RLS tests in the ADR-only PR.

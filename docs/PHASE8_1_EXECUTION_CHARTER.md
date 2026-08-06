@@ -44,7 +44,7 @@ Follow the roadmap epic sequence. Do not skip dependency gates:
 1. Epic 1 — Admin Provisioning Security (**complete on `main` and fully effective in production**)  
 2. Epic 2 — Environment and Origin Hygiene (**complete on `main`**; see ADR 0002)  
 3. Epic 3 — Observability (**complete on `main` and production-activated/verified 2026-08-06** — see ADR 0003)  
-4. Epic 4 — RLS Security Test Expansion (**before** schema reconciliation)  
+4. Epic 4 — RLS Security Test Expansion (**In progress — ADR-first**; complete before schema reconciliation; see ADR 0004)  
 5. Epic 5 — Shared Core Package  
 6. Epic 6 — Schema Reconciliation (requires Epic 4)  
 7. Epic 7 — Staging Environment  
@@ -100,10 +100,24 @@ Vercel-build source-map upload, and verified production ingestion on
 2026-08-06. Repository code remains fail-soft when DSNs are absent;
 production DSNs live only in Vercel / Supabase platform configuration.
 Authority: `docs/adr/0003-observability-policy.md` (verification record and
-operational baseline). See `docs/PHASE8_1_EPIC_BOUNDARIES.md`. **Do not
-begin Epic 4 or later Phase 8.1 epics automatically.** Non-blocking
+operational baseline). See `docs/PHASE8_1_EPIC_BOUNDARIES.md`. Non-blocking
 follow-ups (alerts, IP-geography privacy review, dedicated Edge probe,
 breadcrumb policy) do not reopen Epic 3.
+
+## PR discipline for Epic 4
+
+| PR | Intent | Status |
+|----|--------|--------|
+| **PR 0** | RLS testing standard ADR (0004) + minimum governance status | **In progress — ADR-first** |
+| **PR 1** | Coverage inventory + harness; core user-owned owner/non-owner/anon matrix | Not authorized — requires separate founder authorization |
+| **PR 2** | Remaining relations + administrative path assertions | Not authorized — requires separate founder authorization |
+| **PR 3** | CI gate / acceptance-criteria gap closure (if needed) | Not authorized — requires separate founder authorization |
+
+Epic 4 is **in progress (ADR-first)**. PR 0 establishes ADR 0004, explicit
+acceptance criteria, and the implementation PR sequence. **Do not write RLS
+tests, change policies/migrations, or begin Epic 5+ automatically.**
+Authority: `docs/adr/0004-rls-testing-standard.md`. See
+`docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 
 ## Required ADRs
 
