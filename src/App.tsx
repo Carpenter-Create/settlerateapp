@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/admin/AdminRoute";
+import { ErrorBoundary } from "@/components/system/ErrorBoundary";
 
 // Public pages
 import Auth from "./pages/Auth";
@@ -29,46 +30,48 @@ import AdminAccess from "./pages/admin/AdminAccess";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Auth />} />
-            <Route path="/sign-up" element={<Navigate to="/?mode=create" replace />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
-            
-            {/* Public share route - no app chrome */}
-            <Route path="/share/:token" element={<Share />} />
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Auth />} />
+              <Route path="/sign-up" element={<Navigate to="/?mode=create" replace />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
 
-            {/* Protected app routes */}
-            <Route path="/app" element={<Navigate to="/app/scenarios" replace />} />
-            <Route path="/app/scenarios" element={<ProtectedRoute><AppLayout><ScenariosIndex /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/scenarios/:id" element={<ProtectedRoute><AppLayout><ScenarioDetail /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/comparisons" element={<ProtectedRoute><AppLayout><ComparisonsIndex /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/comparisons/:id" element={<ProtectedRoute><AppLayout><ComparisonDetail /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/calculator" element={<ProtectedRoute><AppLayout><Calculator /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/account" element={<ProtectedRoute><AppLayout><Account /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/settings" element={<ProtectedRoute><AppLayout><AppSettings /></AppLayout></ProtectedRoute>} />
+              {/* Public share route - no app chrome */}
+              <Route path="/share/:token" element={<Share />} />
 
-            {/* Legacy compare route - redirect to new comparisons */}
-            <Route path="/app/compare" element={<Navigate to="/app/comparisons" replace />} />
+              {/* Protected app routes */}
+              <Route path="/app" element={<Navigate to="/app/scenarios" replace />} />
+              <Route path="/app/scenarios" element={<ProtectedRoute><AppLayout><ScenariosIndex /></AppLayout></ProtectedRoute>} />
+              <Route path="/app/scenarios/:id" element={<ProtectedRoute><AppLayout><ScenarioDetail /></AppLayout></ProtectedRoute>} />
+              <Route path="/app/comparisons" element={<ProtectedRoute><AppLayout><ComparisonsIndex /></AppLayout></ProtectedRoute>} />
+              <Route path="/app/comparisons/:id" element={<ProtectedRoute><AppLayout><ComparisonDetail /></AppLayout></ProtectedRoute>} />
+              <Route path="/app/calculator" element={<ProtectedRoute><AppLayout><Calculator /></AppLayout></ProtectedRoute>} />
+              <Route path="/app/account" element={<ProtectedRoute><AppLayout><Account /></AppLayout></ProtectedRoute>} />
+              <Route path="/app/settings" element={<ProtectedRoute><AppLayout><AppSettings /></AppLayout></ProtectedRoute>} />
 
-            {/* Admin routes */}
-            <Route path="/app/admin/access" element={<AdminRoute><AdminAccess /></AdminRoute>} />
-            <Route path="/admin/advisor-requests" element={<Navigate to="/app/scenarios" replace />} />
-            <Route path="/app/admin/advisors" element={<Navigate to="/app/scenarios" replace />} />
-            <Route path="/app/advisor-request" element={<Navigate to="/app/scenarios" replace />} />
+              {/* Legacy compare route - redirect to new comparisons */}
+              <Route path="/app/compare" element={<Navigate to="/app/comparisons" replace />} />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+              {/* Admin routes */}
+              <Route path="/app/admin/access" element={<AdminRoute><AdminAccess /></AdminRoute>} />
+              <Route path="/admin/advisor-requests" element={<Navigate to="/app/scenarios" replace />} />
+              <Route path="/app/admin/advisors" element={<Navigate to="/app/scenarios" replace />} />
+              <Route path="/app/advisor-request" element={<Navigate to="/app/scenarios" replace />} />
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

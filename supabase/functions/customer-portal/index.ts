@@ -3,11 +3,16 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { handleCustomerPortalRequest } from "./handler.ts";
 import { stripeCustomerMetadataSearchQuery } from "../_shared/stripeCustomerResolve.ts";
+import { captureEdgeException, initEdgeSentry } from "../_shared/sentry.ts";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[CUSTOMER-PORTAL] ${step}${detailsStr}`);
 };
+
+// Inert without a SENTRY_DSN secret — see supabase/functions/_shared/sentry.ts.
+const SENTRY_DSN = Deno.env.get("SENTRY_DSN");
+initEdgeSentry(SENTRY_DSN);
 
 serve(async (req) => {
   logStep("Function started");
@@ -90,5 +95,6 @@ serve(async (req) => {
       logStep("Customer portal session created", { sessionId: portalSession.id });
       return { url: portalSession.url, id: portalSession.id };
     },
+    captureException: (error, context) => captureEdgeException(error, SENTRY_DSN, context),
   });
 });

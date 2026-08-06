@@ -116,14 +116,24 @@ requires explicit founder authorization.
 
 ## Epic 3 — Observability
 
-**Status:** PR 0 (ADR 0003 + minimum governance status updates) complete.
-Repository implementation (PR 1), vendor-account creation, secret
+**Status:** PR 0 (ADR 0003 + minimum governance status updates) and PR 1
+(bundled repository implementation) complete and merged. The repository
+implementation is inert without DSNs. Vendor-account creation, secret
 configuration, and production activation each require separate explicit
 founder authorization. Authority: `docs/adr/0003-observability-policy.md`.
 
 ### Completed work
 
-- ADR 0003 accepted; governance updated (PR 0, this PR)
+- ADR 0003 accepted; governance updated (PR 0)
+- PR 1: client Sentry foundation (`src/lib/observability.ts`), shared
+  fail-closed redaction (`src/lib/observabilityRedaction.ts`, mirrored to
+  `supabase/functions/_shared/observabilityRedaction.ts`), top-level React
+  error boundary (`src/components/system/ErrorBoundary.tsx`), Edge Function
+  observability foundation (`supabase/functions/_shared/observability.ts`,
+  `supabase/functions/_shared/sentry.ts`) wired into all six covered
+  functions, hidden-source-map / conditional Sentry Vite plugin
+  configuration, and focused tests. No DSN is configured anywhere — the
+  entire implementation remains inert (byte-identical current behavior).
 
 ### Accepted scope (binding for PR 1 when authorized)
 
@@ -161,18 +171,21 @@ founder authorization. Authority: `docs/adr/0003-observability-policy.md`.
 - Database migrations, RLS changes, or an audit-trail schema as part of
   Epic 3
 - Widening captured data beyond ADR 0003 §4 without a new ADR
-- Beginning Epic 3 PR 1, creating a Sentry account, adding secrets, or
-  activating production monitoring without separate founder authorization
+- Creating a Sentry account, adding secrets, or activating production
+  monitoring without separate founder authorization
 
 ### Epic 3 PR sequence
 
 | PR | Scope | Status |
 |----|--------|--------|
-| **PR 0** | ADR 0003 + minimum governance status updates | Complete (this PR) |
-| **PR 1** | Bundled repository implementation (client + Edge Function SDK wiring, error boundary, redaction, source maps), inert without DSNs | Requires separate founder authorization |
+| **PR 0** | ADR 0003 + minimum governance status updates | Complete / merged |
+| **PR 1** | Bundled repository implementation (client + Edge Function SDK wiring, error boundary, redaction, source maps), inert without DSNs | Complete / merged |
 | Vendor/secret/production steps | Sentry account creation, DSN/token configuration, production activation and verification | Each requires separate founder authorization; not code PRs |
 
-**Epic 3 PR 0 authorizes policy only. Never begin Epic 3 PR 1 automatically.**
+**Epic 3 repository implementation (PR 0–1) is complete and inert. Vendor
+account creation, secret configuration, and production activation each
+require separate founder authorization. Never activate live monitoring
+automatically.**
 
 ---
 

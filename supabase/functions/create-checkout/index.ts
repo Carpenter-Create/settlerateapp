@@ -21,6 +21,12 @@ import {
   checkoutMaintenancePayload,
   isCheckoutMaintenanceEnabled,
 } from "../_shared/checkoutMaintenance.ts";
+import { generateRequestId } from "../_shared/observability.ts";
+import { captureEdgeException, initEdgeSentry } from "../_shared/sentry.ts";
+
+// Inert without a SENTRY_DSN secret — see supabase/functions/_shared/sentry.ts.
+const SENTRY_DSN = Deno.env.get("SENTRY_DSN");
+initEdgeSentry(SENTRY_DSN);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,6 +95,8 @@ const PRICE_BY_TYPE: Record<string, string> = {
 };
 
 serve(async (req) => {
+  const requestId = generateRequestId();
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -298,6 +306,10 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR in create-checkout", { message: errorMessage });
+    captureEdgeException(error, SENTRY_DSN, {
+      function_name: "create-checkout",
+      request_id: requestId,
+    });
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }

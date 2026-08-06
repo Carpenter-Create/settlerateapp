@@ -14,6 +14,14 @@ interface ImportMetaEnv {
    * production always falls back to DEFAULT_APP_ORIGIN when unset.
    */
   readonly VITE_APP_ORIGIN?: string;
+  /**
+   * Optional. Sentry client DSN (public identifier, safe to expose in the
+   * browser bundle — not a secret). Validated by
+   * `src/lib/observability.ts`; absent, blank, or malformed values leave
+   * observability disabled with no effect on application behavior.
+   * Authority: docs/adr/0003-observability-policy.md.
+   */
+  readonly VITE_SENTRY_DSN?: string;
 }
 
 interface ImportMeta {

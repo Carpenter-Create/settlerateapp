@@ -3,6 +3,7 @@ import {
   resolveStripeCustomerByUserId,
   type StripeCustomerLike,
 } from "../_shared/stripeCustomerResolve.ts";
+import { generateRequestId } from "../_shared/observability.ts";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,6 +30,13 @@ export interface CustomerPortalDeps {
   /** Repairs the authenticated user's billing mapping after a unique metadata match. */
   upsertBillingCustomerId: (userId: string, customerId: string) => Promise<void>;
   createPortalSession: (customerId: string, returnUrl: string) => Promise<{ url: string; id: string }>;
+  /**
+   * Optional Sentry exception capture, injected from index.ts (which owns the
+   * Deno-specific SDK wiring in ../_shared/sentry.ts). Kept as an injected
+   * callback — rather than importing sentry.ts directly — so this handler
+   * stays portable and unit-testable under Node/Vitest. No-op when omitted.
+   */
+  captureException?: (error: unknown, context: { function_name: string; request_id: string }) => void;
 }
 
 function jsonResponse(body: Record<string, unknown>, status: number): Response {
@@ -42,6 +50,8 @@ export async function handleCustomerPortalRequest(
   req: Request,
   deps: CustomerPortalDeps
 ): Promise<Response> {
+  const requestId = generateRequestId();
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -103,6 +113,7 @@ export async function handleCustomerPortalRequest(
     return jsonResponse({ url: portalSession.url }, 200);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    deps.captureException?.(error, { function_name: "customer-portal", request_id: requestId });
     return jsonResponse({ error: errorMessage }, 500);
   }
 }

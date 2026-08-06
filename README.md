@@ -78,6 +78,7 @@ cp .env.example .env
 | `VITE_SUPABASE_URL` | Supabase project API URL (`https://<project-ref>.supabase.co`) |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase anon / publishable key |
 | `VITE_APP_ORIGIN` (optional) | Local-development-only auth email redirect origin override (signup confirmation, magic-link, password reset). Leave unset to use the production default. Only `http://localhost:5173`, `http://localhost:8080`, `http://127.0.0.1:5173`, and `http://127.0.0.1:8080` are accepted (exact match) — see `src/lib/authRedirect.ts`. |
+| `VITE_SENTRY_DSN` (optional) | Sentry client DSN (public identifier, not a secret). Leave unset to keep client error monitoring disabled — see [Observability](#observability-sentry) below. |
 
 These are **public client configuration** (bundled into the browser). Do **not**
 put service-role keys, Stripe secrets, or other server secrets in `.env` or
@@ -108,6 +109,35 @@ Subscription management is handled via Stripe:
 **Important:** Stripe secret keys and webhook signing secrets are stored as
 Supabase Edge Function secrets, never in client code or `.env`.
 
+### Observability (Sentry)
+
+Authority: [`docs/adr/0003-observability-policy.md`](docs/adr/0003-observability-policy.md).
+
+Client (`src/lib/observability.ts`) and Edge Function
+(`supabase/functions/_shared/sentry.ts`) error monitoring foundations are in
+the repository but **inert by default**:
+
+- The client only sends events in a production build (`MODE === "production"`)
+  with a structurally valid `VITE_SENTRY_DSN`; local development never sends
+  events regardless of configuration.
+- Each of the six covered Edge Functions (`create-checkout`, `stripe-webhook`,
+  `customer-portal`, `check-subscription`, `generate-pdf`, `export-share`)
+  only sends events when the `SENTRY_DSN` platform secret is set.
+- Scope is errors/exceptions only — no session replay, product analytics,
+  advertising tracking, performance tracing, or request/response body
+  capture. A shared, unit-tested, fail-closed redaction policy
+  (`src/lib/observabilityRedaction.ts`, mirrored for Edge Functions) allows
+  only approved opaque identifiers and generic status/error metadata through
+  `beforeSend` / `beforeBreadcrumb`.
+- A top-level React error boundary (`src/components/system/ErrorBoundary.tsx`)
+  shows a minimal "Something went wrong. Reload the page to continue."
+  fallback on render-time failures — never technical details.
+
+**Not yet done** (separate, founder-authorized steps): creating a Sentry
+account/project, setting `VITE_SENTRY_DSN` / `SENTRY_DSN`, CI secrets for
+source-map upload, alert configuration, and production activation/smoke
+verification.
+
 ### Environment and origin controls (summary)
 
 These are related but separate controls — see
@@ -121,6 +151,7 @@ for the authoritative decisions:
 | CORS | `Access-Control-Allow-Origin` on Edge Function responses | Set per Edge Function (e.g. `supabase/functions/*/index.ts`) |
 | Stripe return-origin validation | Which browser `Origin` values are trusted for Checkout/Portal return URLs | `supabase/functions/_shared/appOrigin.ts` (exact-match allowlist) |
 | Auth email redirect origin | Which origin Supabase Auth emails (signup, magic-link, password reset) redirect back to | `src/lib/authRedirect.ts` (exact-match allowlist; optional `VITE_APP_ORIGIN` for local dev only) |
+| Observability (Sentry) | Client/Edge Function error monitoring — inert without `VITE_SENTRY_DSN` / `SENTRY_DSN` | `src/lib/observability.ts`, `supabase/functions/_shared/sentry.ts` (see [Observability](#observability-sentry) above) |
 
 ## Local Development
 

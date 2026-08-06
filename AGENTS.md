@@ -49,13 +49,16 @@ operational action. See `docs/adr/0002-secrets-and-environment-policy.md`
 and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 
 **Epic 3 (Observability)** — PR 0 (ADR 0003 + minimum governance status
-updates) merged. Approved scope: Sentry (errors/exceptions only; no session
-replay, analytics, tracking, or performance tracing) for the React/Vite
-client and six named Edge Functions (`create-checkout`, `stripe-webhook`,
-`customer-portal`, `check-subscription`, `generate-pdf`, `export-share`).
-See `docs/adr/0003-observability-policy.md`. Epic 3 PR 1 (repository
-implementation), vendor-account creation, secret configuration, and
-production activation each require separate explicit founder authorization.
+updates) and PR 1 (bundled repository implementation) merged. Scope:
+Sentry (errors/exceptions only; no session replay, analytics, tracking, or
+performance tracing) for the React/Vite client and six named Edge Functions
+(`create-checkout`, `stripe-webhook`, `customer-portal`,
+`check-subscription`, `generate-pdf`, `export-share`), with a shared
+fail-closed redaction policy and a top-level React error boundary. The
+implementation is inert — no `VITE_SENTRY_DSN` / `SENTRY_DSN` is configured
+anywhere. See `docs/adr/0003-observability-policy.md`. Sentry vendor-account
+creation, secret configuration, and production activation each require
+separate explicit founder authorization.
 **Later epics have not begun and still require separate explicit
 authorization.**
 

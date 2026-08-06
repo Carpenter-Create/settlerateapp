@@ -5,6 +5,12 @@ import {
   featureAccessFromDecision,
   planCodeToLegacyTier,
 } from "../_shared/entitlementContract.ts";
+import { generateRequestId } from "../_shared/observability.ts";
+import { captureEdgeException, initEdgeSentry } from "../_shared/sentry.ts";
+
+// Inert without a SENTRY_DSN secret — see supabase/functions/_shared/sentry.ts.
+const SENTRY_DSN = Deno.env.get("SENTRY_DSN");
+initEdgeSentry(SENTRY_DSN);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +23,8 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
 };
 
 serve(async (req) => {
+  const requestId = generateRequestId();
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -126,6 +134,10 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR in check-subscription", { message: errorMessage });
+    captureEdgeException(error, SENTRY_DSN, {
+      function_name: "check-subscription",
+      request_id: requestId,
+    });
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
