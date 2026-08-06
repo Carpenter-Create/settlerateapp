@@ -59,23 +59,53 @@ Standards and guidelines are maintained in the `/docs` folder:
 
 ## Environment
 
+Authority: [`docs/adr/0002-secrets-and-environment-policy.md`](docs/adr/0002-secrets-and-environment-policy.md).
+
+### Local client setup
+
+The SPA reads public Supabase configuration from Vite environment variables.
+
+1. Copy the template (do not commit your local `.env`):
+
+```bash
+cp .env.example .env
+```
+
+2. Set the required public client variables in `.env`:
+
+| Variable | Purpose |
+|----------|---------|
+| `VITE_SUPABASE_URL` | Supabase project API URL (`https://<project-ref>.supabase.co`) |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase anon / publishable key |
+
+These are **public client configuration** (bundled into the browser). Do **not**
+put service-role keys, Stripe secrets, or other server secrets in `.env` or
+any `VITE_*` variable.
+
+See [`.env.example`](.env.example) for the exact template. `.env` is gitignored.
+
+CI sets the same two public `VITE_*` variables to non-secret placeholders so
+lint/tests/build can import the client without a committed `.env`.
+
 ### Supabase
 
-This project is connected to Supabase for:
-- User authentication (email, OAuth)
+This project uses Supabase for:
+- User authentication
 - Database with Row-Level Security
-- Edge functions for server-side logic
+- Edge Functions for server-side logic
 
-Project ID: `vpcxzbaxhpucvevnkalo`
+Platform-managed Edge Function env includes `SUPABASE_URL`,
+`SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
 
 ### Stripe
 
 Subscription management is handled via Stripe:
-- Checkout sessions created via edge function
+- Checkout sessions created via Edge Function
 - Webhook events sync subscription status to Supabase
 - Customer portal for billing management
 
-**Important**: Stripe secret keys are stored as edge function secrets, never in client code.
+**Important:** Stripe secret keys and webhook signing secrets are stored as
+Supabase Edge Function secrets, never in client code or `.env`.
 
 ## Development
 
@@ -87,7 +117,11 @@ This project uses [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 # Install dependencies
 npm install
 
-# Start development server
+# Configure public client env (see Environment above)
+cp .env.example .env
+# edit .env with your Supabase URL and publishable key
+
+# Start development server (default: http://localhost:8080)
 npm run dev
 ```
 
@@ -97,6 +131,8 @@ npm run dev
 - Admin access requires explicit role assignment
 - Entitlements are enforced server-side via Supabase
 - See [SECURITY_MODEL.md](docs/SECURITY_MODEL.md) for details
+- Client env may only contain public `VITE_*` configuration; server secrets
+  stay on the Edge / platform side (ADR 0002)
 
 ## Deployment
 
