@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { buildAuthRedirectUrl, resolveAuthOrigin } from "@/lib/authRedirect";
 import {
   AuthLayout,
   AuthCard,
@@ -11,6 +12,8 @@ import {
   AuthConfirmationState,
 } from "@/components/auth/AuthLayout";
 import { authClasses } from "@/styles/authStandard";
+
+const AUTH_REDIRECT_ORIGIN = resolveAuthOrigin(import.meta.env.VITE_APP_ORIGIN);
 
 /**
  * Reset Password - Uses AuthLayout standard
@@ -34,7 +37,7 @@ export default function ResetPassword() {
 
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: "https://app.settlerate.com/reset-password/confirm",
+        redirectTo: buildAuthRedirectUrl(AUTH_REDIRECT_ORIGIN, "/reset-password/confirm"),
       });
 
       if (resetError) {

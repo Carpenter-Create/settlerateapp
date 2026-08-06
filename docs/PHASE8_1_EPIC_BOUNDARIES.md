@@ -54,9 +54,14 @@ Epic 1 is complete in the repository and fully effective in production.
 
 ## Epic 2 — Environment and Origin Hygiene
 
-**Status:** PR 0–2 merged to `main`. PR 3 and PR 4 implemented and opened as
-draft PRs, pending CI/review/merge. Authority:
-`docs/adr/0002-secrets-and-environment-policy.md`.
+**Status:** PR 0–4 merged to `main`. PR 5 (final code PR — auth-redirect
+hygiene) implemented and opened as a draft PR, pending CI/review/merge.
+No Supabase Auth Dashboard redirect-allowlist change has been made; that
+remains a separate, explicitly-authorized production-configuration step
+(not a code PR) and is not required for PR 5 to be safely merged, since
+`VITE_APP_ORIGIN` is unset in production and all three auth call sites
+resolve to the existing, already-allowlisted production redirect URLs by
+default. Authority: `docs/adr/0002-secrets-and-environment-policy.md`.
 
 ### Completed work
 
@@ -66,18 +71,20 @@ draft PRs, pending CI/review/merge. Authority:
 - Obsolete Lovable preview origin removed from the Stripe return-origin
   allowlist; regression test added (PR 2, merged)
 - Client-side hardcoded Edge Function host URLs replaced with a validated
-  `buildEdgeFunctionUrl(VITE_SUPABASE_URL, functionName)` helper (PR 3, draft
-  PR open)
+  `buildEdgeFunctionUrl(VITE_SUPABASE_URL, functionName)` helper (PR 3,
+  merged)
 - Typed `ImportMetaEnv` declarations and fail-fast public client env
-  validation (`src/lib/clientEnv.ts`) (PR 4, draft PR open)
+  validation (`src/lib/clientEnv.ts`) (PR 4, merged)
 - `bun.lockb` removed; `lovable-tagger` removed from `package.json` and
-  `vite.config.ts`; standardized on npm (PR 4, draft PR open)
+  `vite.config.ts`; standardized on npm (PR 4, merged)
 - Obsolete Lovable publishing/setup instructions removed from `README.md`;
-  environment/origin control distinctions documented (PR 4, draft PR open)
-
-### Allowed (when the matching Epic 2 PR is authorized)
-
-- Gated auth-redirect changes per ADR 0002 §3 (later, separately gated PR)
+  environment/origin control distinctions documented (PR 4, merged)
+- Hardcoded production auth-redirect URLs in `src/pages/Auth.tsx` (signup
+  confirmation, magic-link) and `src/pages/ResetPassword.tsx` (password
+  reset) replaced with `resolveAuthOrigin()` / `buildAuthRedirectUrl()`
+  (`src/lib/authRedirect.ts`); optional, exact-match-only `VITE_APP_ORIGIN`
+  local-dev override added; default production output unchanged (PR 5,
+  draft PR open)
 
 ### Prohibited in Epic 2
 
@@ -88,6 +95,8 @@ draft PRs, pending CI/review/merge. Authority:
   Functions)
 - Staging or preview deployment topology (Epic 7 / ADR 0008)
 - Git history scrub of `.env`
+- Supabase Auth Dashboard redirect-allowlist changes (separate,
+  explicitly-authorized production-configuration action, not a code PR)
 - Unrelated refactors; financial / entitlement / persistence / export changes
 
 ### Epic 2 PR sequence
@@ -97,12 +106,15 @@ draft PRs, pending CI/review/merge. Authority:
 | **PR 0** | ADR 0002 + minimum governance status updates | Complete / merged |
 | **PR 1** | `.env.example`, `.gitignore`, stop tracking `.env`, README setup | Complete / merged |
 | **PR 2** | Remove obsolete Lovable origin from Stripe return-origin allowlist | Complete / merged |
-| **PR 3** | Derive Edge Function base URL from `VITE_SUPABASE_URL` via validated helper | Implemented / draft PR open, pending CI+merge |
-| **PR 4** | Client env fail-fast validation; npm standardization (`bun.lockb` removal); Lovable tooling/doc cleanup; doc reconciliation | Implemented / draft PR open, pending CI+merge |
-| **PR 5+** | Gated auth-redirect changes (ADR 0002 §3) | Requires separate authorization |
+| **PR 3** | Derive Edge Function base URL from `VITE_SUPABASE_URL` via validated helper | Complete / merged |
+| **PR 4** | Client env fail-fast validation; npm standardization (`bun.lockb` removal); Lovable tooling/doc cleanup; doc reconciliation | Complete / merged |
+| **PR 5** | Auth-redirect hygiene: `src/lib/authRedirect.ts`, optional `VITE_APP_ORIGIN` local-dev override, exact-match allowlist, no `window.location.origin` | Implemented / draft PR open, pending CI+merge |
 
-**PR 4 does not authorize PR 5 (auth-redirect changes).** Stop until the
-founder separately authorizes and gates that work per ADR 0002 §3.
+**Epic 2 code work is now fully scoped and implemented pending PR 5 review.**
+No Supabase Auth Dashboard changes have been made or are required for the
+default (production) behavior. If a future decision expands the approved
+local-development origin list, that Dashboard update is a separate
+founder-authorized production-configuration action.
 
 ---
 

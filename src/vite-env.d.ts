@@ -8,6 +8,12 @@
 interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL: string;
   readonly VITE_SUPABASE_PUBLISHABLE_KEY: string;
+  /**
+   * Optional. Local-development-only auth redirect origin override.
+   * Validated by `src/lib/authRedirect.ts` against an exact-match allowlist;
+   * production always falls back to DEFAULT_APP_ORIGIN when unset.
+   */
+  readonly VITE_APP_ORIGIN?: string;
 }
 
 interface ImportMeta {

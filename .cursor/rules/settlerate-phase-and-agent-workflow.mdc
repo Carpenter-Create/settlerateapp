@@ -19,15 +19,14 @@ alwaysApply: true
 
 **Epic 1 — Admin Provisioning Security** is **complete on `main` and fully effective in production**.
 
-**Epic 2 — Environment and Origin Hygiene** — PR 0–2 merged to `main`; PR 3
-and PR 4 implemented and open as draft PRs (ADR 0002 secrets/environment
-policy). Epic 2 PR 5+ (gated auth-redirect changes per ADR 0002 §3) and later
-epics require separate founder authorization. Do not begin Epic 2 PR 5+
-automatically.
+**Epic 2 — Environment and Origin Hygiene** — PR 0–4 merged to `main`; PR 5
+(final code PR — auth-redirect hygiene, ADR 0002 §3) implemented and open as
+a draft PR pending CI/review/merge. No Supabase Auth Dashboard configuration
+has been changed. Later epics require separate founder authorization.
 
 ## Prohibited unless explicitly authorized
 
-- Epic 2 PR 5+ (gated auth-redirect changes) implementation without founder authorization
+- Supabase Auth Dashboard redirect-allowlist changes without founder authorization
 - Beginning Epic 3 or later Phase 8.1 epics ahead of sequence / dependency gates
 - Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
