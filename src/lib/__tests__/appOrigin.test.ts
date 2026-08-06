@@ -40,6 +40,12 @@ describe("resolveAppOrigin", () => {
     ).toBe(DEFAULT_APP_ORIGIN);
   });
 
+  it("rejects the removed Lovable preview origin (Epic 2 PR 2 / ADR 0002)", () => {
+    expect(
+      resolveAppOrigin(requestWithOrigin("https://vpcxzbaxhpucvevnkalo.lovable.app"))
+    ).toBe(DEFAULT_APP_ORIGIN);
+  });
+
   it("rejects deceptive suffix and lookalike domains", () => {
     expect(
       resolveAppOrigin(requestWithOrigin("https://app.settlerate.com.attacker.test"))
