@@ -42,7 +42,7 @@ re-authorizes live smoke / beta opening.
 Follow the roadmap epic sequence. Do not skip dependency gates:
 
 1. Epic 1 — Admin Provisioning Security (**complete on `main` and fully effective in production**)  
-2. Epic 2 — Environment and Origin Hygiene (**PR 0 authorized**; see ADR 0002)  
+2. Epic 2 — Environment and Origin Hygiene (**PR 0–2 merged; PR 3–4 draft PRs open**; see ADR 0002)  
 3. Epic 3 — Observability  
 4. Epic 4 — RLS Security Test Expansion (**before** schema reconciliation)  
 5. Epic 5 — Shared Core Package  
@@ -68,11 +68,16 @@ and promotion unchanged).
 
 | PR | Intent | Status |
 |----|--------|--------|
-| **PR 0** | Secrets/environment policy ADR + minimum governance status | Authorized |
-| **PR 1+** | `.env` hygiene, origins, Edge URL helper, validation, gated auth redirects, cleanup | **Not authorized by PR 0 alone** |
+| **PR 0** | Secrets/environment policy ADR + minimum governance status | Complete / merged |
+| **PR 1** | `.env.example`, `.gitignore`, stop tracking `.env`, README setup | Complete / merged |
+| **PR 2** | Remove obsolete Lovable origin from Stripe return-origin allowlist | Complete / merged |
+| **PR 3** | Edge Function base URL helper (`VITE_SUPABASE_URL`) | Implemented / draft PR open |
+| **PR 4** | Client env validation, npm standardization, Lovable cleanup, doc reconciliation | Implemented / draft PR open |
+| **PR 5+** | Gated auth-redirect changes (ADR 0002 §3) | **Requires separate founder authorization** |
 
-Authority: `docs/adr/0002-secrets-and-environment-policy.md`. **Never begin
-the next epic or the next PR automatically.**
+Authority: `docs/adr/0002-secrets-and-environment-policy.md`. See
+`docs/PHASE8_1_EPIC_BOUNDARIES.md` for full detail. **Never begin the next
+epic or the next PR automatically.**
 
 ## Required ADRs
 

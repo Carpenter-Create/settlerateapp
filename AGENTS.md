@@ -39,7 +39,13 @@ Detailed agent rules: `.cursor/rules/`.
 
 **Epic 1 (Admin Provisioning Security)** is **complete on `main` and fully effective in production**.
 
-**Epic 2 (Environment and Origin Hygiene)** — **PR 0 is authorized** (secrets/environment policy ADR: `docs/adr/0002-secrets-and-environment-policy.md`). Do **not** begin Epic 2 PR 1+ implementation or later epics unless explicitly authorized.
+**Epic 2 (Environment and Origin Hygiene)** — PR 0–2 merged to `main`; PR 3
+(Edge Function URL helper) and PR 4 (client env validation, npm
+standardization, Lovable cleanup, doc reconciliation) implemented and open as
+draft PRs pending CI/review/merge. See
+`docs/adr/0002-secrets-and-environment-policy.md` and
+`docs/PHASE8_1_EPIC_BOUNDARIES.md`. Epic 2 PR 5+ (gated auth-redirect
+changes) and later epics require separate explicit authorization.
 
 Do not begin AWS / Cloudflare / Next.js platform migration unless explicitly authorized.
 

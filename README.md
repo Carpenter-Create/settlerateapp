@@ -107,11 +107,20 @@ Subscription management is handled via Stripe:
 **Important:** Stripe secret keys and webhook signing secrets are stored as
 Supabase Edge Function secrets, never in client code or `.env`.
 
-## Development
+### Environment and origin controls (summary)
 
-This project uses [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) for development.
+These are related but separate controls — see
+[`docs/adr/0002-secrets-and-environment-policy.md`](docs/adr/0002-secrets-and-environment-policy.md)
+for the authoritative decisions:
 
-### Local Development
+| Control | What it governs | Where |
+|---------|------------------|-------|
+| Public client configuration | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` — safe to bundle into the browser | `.env` / `.env.example`, validated by `src/lib/clientEnv.ts` |
+| Server-side secrets | Service-role keys, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Supabase Edge Function / platform secrets only — never client env |
+| CORS | `Access-Control-Allow-Origin` on Edge Function responses | Set per Edge Function (e.g. `supabase/functions/*/index.ts`) |
+| Stripe return-origin validation | Which browser `Origin` values are trusted for Checkout/Portal return URLs | `supabase/functions/_shared/appOrigin.ts` (exact-match allowlist) |
+
+## Local Development
 
 ```bash
 # Install dependencies
@@ -133,10 +142,6 @@ npm run dev
 - See [SECURITY_MODEL.md](docs/SECURITY_MODEL.md) for details
 - Client env may only contain public `VITE_*` configuration; server secrets
   stay on the Edge / platform side (ADR 0002)
-
-## Deployment
-
-Open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click Share → Publish.
 
 ## License
 

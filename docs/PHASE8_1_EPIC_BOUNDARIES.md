@@ -54,18 +54,30 @@ Epic 1 is complete in the repository and fully effective in production.
 
 ## Epic 2 — Environment and Origin Hygiene
 
-**Status:** PR 0 authorized. Authority: `docs/adr/0002-secrets-and-environment-policy.md`.
+**Status:** PR 0–2 merged to `main`. PR 3 and PR 4 implemented and opened as
+draft PRs, pending CI/review/merge. Authority:
+`docs/adr/0002-secrets-and-environment-policy.md`.
+
+### Completed work
+
+- ADR 0002 accepted; governance updated (PR 0, merged)
+- `.env.example` added, `.env` untracked and gitignored, README setup docs
+  updated (PR 1, merged)
+- Obsolete Lovable preview origin removed from the Stripe return-origin
+  allowlist; regression test added (PR 2, merged)
+- Client-side hardcoded Edge Function host URLs replaced with a validated
+  `buildEdgeFunctionUrl(VITE_SUPABASE_URL, functionName)` helper (PR 3, draft
+  PR open)
+- Typed `ImportMetaEnv` declarations and fail-fast public client env
+  validation (`src/lib/clientEnv.ts`) (PR 4, draft PR open)
+- `bun.lockb` removed; `lovable-tagger` removed from `package.json` and
+  `vite.config.ts`; standardized on npm (PR 4, draft PR open)
+- Obsolete Lovable publishing/setup instructions removed from `README.md`;
+  environment/origin control distinctions documented (PR 4, draft PR open)
 
 ### Allowed (when the matching Epic 2 PR is authorized)
 
-- Environment handling policy and ADR 0002 (PR 0)
-- `.env.example`, stop tracking `.env`, `.gitignore` updates (later PR)
-- Remove obsolete origins (Lovable) and development artifacts (later PRs)
-- Derive Edge Function base URL from `VITE_SUPABASE_URL` via validated helper
-  (later PR; behavior-preserving in production)
-- Lightweight client env fail-fast for public `VITE_*` vars (later PR)
-- Gated auth-redirect changes per ADR 0002 (later gated PR)
-- Remove unused dependencies / `bun.lockb`; standardize on npm (later PR)
+- Gated auth-redirect changes per ADR 0002 §3 (later, separately gated PR)
 
 ### Prohibited in Epic 2
 
@@ -82,11 +94,15 @@ Epic 1 is complete in the repository and fully effective in production.
 
 | PR | Scope | Status |
 |----|--------|--------|
-| **PR 0** | ADR 0002 + minimum governance status updates | Authorized (this work) |
-| **PR 1+** | Implementation of ADR 0002 decisions | Requires separate authorization |
+| **PR 0** | ADR 0002 + minimum governance status updates | Complete / merged |
+| **PR 1** | `.env.example`, `.gitignore`, stop tracking `.env`, README setup | Complete / merged |
+| **PR 2** | Remove obsolete Lovable origin from Stripe return-origin allowlist | Complete / merged |
+| **PR 3** | Derive Edge Function base URL from `VITE_SUPABASE_URL` via validated helper | Implemented / draft PR open, pending CI+merge |
+| **PR 4** | Client env fail-fast validation; npm standardization (`bun.lockb` removal); Lovable tooling/doc cleanup; doc reconciliation | Implemented / draft PR open, pending CI+merge |
+| **PR 5+** | Gated auth-redirect changes (ADR 0002 §3) | Requires separate authorization |
 
-**PR 0 does not authorize PR 1.** Stop after policy/governance until the
-founder authorizes the next PR.
+**PR 4 does not authorize PR 5 (auth-redirect changes).** Stop until the
+founder separately authorizes and gates that work per ADR 0002 §3.
 
 ---
 
