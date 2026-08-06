@@ -25,21 +25,21 @@ change was required. Any future local-development redirect additions remain
 a separate founder-authorized operational action.
 
 **Epic 3 — Observability** is **complete on `main` and fully effective in
-production** (activated and verified 2026-08-06). Sentry, errors/exceptions
-only, client + six named Edge Functions (`create-checkout`, `stripe-webhook`,
-`customer-portal`, `check-subscription`, `generate-pdf`, `export-share`),
-shared fail-closed redaction, top-level React error boundary, browser
-symbolication verified. Projects: `settlerate-web`
-(`4511862124904448`), `settlerate-edge-functions` (`4511862129623040`).
-Repository remains fail-soft without DSNs; production DSNs are platform
-secrets only. See `docs/adr/0003-observability-policy.md`. **Do not begin
-later Phase 8.1 epics automatically.**
+production** (activated and verified 2026-08-06). See
+`docs/adr/0003-observability-policy.md`.
+
+**Epic 4 — RLS Security Test Expansion** is **In progress — ADR-first**.
+PR 0 (ADR 0004 + governance) is the authorized slice. Do not write RLS
+tests, change policies/migrations, or modify application code until a
+later Epic 4 implementation PR is explicitly authorized. See
+`docs/adr/0004-rls-testing-standard.md`. **Do not begin Epic 4 PR 1–3 or
+Epic 5+ automatically.**
 
 ## Prohibited unless explicitly authorized
 
 - Supabase Auth Dashboard redirect-allowlist changes without founder authorization
 - Changing production Sentry DSNs, project routing, or capture scope without founder authorization
-- Beginning Epic 4 or later Phase 8.1 epics ahead of sequence / dependency gates
+- Beginning Epic 4 implementation PRs (RLS tests / policy fixes) or Epic 5+ ahead of sequence / dependency gates
 - Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
 - Next.js platform migration
