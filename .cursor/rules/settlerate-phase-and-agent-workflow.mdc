@@ -22,13 +22,23 @@ alwaysApply: true
 **Epic 2 — Environment and Origin Hygiene** is **complete on `main`**
 (PR 0–5 merged; ADR 0002). No Supabase Auth Dashboard redirect-allowlist
 change was required. Any future local-development redirect additions remain
-a separate founder-authorized operational action. **Epic 3 has not begun
-and still requires explicit founder authorization.**
+a separate founder-authorized operational action.
+
+**Epic 3 — Observability** — PR 0 (ADR 0003 + minimum governance status
+updates) merged. Approved: Sentry, errors/exceptions only, client + six
+named Edge Functions (`create-checkout`, `stripe-webhook`,
+`customer-portal`, `check-subscription`, `generate-pdf`, `export-share`).
+No session replay, analytics, tracking, or performance tracing without
+separate authorization. See `docs/adr/0003-observability-policy.md`. Epic 3
+PR 1, vendor-account creation, secret configuration, and production
+activation each require separate founder authorization. **Do not begin
+Epic 3 PR 1 or later Phase 8.1 epics automatically.**
 
 ## Prohibited unless explicitly authorized
 
 - Supabase Auth Dashboard redirect-allowlist changes without founder authorization
-- Beginning Epic 3 or later Phase 8.1 epics ahead of sequence / dependency gates
+- Epic 3 PR 1 (observability implementation), Sentry account creation, secret configuration, or production activation without founder authorization
+- Beginning Epic 4 or later Phase 8.1 epics ahead of sequence / dependency gates
 - Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
 - Next.js platform migration

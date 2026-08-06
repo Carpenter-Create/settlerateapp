@@ -116,12 +116,63 @@ requires explicit founder authorization.
 
 ## Epic 3 — Observability
 
-**Status:** Not begun. Requires explicit founder authorization.
+**Status:** PR 0 (ADR 0003 + minimum governance status updates) complete.
+Repository implementation (PR 1), vendor-account creation, secret
+configuration, and production activation each require separate explicit
+founder authorization. Authority: `docs/adr/0003-observability-policy.md`.
 
-Allowed when authorized: error tracking, monitoring configuration, exclusion of
-financial information from logs and breadcrumbs.  
-Prohibited: logging raw Stripe payloads, account numbers, or full mortgage
-inputs in third-party tools.
+### Completed work
+
+- ADR 0003 accepted; governance updated (PR 0, this PR)
+
+### Accepted scope (binding for PR 1 when authorized)
+
+- Vendor: Sentry, limited to errors and exceptions only. No session replay,
+  product analytics, advertising tracking, user-behavior telemetry, request/
+  response body capture, or performance tracing unless separately
+  authorized.
+- Covered surfaces: the React/Vite client and exactly six Edge Functions —
+  `create-checkout`, `stripe-webhook`, `customer-portal`,
+  `check-subscription`, `generate-pdf`, `export-share`.
+- Optional, fail-soft env vars: `VITE_SENTRY_DSN` (client),
+  `SENTRY_DSN` (Edge Functions). Repository implementation must remain
+  inert (byte-identical current behavior) when DSNs are absent.
+- Local development must never send events to the production Sentry
+  project; production is the only initially monitored environment (staging
+  deferred to Epic 7).
+- Shared, unit-tested, fail-closed redaction policy via `beforeSend` /
+  `beforeBreadcrumb`; unsafe automatic breadcrumbs disabled.
+- Top-level React error boundary with a minimal, neutral fallback ("Something
+  went wrong. Reload the page to continue." + Reload button); no technical
+  error detail shown to users.
+- Hidden production source maps uploaded via CI with a scoped Sentry auth
+  token never exposed to the client bundle.
+- Full prohibited-data list and alert/retention/access decisions: see
+  `docs/adr/0003-observability-policy.md`.
+
+### Prohibited in Epic 3
+
+- Logging raw Stripe payloads, account numbers, full mortgage inputs, income
+  figures, asset/debt values, payment details, passwords, authentication
+  tokens, Supabase JWTs, cookies, Authorization headers, Stripe secrets, or
+  Supabase service-role credentials in any third-party tool
+- Session replay, product analytics, advertising tracking, or performance
+  tracing without separate authorization
+- Database migrations, RLS changes, or an audit-trail schema as part of
+  Epic 3
+- Widening captured data beyond ADR 0003 §4 without a new ADR
+- Beginning Epic 3 PR 1, creating a Sentry account, adding secrets, or
+  activating production monitoring without separate founder authorization
+
+### Epic 3 PR sequence
+
+| PR | Scope | Status |
+|----|--------|--------|
+| **PR 0** | ADR 0003 + minimum governance status updates | Complete (this PR) |
+| **PR 1** | Bundled repository implementation (client + Edge Function SDK wiring, error boundary, redaction, source maps), inert without DSNs | Requires separate founder authorization |
+| Vendor/secret/production steps | Sentry account creation, DSN/token configuration, production activation and verification | Each requires separate founder authorization; not code PRs |
+
+**Epic 3 PR 0 authorizes policy only. Never begin Epic 3 PR 1 automatically.**
 
 ---
 
