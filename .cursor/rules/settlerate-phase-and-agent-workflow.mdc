@@ -19,10 +19,11 @@ alwaysApply: true
 
 **Epic 1 — Admin Provisioning Security** is **complete on `main` and fully effective in production**.
 
-**Epic 2 — Environment and Origin Hygiene** — PR 0–4 merged to `main`; PR 5
-(final code PR — auth-redirect hygiene, ADR 0002 §3) implemented and open as
-a draft PR pending CI/review/merge. No Supabase Auth Dashboard configuration
-has been changed. Later epics require separate founder authorization.
+**Epic 2 — Environment and Origin Hygiene** is **complete on `main`**
+(PR 0–5 merged; ADR 0002). No Supabase Auth Dashboard redirect-allowlist
+change was required. Any future local-development redirect additions remain
+a separate founder-authorized operational action. **Epic 3 has not begun
+and still requires explicit founder authorization.**
 
 ## Prohibited unless explicitly authorized
 

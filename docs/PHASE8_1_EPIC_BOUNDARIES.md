@@ -54,14 +54,13 @@ Epic 1 is complete in the repository and fully effective in production.
 
 ## Epic 2 — Environment and Origin Hygiene
 
-**Status:** PR 0–4 merged to `main`. PR 5 (final code PR — auth-redirect
-hygiene) implemented and opened as a draft PR, pending CI/review/merge.
-No Supabase Auth Dashboard redirect-allowlist change has been made; that
-remains a separate, explicitly-authorized production-configuration step
-(not a code PR) and is not required for PR 5 to be safely merged, since
-`VITE_APP_ORIGIN` is unset in production and all three auth call sites
-resolve to the existing, already-allowlisted production redirect URLs by
-default. Authority: `docs/adr/0002-secrets-and-environment-policy.md`.
+**Status:** **Complete on `main`.** Repository work for Epic 2 is finished
+(PR 0–5 merged). No Supabase Auth Dashboard redirect-allowlist change was
+required: production continues to use the existing, already-allowlisted
+redirect URLs by default (`VITE_APP_ORIGIN` unset). Any future
+local-development redirect additions remain a separate founder-authorized
+operational action (not part of this epic's closed repository work).
+Authority: `docs/adr/0002-secrets-and-environment-policy.md`.
 
 ### Completed work
 
@@ -84,19 +83,19 @@ default. Authority: `docs/adr/0002-secrets-and-environment-policy.md`.
   reset) replaced with `resolveAuthOrigin()` / `buildAuthRedirectUrl()`
   (`src/lib/authRedirect.ts`); optional, exact-match-only `VITE_APP_ORIGIN`
   local-dev override added; default production output unchanged (PR 5,
-  draft PR open)
+  merged)
 
-### Prohibited in Epic 2
+### Standing prohibitions (still apply after Epic 2 closure)
 
-- Secret rotation in production
+- Secret rotation in production without separate authorization
 - Phase 7B live smoke / beta / public checkout / disabling
   `CHECKOUT_MAINTENANCE`
 - CORS redesign (preserve `Access-Control-Allow-Origin: *` on existing Edge
-  Functions)
+  Functions unless a later epic authorizes change)
 - Staging or preview deployment topology (Epic 7 / ADR 0008)
 - Git history scrub of `.env`
-- Supabase Auth Dashboard redirect-allowlist changes (separate,
-  explicitly-authorized production-configuration action, not a code PR)
+- Supabase Auth Dashboard redirect-allowlist changes without founder
+  authorization (operational action, not closed by this epic)
 - Unrelated refactors; financial / entitlement / persistence / export changes
 
 ### Epic 2 PR sequence
@@ -108,17 +107,16 @@ default. Authority: `docs/adr/0002-secrets-and-environment-policy.md`.
 | **PR 2** | Remove obsolete Lovable origin from Stripe return-origin allowlist | Complete / merged |
 | **PR 3** | Derive Edge Function base URL from `VITE_SUPABASE_URL` via validated helper | Complete / merged |
 | **PR 4** | Client env fail-fast validation; npm standardization (`bun.lockb` removal); Lovable tooling/doc cleanup; doc reconciliation | Complete / merged |
-| **PR 5** | Auth-redirect hygiene: `src/lib/authRedirect.ts`, optional `VITE_APP_ORIGIN` local-dev override, exact-match allowlist, no `window.location.origin` | Implemented / draft PR open, pending CI+merge |
+| **PR 5** | Auth-redirect hygiene: `src/lib/authRedirect.ts`, optional `VITE_APP_ORIGIN` local-dev override, exact-match allowlist, no `window.location.origin` | Complete / merged |
 
-**Epic 2 code work is now fully scoped and implemented pending PR 5 review.**
-No Supabase Auth Dashboard changes have been made or are required for the
-default (production) behavior. If a future decision expands the approved
-local-development origin list, that Dashboard update is a separate
-founder-authorized production-configuration action.
+**Epic 2 repository work is complete.** Epic 3 has not begun and still
+requires explicit founder authorization.
 
 ---
 
 ## Epic 3 — Observability
+
+**Status:** Not begun. Requires explicit founder authorization.
 
 Allowed when authorized: error tracking, monitoring configuration, exclusion of
 financial information from logs and breadcrumbs.  

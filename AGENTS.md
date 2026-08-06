@@ -39,14 +39,15 @@ Detailed agent rules: `.cursor/rules/`.
 
 **Epic 1 (Admin Provisioning Security)** is **complete on `main` and fully effective in production**.
 
-**Epic 2 (Environment and Origin Hygiene)** — PR 0–4 merged to `main`; PR 5
-(final code PR — auth-redirect hygiene: `src/lib/authRedirect.ts`, optional
-exact-match-only `VITE_APP_ORIGIN` local-dev override, default production
-redirect URLs unchanged) implemented and open as a draft PR pending
-CI/review/merge. No Supabase Auth Dashboard configuration has been changed.
-See `docs/adr/0002-secrets-and-environment-policy.md` and
-`docs/PHASE8_1_EPIC_BOUNDARIES.md`. Later epics require separate explicit
-authorization.
+**Epic 2 (Environment and Origin Hygiene)** is **complete on `main`**.
+PR 0–5 merged (ADR 0002; env-file hygiene; Lovable return-origin removal;
+environment-derived Edge Function URLs; client env validation / npm /
+Lovable cleanup; environment-aware auth redirects). No Supabase Auth
+Dashboard redirect-allowlist change was required. Any future
+local-development redirect additions remain a separate founder-authorized
+operational action. See `docs/adr/0002-secrets-and-environment-policy.md`
+and `docs/PHASE8_1_EPIC_BOUNDARIES.md`. **Epic 3 and later epics have not
+begun and still require separate explicit authorization.**
 
 Do not begin AWS / Cloudflare / Next.js platform migration unless explicitly authorized.
 

@@ -42,8 +42,8 @@ re-authorizes live smoke / beta opening.
 Follow the roadmap epic sequence. Do not skip dependency gates:
 
 1. Epic 1 — Admin Provisioning Security (**complete on `main` and fully effective in production**)  
-2. Epic 2 — Environment and Origin Hygiene (**PR 0–4 merged; PR 5 draft PR open**; see ADR 0002)  
-3. Epic 3 — Observability  
+2. Epic 2 — Environment and Origin Hygiene (**complete on `main`**; see ADR 0002)  
+3. Epic 3 — Observability (**not begun; requires explicit authorization**)  
 4. Epic 4 — RLS Security Test Expansion (**before** schema reconciliation)  
 5. Epic 5 — Shared Core Package  
 6. Epic 6 — Schema Reconciliation (requires Epic 4)  
@@ -73,14 +73,17 @@ and promotion unchanged).
 | **PR 2** | Remove obsolete Lovable origin from Stripe return-origin allowlist | Complete / merged |
 | **PR 3** | Edge Function base URL helper (`VITE_SUPABASE_URL`) | Complete / merged |
 | **PR 4** | Client env validation, npm standardization, Lovable cleanup, doc reconciliation | Complete / merged |
-| **PR 5** | Auth-redirect hygiene (`src/lib/authRedirect.ts`, optional `VITE_APP_ORIGIN`, ADR 0002 §3) | Implemented / draft PR open |
+| **PR 5** | Auth-redirect hygiene (`src/lib/authRedirect.ts`, optional `VITE_APP_ORIGIN`, ADR 0002 §3) | Complete / merged |
 
-Epic 2 code work is now fully scoped and implemented pending PR 5
-review/merge. No Supabase Auth Dashboard configuration has been changed;
-default production redirect behavior is unchanged. Authority:
+Epic 2 repository work is **complete on `main`** (PR 0–5 merged). No
+Supabase Auth Dashboard redirect-allowlist change was required; default
+production redirect behavior remains unchanged. Any future
+local-development redirect additions remain a separate founder-authorized
+operational action. Authority:
 `docs/adr/0002-secrets-and-environment-policy.md`. See
-`docs/PHASE8_1_EPIC_BOUNDARIES.md` for full detail. **Never begin the next
-epic or the next PR automatically.**
+`docs/PHASE8_1_EPIC_BOUNDARIES.md` for full detail. **Epic 3 has not begun
+and still requires explicit authorization. Never begin the next epic
+automatically.**
 
 ## Required ADRs
 
