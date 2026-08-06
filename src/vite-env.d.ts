@@ -22,6 +22,14 @@ interface ImportMetaEnv {
    * Authority: docs/adr/0003-observability-policy.md.
    */
   readonly VITE_SENTRY_DSN?: string;
+  /**
+   * Optional. Deterministic release identifier injected at build time by
+   * `vite.config.ts` (not read from a real `VITE_*` env file/secret) —
+   * see `src/lib/observabilityRelease.ts`. Not a secret: a public commit
+   * SHA or empty string. Consumed by `src/lib/observability.ts` so the
+   * browser SDK's release matches the one used for source-map upload.
+   */
+  readonly VITE_SENTRY_RELEASE?: string;
 }
 
 interface ImportMeta {

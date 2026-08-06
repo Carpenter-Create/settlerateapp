@@ -39,6 +39,18 @@ export function isObservabilityEnabled(
   return mode === "production" && isValidSentryDsn(dsn);
 }
 
+/**
+ * Reads the release identifier injected by `vite.config.ts`
+ * (`src/lib/observabilityRelease.ts`) into `VITE_SENTRY_RELEASE`. Returns
+ * `undefined` — never a hardcoded value — when no build-time commit SHA
+ * was available (e.g. local dev), matching the Sentry Vite plugin's own
+ * release configuration for that same build.
+ */
+export function resolveClientRelease(): string | undefined {
+  const value = import.meta.env.VITE_SENTRY_RELEASE;
+  return typeof value === "string" && value.trim() !== "" ? value.trim() : undefined;
+}
+
 let attempted = false;
 let enabled = false;
 
@@ -61,6 +73,7 @@ export function initObservability(): void {
     Sentry.init({
       dsn,
       environment: mode,
+      release: resolveClientRelease(),
       integrations: [],
       tracesSampleRate: 0,
       replaysSessionSampleRate: 0,

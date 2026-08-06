@@ -114,6 +114,27 @@ generic statuses/error codes.
 - Do not intentionally serve source maps publicly.
 - Tag events with environment and a release/build identifier where
   available (e.g., short git SHA).
+- **Browser events must retain a privacy-safe stack trace** (frame
+  location/identity fields; never captured local variables or inlined
+  source-code context) — without it, an uploaded source map has nothing
+  to resolve against. See `src/lib/observabilityRedaction.ts`.
+- **Release identity must match the deployed artifact.** `Sentry.init` in
+  the browser and the Sentry Vite plugin's source-map upload must use one
+  deterministic release identifier for a given build (preferring
+  `VERCEL_GIT_COMMIT_SHA`, falling back to `GITHUB_SHA`, undefined
+  locally — see `src/lib/observabilityRelease.ts`).
+- **Production Vercel builds are the authoritative browser source-map
+  upload.** The app is built and deployed by Vercel, not GitHub Actions —
+  a GitHub Actions CI build is a validation build only and is never what
+  users' browsers load. The Sentry Vite plugin must therefore also be
+  able to run during the Vercel build itself (server-side build
+  environment variables `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`
+  configured in Vercel, never as `VITE_*`), so the uploaded source maps
+  correspond to the exact bundle served in production. The existing
+  GitHub Actions upload for CI validation builds may remain — it uploads
+  a separate build's own uniquely-identified source-map artifacts under
+  the same release name and does not interfere with or override the
+  Vercel production artifact's own upload.
 
 ### 8. Alerts and ownership
 
@@ -190,7 +211,9 @@ generic statuses/error codes.
 |----|--------|--------|
 | **PR 0** | This ADR + minimum governance status updates | Complete / merged |
 | **PR 1** | Bundled repository implementation (client + Edge Function SDK wiring, error boundary, redaction, source maps), inert without DSNs | Complete / merged |
-| Vendor/secret/production steps | Sentry account creation, DSN/token configuration, production activation and verification | Each requires separate founder authorization; not code PRs |
+| CI source-map upload config | GitHub Actions `Build` step scoped `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT` secrets | Complete / merged |
+| Browser symbolication fix | Preserve privacy-safe browser stack traces in redaction; deterministic client/Vite-plugin release identifier; enable Sentry Vite plugin source-map upload during the Vercel production build | Complete / merged |
+| Vendor/secret/production steps | Sentry account creation, DSN/token configuration (including the Vercel-side `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT` build variables needed for the Vercel build to upload source maps), production activation and verification | Each requires separate founder authorization; not code PRs |
 
 **PR 1 shipped the repository implementation only; no DSN is configured
 anywhere and no event is ever sent by this work. Never activate live

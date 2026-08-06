@@ -81,6 +81,33 @@ describe("initObservability / captureException — default (test) mode, no DSN",
   });
 });
 
+describe("resolveClientRelease", () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("returns undefined when VITE_SENTRY_RELEASE is unset (matches vite.config.ts's `??\"\"` default)", async () => {
+    const { resolveClientRelease } = await import("@/lib/observability");
+    expect(resolveClientRelease()).toBeUndefined();
+  });
+
+  it("returns undefined for an empty string (no commit SHA resolved at build time)", async () => {
+    vi.stubEnv("VITE_SENTRY_RELEASE", "");
+    const { resolveClientRelease } = await import("@/lib/observability");
+    expect(resolveClientRelease()).toBeUndefined();
+  });
+
+  it("returns the injected commit SHA when present", async () => {
+    vi.stubEnv("VITE_SENTRY_RELEASE", "abc123def456");
+    const { resolveClientRelease } = await import("@/lib/observability");
+    expect(resolveClientRelease()).toBe("abc123def456");
+  });
+});
+
 describe("initObservability — simulated production with a valid DSN", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -107,6 +134,21 @@ describe("initObservability — simulated production with a valid DSN", () => {
     expect(config.integrations).toEqual([]);
     expect(typeof config.beforeSend).toBe("function");
     expect(typeof config.beforeBreadcrumb).toBe("function");
+  });
+
+  it("passes no release when VITE_SENTRY_RELEASE was not injected at build time", async () => {
+    const { initObservability } = await import("@/lib/observability");
+    initObservability();
+    const config = sentryInit.mock.calls[0][0];
+    expect(config.release).toBeUndefined();
+  });
+
+  it("passes the build-injected release identifier to Sentry.init, matching the Sentry Vite plugin's own release for that build", async () => {
+    vi.stubEnv("VITE_SENTRY_RELEASE", "ab53042660e4");
+    const { initObservability } = await import("@/lib/observability");
+    initObservability();
+    const config = sentryInit.mock.calls[0][0];
+    expect(config.release).toBe("ab53042660e4");
   });
 
   it("captureException forwards to Sentry once enabled", async () => {
