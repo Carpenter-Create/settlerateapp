@@ -188,8 +188,11 @@ generic statuses/error codes.
 
 | PR | Scope | Status |
 |----|--------|--------|
-| **PR 0** | This ADR + minimum governance status updates | Complete (this PR) |
-| **PR 1** | Bundled repository implementation (client + Edge Function SDK wiring, error boundary, redaction, source maps), inert without DSNs | Requires separate founder authorization |
+| **PR 0** | This ADR + minimum governance status updates | Complete / merged |
+| **PR 1** | Bundled repository implementation (client + Edge Function SDK wiring, error boundary, redaction, source maps), inert without DSNs | Complete / merged |
 | Vendor/secret/production steps | Sentry account creation, DSN/token configuration, production activation and verification | Each requires separate founder authorization; not code PRs |
 
-**Never begin Epic 3 PR 1 automatically.**
+**PR 1 shipped the repository implementation only; no DSN is configured
+anywhere and no event is ever sent by this work. Never activate live
+Sentry monitoring (vendor account, secrets, production DSNs) without
+separate explicit founder authorization.**

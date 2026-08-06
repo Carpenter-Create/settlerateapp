@@ -12,6 +12,12 @@ import {
   mapSubscriptionToBillingSnapshot,
   resolveSubscriptionBillingSnapshot,
 } from "../_shared/stripeBillingSnapshot.ts";
+import { generateRequestId } from "../_shared/observability.ts";
+import { captureEdgeException, initEdgeSentry } from "../_shared/sentry.ts";
+
+// Inert without a SENTRY_DSN secret — see supabase/functions/_shared/sentry.ts.
+const SENTRY_DSN = Deno.env.get("SENTRY_DSN");
+initEdgeSentry(SENTRY_DSN);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -96,6 +102,8 @@ async function verifyMetadataUserId(
 }
 
 serve(async (req) => {
+  const requestId = generateRequestId();
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -600,6 +608,10 @@ serve(async (req) => {
       user_role: null,
       action_taken: "error",
       details: { error: errorMessage },
+    });
+    captureEdgeException(error, SENTRY_DSN, {
+      function_name: "stripe-webhook",
+      request_id: requestId,
     });
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 400,

@@ -25,6 +25,8 @@ import {
   type ScenarioData,
   type ScenarioType,
 } from "./mapDerivedForExport.ts";
+import { generateRequestId } from "../_shared/observability.ts";
+import { captureEdgeException, initEdgeSentry } from "../_shared/sentry.ts";
 
 // CORS headers
 const corsHeaders = {
@@ -35,6 +37,10 @@ const corsHeaders = {
 // Supabase configuration
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+
+// Inert without a SENTRY_DSN secret — see supabase/functions/_shared/sentry.ts.
+const SENTRY_DSN = Deno.env.get("SENTRY_DSN");
+initEdgeSentry(SENTRY_DSN);
 
 // ============================================================================
 // BRAND CONSTANTS - Matches exportLayout.ts
@@ -1075,6 +1081,8 @@ function generateComparisonFilename(a: ScenarioData, b: ScenarioData, c?: Scenar
 // ============================================================================
 
 Deno.serve(async (req: Request) => {
+  const requestId = generateRequestId();
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -1260,6 +1268,10 @@ Deno.serve(async (req: Request) => {
       stack: errorStack,
       timestamp: new Date().toISOString(),
     }));
+    captureEdgeException(error, SENTRY_DSN, {
+      function_name: "generate-pdf",
+      request_id: requestId,
+    });
     return new Response(
       JSON.stringify({ error: "Export failed." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

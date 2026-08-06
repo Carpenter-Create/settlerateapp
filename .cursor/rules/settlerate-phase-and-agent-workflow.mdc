@@ -25,19 +25,21 @@ change was required. Any future local-development redirect additions remain
 a separate founder-authorized operational action.
 
 **Epic 3 — Observability** — PR 0 (ADR 0003 + minimum governance status
-updates) merged. Approved: Sentry, errors/exceptions only, client + six
-named Edge Functions (`create-checkout`, `stripe-webhook`,
-`customer-portal`, `check-subscription`, `generate-pdf`, `export-share`).
-No session replay, analytics, tracking, or performance tracing without
-separate authorization. See `docs/adr/0003-observability-policy.md`. Epic 3
-PR 1, vendor-account creation, secret configuration, and production
-activation each require separate founder authorization. **Do not begin
-Epic 3 PR 1 or later Phase 8.1 epics automatically.**
+updates) and PR 1 (bundled repository implementation) merged. Sentry,
+errors/exceptions only, client + six named Edge Functions
+(`create-checkout`, `stripe-webhook`, `customer-portal`,
+`check-subscription`, `generate-pdf`, `export-share`), shared fail-closed
+redaction, top-level React error boundary — all inert without DSNs (none
+configured). No session replay, analytics, tracking, or performance tracing
+without separate authorization. See `docs/adr/0003-observability-policy.md`.
+Sentry vendor-account creation, secret configuration, and production
+activation each require separate founder authorization. **Do not activate
+live monitoring or begin later Phase 8.1 epics automatically.**
 
 ## Prohibited unless explicitly authorized
 
 - Supabase Auth Dashboard redirect-allowlist changes without founder authorization
-- Epic 3 PR 1 (observability implementation), Sentry account creation, secret configuration, or production activation without founder authorization
+- Sentry account creation, secret configuration, or production observability activation without founder authorization
 - Beginning Epic 4 or later Phase 8.1 epics ahead of sequence / dependency gates
 - Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
