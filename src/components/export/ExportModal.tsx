@@ -28,6 +28,7 @@ import {
 import { ScenarioData } from "@/lib/scenarioContract";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { buildEdgeFunctionUrl } from "@/lib/edgeFunctionUrl";
 import {
   generateComparisonFilename,
   generateScenarioFilename,
@@ -66,9 +67,6 @@ type ExportModalProps = ScenarioExportModalProps | ComparisonExportModalProps;
 // PDF DOWNLOAD UTILITY
 // ============================================================================
 
-const SUPABASE_PROJECT_ID = "vpcxzbaxhpucvevnkalo";
-const EDGE_FUNCTION_BASE = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1`;
-
 async function downloadPDFFromServer(
   type: "scenario" | "comparison",
   id: string,
@@ -80,9 +78,10 @@ async function downloadPDFFromServer(
     throw new Error("Authentication required");
   }
 
-  const endpoint = type === "scenario" 
-    ? `${EDGE_FUNCTION_BASE}/generate-pdf?type=scenario&id=${encodeURIComponent(id)}`
-    : `${EDGE_FUNCTION_BASE}/generate-pdf?type=comparison&id=${encodeURIComponent(id)}`;
+  const generatePdfUrl = buildEdgeFunctionUrl(import.meta.env.VITE_SUPABASE_URL, "generate-pdf");
+  const endpoint = type === "scenario"
+    ? `${generatePdfUrl}?type=scenario&id=${encodeURIComponent(id)}`
+    : `${generatePdfUrl}?type=comparison&id=${encodeURIComponent(id)}`;
 
   const response = await fetch(endpoint, {
     method: "GET",

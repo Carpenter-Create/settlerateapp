@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Loader2, AlertCircle, FileText } from "lucide-react";
+import { buildEdgeFunctionUrl } from "@/lib/edgeFunctionUrl";
 
 type ShareStatus = "loading" | "error" | "success";
 
@@ -39,7 +40,7 @@ export default function Share() {
       // Call the edge function directly with GET to resolve the token
       // supabase-js invoke uses POST, so we use fetch directly
       const response = await fetch(
-        `https://vpcxzbaxhpucvevnkalo.supabase.co/functions/v1/export-share?token=${encodeURIComponent(shareToken)}`,
+        `${buildEdgeFunctionUrl(import.meta.env.VITE_SUPABASE_URL, "export-share")}?token=${encodeURIComponent(shareToken)}`,
         {
           method: "GET",
           headers: {
