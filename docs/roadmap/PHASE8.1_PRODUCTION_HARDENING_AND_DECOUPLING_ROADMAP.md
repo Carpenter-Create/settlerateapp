@@ -32,6 +32,9 @@ AWS migration is intentionally deferred until a forcing reason exists.
 
 ### Epic 3 --- Observability
 
+**Status: Complete** (production activated and verified 2026-08-06; see
+`docs/adr/0003-observability-policy.md`).
+
 -   Add error tracking.
 -   Configure monitoring.
 -   Exclude financial information from logs and breadcrumbs.

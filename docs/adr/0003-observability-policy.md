@@ -213,9 +213,120 @@ generic statuses/error codes.
 | **PR 1** | Bundled repository implementation (client + Edge Function SDK wiring, error boundary, redaction, source maps), inert without DSNs | Complete / merged |
 | CI source-map upload config | GitHub Actions `Build` step scoped `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT` secrets | Complete / merged |
 | Browser symbolication fix | Preserve privacy-safe browser stack traces in redaction; deterministic client/Vite-plugin release identifier; enable Sentry Vite plugin source-map upload during the Vercel production build | Complete / merged |
-| Vendor/secret/production steps | Sentry account creation, DSN/token configuration (including the Vercel-side `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT` build variables needed for the Vercel build to upload source maps), production activation and verification | Each requires separate founder authorization; not code PRs |
+| Vendor/secret/production steps | Sentry account creation, DSN/token configuration (including the Vercel-side `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT` build variables needed for the Vercel build to upload source maps), production activation and verification | **Complete** — production activated and verified 2026-08-06 (founder-authorized; not a code PR) |
 
-**PR 1 shipped the repository implementation only; no DSN is configured
-anywhere and no event is ever sent by this work. Never activate live
-Sentry monitoring (vendor account, secrets, production DSNs) without
-separate explicit founder authorization.**
+**Epic 3 status:** Complete. Production activated. Browser ingestion
+verified. Browser symbolication verified. Edge ingestion verified.
+Privacy redaction verification passed for the tested event paths.
+
+Repository code remains fail-soft when DSNs are absent (local/CI without
+platform secrets). Production DSNs and upload credentials live only in
+Vercel / Supabase platform configuration — never in the repository.
+No further DSN changes are required for Epic 3 closure.
+
+## Production verification record (2026-08-06)
+
+Deployed commit SHA (browser release and Edge Function redeploy source):
+`059624e178ac51e4ec218ff2ac0a750a564e185b`.
+
+### Browser observability
+
+| Field | Value |
+|-------|--------|
+| Sentry project slug | `settlerate-web` |
+| Sentry project ID | `4511862124904448` |
+| Verified issue | `SETTLERATE-WEB-2` |
+| Event ID | `440718be6636413593e3630592e4bb26` |
+| Event timestamp (UTC) | `2026-08-06T20:06:31.158000+00:00` |
+| Environment | `production` |
+| Release | `059624e178ac51e4ec218ff2ac0a750a564e185b` |
+| Live asset | `index-Bkh_JVcS.js` |
+| Debug ID | `35798c69-e2f5-4eaf-95e1-6d4c3dc89d04` |
+
+Results:
+
+- Release matched the deployed Vercel commit SHA.
+- Source-map upload succeeded from the authoritative Vercel production build.
+- Sentry resolved the bundled frame through the debug ID to original source.
+- The remaining `<anonymous>` frame was expected (test throw originated in DevTools).
+- Stacktrace redaction preserves safe frame fields and mechanism data.
+- No mortgage values, form values, auth tokens, cookies, headers, request
+  bodies, local variables, or user financial data were present.
+- Sentry default IP-derived geography may still appear; treat as a future
+  privacy-policy review item, not an Epic 3 blocker.
+
+### Edge Function observability
+
+Six covered functions redeployed from
+`059624e178ac51e4ec218ff2ac0a750a564e185b`:
+
+| Function | Deployed version |
+|----------|------------------|
+| `check-subscription` | v41 |
+| `create-checkout` | v46 |
+| `customer-portal` | v44 |
+| `stripe-webhook` | v39 |
+| `generate-pdf` | v34 |
+| `export-share` | v21 |
+
+| Field | Value |
+|-------|--------|
+| Sentry project slug | `settlerate-edge-functions` |
+| Sentry project ID | `4511862129623040` |
+| Verified issue | `SETTLERATE-EDGE-FUNCTIONS-3` |
+| Event ID | `ac07d9cd30004cc28f1f68789f6069f7` |
+| Event timestamp (UTC) | `2026-08-06T20:22:49.926000+00:00` |
+| Environment | `production` |
+| Exception | `Error: No authorization header provided` |
+| `extra.function_name` | `check-subscription` |
+| `extra.request_id` | `99c50f64-55e5-4438-ad8c-e4a3d4147838` |
+
+Probe safety and side effects:
+
+- Exactly one unauthenticated `POST` to production `check-subscription`
+  using the public anon/publishable key; `Authorization` omitted; body `{}`.
+- HTTP response: `500` with `{"error":"No authorization header provided"}`.
+- Stacktrace included `check-subscription/index.ts` and Deno runtime frames.
+- No user JWT, cookies, request body data, mortgage values, financial
+  values, Stripe data, persistence mutation, entitlement mutation, or
+  checkout side effect.
+
+## Operational baseline
+
+Do **not** paste DSNs or auth tokens into documentation.
+
+**Vercel Production** must retain:
+
+- `VITE_SENTRY_DSN` (client public DSN for `settlerate-web`)
+- `SENTRY_AUTH_TOKEN` (server-side build only; never `VITE_*`)
+- `SENTRY_ORG=e8-holdings-llc`
+- `SENTRY_PROJECT=settlerate-web`
+
+**Supabase Production** must retain:
+
+- `SENTRY_DSN` pointing at the `settlerate-edge-functions` project
+
+Other baseline rules:
+
+- Browser production builds must upload source maps from the same Vercel
+  build that ships the artifact.
+- Edge Functions must be redeployed after observability code changes.
+- Sentry numeric project IDs are the authoritative project identity; issue
+  short IDs (`SETTLERATE-WEB-*`, `SETTLERATE-EDGE-FUNCTIONS-*`) are issue
+  labels within those projects, not separate projects.
+- No DSN changes are required for Epic 3 closure.
+
+## Remaining non-blocking follow-ups
+
+These are **not** Epic 3 reopen criteria unless a future phase plan makes
+alerts an acceptance gate:
+
+- Configure production Sentry alert rules (ADR §8 burn-in / tuning).
+- Review whether automatic IP-derived geography should be disabled or
+  retained under the privacy policy.
+- Consider a dedicated authenticated or admin-only Edge observability probe
+  instead of relying on an expected auth-failure path.
+- Review browser breadcrumb policy separately if automatic breadcrumbs
+  remain enabled.
+
+Do not begin Epic 4 or later Phase 8.1 epics automatically.

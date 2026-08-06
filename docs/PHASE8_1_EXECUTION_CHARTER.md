@@ -43,7 +43,7 @@ Follow the roadmap epic sequence. Do not skip dependency gates:
 
 1. Epic 1 — Admin Provisioning Security (**complete on `main` and fully effective in production**)  
 2. Epic 2 — Environment and Origin Hygiene (**complete on `main`**; see ADR 0002)  
-3. Epic 3 — Observability (**PR 0–1 complete — ADR 0003 accepted, inert repository implementation merged; vendor/secret/production activation requires explicit authorization**)  
+3. Epic 3 — Observability (**complete on `main` and production-activated/verified 2026-08-06** — see ADR 0003)  
 4. Epic 4 — RLS Security Test Expansion (**before** schema reconciliation)  
 5. Epic 5 — Shared Core Package  
 6. Epic 6 — Schema Reconciliation (requires Epic 4)  
@@ -89,18 +89,21 @@ operational action. Authority:
 |----|--------|--------|
 | **PR 0** | Observability policy ADR (0003) + minimum governance status | Complete / merged |
 | **PR 1** | Bundled repository implementation (Sentry client + Edge Function SDK wiring, error boundary, redaction, source maps), inert without DSNs | Complete / merged |
-| Vendor/secret/production steps | Sentry account creation, DSN/token configuration, production activation | Each requires separate founder authorization; not code PRs |
+| Vendor/secret/production steps | Sentry account creation, DSN/token configuration, production activation and verification | **Complete** — activated and verified 2026-08-06 |
 
-Epic 3 PR 0–1 delivered Sentry as vendor, errors/exceptions only, client +
-six named Edge Functions (`create-checkout`, `stripe-webhook`,
-`customer-portal`, `check-subscription`, `generate-pdf`, `export-share`),
-fail-soft optional DSNs, and the shared redaction policy — all inert without
-DSNs (no DSN is configured anywhere by this repository work). Authority:
-`docs/adr/0003-observability-policy.md`. See
-`docs/PHASE8_1_EPIC_BOUNDARIES.md` for full detail. **Sentry vendor-account
-creation, secret configuration, and production activation each still
-require explicit founder authorization. Never activate live monitoring or
-begin the next epic automatically.**
+Epic 3 is **complete on `main` and fully effective in production**: Sentry
+(errors/exceptions only) for the React/Vite client and six named Edge
+Functions (`create-checkout`, `stripe-webhook`, `customer-portal`,
+`check-subscription`, `generate-pdf`, `export-share`), shared fail-closed
+redaction, top-level React error boundary, browser symbolication via
+Vercel-build source-map upload, and verified production ingestion on
+2026-08-06. Repository code remains fail-soft when DSNs are absent;
+production DSNs live only in Vercel / Supabase platform configuration.
+Authority: `docs/adr/0003-observability-policy.md` (verification record and
+operational baseline). See `docs/PHASE8_1_EPIC_BOUNDARIES.md`. **Do not
+begin Epic 4 or later Phase 8.1 epics automatically.** Non-blocking
+follow-ups (alerts, IP-geography privacy review, dedicated Edge probe,
+breadcrumb policy) do not reopen Epic 3.
 
 ## Required ADRs
 
