@@ -35,7 +35,7 @@ Success URLs, client plan flags, and localStorage never grant access.
 | Edge secrets required | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (+ platform `SUPABASE_*`) |
 | Sandbox webhook (reference) | `we_1U0mIkC2Fmi7ZUCbhSBtVdwX` → `…/functions/v1/stripe-webhook` |
 | Portal return URL (canonical) | `https://app.settlerate.com/app/account` |
-| App origin allowlist | `https://app.settlerate.com` (+ local / Lovable origins in `appOrigin.ts`) |
+| App origin allowlist | `https://app.settlerate.com` (+ local development origins in `appOrigin.ts`; obsolete Lovable origin removed, Phase 8.1 Epic 2 PR 2) |
 
 ### Allowlist / catalog touchpoints (must stay in lockstep)
 
