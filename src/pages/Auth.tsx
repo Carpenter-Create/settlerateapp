@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { buildAuthRedirectUrl, resolveAuthOrigin } from "@/lib/authRedirect";
 import {
   AuthLayout,
   AuthCard,
@@ -33,6 +34,8 @@ import {
 
 type AccessMode = "signin" | "create";
 type ViewState = "form" | "magic-link-sent" | "confirm-email";
+
+const AUTH_REDIRECT_ORIGIN = resolveAuthOrigin(import.meta.env.VITE_APP_ORIGIN);
 
 interface FieldErrors {
   email?: string;
@@ -175,7 +178,7 @@ export default function Auth() {
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: "https://app.settlerate.com/app/scenarios",
+          emailRedirectTo: buildAuthRedirectUrl(AUTH_REDIRECT_ORIGIN, "/app/scenarios"),
         },
       });
 
@@ -211,7 +214,7 @@ export default function Auth() {
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          emailRedirectTo: "https://app.settlerate.com/app/scenarios",
+          emailRedirectTo: buildAuthRedirectUrl(AUTH_REDIRECT_ORIGIN, "/app/scenarios"),
         },
       });
 

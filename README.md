@@ -77,6 +77,7 @@ cp .env.example .env
 |----------|---------|
 | `VITE_SUPABASE_URL` | Supabase project API URL (`https://<project-ref>.supabase.co`) |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase anon / publishable key |
+| `VITE_APP_ORIGIN` (optional) | Local-development-only auth email redirect origin override (signup confirmation, magic-link, password reset). Leave unset to use the production default. Only `http://localhost:5173`, `http://localhost:8080`, `http://127.0.0.1:5173`, and `http://127.0.0.1:8080` are accepted (exact match) — see `src/lib/authRedirect.ts`. |
 
 These are **public client configuration** (bundled into the browser). Do **not**
 put service-role keys, Stripe secrets, or other server secrets in `.env` or
@@ -119,6 +120,7 @@ for the authoritative decisions:
 | Server-side secrets | Service-role keys, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Supabase Edge Function / platform secrets only — never client env |
 | CORS | `Access-Control-Allow-Origin` on Edge Function responses | Set per Edge Function (e.g. `supabase/functions/*/index.ts`) |
 | Stripe return-origin validation | Which browser `Origin` values are trusted for Checkout/Portal return URLs | `supabase/functions/_shared/appOrigin.ts` (exact-match allowlist) |
+| Auth email redirect origin | Which origin Supabase Auth emails (signup, magic-link, password reset) redirect back to | `src/lib/authRedirect.ts` (exact-match allowlist; optional `VITE_APP_ORIGIN` for local dev only) |
 
 ## Local Development
 

@@ -42,7 +42,7 @@ re-authorizes live smoke / beta opening.
 Follow the roadmap epic sequence. Do not skip dependency gates:
 
 1. Epic 1 — Admin Provisioning Security (**complete on `main` and fully effective in production**)  
-2. Epic 2 — Environment and Origin Hygiene (**PR 0–2 merged; PR 3–4 draft PRs open**; see ADR 0002)  
+2. Epic 2 — Environment and Origin Hygiene (**PR 0–4 merged; PR 5 draft PR open**; see ADR 0002)  
 3. Epic 3 — Observability  
 4. Epic 4 — RLS Security Test Expansion (**before** schema reconciliation)  
 5. Epic 5 — Shared Core Package  
@@ -71,11 +71,14 @@ and promotion unchanged).
 | **PR 0** | Secrets/environment policy ADR + minimum governance status | Complete / merged |
 | **PR 1** | `.env.example`, `.gitignore`, stop tracking `.env`, README setup | Complete / merged |
 | **PR 2** | Remove obsolete Lovable origin from Stripe return-origin allowlist | Complete / merged |
-| **PR 3** | Edge Function base URL helper (`VITE_SUPABASE_URL`) | Implemented / draft PR open |
-| **PR 4** | Client env validation, npm standardization, Lovable cleanup, doc reconciliation | Implemented / draft PR open |
-| **PR 5+** | Gated auth-redirect changes (ADR 0002 §3) | **Requires separate founder authorization** |
+| **PR 3** | Edge Function base URL helper (`VITE_SUPABASE_URL`) | Complete / merged |
+| **PR 4** | Client env validation, npm standardization, Lovable cleanup, doc reconciliation | Complete / merged |
+| **PR 5** | Auth-redirect hygiene (`src/lib/authRedirect.ts`, optional `VITE_APP_ORIGIN`, ADR 0002 §3) | Implemented / draft PR open |
 
-Authority: `docs/adr/0002-secrets-and-environment-policy.md`. See
+Epic 2 code work is now fully scoped and implemented pending PR 5
+review/merge. No Supabase Auth Dashboard configuration has been changed;
+default production redirect behavior is unchanged. Authority:
+`docs/adr/0002-secrets-and-environment-policy.md`. See
 `docs/PHASE8_1_EPIC_BOUNDARIES.md` for full detail. **Never begin the next
 epic or the next PR automatically.**
 
