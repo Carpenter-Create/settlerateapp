@@ -9,17 +9,139 @@
 -- Isolation evidence uses test.set_auth / test.reset_auth exclusively.
 
 -- ---------------------------------------------------------------------------
--- Inventory: assert every RLS-enabled application relation is classified.
--- Full human-readable inventory: docs/security/RLS_COVERAGE_INVENTORY.md
--- (generated from the same catalog query against the ephemeral DB).
+-- Inventory drift gate
+-- Committed expected fingerprint: supabase/tests/fixtures/epic4_pr1_rls_catalog.sha256
+-- (injected by scripts/test-entitlement-sql.mjs as test.epic4_pr1_expected_catalog_fp).
+-- Human-readable inventory: docs/security/RLS_COVERAGE_INVENTORY.md
 -- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION test.epic4_pr1_catalog_canonical()
+RETURNS text
+LANGUAGE plpgsql
+STABLE
+AS $$
+DECLARE
+  v_lines text := '';
+  v_rel record;
+  v_pol record;
+  v_roles text;
+  v_first boolean;
+BEGIN
+  FOR v_rel IN
+    SELECT n.nspname AS schema_name,
+           c.relname AS relation_name,
+           c.relrowsecurity AS rls_enabled,
+           c.relforcerowsecurity AS rls_forced,
+           c.oid AS relid
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE c.relkind = 'r'
+      AND c.relrowsecurity = true
+      AND n.nspname IN ('public', 'storage')
+    ORDER BY n.nspname, c.relname
+  LOOP
+    v_lines := v_lines
+      || 'REL|' || v_rel.schema_name || '|' || v_rel.relation_name || '|'
+      || v_rel.rls_enabled::text || '|' || v_rel.rls_forced::text
+      || E'\n';
+
+    v_first := true;
+    FOR v_pol IN
+      SELECT p.polname AS policy_name,
+             CASE p.polcmd
+               WHEN 'r' THEN 'SELECT'
+               WHEN 'a' THEN 'INSERT'
+               WHEN 'w' THEN 'UPDATE'
+               WHEN 'd' THEN 'DELETE'
+               WHEN '*' THEN 'ALL'
+               ELSE p.polcmd::text
+             END AS command,
+             COALESCE(
+               (
+                 SELECT string_agg(rol.rolname, ',' ORDER BY rol.rolname)
+                 FROM pg_roles rol
+                 WHERE rol.oid = ANY (p.polroles)
+               ),
+               'PUBLIC'
+             ) AS roles,
+             COALESCE(pg_get_expr(p.polqual, p.polrelid), '') AS using_expr,
+             COALESCE(pg_get_expr(p.polwithcheck, p.polrelid), '') AS with_check_expr
+      FROM pg_policy p
+      WHERE p.polrelid = v_rel.relid
+      ORDER BY p.polname, 2
+    LOOP
+      v_first := false;
+      v_lines := v_lines
+        || 'POL|' || v_pol.policy_name || '|' || v_pol.command || '|'
+        || v_pol.roles || '|' || v_pol.using_expr || '|' || v_pol.with_check_expr
+        || E'\n';
+    END LOOP;
+
+    IF v_first THEN
+      v_lines := v_lines || 'POL|NONE' || E'\n';
+    END IF;
+  END LOOP;
+
+  RETURN v_lines;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION test.epic4_pr1_assert_rls_exception(p_label text, p_sqlerrm text)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF p_sqlerrm ILIKE '%row-level security%' THEN
+    RAISE NOTICE 'ASSERT_OK: % (%).', p_label, p_sqlerrm;
+    RETURN;
+  END IF;
+  IF p_sqlerrm ILIKE '%permission denied%' THEN
+    RAISE EXCEPTION
+      'ASSERT_FAIL: % denied by missing privilege/grant, not RLS (%).',
+      p_label,
+      p_sqlerrm;
+  END IF;
+  RAISE EXCEPTION 'ASSERT_FAIL: % unexpected error (%).', p_label, p_sqlerrm;
+END;
+$$;
+
 DO $inventory$
 DECLARE
   v_rel_count int;
   v_pol_count int;
+  v_expected_fp text;
+  v_actual_fp text;
+  v_canonical text;
   v_missing text;
+  v_extra text;
+  v_expected_rels text[] := ARRAY[
+    'public.admin_audit_log',
+    'public.admin_bootstrap_tokens',
+    'public.advisor_access_requests',
+    'public.billing',
+    'public.comparison_items',
+    'public.comparison_shares',
+    'public.comparison_versions',
+    'public.contact_messages',
+    'public.entitlement_bypass_log',
+    'public.export_files',
+    'public.export_shares',
+    'public.pdf_exports',
+    'public.profiles',
+    'public.saved_comparisons',
+    'public.scenarios',
+    'public.stripe_webhook_events',
+    'public.user_comparisons',
+    'public.user_roles',
+    'storage.objects'
+  ];
 BEGIN
   PERFORM test.reset_auth();
+
+  v_expected_fp := nullif(current_setting('test.epic4_pr1_expected_catalog_fp', true), '');
+  PERFORM test.assert_true(
+    'inventory: expected fingerprint injected by harness',
+    v_expected_fp IS NOT NULL AND length(v_expected_fp) = 64
+  );
 
   SELECT count(*)::int INTO v_rel_count
   FROM pg_class c
@@ -32,45 +154,64 @@ BEGIN
   FROM pg_policy p
   JOIN pg_class c ON c.oid = p.polrelid
   JOIN pg_namespace n ON n.oid = c.relnamespace
-  WHERE n.nspname IN ('public', 'storage');
+  WHERE n.nspname IN ('public', 'storage')
+    AND c.relrowsecurity = true;
 
   PERFORM test.assert_true(
-    'inventory: at least 18 RLS-enabled relations expected (public + storage.objects)',
-    v_rel_count >= 18
+    format('inventory: exactly 19 RLS-enabled relations (got %s)', v_rel_count),
+    v_rel_count = 19
   );
   PERFORM test.assert_true(
-    'inventory: policies exist on RLS-enabled relations',
-    v_pol_count >= 40
+    format('inventory: exactly 55 effective policies (got %s)', v_pol_count),
+    v_pol_count = 55
   );
 
-  -- Core PR 1 set must be present with RLS enabled.
   SELECT string_agg(t, ', ' ORDER BY t) INTO v_missing
-  FROM (
-    VALUES
-      ('public.scenarios'),
-      ('public.profiles'),
-      ('public.saved_comparisons'),
-      ('public.user_comparisons'),
-      ('public.comparison_items'),
-      ('public.comparison_versions')
-  ) AS required(t)
+  FROM unnest(v_expected_rels) AS t
   WHERE NOT EXISTS (
     SELECT 1
     FROM pg_class c
     JOIN pg_namespace n ON n.oid = c.relnamespace
     WHERE c.relkind = 'r'
       AND c.relrowsecurity = true
-      AND (n.nspname || '.' || c.relname) = required.t
+      AND (n.nspname || '.' || c.relname) = t
   );
-
   PERFORM test.assert_true(
-    'inventory: all PR 1 core tables have RLS enabled',
+    format('inventory: no missing classified relations (%s)', coalesce(v_missing, 'none')),
     v_missing IS NULL
   );
 
-  RAISE NOTICE 'EPIC4_PR1_INVENTORY: relations=% policies=%', v_rel_count, v_pol_count;
+  SELECT string_agg(n.nspname || '.' || c.relname, ', ' ORDER BY 1) INTO v_extra
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE c.relkind = 'r'
+    AND c.relrowsecurity = true
+    AND n.nspname IN ('public', 'storage')
+    AND (n.nspname || '.' || c.relname) <> ALL (v_expected_rels);
+  PERFORM test.assert_true(
+    format('inventory: no extra RLS relations (%s)', coalesce(v_extra, 'none')),
+    v_extra IS NULL
+  );
+
+  v_canonical := test.epic4_pr1_catalog_canonical();
+  v_actual_fp := encode(digest(v_canonical, 'sha256'), 'hex');
+
+  PERFORM test.assert_true(
+    format(
+      'inventory: catalog fingerprint matches committed fixture (expected %s got %s)',
+      v_expected_fp,
+      v_actual_fp
+    ),
+    v_actual_fp = v_expected_fp
+  );
+
+  RAISE NOTICE 'EPIC4_PR1_INVENTORY: relations=% policies=% fingerprint=%',
+    v_rel_count, v_pol_count, v_actual_fp;
 END;
 $inventory$;
+
+GRANT EXECUTE ON FUNCTION test.epic4_pr1_catalog_canonical() TO postgres, authenticated, service_role, anon;
+GRANT EXECUTE ON FUNCTION test.epic4_pr1_assert_rls_exception(text, text) TO postgres, authenticated, service_role, anon;
 
 -- ---------------------------------------------------------------------------
 -- Core matrix fixtures + assertions
@@ -91,6 +232,15 @@ DECLARE
   v_owner_item uuid;
   v_owner_version uuid;
   v_n int;
+  v_tbl text;
+  v_core_tables text[] := ARRAY[
+    'public.scenarios',
+    'public.profiles',
+    'public.saved_comparisons',
+    'public.user_comparisons',
+    'public.comparison_items',
+    'public.comparison_versions'
+  ];
 BEGIN
   PERFORM test.reset_auth();
 
@@ -125,24 +275,51 @@ BEGIN
     cancel_at_period_end = EXCLUDED.cancel_at_period_end;
 
   -- Seed owned rows with entitlement skip only for scenarios (documented
-  -- privileged setup). Restore immediately.
-  PERFORM set_config('app.skip_scenario_entitlement', '1', true);
-  INSERT INTO public.scenarios (user_id, name, scenario_type, inputs, derived)
-  VALUES (v_owner, 'Epic4 owner scenario', 'purchase', '{}'::jsonb, '{}'::jsonb)
-  RETURNING id INTO v_owner_scenario;
+  -- privileged setup). Always restore, even on failure.
+  BEGIN
+    PERFORM set_config('app.skip_scenario_entitlement', '1', true);
+    INSERT INTO public.scenarios (user_id, name, scenario_type, inputs, derived)
+    VALUES (v_owner, 'Epic4 owner scenario', 'purchase', '{}'::jsonb, '{}'::jsonb)
+    RETURNING id INTO v_owner_scenario;
 
-  INSERT INTO public.scenarios (user_id, name, scenario_type, inputs, derived)
-  VALUES (v_owner, 'Epic4 owner scenario B', 'refinance', '{}'::jsonb, '{}'::jsonb)
-  RETURNING id INTO v_owner_scenario_b;
+    INSERT INTO public.scenarios (user_id, name, scenario_type, inputs, derived)
+    VALUES (v_owner, 'Epic4 owner scenario B', 'refinance', '{}'::jsonb, '{}'::jsonb)
+    RETURNING id INTO v_owner_scenario_b;
 
-  INSERT INTO public.scenarios (user_id, name, scenario_type, inputs, derived)
-  VALUES (v_non_owner, 'Epic4 nonowner scenario', 'purchase', '{}'::jsonb, '{}'::jsonb)
-  RETURNING id INTO v_non_owner_scenario;
+    INSERT INTO public.scenarios (user_id, name, scenario_type, inputs, derived)
+    VALUES (v_non_owner, 'Epic4 nonowner scenario', 'purchase', '{}'::jsonb, '{}'::jsonb)
+    RETURNING id INTO v_non_owner_scenario;
 
-  INSERT INTO public.scenarios (user_id, name, scenario_type, inputs, derived)
-  VALUES (v_non_owner, 'Epic4 nonowner scenario B', 'refinance', '{}'::jsonb, '{}'::jsonb)
-  RETURNING id INTO v_non_owner_scenario_b;
+    INSERT INTO public.scenarios (user_id, name, scenario_type, inputs, derived)
+    VALUES (v_non_owner, 'Epic4 nonowner scenario B', 'refinance', '{}'::jsonb, '{}'::jsonb)
+    RETURNING id INTO v_non_owner_scenario_b;
+  EXCEPTION
+    WHEN OTHERS THEN
+      PERFORM set_config('app.skip_scenario_entitlement', '0', true);
+      RAISE;
+  END;
   PERFORM set_config('app.skip_scenario_entitlement', '0', true);
+
+  -- Anon must already hold table DML for PR 1 relations so later anonymous
+  -- denials cannot pass from missing grants.
+  FOREACH v_tbl IN ARRAY v_core_tables LOOP
+    PERFORM test.assert_true(
+      format('anon has SELECT on %s', v_tbl),
+      has_table_privilege('anon', v_tbl::regclass, 'SELECT')
+    );
+    PERFORM test.assert_true(
+      format('anon has INSERT on %s', v_tbl),
+      has_table_privilege('anon', v_tbl::regclass, 'INSERT')
+    );
+    PERFORM test.assert_true(
+      format('anon has UPDATE on %s', v_tbl),
+      has_table_privilege('anon', v_tbl::regclass, 'UPDATE')
+    );
+    PERFORM test.assert_true(
+      format('anon has DELETE on %s', v_tbl),
+      has_table_privilege('anon', v_tbl::regclass, 'DELETE')
+    );
+  END LOOP;
 
   INSERT INTO public.saved_comparisons (user_id, name)
   VALUES (v_owner, 'Epic4 owner saved comparison')
@@ -212,19 +389,23 @@ BEGIN
   -- Skip entitlement trigger so denial is attributable to RLS WITH CHECK
   -- (auth.uid() = user_id), not billing visibility under the trigger.
   -- Postgres raises on WITH CHECK failure for UPDATE (does not return 0 rows).
-  PERFORM set_config('app.skip_scenario_entitlement', '1', true);
   BEGIN
-    UPDATE public.scenarios SET user_id = v_non_owner WHERE id = v_owner_scenario;
-    RAISE EXCEPTION 'ASSERT_FAIL: scenarios ownership transfer should fail RLS';
+    PERFORM set_config('app.skip_scenario_entitlement', '1', true);
+    BEGIN
+      UPDATE public.scenarios SET user_id = v_non_owner WHERE id = v_owner_scenario;
+      RAISE EXCEPTION 'ASSERT_FAIL: scenarios ownership transfer should fail RLS';
+    EXCEPTION
+      WHEN OTHERS THEN
+        IF SQLERRM ILIKE '%row-level security%' THEN
+          RAISE NOTICE 'ASSERT_OK: scenarios owner cannot transfer ownership (%).', SQLERRM;
+        ELSE
+          RAISE;
+        END IF;
+    END;
   EXCEPTION
-    WHEN insufficient_privilege THEN
-      RAISE NOTICE 'ASSERT_OK: scenarios owner cannot transfer ownership.';
     WHEN OTHERS THEN
-      IF SQLERRM ILIKE '%row-level security%' THEN
-        RAISE NOTICE 'ASSERT_OK: scenarios owner cannot transfer ownership (%).', SQLERRM;
-      ELSE
-        RAISE;
-      END IF;
+      PERFORM set_config('app.skip_scenario_entitlement', '0', true);
+      RAISE;
   END;
   PERFORM set_config('app.skip_scenario_entitlement', '0', true);
 
@@ -268,14 +449,8 @@ BEGIN
     VALUES (v_owner, 'Epic4 anon insert', 'purchase', '{}'::jsonb, '{}'::jsonb);
     RAISE EXCEPTION 'ASSERT_FAIL: scenarios anon insert should fail';
   EXCEPTION
-    WHEN insufficient_privilege THEN
-      RAISE NOTICE 'ASSERT_OK: scenarios anon cannot insert.';
     WHEN OTHERS THEN
-      IF SQLERRM ILIKE '%row-level security%' OR SQLERRM ILIKE '%permission denied%' THEN
-        RAISE NOTICE 'ASSERT_OK: scenarios anon cannot insert (%).', SQLERRM;
-      ELSE
-        RAISE;
-      END IF;
+      PERFORM test.epic4_pr1_assert_rls_exception('scenarios anon cannot insert', SQLERRM);
   END;
   UPDATE public.scenarios SET name = 'x' WHERE id = v_owner_scenario;
   GET DIAGNOSTICS v_n = ROW_COUNT;
@@ -350,7 +525,7 @@ BEGIN
   SELECT count(*)::int INTO v_n FROM public.profiles WHERE id = v_owner;
   PERFORM test.assert_true('profiles: anon cannot select', v_n = 0);
   BEGIN
-    -- auth.users row exists (v_orphan); no profile yet — denial must be authz/RLS.
+    -- auth.users row exists (v_orphan); no profile yet — denial must be RLS.
     INSERT INTO public.profiles (id, full_name)
     VALUES (v_orphan, 'anon');
     RAISE EXCEPTION 'ASSERT_FAIL: profiles anon insert should fail';
@@ -359,14 +534,8 @@ BEGIN
       RAISE EXCEPTION 'ASSERT_FAIL: profiles anon insert hit FK (not authz)';
     WHEN unique_violation THEN
       RAISE EXCEPTION 'ASSERT_FAIL: profiles anon insert hit unique (not authz)';
-    WHEN insufficient_privilege THEN
-      RAISE NOTICE 'ASSERT_OK: profiles anon cannot insert.';
     WHEN OTHERS THEN
-      IF SQLERRM ILIKE '%row-level security%' OR SQLERRM ILIKE '%permission denied%' THEN
-        RAISE NOTICE 'ASSERT_OK: profiles anon cannot insert (%).', SQLERRM;
-      ELSE
-        RAISE;
-      END IF;
+      PERFORM test.epic4_pr1_assert_rls_exception('profiles anon cannot insert', SQLERRM);
   END;
   PERFORM test.reset_auth();
 
@@ -456,14 +625,11 @@ BEGIN
     VALUES (v_owner, 'anon saved');
     RAISE EXCEPTION 'ASSERT_FAIL: saved_comparisons anon insert should fail';
   EXCEPTION
-    WHEN insufficient_privilege THEN
-      RAISE NOTICE 'ASSERT_OK: saved_comparisons anon cannot insert.';
     WHEN OTHERS THEN
-      IF SQLERRM ILIKE '%row-level security%' OR SQLERRM ILIKE '%permission denied%' THEN
-        RAISE NOTICE 'ASSERT_OK: saved_comparisons anon cannot insert (%).', SQLERRM;
-      ELSE
-        RAISE;
-      END IF;
+      PERFORM test.epic4_pr1_assert_rls_exception(
+        'saved_comparisons anon cannot insert',
+        SQLERRM
+      );
   END;
   PERFORM test.reset_auth();
 

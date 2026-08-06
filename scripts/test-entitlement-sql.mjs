@@ -118,6 +118,18 @@ async function applyMigrations(client) {
 async function runSqlAssertions(client) {
   // Epic 4 PR 1 must run before Epic 1 / Phase 6 fixtures so admin and
   // entitlement seeds cannot contaminate the core RLS matrix.
+  // Inject the committed catalog fingerprint (never derived from the live
+  // query during the assertion itself).
+  const expectedCatalogFp = readFileSync(
+    join(root, "supabase/tests/fixtures/epic4_pr1_rls_catalog.sha256"),
+    "utf8"
+  ).trim();
+  if (!/^[a-f0-9]{64}$/.test(expectedCatalogFp)) {
+    throw new Error("Invalid epic4_pr1_rls_catalog.sha256 fixture");
+  }
+  await client.query(`SELECT set_config('test.epic4_pr1_expected_catalog_fp', $1, false)`, [
+    expectedCatalogFp,
+  ]);
   process.stdout.write("Running epic4_pr1_core_rls.sql assertions...\n");
   await psqlFile(client, join(root, "supabase/tests/epic4_pr1_core_rls.sql"));
 
