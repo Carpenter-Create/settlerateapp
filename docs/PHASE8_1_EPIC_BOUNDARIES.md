@@ -293,9 +293,12 @@ the ADR §11 sequence.
 ### Allowed in Epic 5 (when the matching PR is authorized)
 
 - Create and wire `packages/core` per ADR 0005
-- Migrate approved candidate modules (entitlement contract, checkout
-  maintenance, subscription guards, Stripe billing snapshot mapping,
-  redaction, and other **Move** / justified export subsets)
+- Migrate approved **Move** symbols per ADR 0005 (entitlement contract,
+  checkout maintenance, subscription guards, pure billing-snapshot mappers,
+  pure customer-resolve helpers, redaction, deterministic Edge observability
+  helpers, and other justified export subsets) — not orchestration such as
+  `resolveCheckoutCustomer` / `resolveSubscriptionBillingSnapshot`, and not
+  nondeterministic `generateRequestId`
 - Replace permanent mirrors with single-source imports (temporary re-export
   shims allowed with deletion conditions)
 - Update Deno import maps / workspace configuration as required by
@@ -331,8 +334,8 @@ the ADR §11 sequence.
 | **PR 0** | ADR 0005 + minimum governance status updates | **In progress** (this slice) |
 | **PR 1** | `packages/core` workspace scaffold (no behavioral migration) | Not authorized — requires separate founder authorization |
 | **PR 2** | Entitlement contract extraction | Not authorized |
-| **PR 3** | Checkout maintenance, guards, billing snapshot, redaction | Not authorized |
-| **PR 4** | Customer resolve, origin helpers, Edge portable observability | Not authorized |
+| **PR 3** | Checkout maintenance, guards, redaction, pure billing-snapshot mappers (not resolve orchestration) | Not authorized |
+| **PR 4** | Pure customer-resolve helpers (not checkout orchestration), origin helpers, deterministic Edge observability (not `generateRequestId`) | Not authorized |
 | **PR 5** | Export-related relocation if justified and behavior-preserving | Not authorized |
 | **PR 6** | Remove shims; Epic 5 closure | Not authorized |
 

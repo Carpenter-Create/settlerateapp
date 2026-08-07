@@ -43,13 +43,22 @@ it only decides how shared TypeScript contracts are packaged.
 and pure transformations that must remain identical across more than one
 runtime (browser/Vite, Node tests/scripts, Deno Edge Functions).
 
-**Belonging rule:** A module may enter `packages/core` only if:
+**Belonging rule:** A symbol (or extractable subset of a file) may enter
+`packages/core` only if:
 
-1. it is pure (no I/O, no SDK calls, no env reads — see §4);
-2. it encodes a contract or transformation that already has, or will have,
+1. it is **pure and deterministic** (no I/O, no SDK calls, no env reads, no
+   randomness — see §4). Same inputs must yield the same outputs;
+2. dependency injection of async retrieve/search/create callbacks does **not**
+   make an orchestration function core-eligible if those callbacks perform
+   network, billing, or Stripe side effects;
+3. it encodes a contract or transformation that already has, or will have,
    more than one runtime consumer; and
-3. relocating it does not require changing financial, entitlement, billing,
+4. relocating it does not require changing financial, entitlement, billing,
    checkout-maintenance, or export semantics.
+
+Files may be **split**: pure types/mappers move to core; orchestration and
+nondeterministic helpers remain in runtime adapters (or a “shared contract +
+runtime adapter” split).
 
 **Not a utilities package.** General helpers, React components, Supabase
 clients, Stripe SDK wrappers, DOM printers, Vite config, and one-runtime
@@ -73,10 +82,13 @@ Classification key:
 | Professional price allowlist / plan mapping | Same module (`PROFESSIONAL_PRICE_IDS`, `isAllowlistedProfessionalPrice`, `resolvePlanCodeFromPrice`) | **Move** | Part of entitlement contract |
 | Checkout maintenance parse/response | `src/lib/checkoutMaintenance.ts` ↔ `_shared/checkoutMaintenance.ts` | **Move** | Pure; env string injected by caller |
 | Professional subscription guards | `src/lib/professionalSubscriptionGuard.ts` ↔ `_shared/professionalSubscriptionGuard.ts` | **Move** | Pure; allowlist callback injected |
-| Stripe billing snapshot mapping | `src/lib/stripeBillingSnapshot.ts` ↔ `_shared/stripeBillingSnapshot.ts` | **Move** | Pure + injectable retrieve; no Stripe SDK import |
-| Stripe customer resolve / checkout customer deps | `_shared/stripeCustomerResolve.ts` (no `src/lib` copy; Vitest imports Edge file) | **Move** | Pure + injected deps; multi-function consumer |
+| Stripe billing snapshot — pure mappers/types | Same files: `StripeSubscriptionLike` / item / invoice types; `StripeSubscriptionBillingSnapshot`; `mapSubscriptionToBillingSnapshot`; `extractSubscriptionPeriodEnd`; `extractSubscriptionPeriodStart`; `extractInvoiceSubscriptionId` (and private pure helpers they need) | **Move** | Deterministic structural mapping; no network |
+| Stripe billing snapshot — retrieval orchestration | Same files: `resolveSubscriptionBillingSnapshot` | **Runtime-specific** (Stripe/runtime adapter) | Invokes injected retrieve; DI does not make it side-effect-free |
+| Stripe customer resolve — pure types/helpers | `_shared/stripeCustomerResolve.ts`: `StripeCustomerLike`; `StripeCustomerResolution`; `resolveStripeCustomerByUserId`; `stripeCustomerMetadataSearchQuery` (and other purely structural types as appropriate) | **Move** | Deterministic selection/query-string helpers |
+| Stripe customer resolve — checkout orchestration | Same file: `resolveCheckoutCustomer` (+ `CheckoutCustomerResolutionDeps` wiring used only by it) | **Shared + adapters** / **Runtime-specific** orchestration | Injected deps may query billing, search Stripe, verify ownership, and create customers — stays in Edge/Stripe adapter |
 | Observability redaction | `src/lib/observabilityRedaction.ts` ↔ `_shared/observabilityRedaction.ts` (byte-identical) | **Move** | Pure; dual consumers; hash-gated |
-| Edge portable observability helpers | `_shared/observability.ts` (`isEdgeObservabilityEnabled`, `generateRequestId`, `buildEdgeExtra`) | **Move** | Standards APIs only (`crypto.randomUUID`); not a copy of client observability |
+| Edge observability — deterministic helpers | `_shared/observability.ts`: `isEdgeObservabilityEnabled`; `buildEdgeExtra`; `EdgeObservabilityContext` (and structural types) | **Move** | Pure/deterministic; not a copy of client observability |
+| Edge observability — request ID generation | `_shared/observability.ts`: `generateRequestId` | **Runtime-specific** | Uses `crypto.randomUUID()` — environment-neutral but **nondeterministic**; keep in adapter. Core may hold ID types, validation/normalization, or accept an injected ID |
 | App origin allowlist for Checkout/Portal | `_shared/appOrigin.ts` | **Shared + adapters** | Pure allowlist + `Request` (Fetch standard). Keep function-local wiring in Edge adapters |
 | Auth redirect origin helper | `src/lib/authRedirect.ts` | **Shared + adapters** | Shared origin-allowlist constants may live in core; `VITE_APP_ORIGIN` injection stays browser-side. Do not merge APIs blindly with `appOrigin` |
 | Client Sentry init / capture | `src/lib/observability.ts` | **Runtime-specific** | `@sentry/react`, `import.meta.env` |
@@ -110,10 +122,14 @@ Classification key:
 - **Prohibited in core:** Node-only APIs, Deno-only APIs, DOM APIs, Supabase
   client, Stripe SDK, filesystem, `process.env`, `import.meta.env`, React,
   framework routers.
-- **Allowed:** ECMAScript language features, Web Crypto (`crypto.randomUUID`),
-  Fetch API types such as `Request` when used as pure inputs (no network).
-- **Environment access:** callers inject env strings, SDK clients, and
-  retrieve functions; core never reads env itself.
+- **Allowed:** ECMAScript language features; Fetch API types such as
+  `Request` when used as pure inputs (no network).
+- **Not core-eligible despite being environment-neutral:** nondeterministic
+  APIs such as `crypto.randomUUID()` (adapters generate IDs; core may
+  validate/normalize or accept injected IDs).
+- **Environment access:** callers inject env strings, SDK clients, retrieve
+  functions, and request IDs; core never reads env itself and never
+  generates random IDs.
 - **Consumption model (initial):** TypeScript **source** is consumed directly
   via npm workspaces + package `exports` (no mandatory compile step in the
   first scaffold). A build step may be added later if Deno/Vite require it —
@@ -133,19 +149,24 @@ Classification key:
 
 | Layer | Contents |
 |-------|----------|
-| **Core** (`packages/core`) | Domain contracts, pure evaluators/mappers, shared constants |
+| **Core** (`packages/core`) | Domain contracts, pure deterministic evaluators/mappers, shared constants, structural Stripe-like types |
 | **Browser adapters** | `src/lib/observability.ts`, `exportPDF.ts`, Vite/`import.meta.env` wiring |
-| **Supabase/Deno adapters** | `_shared/sentry.ts`, function `index.ts` handlers, `Deno.env` reads |
-| **Stripe SDK adapters** | Edge function Stripe client construction; injectable retrieve/list fns |
+| **Supabase/Deno adapters** | `_shared/sentry.ts`, `generateRequestId`, function `index.ts` handlers, `Deno.env` reads |
+| **Stripe / billing adapters** | Stripe SDK client construction; `resolveSubscriptionBillingSnapshot`; `resolveCheckoutCustomer`; other injectable retrieve/search/create orchestration |
 | **Persistence/DB adapters** | Supabase JS client, SQL RPCs |
 | **UI presentation adapters** | React components, `exportLayout`, pricing display |
 
 **Core must not:** perform network calls, database queries, auth resolution,
-env reads, Stripe/Supabase SDK calls, browser storage, or logging/telemetry
-side effects.
+env reads, Stripe/Supabase SDK calls, browser storage, logging/telemetry side
+effects, or nondeterministic ID generation.
 
-**Justified exceptions:** none. `crypto.randomUUID` and reading fields from an
-injected `Request` are not side effects for this ADR.
+**Dependency injection rule:** Injecting an async function that performs I/O
+does **not** make the caller core-eligible. Orchestrators such as
+`resolveSubscriptionBillingSnapshot` and `resolveCheckoutCustomer` remain in
+runtime adapters even when their deps are parameters.
+
+**Justified exceptions:** none. Reading fields from an injected `Request` for
+pure allowlist checks is allowed; generating UUIDs is not.
 
 ### 5. Source-of-truth rule
 
@@ -274,8 +295,8 @@ because of type coupling).
 | **PR 0** | This ADR + minimum governance status (no code moves) |
 | **PR 1** | Workspace / `packages/core` scaffold; package name + exports map; typecheck/CI wiring; **no behavioral migration** |
 | **PR 2** | Move `entitlementContract` (incl. price allowlist / plan mapping); replace dual trees with shims → core; keep SQL parity + hash/shim gates green |
-| **PR 3** | Move `checkoutMaintenance`, `professionalSubscriptionGuard`, `stripeBillingSnapshot`, `observabilityRedaction` |
-| **PR 4** | Move `stripeCustomerResolve`, shared origin helpers (`appOrigin` pure parts), Edge portable observability helpers; leave Sentry SDK adapters in place |
+| **PR 3** | Move `checkoutMaintenance`, `professionalSubscriptionGuard`, `observabilityRedaction`, and **pure** billing-snapshot mappers/types (`mapSubscriptionToBillingSnapshot`, period/invoice extractors, structural Stripe-like types). Leave `resolveSubscriptionBillingSnapshot` in a Stripe/runtime adapter (shim may re-export adapter + core). |
+| **PR 4** | Move **pure** customer-resolve helpers (`StripeCustomerLike`, `StripeCustomerResolution`, `resolveStripeCustomerByUserId`, `stripeCustomerMetadataSearchQuery`); shared origin helpers (`appOrigin` pure parts); deterministic Edge observability helpers (`isEdgeObservabilityEnabled`, `buildEdgeExtra`, structural context types). Leave `resolveCheckoutCustomer` and `generateRequestId` in runtime adapters; leave Sentry SDK adapters in place. |
 | **PR 5** | Export-related relocation **only if** pure mappers can move without semantic change and without importing the mortgage engine; otherwise defer with founder decision and close Epic 5 without export move |
 | **PR 6** | Remove temporary shims/mirrors; update docs/import maps; prove browser + Node + Deno single-source; Epic 5 closure |
 
@@ -286,9 +307,11 @@ Do not begin PR 1+ automatically.
 1. ADR 0005 is accepted and remains binding.
 2. Canonical `packages/core` exists and is the sole implementation for migrated
    modules.
-3. Approved **Move** candidates (and any export subset authorized in PR 5) are
-   migrated.
-4. No permanent manual mirrors remain for migrated logic.
+3. Approved **Move** symbols (and any export subset authorized in PR 5) are
+   migrated. Orchestration/nondeterministic symbols classified
+   **Runtime-specific** / adapter-side remain outside core (not silently
+   relocated).
+4. No permanent manual mirrors remain for migrated **Move** logic.
 5. Browser, Node, and Deno compatibility are proven in CI for migrated paths.
 6. Existing behavior, benchmarks, entitlement SQL parity, and export contract
    semantics are unchanged.
@@ -331,14 +354,17 @@ Inspected 2026-08-06 on `main` (post Epic 4 closure).
 | `src/lib/observabilityRedaction.ts` ↔ `_shared/observabilityRedaction.ts` | Byte-identical; gated by Vitest |
 | `src/lib/checkoutMaintenance.ts` ↔ `_shared/checkoutMaintenance.ts` | Logic-identical; comment-only drift |
 | `src/lib/professionalSubscriptionGuard.ts` ↔ `_shared/…` | Logic-identical; comment-only drift |
-| `src/lib/stripeBillingSnapshot.ts` ↔ `_shared/…` | Logic-identical; comment whitespace drift |
+| `src/lib/stripeBillingSnapshot.ts` ↔ `_shared/…` | Logic-identical; comment whitespace drift; **contains both** pure mappers and `resolveSubscriptionBillingSnapshot` orchestration |
+| `_shared/stripeCustomerResolve.ts` | No `src/lib` copy; Vitest imports Edge file; **contains both** pure helpers and `resolveCheckoutCustomer` orchestration |
+| `_shared/observability.ts` | Not a client copy; mixes deterministic helpers with nondeterministic `generateRequestId` |
 | Export client vs `generate-pdf/mapDerivedForExport.ts` | Semantic parity via fixtures — not a file copy |
 
 ### Current runtime consumers (representative)
 
 - Edge: `create-checkout`, `check-subscription`, `stripe-webhook`,
   `customer-portal`, `generate-pdf`, `export-share` import `_shared`
-  modules as applicable.
+  modules as applicable (`resolveCheckoutCustomer` / billing snapshot
+  resolve used from checkout/webhook/portal paths).
 - App: entitlement constants/types via `@/lib/entitlementContract`; export UI
   via `src/lib/exports/*`; client observability via `src/lib/observability.ts`.
 - Tests: Vitest imports both `@/lib/*` and relative
@@ -346,7 +372,10 @@ Inspected 2026-08-06 on `main` (post Epic 4 closure).
 
 ### Environment-specific dependencies
 
-- Core candidates listed as **Move** are free of env/SDK/DOM deps.
+- **Move** symbols are free of env/SDK/DOM deps and of randomness.
+- `resolveSubscriptionBillingSnapshot` / `resolveCheckoutCustomer` depend on
+  injected async I/O (adapter-side).
+- `generateRequestId` uses `crypto.randomUUID()` (adapter-side).
 - Client observability uses `import.meta.env` + `@sentry/react`.
 - Edge Sentry uses `npm:@sentry/deno`.
 - `exportPDF` uses DOM.
@@ -375,6 +404,9 @@ Inspected 2026-08-06 on `main` (post Epic 4 closure).
    unify constants carefully; do not force a single function shape.
 5. ADR 0012 remains open for deeper entitlement-authority questions beyond
    packaging the existing TS evaluator.
+6. Split files (`stripeBillingSnapshot`, `stripeCustomerResolve`,
+   `_shared/observability`) need careful shim design so adapters keep
+   orchestration/ID generation while core owns pure symbols only.
 
 ## Consequences
 
@@ -408,8 +440,8 @@ Inspected 2026-08-06 on `main` (post Epic 4 closure).
 | **PR 0** | This ADR + minimum governance status updates | **In progress** (this slice) |
 | **PR 1** | `packages/core` workspace scaffold (no behavioral migration) | Not authorized — requires separate founder authorization |
 | **PR 2** | Entitlement contract extraction | Not authorized |
-| **PR 3** | Checkout maintenance, subscription guards, billing snapshot, redaction | Not authorized |
-| **PR 4** | Customer resolve, origin helpers, Edge portable observability | Not authorized |
+| **PR 3** | Checkout maintenance, guards, redaction, **pure** billing-snapshot mappers (not `resolveSubscriptionBillingSnapshot`) | Not authorized |
+| **PR 4** | **Pure** customer-resolve helpers (not `resolveCheckoutCustomer`), origin helpers, deterministic Edge observability (not `generateRequestId`) | Not authorized |
 | **PR 5** | Export-related relocation if justified and behavior-preserving | Not authorized |
 | **PR 6** | Remove shims; Epic 5 closure | Not authorized |
 

@@ -63,9 +63,10 @@ Create:
 `packages/core`
 
 Shared by frontend and backend for: - entitlement contracts - checkout
-maintenance logic - subscription guards - Stripe billing snapshots
+maintenance logic - subscription guards - pure Stripe billing-snapshot
+mappers (not retrieval orchestration)
 
-Goal: prevent business logic drift.
+Goal: prevent business logic drift. See ADR 0005 for symbol-level splits.
 
 ### Epic 6 --- Schema Reconciliation
 

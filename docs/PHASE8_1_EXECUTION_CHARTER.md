@@ -127,8 +127,8 @@ is not required. Authority: `docs/adr/0004-rls-testing-standard.md`. See
 | **PR 0** | Shared package architecture ADR (0005) + minimum governance status | **In progress** |
 | **PR 1** | `packages/core` workspace scaffold (no behavioral migration) | Not authorized — requires separate founder authorization |
 | **PR 2** | Entitlement contract extraction | Not authorized |
-| **PR 3** | Checkout maintenance, guards, billing snapshot, redaction | Not authorized |
-| **PR 4** | Customer resolve, origin helpers, Edge portable observability | Not authorized |
+| **PR 3** | Checkout maintenance, guards, redaction, pure billing-snapshot mappers (not resolve orchestration) | Not authorized |
+| **PR 4** | Pure customer-resolve helpers (not checkout orchestration), origin helpers, deterministic Edge observability (not `generateRequestId`) | Not authorized |
 | **PR 5** | Export-related relocation if justified and behavior-preserving | Not authorized |
 | **PR 6** | Remove shims; Epic 5 closure | Not authorized |
 
