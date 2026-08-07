@@ -139,8 +139,8 @@ Classification key:
   `@settlerate/core` (or agreed package name) to `packages/core` source.
   Relative imports into `packages/core` are acceptable as a temporary bridge
   with an explicit deletion condition.
-- **npm workspaces:** implementation PRs will add `"workspaces": ["packages/*"]`
-  (or equivalent) and a `packages/core/package.json`. **Not in PR 0.**
+- **npm workspaces:** `"workspaces": ["packages/*"]` and
+  `packages/core/package.json` are added in **PR 1** (scaffold).
 - **Import path:** application and tests migrate to a stable package name
   (recommended `@settlerate/core`); temporary re-export shims may remain at
   old `src/lib/*` and `_shared/*` paths until removed.
@@ -246,23 +246,26 @@ Principles for the future package:
   Epic 5.
 - No circular dependencies within the package.
 
-**Proposed layout (do not create in PR 0):**
+**Proposed layout** (PR 1 creates the scaffold shell only; domain folders
+arrive in later authorized PRs):
 
 ```
 packages/core/
   package.json
-  src/
-    index.ts                 # curated public re-exports only
-    entitlement/
-    checkout/
-    billing/
-    observability/
-    origin/                  # shared allowlist constants / pure helpers
-    exports/                 # only if/when export pure mappers qualify
   README.md
+  tsconfig.json
+  deno.json                  # import-map proof for @settlerate/core → src
+  src/
+    index.ts                 # curated public re-exports only (scaffold marker in PR 1)
+    entitlement/             # PR 2+
+    checkout/                # PR 3+
+    billing/                 # PR 3–4+
+    observability/           # PR 3–4+
+    origin/                  # PR 4+
+    exports/                 # PR 5 if justified
 ```
 
-Exact filenames are fixed in implementation PRs.
+Exact domain filenames are fixed in implementation PRs.
 
 ### 10. Testing standard
 
@@ -437,13 +440,13 @@ Inspected 2026-08-06 on `main` (post Epic 4 closure).
 
 | PR | Scope | Status |
 |----|--------|--------|
-| **PR 0** | This ADR + minimum governance status updates | **In progress** (this slice) |
-| **PR 1** | `packages/core` workspace scaffold (no behavioral migration) | Not authorized — requires separate founder authorization |
-| **PR 2** | Entitlement contract extraction | Not authorized |
+| **PR 0** | This ADR + minimum governance status updates | Complete / merged |
+| **PR 1** | `packages/core` workspace scaffold (no behavioral migration) | **In progress** |
+| **PR 2** | Entitlement contract extraction | Not authorized — requires separate founder authorization |
 | **PR 3** | Checkout maintenance, guards, redaction, **pure** billing-snapshot mappers (not `resolveSubscriptionBillingSnapshot`) | Not authorized |
 | **PR 4** | **Pure** customer-resolve helpers (not `resolveCheckoutCustomer`), origin helpers, deterministic Edge observability (not `generateRequestId`) | Not authorized |
 | **PR 5** | Export-related relocation if justified and behavior-preserving | Not authorized |
 | **PR 6** | Remove shims; Epic 5 closure | Not authorized |
 
-**Epic 5 status:** In progress — PR 0 (ADR only). Do not begin PR 1–6
-automatically.
+**Epic 5 status:** In progress — PR 1 (scaffold only; no business modules
+migrated). Do not begin PR 2–6 automatically.

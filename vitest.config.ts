@@ -9,6 +9,7 @@ export default defineConfig({
     environment: "node",
     include: [
       "src/lib/__tests__/**/*.test.ts",
+      "packages/core/src/**/*.test.ts",
     ],
     globals: false,
     reporters: ["verbose"],

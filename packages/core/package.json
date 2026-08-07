@@ -1,0 +1,14 @@
+{
+  "name": "@settlerate/core",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "SettleRate shared deterministic business contracts (Epic 5). Scaffold only in PR 1.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "sideEffects": false
+}
