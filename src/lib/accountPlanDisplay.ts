@@ -2,7 +2,7 @@ import {
   FREE_SCENARIO_LIMIT,
   type EntitlementStatus,
   type PlanCode,
-} from "@/lib/entitlementContract";
+} from "@settlerate/core/entitlement";
 
 /** Customer-facing plan names (internal planCode values unchanged). */
 export const PLAN_LABEL_FREE = "SettleRate Free";

@@ -3,7 +3,7 @@ import {
   evaluateEntitlement,
   featureAccessFromDecision,
   type FeatureAccessFlags,
-} from "@/lib/entitlementContract";
+} from "@settlerate/core/entitlement";
 import {
   isAuthenticatedEntitlementPending,
   isUsageRefreshPending,
@@ -11,7 +11,7 @@ import {
   unresolvedFeatureAccess,
 } from "@/lib/entitlementLoading";
 
-import { PROFESSIONAL_PRICE_IDS } from "@/lib/entitlementContract";
+import { PROFESSIONAL_PRICE_IDS } from "@settlerate/core/entitlement";
 
 const PRO_PRICE = PROFESSIONAL_PRICE_IDS[0];
 const future = new Date("2026-12-01T00:00:00.000Z");

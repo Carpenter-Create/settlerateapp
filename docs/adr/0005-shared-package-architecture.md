@@ -7,21 +7,20 @@
 
 ## Context
 
-SettleRate currently duplicates drift-sensitive business contracts between the
-Vite/React client (`src/lib/`) and Supabase Edge Functions
-(`supabase/functions/_shared/`). After PR 2–5, entitlement, checkout
+SettleRate previously duplicated drift-sensitive business contracts between
+the Vite/React client (`src/lib/`) and Supabase Edge Functions
+(`supabase/functions/_shared/`). After PR 2–6, entitlement, checkout
 maintenance, subscription guards, observability redaction, pure billing
 snapshot mappers, pure customer-resolution helpers, pure app-origin policy,
 deterministic Edge observability helpers, and the persisted derived →
-export-summary mapper are single-sourced in `@settlerate/core` with
-re-export shims / runtime adapters (shim-purity gated). Remaining
-shared/runtime boundaries are limited to modules intentionally retained
-outside core, including Stripe customer-resolution orchestration
-(`resolveCheckoutCustomer`), nondeterministic Edge request-ID generation
-(`generateRequestId`), client `buildCanonicalScenarioExport` /
-`generatedAt`, and server PDF `buildScenarioData` / layout. Runtime-specific
-orchestration remains in adapters where required. Export field semantics
-remain protected by `docs/EXPORT_CONTRACT.md`.
+export-summary mapper are single-sourced in `@settlerate/core`. Pure
+compatibility shims are removed; consumers import package subpaths directly.
+Runtime adapters remain for orchestration and environment boundaries
+(`resolveCheckoutCustomer`, `generateRequestId`,
+`buildCanonicalScenarioExport` / `generatedAt`, `buildScenarioData`,
+Sentry wiring). Edge Functions resolve `@settlerate/core/<subpath>` via
+per-function `deno.json`. Export field semantics remain protected by
+`docs/EXPORT_CONTRACT.md`.
 
 Roadmap Epic 5 calls for a shared `packages/core` so these contracts have one
 canonical implementation across browser, Node test/scripts, and Deno Edge
@@ -450,10 +449,14 @@ Inspected 2026-08-06 on `main` (post Epic 4 closure).
 | **PR 2** | Entitlement contract extraction | Complete / merged |
 | **PR 3** | Checkout maintenance, guards, redaction, **pure** billing-snapshot mappers (not `resolveSubscriptionBillingSnapshot`) | Complete / merged |
 | **PR 4** | **Pure** customer-resolve helpers (not `resolveCheckoutCustomer`), origin helpers, deterministic Edge observability (not `generateRequestId`) | Complete / merged |
-| **PR 5** | Export-related relocation if justified and behavior-preserving | **In progress** |
-| **PR 6** | Remove shims; Epic 5 closure | Not authorized |
+| **PR 5** | Export-related relocation if justified and behavior-preserving | Complete / merged |
+| **PR 6** | Remove pure shims; Edge package resolution; Epic 5 closure | **In progress** (closure on merge) |
 
-**Epic 5 status:** In progress — PR 5 (canonical
-`mapDerivedExportSummary` in `@settlerate/core/export-summary`;
-client/server adapters retain public APIs; export field semantics frozen).
-Do not begin PR 6 automatically.
+**Epic 5 status:** Complete on this branch pending PR 6 merge.
+Canonical pure modules live under `@settlerate/core/*`. Pure
+compatibility shims are removed. Runtime adapters remain
+(`resolveSubscriptionBillingSnapshot`, `resolveCheckoutCustomer`,
+`resolveAppOrigin(Request)`, `generateRequestId`, `buildScenarioData`,
+`buildCanonicalScenarioExport`). Edge Functions resolve package
+subpaths via per-function `supabase/functions/<name>/deno.json`
+(Supabase-recommended). Do not begin Epic 6+ automatically.

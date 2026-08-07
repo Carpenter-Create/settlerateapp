@@ -2,7 +2,7 @@ import {
   evaluateEntitlement,
   featureAccessFromDecision,
   type FeatureAccessFlags,
-} from "@/lib/entitlementContract";
+} from "@settlerate/core/entitlement";
 
 /** Fail-closed feature flags while subscription/usage is unresolved. */
 export function unresolvedFeatureAccess(): FeatureAccessFlags {

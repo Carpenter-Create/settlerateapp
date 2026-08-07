@@ -5,7 +5,7 @@ import {
   evaluateEntitlement,
   isAllowlistedProfessionalPrice,
   resolvePlanCodeFromPrice,
-} from "../_shared/entitlementContract.ts";
+} from "@settlerate/core/entitlement";
 import {
   extractInvoiceSubscriptionId,
   extractSubscriptionPeriodEnd,

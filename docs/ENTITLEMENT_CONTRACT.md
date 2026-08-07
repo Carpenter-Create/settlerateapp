@@ -2,7 +2,7 @@
 
 Canonical product-policy contract for SettleRate plan codes, Stripe status mapping, and protected features.
 
-**Authority:** This document + `src/lib/entitlementContract.ts` + DB `evaluate_entitlement` / `feature_allowed`.  
+**Authority:** This document + `@settlerate/core/entitlement` (`packages/core/src/entitlement/entitlementContract.ts`) + DB `evaluate_entitlement` / `feature_allowed`.  
 Server enforcement is authoritative. Client gates mirror only.
 
 ## Active plan codes

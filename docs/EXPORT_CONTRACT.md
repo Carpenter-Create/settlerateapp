@@ -74,14 +74,15 @@ Use assumption summary semantics only. Do **not** flatten into a standard mortga
 - Server derived compatibility surface (actual generate-pdf path):
   `mapDerivedForExport` / `buildScenarioData` in
   `supabase/functions/generate-pdf/mapDerivedForExport.ts`
-  (`mapDerivedForExport` delegates to core; `buildScenarioData` remains
-  server PDF adapter and must call `mapDerivedForExport`)
+  (`mapDerivedForExport` delegates to `@settlerate/core/export-summary`
+  via `supabase/functions/generate-pdf/deno.json`; `buildScenarioData`
+  remains server PDF adapter and must call `mapDerivedForExport`)
 - Shared fixtures: `src/lib/__tests__/fixtures/export-parity/*.json`
 - Automated coverage:
   - Vitest `exportParity.test.ts` compares **core + client + actual Deno
     server adapter** against the same fixtures
   - Deno `mapDerivedForExport_test.ts` exercises the actual server adapter +
-    fixtures (`deno test supabase/functions/generate-pdf/mapDerivedForExport_test.ts`)
+    fixtures (`npm run test:export-parity-deno`)
 
 **Important:** Client-only mapper tests do **not** prove server parity. The Deno adapter must be imported or run under Deno against the shared fixtures.
 

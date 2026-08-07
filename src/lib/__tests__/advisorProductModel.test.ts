@@ -5,7 +5,7 @@ import {
   featureAccessFromDecision,
   resolvePlanCodeFromPrice,
   type PlanCode,
-} from "@/lib/entitlementContract";
+} from "@settlerate/core/entitlement";
 import {
   getTierFromProductId,
   isLegacyAdvisorPriceId,

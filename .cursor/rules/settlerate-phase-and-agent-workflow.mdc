@@ -33,19 +33,17 @@ ADR 0004 accepted; PR 0–2 merged; PR 3 not required. See
 `docs/adr/0004-rls-testing-standard.md` and
 `docs/security/RLS_COVERAGE_INVENTORY.md`.
 
-**Epic 5 — Shared Core Package** is **In progress — PR 5** (export derived
-mapper). ADR 0005 accepted; PR 0–4 complete/merged. PR 5 centralizes the
-persisted derived → export-summary mapper in `@settlerate/core` without
-changing export field semantics. See
-`docs/adr/0005-shared-package-architecture.md` and
-`docs/EXPORT_CONTRACT.md`. **Do not begin Epic 5 PR 6 or Epic 6+
-automatically.**
+**Epic 5 — Shared Core Package** is **complete on this branch pending PR 6
+merge** (PR 0–5 merged; PR 6 removes pure shims and finalizes Edge
+`@settlerate/core/<subpath>` resolution via per-function `deno.json`).
+See `docs/adr/0005-shared-package-architecture.md` and
+`docs/EXPORT_CONTRACT.md`. **Do not begin Epic 6+ automatically.**
 
 ## Prohibited unless explicitly authorized
 
 - Supabase Auth Dashboard redirect-allowlist changes without founder authorization
 - Changing production Sentry DSNs, project routing, or capture scope without founder authorization
-- Beginning Epic 5 PR 6 (shim removal / Epic 5 closure) or Epic 6+ ahead of sequence / dependency gates
+- Beginning Epic 6+ ahead of sequence / dependency gates
 - Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
 - Next.js platform migration

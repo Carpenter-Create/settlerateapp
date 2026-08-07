@@ -38,7 +38,7 @@ import { toast } from "sonner";
 import { resolveNewScenarioControl } from "@/lib/newScenarioControl";
 import { resolveDuplicateScenarioControl } from "@/lib/duplicateScenarioControl";
 import { resolveScenarioEditControl } from "@/lib/scenarioEditControl";
-import { FREE_SCENARIO_LIMIT } from "@/lib/entitlementContract";
+import { FREE_SCENARIO_LIMIT } from "@settlerate/core/entitlement";
 
 /**
  * Format relative time for display

@@ -4,7 +4,7 @@ import {
   evaluateEntitlement,
   featureAccessFromDecision,
   planCodeToLegacyTier,
-} from "../_shared/entitlementContract.ts";
+} from "@settlerate/core/entitlement";
 import { generateRequestId } from "../_shared/observability.ts";
 import { captureEdgeException, initEdgeSentry } from "../_shared/sentry.ts";
 

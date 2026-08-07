@@ -5,7 +5,7 @@
  * Legacy Advisor product IDs resolve to free — see LEGACY_ADVISOR_* in entitlementContract.
  */
 
-import { LEGACY_ADVISOR_PRICE_IDS } from "@/lib/entitlementContract";
+import { LEGACY_ADVISOR_PRICE_IDS } from "@settlerate/core/entitlement";
 
 export const STRIPE_PRO_MONTHLY_PRICE_ID = "price_1U0t2QC56u2NxRItya8dElyg";
 export const STRIPE_PRO_ANNUAL_PRICE_ID = "price_1U0t2jC56u2NxRItM185AYK9";

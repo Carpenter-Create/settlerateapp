@@ -1,4 +1,4 @@
-import type { EntitlementStatus } from "@/lib/entitlementContract";
+import type { EntitlementStatus } from "@settlerate/core/entitlement";
 
 export interface ScenarioEditControl {
   allowed: boolean;

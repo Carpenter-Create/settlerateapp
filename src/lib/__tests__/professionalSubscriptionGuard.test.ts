@@ -1,25 +1,25 @@
 /**
- * Compatibility proof: `@/lib/professionalSubscriptionGuard` re-exports canonical core.
+ * Final architecture proof: `@settlerate/core/subscription-guard`.
  * Full coverage: packages/core/src/checkout/professionalSubscriptionGuard.test.ts
  */
 import { describe, expect, it } from "vitest";
 import {
   billingRowBlocksCheckout,
   checkoutIdempotencyKey,
-} from "@/lib/professionalSubscriptionGuard";
+} from "@settlerate/core/subscription-guard";
 
-describe("professionalSubscriptionGuard app compatibility shim", () => {
-  it("resolves guard helpers via @/lib re-export", () => {
+describe("professionalSubscriptionGuard canonical package import", () => {
+  it("resolves guard helpers via package subpath", () => {
     expect(
       billingRowBlocksCheckout(
         {
-          price_id: "price_professional",
           stripe_subscription_id: "sub_1",
           subscription_status: "active",
+          price_id: "price_pro",
         },
-        (id) => id === "price_professional"
+        (priceId) => priceId === "price_pro"
       )
     ).toBe(true);
-    expect(checkoutIdempotencyKey("user_1", "price_x")).toBe("checkout_user_1_price_x");
+    expect(checkoutIdempotencyKey("user", "price")).toBe("checkout_user_price");
   });
 });

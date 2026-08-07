@@ -1,5 +1,5 @@
 /**
- * Compatibility proof: `@/lib/checkoutMaintenance` re-exports canonical core.
+ * Final architecture proof: `@settlerate/core/checkout-maintenance`.
  * Full coverage: packages/core/src/checkout/checkoutMaintenance.test.ts
  */
 import { describe, expect, it } from "vitest";
@@ -7,10 +7,10 @@ import {
   CHECKOUT_MAINTENANCE_CODE,
   checkoutMaintenancePayload,
   isCheckoutMaintenanceEnabled,
-} from "@/lib/checkoutMaintenance";
+} from "@settlerate/core/checkout-maintenance";
 
-describe("checkoutMaintenance app compatibility shim", () => {
-  it("resolves enable parsing and payload via @/lib re-export", () => {
+describe("checkoutMaintenance canonical package import", () => {
+  it("resolves enable parsing and payload via package subpath", () => {
     expect(isCheckoutMaintenanceEnabled("true")).toBe(true);
     expect(isCheckoutMaintenanceEnabled("maybe")).toBe(false);
     expect(checkoutMaintenancePayload()).toEqual({

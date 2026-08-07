@@ -11,7 +11,7 @@
  *
  * Kept pure (accepts the raw env values as arguments) so it stays
  * independently unit-testable, matching the pattern in
- * `src/lib/checkoutMaintenance.ts` and `src/lib/edgeFunctionUrl.ts`.
+ * `@settlerate/core/checkout-maintenance` and `src/lib/edgeFunctionUrl.ts`.
  */
 
 export interface ClientEnv {

@@ -1,7 +1,7 @@
 import {
   FREE_SCENARIO_LIMIT,
   type EntitlementStatus,
-} from "@/lib/entitlementContract";
+} from "@settlerate/core/entitlement";
 
 export interface DuplicateScenarioControl {
   allowed: boolean;
