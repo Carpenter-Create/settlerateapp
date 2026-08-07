@@ -38,16 +38,17 @@ accepted; PR 0–6 merged. See
 `docs/adr/0005-shared-package-architecture.md` and
 `docs/EXPORT_CONTRACT.md`.
 
-**Epic 6 — Schema Reconciliation** is **In progress — PR 2A** (ADR 0006
-and ADR 0007 **accepted**; PR 0–1 complete/merged). PR 2A = schema
-provenance / reconstruction blocker. See
+**Epic 6 — Schema Reconciliation** is **In progress — PR 2B** (ADR 0006
+and ADR 0007 **accepted**; PR 0–2A complete/merged). PR 2B = post-
+provenance drift refresh (evidence only). See
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
-`docs/database/SCHEMA_DRIFT_REPORT.md`, and
-`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`. **Do not begin later
-Epic 6 PR 2 slices or Epic 7+ automatically. Do not apply PR 2A SQL to
-production without separate founder authorization.**
+`docs/database/SCHEMA_DRIFT_REPORT.md`,
+`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`, and
+`docs/database/SCHEMA_DRIFT_REFRESH_PR2B.md`. **Do not begin later
+Epic 6 PR 2 slices or Epic 7+ automatically. Do not mutate production
+schema/grants without separate founder authorization.**
 
 ## Prohibited unless explicitly authorized
 

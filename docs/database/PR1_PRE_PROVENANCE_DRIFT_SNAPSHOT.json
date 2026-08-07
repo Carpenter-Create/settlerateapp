@@ -1,0 +1,68 @@
+{
+  "label": "PR1_pre_provenance_baseline",
+  "note": "Frozen snapshot of schema-drift-report.json before PR2B regeneration",
+  "meta": {
+    "generatedAt": "2026-08-07T21:23:23.383Z",
+    "harnessStatus": "reconstruction succeeded",
+    "migrationOnlyStatus": "reconstruction FAILED at 20260112204012_f094f5d3-2c93-436a-96ac-809c5761f37f.sql (expected if public.subscriptions is required before its stub would exist)",
+    "sources": {
+      "harness": true,
+      "migrationOnly": true,
+      "production": true,
+      "types": true
+    }
+  },
+  "summary": {
+    "byClass": {
+      "constraint_index_mismatch": 1,
+      "definition_mismatch": 8,
+      "function_rpc_mismatch": 5,
+      "generated_types_mismatch": 3,
+      "grant_mismatch": 1559,
+      "match": 376,
+      "policy_rls_mismatch": 3,
+      "production_missing_repo_object": 76,
+      "repo_missing_production_object": 256
+    },
+    "bySurface": {
+      "harness": 1070,
+      "migration_only": 1214,
+      "types_vs_production": 3
+    },
+    "highPriorityNonMatchCount": 550,
+    "totalRecords": 2287
+  },
+  "totalRecords": 2287,
+  "nonMatchRecords": 1911,
+  "byClass": {
+    "repo_missing_production_object": 256,
+    "match": 376,
+    "definition_mismatch": 8,
+    "policy_rls_mismatch": 3,
+    "function_rpc_mismatch": 5,
+    "production_missing_repo_object": 76,
+    "constraint_index_mismatch": 1,
+    "grant_mismatch": 1559,
+    "generated_types_mismatch": 3
+  },
+  "nonMatchByClass": {
+    "repo_missing_production_object": 256,
+    "definition_mismatch": 8,
+    "policy_rls_mismatch": 3,
+    "function_rpc_mismatch": 5,
+    "production_missing_repo_object": 76,
+    "constraint_index_mismatch": 1,
+    "grant_mismatch": 1559,
+    "generated_types_mismatch": 3
+  },
+  "nonMatchBySurface": {
+    "migration_only": 1095,
+    "harness": 813,
+    "types_vs_production": 3
+  },
+  "grants": {
+    "total": 1559,
+    "migration_only": 852,
+    "harness": 707
+  }
+}

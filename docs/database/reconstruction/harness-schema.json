@@ -370,6 +370,15 @@
       "type": "PRIMARY KEY"
     },
     {
+      "definition": "UNIQUE (stripe_customer_id)",
+      "name": "profiles_stripe_customer_id_key",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "profiles",
+      "type": "UNIQUE"
+    },
+    {
       "definition": "PRIMARY KEY (id)",
       "name": "saved_comparisons_pkey",
       "referencedSchema": null,
@@ -4355,6 +4364,62 @@
       "schema": "public"
     },
     {
+      "grantee": "anon",
+      "isGrantable": false,
+      "objectName": "subscriptions",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "public"
+    },
+    {
+      "grantee": "anon",
+      "isGrantable": false,
+      "objectName": "subscriptions",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "anon",
+      "isGrantable": false,
+      "objectName": "subscriptions",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "public"
+    },
+    {
+      "grantee": "anon",
+      "isGrantable": false,
+      "objectName": "subscriptions",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "anon",
+      "isGrantable": false,
+      "objectName": "subscriptions",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "public"
+    },
+    {
+      "grantee": "anon",
+      "isGrantable": false,
+      "objectName": "subscriptions",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "anon",
+      "isGrantable": false,
+      "objectName": "subscriptions",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "public"
+    },
+    {
       "grantee": "authenticated",
       "isGrantable": false,
       "objectName": "subscriptions",
@@ -5122,6 +5187,13 @@
       "unique": false
     },
     {
+      "definition": "CREATE INDEX idx_profiles_stripe_customer_id ON public.profiles USING btree (stripe_customer_id)",
+      "name": "idx_profiles_stripe_customer_id",
+      "schema": "public",
+      "table": "profiles",
+      "unique": false
+    },
+    {
       "definition": "CREATE INDEX profiles_created_at_idx ON public.profiles USING btree (created_at DESC)",
       "name": "profiles_created_at_idx",
       "schema": "public",
@@ -5131,6 +5203,13 @@
     {
       "definition": "CREATE UNIQUE INDEX profiles_pkey ON public.profiles USING btree (id)",
       "name": "profiles_pkey",
+      "schema": "public",
+      "table": "profiles",
+      "unique": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX profiles_stripe_customer_id_key ON public.profiles USING btree (stripe_customer_id)",
+      "name": "profiles_stripe_customer_id_key",
       "schema": "public",
       "table": "profiles",
       "unique": true
@@ -5199,6 +5278,20 @@
       "unique": false
     },
     {
+      "definition": "CREATE INDEX idx_subscriptions_stripe_subscription_id ON public.subscriptions USING btree (stripe_subscription_id)",
+      "name": "idx_subscriptions_stripe_subscription_id",
+      "schema": "public",
+      "table": "subscriptions",
+      "unique": false
+    },
+    {
+      "definition": "CREATE INDEX idx_subscriptions_user_id ON public.subscriptions USING btree (user_id)",
+      "name": "idx_subscriptions_user_id",
+      "schema": "public",
+      "table": "subscriptions",
+      "unique": false
+    },
+    {
       "definition": "CREATE UNIQUE INDEX subscriptions_pkey ON public.subscriptions USING btree (id)",
       "name": "subscriptions_pkey",
       "schema": "public",
@@ -5211,13 +5304,6 @@
       "schema": "public",
       "table": "subscriptions",
       "unique": true
-    },
-    {
-      "definition": "CREATE INDEX subscriptions_user_id_idx ON public.subscriptions USING btree (user_id)",
-      "name": "subscriptions_user_id_idx",
-      "schema": "public",
-      "table": "subscriptions",
-      "unique": false
     },
     {
       "definition": "CREATE INDEX idx_user_comparisons_created_at ON public.user_comparisons USING btree (created_at DESC)",
@@ -5277,8 +5363,8 @@
     }
   ],
   "meta": {
-    "capturedAt": "2026-08-07T19:22:54.185Z",
-    "gitSha": "7d4d8eae83479117528bf1bfa771c6c10ffcc190",
+    "capturedAt": "2026-08-07T22:34:05.918Z",
+    "gitSha": "25115df474ed1498472a200d7a16303a043d1cba",
     "projectRef": null,
     "readOnly": true,
     "schemas": [
@@ -5715,6 +5801,16 @@
       "withCheck": "(auth.uid() = user_id)"
     },
     {
+      "cmd": "SELECT",
+      "name": "subscriptions_select_own",
+      "permissive": "PERMISSIVE",
+      "qual": "(auth.uid() = user_id)",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "subscriptions",
+      "withCheck": null
+    },
+    {
       "cmd": "INSERT",
       "name": "Users can create their own comparisons",
       "permissive": "PERMISSIVE",
@@ -5877,6 +5973,10 @@
       },
       {
         "file": "20260112073631_1853b0c8-51b4-45b7-b8b2-1d55c64670c4.sql",
+        "status": "applied"
+      },
+      {
+        "file": "20260112193137_restore_subscriptions_profiles_provenance.sql",
         "status": "applied"
       },
       {
@@ -7448,6 +7548,54 @@
           "name": "created_at",
           "ordinalPosition": 3,
           "udtName": "timestamptz"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "stripe_customer_id",
+          "ordinalPosition": 4,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": "'core'::text",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "plan_key",
+          "ordinalPosition": 5,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": "'active'::text",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "plan_status",
+          "ordinalPosition": 6,
+          "udtName": "text"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "current_period_end",
+          "ordinalPosition": 7,
+          "udtName": "timestamptz"
         }
       ],
       "name": "profiles",
@@ -7812,8 +7960,8 @@
           "identityGeneration": null,
           "isGenerated": false,
           "isIdentity": false,
-          "isNullable": true,
-          "name": "stripe_customer_id",
+          "isNullable": false,
+          "name": "stripe_subscription_id",
           "ordinalPosition": 3,
           "udtName": "text"
         },
@@ -7824,8 +7972,8 @@
           "identityGeneration": null,
           "isGenerated": false,
           "isIdentity": false,
-          "isNullable": true,
-          "name": "stripe_subscription_id",
+          "isNullable": false,
+          "name": "stripe_customer_id",
           "ordinalPosition": 4,
           "udtName": "text"
         },
@@ -7836,8 +7984,8 @@
           "identityGeneration": null,
           "isGenerated": false,
           "isIdentity": false,
-          "isNullable": true,
-          "name": "status",
+          "isNullable": false,
+          "name": "plan_key",
           "ordinalPosition": 5,
           "udtName": "text"
         },
@@ -7848,22 +7996,10 @@
           "identityGeneration": null,
           "isGenerated": false,
           "isIdentity": false,
-          "isNullable": true,
-          "name": "plan_key",
+          "isNullable": false,
+          "name": "status",
           "ordinalPosition": 6,
           "udtName": "text"
-        },
-        {
-          "dataType": "boolean",
-          "default": "false",
-          "generationExpression": null,
-          "identityGeneration": null,
-          "isGenerated": false,
-          "isIdentity": false,
-          "isNullable": false,
-          "name": "cancel_at_period_end",
-          "ordinalPosition": 7,
-          "udtName": "bool"
         },
         {
           "dataType": "timestamp with time zone",
@@ -7874,7 +8010,31 @@
           "isIdentity": false,
           "isNullable": true,
           "name": "current_period_end",
+          "ordinalPosition": 7,
+          "udtName": "timestamptz"
+        },
+        {
+          "dataType": "boolean",
+          "default": "false",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "cancel_at_period_end",
           "ordinalPosition": 8,
+          "udtName": "bool"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "created_at",
+          "ordinalPosition": 9,
           "udtName": "timestamptz"
         },
         {
@@ -7886,12 +8046,12 @@
           "isIdentity": false,
           "isNullable": false,
           "name": "updated_at",
-          "ordinalPosition": 9,
+          "ordinalPosition": 10,
           "udtName": "timestamptz"
         }
       ],
       "name": "subscriptions",
-      "rlsEnabled": false,
+      "rlsEnabled": true,
       "rlsForced": false,
       "schema": "public"
     },
@@ -8371,6 +8531,19 @@
       "functionSchema": "public",
       "level": "ROW",
       "name": "trg_protect_admin_subscriptions_upd",
+      "schema": "public",
+      "table": "subscriptions",
+      "timing": "BEFORE"
+    },
+    {
+      "enabled": true,
+      "events": [
+        "UPDATE"
+      ],
+      "functionName": "tg_set_updated_at",
+      "functionSchema": "public",
+      "level": "ROW",
+      "name": "update_subscriptions_updated_at",
       "schema": "public",
       "table": "subscriptions",
       "timing": "BEFORE"

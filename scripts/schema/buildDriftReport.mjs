@@ -117,9 +117,12 @@ function compareAgainstProduction(production, reconstruction, surfaceLabel) {
 /**
  * Informational (non-classified) delta between the two repo reconstructions
  * themselves — neither side is "production", so this is not run through the
- * ADR 0006 §3 classification scheme. Its purpose is purely to make the
- * TRUE-migration vs TEST-HARNESS distinction legible (e.g. surfacing that
- * `public.subscriptions` exists only because of the harness stub).
+ * ADR 0006 §3 classification scheme. Its purpose is to make the
+ * TRUE-migration vs TEST-HARNESS distinction legible.
+ *
+ * Post–Epic 6 PR 2A: migration-only reconstructs successfully without a
+ * product-table `subscriptions` stub. Remaining harness-only deltas (if any)
+ * are non-canonical for repository drift.
  */
 function compareHarnessStubDelta(migrationOnly, harness) {
   if (!migrationOnly || !harness) return null;
@@ -135,7 +138,10 @@ function compareHarnessStubDelta(migrationOnly, harness) {
     ...comparePolicies(migrationOnly.policies, harness.policies, label).filter((r) => r.class !== DRIFT_CLASSES.MATCH),
     ...compareGrants(migrationOnly.grants, harness.grants, label).filter((r) => r.class !== DRIFT_CLASSES.MATCH),
   ];
-  return records.map((r) => ({ ...r, note: "TEST-HARNESS-only object/definition — introduced by supabase/tests/00_auth_stub.sql, not by any migration." }));
+  return records.map((r) => ({
+    ...r,
+    note: "Harness vs migration-only delta (informational). Not canonical repository drift; migration_only is the principal repo surface after PR 2A.",
+  }));
 }
 
 const HIGH_PRIORITY_CANDIDATE_NAMES = [
@@ -191,13 +197,22 @@ function renderReconstructionEvidence(meta, migrationOnly, harness) {
     lines.push("_Artifact missing._");
   } else if (h?.success) {
     lines.push("- Result: **SUCCEEDED**");
-    lines.push(
-      "- Why harness can succeed when migration-only fails: `supabase/tests/00_auth_stub.sql` supplies prerequisite state (notably `public.subscriptions`) that is **not** created by any migration."
-    );
+    if (mo?.success) {
+      lines.push(
+        "- Post–PR 2A: migration-only also succeeds; harness is retained for comparison only and is **not** the canonical repository surface."
+      );
+      lines.push(
+        "- `supabase/tests/00_auth_stub.sql` no longer creates a product-table `public.subscriptions` stub (removed in PR 2A)."
+      );
+    } else {
+      lines.push(
+        "- Why harness can succeed when migration-only fails: `supabase/tests/00_auth_stub.sql` may supply prerequisite auth/test state that is **not** created by migrations."
+      );
+      lines.push(
+        "- This does **not** prove that git migrations alone can rebuild an equivalent catalog."
+      );
+    }
     lines.push(`- Tables reconstructed: ${harness.tables?.length ?? 0}`);
-    lines.push(
-      "- This does **not** prove that git migrations alone can rebuild an equivalent catalog."
-    );
   } else {
     lines.push("- Result: **FAILED**");
     lines.push(`- Failed at: \`${h?.failedAtMigration ?? "unknown"}\``);
@@ -342,7 +357,7 @@ function renderMarkdown({ meta, summary, records, harnessStubDelta, productionSu
   lines.push("## TEST-HARNESS-only delta (informational, not classified)");
   lines.push("");
   lines.push(
-    "Objects/definitions present in the harness reconstruction but not in the TRUE migration-only reconstruction, or vice versa. This is expected and intentional (the harness stub exists so CI's ephemeral Postgres can run) — it is **not** production drift evidence on its own. Harness reconstruction succeeds only because the test harness supplies prerequisite state."
+    "Informational delta between harness and migration-only reconstructions. After PR 2A, migration-only is the principal repository surface; harness-only differences are **not** canonical production drift. Empty delta means the two reconstructions agree structurally for compared categories."
   );
   lines.push("");
   if (!harnessStubDelta) {
@@ -399,7 +414,7 @@ export function buildDriftReport() {
     migrationOnlyStatus: migrationOnly
       ? migrationOnly.reconstruction?.success
         ? "reconstruction succeeded"
-        : `reconstruction FAILED at ${migrationOnly.reconstruction?.failedAtMigration ?? "unknown step"} (expected if public.subscriptions is required before its stub would exist)`
+        : `reconstruction FAILED at ${migrationOnly.reconstruction?.failedAtMigration ?? "unknown step"}`
       : "not run — run `npm run schema:reconstruct -- --mode migration_only`",
     harnessStatus: harness
       ? harness.reconstruction?.success
