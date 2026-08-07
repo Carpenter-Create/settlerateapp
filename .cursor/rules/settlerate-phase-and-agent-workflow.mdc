@@ -28,18 +28,18 @@ a separate founder-authorized operational action.
 production** (activated and verified 2026-08-06). See
 `docs/adr/0003-observability-policy.md`.
 
-**Epic 4 — RLS Security Test Expansion** is **In progress — PR 2**.
-ADR 0004 accepted; PR 1 complete/merged (inventory + core matrix). PR 2
-covers remaining relations and administrative paths. Do not change
-policies/migrations. See `docs/adr/0004-rls-testing-standard.md` and
-`docs/security/RLS_COVERAGE_INVENTORY.md`. **Do not begin Epic 4 PR 3
-or Epic 5+ automatically.**
+**Epic 4 — RLS Security Test Expansion** is **complete on `main`**.
+ADR 0004 accepted; PR 0–2 merged; PR 3 not required (CI already runs
+`npm run test:entitlement-sql`; acceptance criteria met in PRs 1–2). See
+`docs/adr/0004-rls-testing-standard.md` and
+`docs/security/RLS_COVERAGE_INVENTORY.md`. **Do not begin Epic 5+
+automatically.**
 
 ## Prohibited unless explicitly authorized
 
 - Supabase Auth Dashboard redirect-allowlist changes without founder authorization
 - Changing production Sentry DSNs, project routing, or capture scope without founder authorization
-- Beginning Epic 4 PR 3 (CI gate / gap closure) or Epic 5+ ahead of sequence / dependency gates
+- Beginning Epic 5+ (including ADR 0005 / shared core package work) ahead of sequence / dependency gates
 - Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
 - Next.js platform migration

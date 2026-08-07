@@ -206,41 +206,47 @@ and do not reopen Epic 3. Do not begin Epic 4 automatically.
 
 ## Epic 4 — RLS Security Test Expansion
 
-**Status:** **In progress — PR 2.** ADR 0004 accepted (PR 0 merged). PR 1
-complete and merged (inventory + core user-owned matrix). PR 2 covers
-remaining relation classes (export/share, billing support, roles/admin,
-public-ish, storage) and administrative paths. PR 3 remains unauthorized.
-Authority: `docs/adr/0004-rls-testing-standard.md`,
+**Status:** **Complete on `main`.** ADR 0004 accepted (PR 0 merged). PR 1
+complete and merged (inventory + core user-owned matrix). PR 2 complete
+and merged (remaining relation classes + administrative paths). PR 3 is
+**not required** — the full RLS suite is already gated in GitHub Actions
+via `npm run test:entitlement-sql` (`.github/workflows/ci.yml`), and all
+acceptance criteria below were satisfied by PRs 1–2. Authority:
+`docs/adr/0004-rls-testing-standard.md`,
 `docs/security/RLS_COVERAGE_INVENTORY.md`.
 
 **Goal:** Expand automated RLS security tests so owner, non-owner, and
 administrative isolation paths are proven in CI against the repository
 migration chain — before Epic 6 schema reconciliation.
 
-**Dependency:** complete before Epic 6 schema reconciliation.
+**Dependency:** complete before Epic 6 schema reconciliation (**met**).
 
 ### Acceptance criteria (binding)
 
 Epic 4 is complete only when all of the following are true:
 
-1. ADR 0004 is accepted and remains the binding RLS testing standard.
+1. ADR 0004 is accepted and remains the binding RLS testing standard. **Met.**
 2. An explicit coverage inventory exists for RLS-enabled in-scope relations
-   derived from current migrations (per ADR 0004 §4).
+   derived from current migrations (per ADR 0004 §4). **Met** —
+   `docs/security/RLS_COVERAGE_INVENTORY.md`.
 3. Automated SQL tests assert, for each in-scope relation, the applicable
    owner / non-owner authenticated / anon / administrative matrix
-   (ADR 0004 §5).
+   (ADR 0004 §5). **Met** — `epic4_pr1_core_rls.sql` +
+   `epic4_pr2_remaining_rls.sql`.
 4. Tests run against ephemeral Postgres applying the repository migration
    chain (same family as `npm run test:entitlement-sql`); they are not
-   satisfied by production probing or client-only mocks.
+   satisfied by production probing or client-only mocks. **Met.**
 5. The RLS suite is gated in CI (via `test:entitlement-sql` and/or a
-   dedicated companion script invoked by CI).
+   dedicated companion script invoked by CI). **Met** —
+   `.github/workflows/ci.yml` runs `npm run test:entitlement-sql`.
 6. No RLS policy was weakened to obtain green CI; confirmed isolation
    defects were fixed only under separately authorized implementation PRs
-   that preserve `docs/SECURITY_MODEL.md` isolation intent.
+   that preserve `docs/SECURITY_MODEL.md` isolation intent. **Met** —
+   Epic 4 PRs were test/governance only (no policy/migration changes).
 7. Phase 8.1 validation suite remains green:
    `npm run lint`, `npm run typecheck`, `npm run verify:benchmarks`,
    `npm run test:run`, `npm run build`, plus the SQL/RLS harness
-   command(s).
+   command(s). **Met.**
 
 ### Prohibited in Epic 4
 
@@ -262,15 +268,18 @@ Epic 4 is complete only when all of the following are true:
 |----|--------|--------|
 | **PR 0** | ADR 0004 + minimum governance status updates | Complete / merged |
 | **PR 1** | Coverage inventory + harness wiring; owner / non-owner / anon matrix for core user-owned tables | Complete / merged |
-| **PR 2** | Remaining in-scope relations + administrative path assertions | **In progress** (this slice) |
-| **PR 3** | CI gate completion / acceptance-criteria gap closure (if needed) | Not authorized — requires separate founder authorization |
+| **PR 2** | Remaining in-scope relations + administrative path assertions | Complete / merged |
+| **PR 3** | CI gate completion / acceptance-criteria gap closure (if needed) | **Not required** — CI gate and acceptance criteria completed in PRs 1–2 |
 
-**Epic 4 is in progress (PR 2). Do not begin PR 3 or Epic 5+
-automatically.**
+**Epic 4 is complete on `main`. Do not begin Epic 5+ automatically.**
 
 ---
 
 ## Epic 5 — Shared Core Package
+
+**Status:** Not started. Requires separate founder authorization.
+**Next gated step when authorized:** ADR-first planning (ADR 0005 —
+shared package architecture) before implementation.
 
 Allowed when authorized: create `packages/core` shared by frontend and backend
 for entitlement contracts, checkout maintenance, subscription guards, Stripe

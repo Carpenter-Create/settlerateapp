@@ -204,7 +204,25 @@ npm run build
 |----|--------|--------|
 | **PR 0** | This ADR + minimum governance status updates (acceptance criteria, PR sequence, roadmap next-step correction) | Complete / merged |
 | **PR 1** | RLS coverage inventory + harness wiring; owner / non-owner / anon matrix for core user-owned tables | Complete / merged |
-| **PR 2** | Remaining in-scope relations (export/share, billing support, roles/admin, public-ish, storage as applicable) + administrative path assertions | **In progress** |
-| **PR 3** | CI gate completion for the RLS suite (if not fully landed in PR 1–2); gap closure against the acceptance criteria | Not authorized — requires separate founder authorization |
+| **PR 2** | Remaining in-scope relations (export/share, billing support, roles/admin, public-ish, storage as applicable) + administrative path assertions | Complete / merged |
+| **PR 3** | CI gate completion for the RLS suite (if not fully landed in PR 1–2); gap closure against the acceptance criteria | **Not required** — CI gate and acceptance criteria completed in PRs 1–2 |
 
-**Epic 4 status:** In progress — PR 2. Do not begin PR 3 automatically.
+**Epic 4 status:** Complete on `main`. Do not begin Epic 5+ automatically.
+
+## Implementation / closure record
+
+- **PR 0:** ADR 0004 + governance status (merged).
+- **PR 1:** `docs/security/RLS_COVERAGE_INVENTORY.md`, catalog fingerprint
+  drift gate, `supabase/tests/epic4_pr1_core_rls.sql` wired into
+  `npm run test:entitlement-sql` (merged as PR #46).
+- **PR 2:** `supabase/tests/epic4_pr2_remaining_rls.sql` for remaining
+  inventory classes and administrative paths; harness storage test-only
+  grants; runs after Epic 1 approved bootstrap admin fixture (merged as
+  PR #47; merge commit `66d587409f1cd54edcd09bd9340158e1edbc3e98`).
+- **PR 3:** Not required. `.github/workflows/ci.yml` already runs
+  `npm run test:entitlement-sql`, which executes the full Epic 4 RLS suite
+  (inventory gate + PR 1 + PR 2 matrices). All Epic 4 acceptance criteria
+  in `docs/PHASE8_1_EPIC_BOUNDARIES.md` are satisfied without a further
+  implementation PR.
+- **Preserve note:** Epic 4 did not modify production RLS policies,
+  migrations, or application authorization logic — test expansion only.
