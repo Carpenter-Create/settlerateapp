@@ -9,7 +9,6 @@
  * - Concurrent free-tier limit + TS↔SQL entitlement parity
  */
 import { execSync } from "node:child_process";
-import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -215,8 +214,9 @@ async function runConcurrentLimitTest(client) {
 }
 
 async function runParityTests(client) {
+  // Canonical implementation (Epic 5 PR 2) — not the compatibility shims.
   const { evaluateEntitlement, isFeatureAllowed } = await import(
-    join(root, "src/lib/entitlementContract.ts")
+    join(root, "packages/core/src/entitlement/entitlementContract.ts")
   );
   const { resolveBillingRow, resolveEntitlementInput } = await import(
     join(root, "src/lib/__fixtures__/resolveEntitlementCase.ts")
@@ -318,22 +318,63 @@ async function runParityTests(client) {
   process.stdout.write(`Parity OK (${cases.length} fixtures × features)\n`);
 }
 
-function verifyDenoMirror() {
-  const src = readFileSync(join(root, "src/lib/entitlementContract.ts"), "utf8");
-  const deno = readFileSync(
-    join(root, "supabase/functions/_shared/entitlementContract.ts"),
-    "utf8"
-  );
-  const srcHash = createHash("sha256").update(src).digest("hex");
-  const denoHash = createHash("sha256").update(deno).digest("hex");
-  if (srcHash !== denoHash) {
-    throw new Error("entitlementContract.ts Deno mirror is out of sync with src/lib");
+function stripTsComments(source) {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "")
+    .trim();
+}
+
+function assertPureReExport(filePath, expectedFrom) {
+  const body = stripTsComments(readFileSync(filePath, "utf8"));
+  const match = /^export\s+\*\s+from\s+["']([^"']+)["']\s*;?\s*$/.exec(body);
+  if (!match) {
+    throw new Error(`${filePath} must be a pure re-export (no business logic)`);
   }
-  process.stdout.write("Deno mirror sync OK\n");
+  if (match[1] !== expectedFrom) {
+    throw new Error(
+      `${filePath}: expected re-export from ${expectedFrom}, got ${match[1]}`
+    );
+  }
+}
+
+/**
+ * Source-of-truth gate (replaces obsolete byte-identical dual-tree hash).
+ * App + Edge paths must remain pure shims; business logic lives only in core.
+ */
+function verifyEntitlementSourceOfTruth() {
+  const canonical = join(
+    root,
+    "packages/core/src/entitlement/entitlementContract.ts"
+  );
+  const appShim = join(root, "src/lib/entitlementContract.ts");
+  const edgeShim = join(
+    root,
+    "supabase/functions/_shared/entitlementContract.ts"
+  );
+
+  const canonicalSrc = readFileSync(canonical, "utf8");
+  if (!canonicalSrc.includes("export const FREE_SCENARIO_LIMIT = 2")) {
+    throw new Error("canonical entitlementContract missing FREE_SCENARIO_LIMIT");
+  }
+  if (!canonicalSrc.includes("export function evaluateEntitlement")) {
+    throw new Error("canonical entitlementContract missing evaluateEntitlement");
+  }
+  if (/^export\s+\*\s+from/m.test(stripTsComments(canonicalSrc))) {
+    throw new Error("canonical entitlementContract must not be a re-export shim");
+  }
+
+  assertPureReExport(appShim, "@settlerate/core/entitlement");
+  assertPureReExport(
+    edgeShim,
+    "../../../packages/core/src/entitlement/entitlementContract.ts"
+  );
+
+  process.stdout.write("Entitlement source-of-truth (shims → core) OK\n");
 }
 
 async function main() {
-  verifyDenoMirror();
+  verifyEntitlementSourceOfTruth();
   try {
     await ensureDockerPostgres();
 

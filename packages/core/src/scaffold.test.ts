@@ -1,6 +1,6 @@
 /**
- * Node/Vitest resolution proof for @settlerate/core (Epic 5 PR 1).
- * Imports only the inert scaffold surface — not a business contract test.
+ * Node/Vitest resolution proof for @settlerate/core root entry.
+ * Entitlement behavioral tests live under src/entitlement/.
  */
 import { describe, expect, it } from "vitest";
 import {
