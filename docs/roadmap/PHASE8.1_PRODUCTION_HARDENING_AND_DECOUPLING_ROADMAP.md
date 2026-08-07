@@ -41,9 +41,10 @@ AWS migration is intentionally deferred until a forcing reason exists.
 
 ### Epic 4 --- RLS Security Test Expansion
 
-**Status: In progress — PR 1** (ADR 0004; inventory + core user-owned
-owner/non-owner/anon matrix; see `docs/adr/0004-rls-testing-standard.md`
-and `docs/security/RLS_COVERAGE_INVENTORY.md`).
+**Status: In progress — PR 2** (ADR 0004; PR 1 complete; remaining
+relations + administrative paths; see
+`docs/adr/0004-rls-testing-standard.md` and
+`docs/security/RLS_COVERAGE_INVENTORY.md`).
 
 -   Validate all RLS policies.
 -   Test owner access.
@@ -131,11 +132,10 @@ deployment process documented - backups verified - monitoring available
 
 ## Next Approved Execution Step
 
-Epic 1–3 are complete. Epic 4 is **in progress — PR 1** (core RLS matrix +
-inventory).
+Epic 1–3 are complete. Epic 4 is **in progress — PR 2** (remaining
+relations + administrative paths; PR 1 complete/merged).
 
 **Next implementation step (requires separate founder authorization):**
-Epic 4 PR 2 — remaining in-scope relations + administrative path
-assertions.
+Epic 4 PR 3 — CI gate / acceptance-criteria gap closure (if needed).
 
-Do not begin Epic 4 PR 2–3, Epic 5, or later epics automatically.
+Do not begin Epic 4 PR 3, Epic 5, or later epics automatically.

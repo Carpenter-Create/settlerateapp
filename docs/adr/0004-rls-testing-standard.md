@@ -203,8 +203,8 @@ npm run build
 | PR | Scope | Status |
 |----|--------|--------|
 | **PR 0** | This ADR + minimum governance status updates (acceptance criteria, PR sequence, roadmap next-step correction) | Complete / merged |
-| **PR 1** | RLS coverage inventory + harness wiring; owner / non-owner / anon matrix for core user-owned tables | **In progress** |
-| **PR 2** | Remaining in-scope relations (export/share, billing support, roles/admin, public-ish, storage as applicable) + administrative path assertions | Not authorized — requires separate founder authorization |
+| **PR 1** | RLS coverage inventory + harness wiring; owner / non-owner / anon matrix for core user-owned tables | Complete / merged |
+| **PR 2** | Remaining in-scope relations (export/share, billing support, roles/admin, public-ish, storage as applicable) + administrative path assertions | **In progress** |
 | **PR 3** | CI gate completion for the RLS suite (if not fully landed in PR 1–2); gap closure against the acceptance criteria | Not authorized — requires separate founder authorization |
 
-**Epic 4 status:** In progress — PR 1. Do not begin PR 2–3 automatically.
+**Epic 4 status:** In progress — PR 2. Do not begin PR 3 automatically.
