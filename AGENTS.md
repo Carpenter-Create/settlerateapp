@@ -52,17 +52,15 @@ and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 production** (activated and verified 2026-08-06). See
 `docs/adr/0003-observability-policy.md`.
 
-**Epic 4 (RLS Security Test Expansion)** is **In progress — PR 2**.
-ADR 0004 is accepted. PR 1 is complete and merged (inventory + core
-user-owned matrix). PR 2 adds remaining relation classes and
-administrative path assertions
-(`supabase/tests/epic4_pr2_remaining_rls.sql` via
-`npm run test:entitlement-sql`). Do **not** change policies/migrations,
-begin PR 3, or begin Epic 5+ automatically. Authority:
-`docs/adr/0004-rls-testing-standard.md` and
+**Epic 4 (RLS Security Test Expansion)** is **complete on `main`**.
+ADR 0004 is accepted. PR 0–2 merged (inventory + core matrix + remaining
+relations / administrative paths). PR 3 is **not required** — CI already
+gates the full RLS suite via `npm run test:entitlement-sql` in
+`.github/workflows/ci.yml`, and all Epic 4 acceptance criteria were met
+in PRs 1–2. Authority: `docs/adr/0004-rls-testing-standard.md` and
 `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 **Epic 5 and later have not begun and still require separate explicit
-authorization.**
+authorization** (next gated step: Epic 5 ADR-first planning / ADR 0005).
 
 Do not begin AWS / Cloudflare / Next.js platform migration unless explicitly authorized.
 

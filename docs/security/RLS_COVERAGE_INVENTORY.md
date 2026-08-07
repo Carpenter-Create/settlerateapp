@@ -2,7 +2,7 @@
 
 **Authority:** `docs/adr/0004-rls-testing-standard.md`  
 **Generated from:** ephemeral Postgres after full repository migration chain + harness FORCE on `public.scenarios`  
-**Epic 4 PR:** PR 2 (remaining relations + administrative paths)  
+**Epic 4 status:** Complete (PR 0–2 merged; PR 3 not required)  
 **Date:** 2026-08-06  
 **Catalog fingerprint (SHA-256):** `89b3814561919ca98f6f3a8674d74d26ce545be694a61074a38f184f20b73412`  
 **Fingerprint fixture:** `supabase/tests/fixtures/epic4_pr1_rls_catalog.sha256`
@@ -12,9 +12,10 @@
 - RLS-enabled relations: **19**
 - Policies: **55**
 - PR 1 behavioral coverage: core user-owned class (`supabase/tests/epic4_pr1_core_rls.sql`) — complete / merged
-- PR 2 behavioral coverage: export/share, billing/entitlement support, roles/admin, public-ish, storage (+ admin path matrix) — `supabase/tests/epic4_pr2_remaining_rls.sql`
-- PR 3: unauthorized
+- PR 2 behavioral coverage: export/share, billing/entitlement support, roles/admin, public-ish, storage (+ admin path matrix) — `supabase/tests/epic4_pr2_remaining_rls.sql` — complete / merged
+- PR 3: **not required** (CI already gates `npm run test:entitlement-sql`; acceptance criteria met in PRs 1–2)
 - Drift gate: `supabase/tests/epic4_pr1_core_rls.sql` compares live catalog fingerprint to the committed fixture (not self-derived).
+- CI: `.github/workflows/ci.yml` runs the full suite via `npm run test:entitlement-sql`.
 
 ## Classification
 
