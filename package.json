@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -13,11 +16,14 @@
     "test:run": "vitest run",
     "test:watch": "vitest watch",
     "test:export-parity-deno": "deno test --allow-read --no-check supabase/functions/generate-pdf/mapDerivedForExport_test.ts",
+    "test:core-deno-scaffold": "deno test --allow-read --no-check --config packages/core/deno.json packages/core/deno/scaffold_test.ts",
     "test:entitlement-sql": "node scripts/test-entitlement-sql.mjs",
-    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
-    "verify:benchmarks": "node scripts/verify-benchmarks.mjs"
+    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p packages/core/tsconfig.json --noEmit && npm run verify:core-boundaries",
+    "verify:benchmarks": "node scripts/verify-benchmarks.mjs",
+    "verify:core-boundaries": "node scripts/verify-core-boundaries.mjs"
   },
   "dependencies": {
+    "@settlerate/core": "*",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",

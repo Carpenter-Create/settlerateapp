@@ -56,10 +56,10 @@ production** (activated and verified 2026-08-06). See
 ADR 0004 is accepted. PR 0–2 merged; PR 3 not required. Authority:
 `docs/adr/0004-rls-testing-standard.md`.
 
-**Epic 5 (Shared Core Package)** is **In progress — PR 0** (ADR 0005
-accepted). PR 0 is documentation/governance only — it does **not** create
-`packages/core`, modify workspaces, or move runtime code. Epic 5
-implementation PRs (scaffold and extractions) remain unauthorized.
+**Epic 5 (Shared Core Package)** is **In progress — PR 1** (ADR 0005
+accepted; PR 0 complete/merged). PR 1 scaffolds npm workspaces and
+`packages/core` (`@settlerate/core`) with **no business logic migrated**
+and **no app/Edge runtime consumers**. PR 2–6 remain unauthorized.
 Authority: `docs/adr/0005-shared-package-architecture.md` and
 `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 **Epic 6 and later have not begun and still require separate explicit

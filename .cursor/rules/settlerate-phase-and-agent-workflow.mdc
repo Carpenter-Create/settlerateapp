@@ -33,17 +33,17 @@ ADR 0004 accepted; PR 0–2 merged; PR 3 not required. See
 `docs/adr/0004-rls-testing-standard.md` and
 `docs/security/RLS_COVERAGE_INVENTORY.md`.
 
-**Epic 5 — Shared Core Package** is **In progress — PR 0**. ADR 0005
-accepted (architecture only). Do not create `packages/core`, modify
-workspaces, or move runtime code until a later Epic 5 PR is authorized.
-See `docs/adr/0005-shared-package-architecture.md`. **Do not begin Epic 5
-implementation PRs or Epic 6+ automatically.**
+**Epic 5 — Shared Core Package** is **In progress — PR 1**. ADR 0005
+accepted; PR 0 complete/merged. PR 1 scaffolds `@settlerate/core` with no
+business migration and no app/Edge runtime consumers. See
+`docs/adr/0005-shared-package-architecture.md`. **Do not begin Epic 5
+PR 2–6 or Epic 6+ automatically.**
 
 ## Prohibited unless explicitly authorized
 
 - Supabase Auth Dashboard redirect-allowlist changes without founder authorization
 - Changing production Sentry DSNs, project routing, or capture scope without founder authorization
-- Beginning Epic 5 implementation (scaffold / code moves) or Epic 6+ ahead of sequence / dependency gates
+- Beginning Epic 5 PR 2–6 (module extraction / shim removal) or Epic 6+ ahead of sequence / dependency gates
 - Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
 - Next.js platform migration

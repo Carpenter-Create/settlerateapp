@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "@settlerate/core": "./src/index.ts"
+  },
+  "compilerOptions": {
+    "lib": ["deno.ns", "es2020"],
+    "strict": true
+  }
+}
