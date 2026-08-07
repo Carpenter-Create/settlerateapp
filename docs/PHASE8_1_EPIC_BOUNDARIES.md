@@ -277,11 +277,12 @@ Epic 4 is complete only when all of the following are true:
 
 ## Epic 5 — Shared Core Package
 
-**Status:** **In progress — PR 2** (entitlement extraction). ADR 0005
-accepted; PR 0 complete/merged; PR 1 scaffold complete/merged. PR 2 moves
-the entitlement contract into `@settlerate/core/entitlement` with
-compatibility re-export shims at the previous app/Edge paths.
-PR 3–6 remain unauthorized. Epic 6+ remain unauthorized.
+**Status:** **In progress — PR 3** (shared pure contracts). ADR 0005
+accepted; PR 0–2 complete/merged. PR 3 moves checkout maintenance,
+professional subscription guards, observability redaction, and pure
+billing-snapshot mappers into `@settlerate/core` (orchestration
+`resolveSubscriptionBillingSnapshot` remains runtime-only).
+PR 4–6 remain unauthorized. Epic 6+ remain unauthorized.
 Authority: `docs/adr/0005-shared-package-architecture.md`.
 
 **Goal:** Create `packages/core` so deterministic, environment-neutral
@@ -308,8 +309,8 @@ the ADR §11 sequence.
 
 ### Prohibited in Epic 5
 
-- Migrating non-entitlement business modules in PR 2 (entitlement only);
-  PR 1 remains scaffold-only historically
+- Migrating PR 4+ modules (customer-resolve, origin helpers, Edge
+  observability helpers, export relocation) ahead of authorization
 - Changing export field semantics (`docs/EXPORT_CONTRACT.md` fence)
 - Changing mortgage formulas, benchmarks, entitlement outcomes, plan
   mappings, scenario limits, billing interpretation, or checkout
@@ -336,14 +337,14 @@ the ADR §11 sequence.
 |----|--------|--------|
 | **PR 0** | ADR 0005 + minimum governance status updates | Complete / merged |
 | **PR 1** | `packages/core` workspace scaffold (no behavioral migration) | Complete / merged |
-| **PR 2** | Entitlement contract extraction | **In progress** (this slice) |
-| **PR 3** | Checkout maintenance, guards, redaction, pure billing-snapshot mappers (not resolve orchestration) | Not authorized |
+| **PR 2** | Entitlement contract extraction | Complete / merged |
+| **PR 3** | Checkout maintenance, guards, redaction, pure billing-snapshot mappers (not resolve orchestration) | **In progress** (this slice) |
 | **PR 4** | Pure customer-resolve helpers (not checkout orchestration), origin helpers, deterministic Edge observability (not `generateRequestId`) | Not authorized |
 | **PR 5** | Export-related relocation if justified and behavior-preserving | Not authorized |
 | **PR 6** | Remove shims; Epic 5 closure | Not authorized |
 
-**Epic 5 is in progress (PR 2 — entitlement extraction). Do not begin
-PR 3–6 or Epic 6+ automatically.**
+**Epic 5 is in progress (PR 3 — shared pure contracts). Do not begin
+PR 4–6 or Epic 6+ automatically.**
 
 ---
 

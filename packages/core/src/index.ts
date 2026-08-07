@@ -3,12 +3,15 @@
  *
  * Authority: docs/adr/0005-shared-package-architecture.md
  *
- * Stable surfaces:
- * - `@settlerate/core` — curated root re-exports
- * - `@settlerate/core/entitlement` — entitlement contract (preferred domain entry)
+ * Prefer domain subpaths for new consumers. Root re-exports curated named
+ * symbols for convenience — never a wildcard package export map.
  *
- * Prefer domain subpaths for new consumers. Root re-exports entitlement for
- * convenience; they are the same implementation.
+ * Stable surfaces:
+ * - `@settlerate/core/entitlement`
+ * - `@settlerate/core/checkout-maintenance`
+ * - `@settlerate/core/subscription-guard`
+ * - `@settlerate/core/observability-redaction`
+ * - `@settlerate/core/billing-snapshot` (pure mappers only)
  */
 
 /** Inert resolution marker (PR 1). Harmless alongside real contracts. */
@@ -42,3 +45,50 @@ export type {
   EntitlementDecision,
   FeatureAccessFlags,
 } from "./entitlement/entitlementContract.ts";
+
+export {
+  CHECKOUT_MAINTENANCE_CODE,
+  isCheckoutMaintenanceEnabled,
+  checkoutMaintenancePayload,
+} from "./checkout/checkoutMaintenance.ts";
+
+export {
+  CHECKOUT_BLOCKING_SUBSCRIPTION_STATUSES,
+  billingRowBlocksCheckout,
+  stripeSubscriptionsBlockCheckout,
+  checkoutIdempotencyKey,
+} from "./checkout/professionalSubscriptionGuard.ts";
+
+export type {
+  BillingRowLike,
+} from "./checkout/professionalSubscriptionGuard.ts";
+
+export {
+  scrubString,
+  redactExtra,
+  redactBreadcrumb,
+  redactEvent,
+} from "./observability/observabilityRedaction.ts";
+
+export type {
+  MinimalBreadcrumb,
+  MinimalStackFrame,
+  MinimalStacktrace,
+  MinimalMechanism,
+  MinimalExceptionValue,
+  MinimalSentryEvent,
+} from "./observability/observabilityRedaction.ts";
+
+export {
+  mapSubscriptionToBillingSnapshot,
+  extractSubscriptionPeriodEnd,
+  extractSubscriptionPeriodStart,
+  extractInvoiceSubscriptionId,
+} from "./billing/stripeBillingSnapshot.ts";
+
+export type {
+  StripeSubscriptionItemLike,
+  StripeSubscriptionLike,
+  StripeInvoiceLike,
+  StripeSubscriptionBillingSnapshot,
+} from "./billing/stripeBillingSnapshot.ts";

@@ -1,34 +1,11 @@
 /**
- * Server-controlled Checkout maintenance gate for Phase 7B cutover.
+ * Compatibility shim — canonical implementation lives in @settlerate/core.
  *
- * Authority: Supabase Edge Function secret/env `CHECKOUT_MAINTENANCE` only.
- * Client request bodies, headers, and query params must never enable or disable this.
+ * Temporary relative bridge into packages/core so Supabase Edge bundling can
+ * follow the dependency graph without a permanent copy-mirror.
  *
- * Keep in sync with src/lib/checkoutMaintenance.ts.
+ * Deletion condition: remove when Edge Functions resolve
+ * `@settlerate/core/checkout-maintenance` via an approved Deno/Supabase
+ * import map and CI proves Deno + deploy graph without this path (Epic 5 PR 6).
  */
-
-export const CHECKOUT_MAINTENANCE_CODE = "CHECKOUT_MAINTENANCE" as const;
-
-/** Explicit enable values only. Unset / empty / other values → maintenance OFF. */
-export function isCheckoutMaintenanceEnabled(
-  envValue: string | null | undefined
-): boolean {
-  if (envValue == null) return false;
-  const normalized = envValue.trim().toLowerCase();
-  return (
-    normalized === "true" ||
-    normalized === "1" ||
-    normalized === "on" ||
-    normalized === "yes"
-  );
-}
-
-export function checkoutMaintenancePayload(): {
-  error: string;
-  code: typeof CHECKOUT_MAINTENANCE_CODE;
-} {
-  return {
-    error: "Checkout temporarily unavailable",
-    code: CHECKOUT_MAINTENANCE_CODE,
-  };
-}
+export * from "../../../packages/core/src/checkout/checkoutMaintenance.ts";

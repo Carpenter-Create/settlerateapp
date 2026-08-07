@@ -1,3 +1,7 @@
+/**
+ * Compatibility proof: `@/lib/checkoutMaintenance` re-exports canonical core.
+ * Full coverage: packages/core/src/checkout/checkoutMaintenance.test.ts
+ */
 import { describe, expect, it } from "vitest";
 import {
   CHECKOUT_MAINTENANCE_CODE,
@@ -5,39 +9,13 @@ import {
   isCheckoutMaintenanceEnabled,
 } from "@/lib/checkoutMaintenance";
 
-describe("checkoutMaintenance", () => {
-  it("is disabled when env is unset, empty, or unrecognized", () => {
-    expect(isCheckoutMaintenanceEnabled(undefined)).toBe(false);
-    expect(isCheckoutMaintenanceEnabled(null)).toBe(false);
-    expect(isCheckoutMaintenanceEnabled("")).toBe(false);
-    expect(isCheckoutMaintenanceEnabled("   ")).toBe(false);
-    expect(isCheckoutMaintenanceEnabled("false")).toBe(false);
-    expect(isCheckoutMaintenanceEnabled("0")).toBe(false);
-    expect(isCheckoutMaintenanceEnabled("off")).toBe(false);
-    expect(isCheckoutMaintenanceEnabled("no")).toBe(false);
-    expect(isCheckoutMaintenanceEnabled("maybe")).toBe(false);
-  });
-
-  it("is enabled only for explicit server truthy values", () => {
+describe("checkoutMaintenance app compatibility shim", () => {
+  it("resolves enable parsing and payload via @/lib re-export", () => {
     expect(isCheckoutMaintenanceEnabled("true")).toBe(true);
-    expect(isCheckoutMaintenanceEnabled("TRUE")).toBe(true);
-    expect(isCheckoutMaintenanceEnabled("  true  ")).toBe(true);
-    expect(isCheckoutMaintenanceEnabled("1")).toBe(true);
-    expect(isCheckoutMaintenanceEnabled("on")).toBe(true);
-    expect(isCheckoutMaintenanceEnabled("yes")).toBe(true);
-  });
-
-  it("does not treat client-shaped strings as special beyond env parsing", () => {
-    // Request bodies are never passed here; only env strings are authoritative.
-    expect(isCheckoutMaintenanceEnabled('{"maintenance":false}')).toBe(false);
-    expect(isCheckoutMaintenanceEnabled("maintenance=false")).toBe(false);
-  });
-
-  it("returns a fail-closed payload with CHECKOUT_MAINTENANCE", () => {
+    expect(isCheckoutMaintenanceEnabled("maybe")).toBe(false);
     expect(checkoutMaintenancePayload()).toEqual({
       error: "Checkout temporarily unavailable",
       code: CHECKOUT_MAINTENANCE_CODE,
     });
-    expect(CHECKOUT_MAINTENANCE_CODE).toBe("CHECKOUT_MAINTENANCE");
   });
 });
