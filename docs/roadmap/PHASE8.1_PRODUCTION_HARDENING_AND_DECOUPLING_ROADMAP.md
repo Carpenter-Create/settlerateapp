@@ -55,6 +55,9 @@ Dependency: complete before schema reconciliation.
 
 ### Epic 5 --- Shared Core Package
 
+**Status: In progress — PR 0** (ADR 0005 accepted; implementation
+unauthorized; see `docs/adr/0005-shared-package-architecture.md`).
+
 Create:
 
 `packages/core`
@@ -132,11 +135,11 @@ deployment process documented - backups verified - monitoring available
 
 ## Next Approved Execution Step
 
-Epic 1–4 are complete on `main`.
+Epic 1–4 are complete on `main`. Epic 5 is **in progress — PR 0**
+(ADR 0005 accepted).
 
-**Next gated step (requires separate founder authorization):**
-Epic 5 ADR-first planning — write and accept ADR 0005 (shared package
-architecture) before any Epic 5 implementation.
+**Next implementation step (requires separate founder authorization):**
+Epic 5 PR 1 — `packages/core` workspace scaffold with no behavioral
+migration.
 
-Do not begin Epic 5 implementation, ADR 0005 drafting, or later epics
-automatically.
+Do not begin Epic 5 PR 1–6, Epic 6, or later epics automatically.

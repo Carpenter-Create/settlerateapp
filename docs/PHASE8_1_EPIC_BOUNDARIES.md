@@ -271,21 +271,46 @@ Epic 4 is complete only when all of the following are true:
 | **PR 2** | Remaining in-scope relations + administrative path assertions | Complete / merged |
 | **PR 3** | CI gate completion / acceptance-criteria gap closure (if needed) | **Not required** — CI gate and acceptance criteria completed in PRs 1–2 |
 
-**Epic 4 is complete on `main`. Do not begin Epic 5+ automatically.**
+**Epic 4 is complete on `main`.**
 
 ---
 
 ## Epic 5 — Shared Core Package
 
-**Status:** Not started. Requires separate founder authorization.
-**Next gated step when authorized:** ADR-first planning (ADR 0005 —
-shared package architecture) before implementation.
+**Status:** **In progress — PR 0.** ADR 0005 accepted
+(`docs/adr/0005-shared-package-architecture.md`). PR 0 is ADR/governance
+only. Implementation PRs (workspace scaffold and module extraction) remain
+unauthorized. Epic 6+ remain unauthorized.
 
-Allowed when authorized: create `packages/core` shared by frontend and backend
-for entitlement contracts, checkout maintenance, subscription guards, Stripe
-billing snapshots.  
-Goal: prevent business-logic drift. Do not change formula semantics while
-moving code unless a DEF-* is authorized.
+**Goal:** Create `packages/core` so deterministic, environment-neutral
+business contracts have one canonical implementation across browser, Node
+tests/scripts, and Deno Edge Functions — preventing dual-tree drift without
+changing financial, entitlement, billing, or export semantics.
+
+**Dependency:** ADR 0005 before any code move (this PR). Later steps follow
+the ADR §11 sequence.
+
+### Allowed in Epic 5 (when the matching PR is authorized)
+
+- Create and wire `packages/core` per ADR 0005
+- Migrate approved candidate modules (entitlement contract, checkout
+  maintenance, subscription guards, Stripe billing snapshot mapping,
+  redaction, and other **Move** / justified export subsets)
+- Replace permanent mirrors with single-source imports (temporary re-export
+  shims allowed with deletion conditions)
+- Update Deno import maps / workspace configuration as required by
+  authorized implementation PRs
+
+### Prohibited in Epic 5
+
+- Creating `packages/core` or modifying workspaces in PR 0
+- Changing export field semantics (`docs/EXPORT_CONTRACT.md` fence)
+- Changing mortgage formulas, benchmarks, entitlement outcomes, plan
+  mappings, scenario limits, billing interpretation, or checkout
+  maintenance behavior during relocation
+- Next.js / AWS / Cloudflare / Supabase-replacement platform migration
+- Publishing packages to the public npm registry
+- Beginning Epic 6+ automatically
 
 **Export fence (hard rule during Phase 8.1):** Authority
 `docs/EXPORT_CONTRACT.md`. Protected surfaces:
@@ -298,6 +323,21 @@ moving code unless a DEF-* is authorized.
   snapshot-selection behavior, or other contract behavior.
 - Any export field semantics change requires **explicit architectural
   approval** (not implied by Epic 5 authorization alone).
+
+### Epic 5 PR sequence
+
+| PR | Scope | Status |
+|----|--------|--------|
+| **PR 0** | ADR 0005 + minimum governance status updates | **In progress** (this slice) |
+| **PR 1** | `packages/core` workspace scaffold (no behavioral migration) | Not authorized — requires separate founder authorization |
+| **PR 2** | Entitlement contract extraction | Not authorized |
+| **PR 3** | Checkout maintenance, guards, billing snapshot, redaction | Not authorized |
+| **PR 4** | Customer resolve, origin helpers, Edge portable observability | Not authorized |
+| **PR 5** | Export-related relocation if justified and behavior-preserving | Not authorized |
+| **PR 6** | Remove shims; Epic 5 closure | Not authorized |
+
+**Epic 5 is in progress (PR 0). Do not begin PR 1–6 or Epic 6+
+automatically.**
 
 ---
 
