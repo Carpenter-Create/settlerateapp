@@ -65,11 +65,12 @@ and export-summary mapping. Goal: prevent business-logic drift.
 
 ### Epic 6 --- Schema Reconciliation
 
-**Status: In progress — PR 1** (ADR 0006 / ADR 0007 **accepted**; PR 0
+**Status: In progress — PR 2A** (ADR 0006 / ADR 0007 **accepted**; PR 0–1
 complete/merged — see `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
-`docs/database/SCHEMA_DRIFT_REPORT.md`).
+`docs/database/SCHEMA_DRIFT_REPORT.md`,
+`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`).
 
 -   Compare production schema against migrations (after read-only capture).
 -   Identify undocumented differences.
@@ -78,9 +79,8 @@ complete/merged — see `docs/adr/0006-database-schema-source-of-truth.md`,
     preserve historical migrations **and** a documented consolidated
     baseline boundary; implementation deferred).
 
-Dependency: requires Epic 4 (met). PR 1 = read-only capture + drift report
-(in progress). PR 2+ (reconciliation / mutation) unauthorized.
-Epic 7+ unauthorized.
+Dependency: requires Epic 4 (met). PR 2A = provenance / reconstruction
+blocker (in progress). Later PR 2 slices unauthorized. Epic 7+ unauthorized.
 
 ### Epic 7 --- Staging Environment
 
@@ -141,12 +141,13 @@ deployment process documented - backups verified - monitoring available
 
 ## Next Approved Execution Step
 
-Epic 1–5 are complete on `main`. Epic 6 is **in progress — PR 1**
-(ADR 0006 / ADR 0007 **accepted**; PR 0 complete/merged; read-only
-production capture + drift report).
+Epic 1–5 are complete on `main`. Epic 6 is **in progress — PR 2A**
+(ADR 0006 / ADR 0007 **accepted**; PR 0–1 complete/merged; provenance
+repair for reconstruction blocker).
 
-**Next implementation step after PR 1 (requires separate founder
-authorization):** Epic 6 PR 2+ — classified reconciliation / mutation
-slices. Production capture must precede reconciliation/mutation.
+**Next implementation step after PR 2A (requires separate founder
+authorization):** later Epic 6 PR 2 slices and/or production apply of
+already-ledgered provenance — never automatic. Baseline cutover remains
+separately authorized.
 
-Do not begin Epic 6 PR 2+, Epic 7, or later epics automatically.
+Do not begin later Epic 6 PR 2 slices, Epic 7, or later epics automatically.

@@ -340,15 +340,16 @@ the ADR §11 sequence.
 
 ## Epic 6 — Schema Reconciliation
 
-**Status:** **In progress — PR 1** (ADR 0006 + ADR 0007 **accepted**;
-PR 0 complete/merged). PR 1 = read-only production schema capture +
-machine-readable drift report (no mutation). PR 2+ unauthorized. Epic 7+
-unauthorized.
+**Status:** **In progress — PR 2A** (ADR 0006 + ADR 0007 **accepted**;
+PR 0–1 complete/merged). PR 2A = schema provenance / reconstruction
+blocker (`subscriptions` + scoped `profiles` columns). Later PR 2 slices
+unauthorized. Epic 7+ unauthorized.
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
-`docs/database/SCHEMA_DRIFT_REPORT.md`.
+`docs/database/SCHEMA_DRIFT_REPORT.md`,
+`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`.
 
 **Goal:** Make the database schema reproducible from git, capture
 production reality read-only before mutation, classify drift (including
@@ -360,30 +361,30 @@ Production capture must precede reconciliation/mutation. Baseline
 implementation (history + documented consolidated baseline boundary) is
 deferred to a later separately authorized Epic 6 slice.
 
-### Allowed in Epic 6 PR 1 (this slice)
+### Allowed in Epic 6 PR 2A (this slice)
 
-- Read-only production schema introspection (no mutation)
-- Dual local reconstruction (migration-only + harness) as evidence
-- Sanitized production catalog artifacts + machine-readable drift report
-- Privilege-level grant comparison (`grant_mismatch`)
-- Governance status updates reflecting PR 0 complete / PR 1 in progress
+- Repository-side provenance restoration for `public.subscriptions` and the
+  four production `profiles` columns, using the orphan production migration
+  version `20260112193137` (already applied on production — not pending)
+- Fresh migration-only reconstruction proof without harness product stubs
+- Governance / inventory updates for PR 2A scope only
 
-### Prohibited in Epic 6 PR 1
+### Prohibited in Epic 6 PR 2A
 
-- Creating or editing migrations
-- Schema repair, drops, renames, backfills, RLS/grant/RPC changes
-- Regenerating or hand-editing `src/integrations/supabase/types.ts`
-- Application or Edge Function behavior changes
-- Beginning PR 2+ or Epic 7+
-- Any production INSERT/UPDATE/DELETE/DDL/GRANT/REVOKE or `db push`
+- Production DDL/DML/`db push` / `migration repair` without separate founder
+  authorization of the exact apply step
+- Dual comparison/export reconciliation, advisor leftovers, ADR 0011
+- Broad grant/storage/RPC cleanup; generated types regeneration
+- Beginning later PR 2 slices or Epic 7+
 
 ### Proposed Epic 6 PR sequence
 
 | PR | Scope | Status |
 |----|--------|--------|
 | **PR 0** | ADR 0006 + ADR 0007 (accepted) + repository inventory + methodology | **Complete / merged** |
-| **PR 1** | Read-only production schema capture + machine-readable drift report (no mutation) | **In progress** |
-| **PR 2+** | Separately authorized reconciliation slices by risk/domain | Not authorized |
+| **PR 1** | Read-only production schema capture + machine-readable drift report (no mutation) | **Complete / merged** |
+| **PR 2A** | Schema provenance / reconstruction blocker (`subscriptions` + scoped `profiles` columns) | **In progress** |
+| **PR 2+ (later)** | Separately authorized reconciliation slices by risk/domain | Not authorized |
 | **Closure** | Clean reconstruction proof; baseline/SoT docs; types regeneration as needed | Not authorized |
 
 ---

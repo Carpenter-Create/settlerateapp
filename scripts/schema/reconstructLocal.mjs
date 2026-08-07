@@ -8,25 +8,21 @@
  *   --mode migration_only
  *     TRUE migration-only reconstruction: a MINIMAL auth/storage stub
  *     (enough for auth.users / auth.uid() / storage.buckets|objects to
- *     exist) WITHOUT `public.subscriptions`, then every
- *     supabase/migrations/*.sql file in order. This is the proof (or
- *     disproof) that git migration history alone can rebuild the schema.
- *     `public.subscriptions` is intentionally absent from the stub — if a
- *     migration assumes it already exists (it does; see
- *     supabase/tests/00_auth_stub.sql's own comment), reconstruction is
- *     expected to fail partway, and that failure is itself the evidence
- *     Epic 6 needs. Failure does not crash this script silently: it is
- *     captured in the output artifact and the process exits non-zero.
+ *     exist) WITHOUT stubbing product tables, then every
+ *     supabase/migrations/*.sql file in order. After Epic 6 PR 2A,
+ *     `public.subscriptions` and the four production `profiles` columns are
+ *     created by migration `20260112193137_*`, so this mode is expected to
+ *     succeed without `00_auth_stub.sql`. Failure is still captured in the
+ *     artifact (non-zero exit) if replay breaks again.
  *
  *   --mode harness
  *     TEST-HARNESS reconstruction: the full
- *     `supabase/tests/00_auth_stub.sql` (which DOES stub
- *     `public.subscriptions`, plus `test.*` helper functions and roles),
- *     then all migrations — but WITHOUT the CI-only post-migration GRANT
- *     ALL overlay / `FORCE ROW LEVEL SECURITY` that
- *     scripts/test-entitlement-sql.mjs applies purely so its SQL assertions
- *     can run under `SET ROLE`. That overlay is test convenience, not
- *     schema truth, so it must not leak into a drift-comparison artifact.
+ *     `supabase/tests/00_auth_stub.sql` (auth/storage/test helpers — no
+ *     longer stubs `public.subscriptions` after PR 2A), then all
+ *     migrations — but WITHOUT the CI-only post-migration GRANT ALL overlay
+ *     / `FORCE ROW LEVEL SECURITY` that scripts/test-entitlement-sql.mjs
+ *     applies purely so its SQL assertions can run under `SET ROLE`. That
+ *     overlay is test convenience, not schema truth.
  *
  * Output: docs/database/reconstruction/<mode>-schema.json
  */
@@ -64,13 +60,13 @@ const VALID_MODES = new Set(["migration_only", "harness"]);
  * schema/table, auth.uid()/jwt()/role(), storage schema/tables, roles,
  * pgcrypto/extensions scaffolding, and the base grants migrations rely on
  * existing before their own GRANT statements run). It intentionally OMITS:
- *   - `public.subscriptions` (no migration creates it — see module docstring)
+ *   - product tables (including `public.subscriptions` — owned by migrations)
  *   - the `test` schema helper functions (test-only, not migration-required)
  */
 const MINIMAL_MIGRATION_ONLY_STUB = `
--- Epic 6 PR 1 minimal migration-only stub (NOT applied in production).
+-- Epic 6 minimal migration-only stub (NOT applied in production).
 -- Enables repo migrations that reference auth.users / auth.uid() / storage.*
--- WITHOUT stubbing public.subscriptions (unlike supabase/tests/00_auth_stub.sql).
+-- WITHOUT stubbing product tables (subscriptions comes from migrations).
 
 CREATE SCHEMA IF NOT EXISTS auth;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -378,7 +374,7 @@ async function main() {
     process.stdout.write(`Wrote ${result.outPath} (reconstruction succeeded)\n`);
   } else {
     process.stdout.write(
-      `Wrote ${result.outPath} (reconstruction FAILED at ${result.failedAtMigration ?? "capture step"} — this is expected evidence for TRUE migration-only mode if public.subscriptions is the blocker)\n`
+      `Wrote ${result.outPath} (reconstruction FAILED at ${result.failedAtMigration ?? "capture step"})\n`
     );
     process.exitCode = 1;
   }

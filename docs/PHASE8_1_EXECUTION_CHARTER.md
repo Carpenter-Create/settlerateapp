@@ -46,7 +46,7 @@ Follow the roadmap epic sequence. Do not skip dependency gates:
 3. Epic 3 — Observability (**complete on `main` and production-activated/verified 2026-08-06** — see ADR 0003)  
 4. Epic 4 — RLS Security Test Expansion (**complete on `main`**; see ADR 0004)  
 5. Epic 5 — Shared Core Package (**complete on `main`**; ADR 0005 accepted; PR 0–6 merged)  
-6. Epic 6 — Schema Reconciliation (**In progress — PR 1**; ADR 0006/0007 accepted; PR 0 complete/merged; PR 1 = read-only capture + drift report; PR 2+ unauthorized; requires Epic 4)  
+6. Epic 6 — Schema Reconciliation (**In progress — PR 2A**; ADR 0006/0007 accepted; PR 0–1 complete/merged; PR 2A = schema provenance / reconstruction blocker; later PR 2 slices unauthorized; requires Epic 4)  
 7. Epic 7 — Staging Environment  
 8. Epic 8 — Billing Recovery Capability  
 9. Epic 9 — Deployment Pipeline  
@@ -144,17 +144,20 @@ application surfaces; Edge resolves package subpaths via per-function
 | PR | Intent | Status |
 |----|--------|--------|
 | **PR 0** | ADR 0006 + ADR 0007 (accepted) + repository schema inventory + methodology | **Complete / merged** |
-| **PR 1** | Read-only production schema capture + machine-readable drift report (no mutation) | **In progress** |
-| **PR 2+** | Separately authorized reconciliation slices | Not authorized |
+| **PR 1** | Read-only production schema capture + machine-readable drift report (no mutation) | **Complete / merged** |
+| **PR 2A** | Schema provenance / reconstruction blocker (`subscriptions` + scoped `profiles` columns) | **In progress** |
+| **PR 2+ (later)** | Separately authorized reconciliation slices | Not authorized |
 
-Epic 6 **PR 1 is evidence-only** — read-only production capture, dual
-reconstruction, and drift classification. No migrations, no schema
-mutation, no types regeneration, no application/Edge behavior changes.
-Do not begin PR 2+ or Epic 7+ automatically. Authority (accepted):
+Epic 6 **PR 2A** restores missing git provenance for the mid-chain
+reconstruction blocker using production orphan migration version
+`20260112193137` (already applied on production — not pending). No
+production apply in this PR. Do not begin later PR 2 slices or Epic 7+
+automatically. Authority (accepted):
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
-`docs/database/SCHEMA_DRIFT_REPORT.md`. See
+`docs/database/SCHEMA_DRIFT_REPORT.md`,
+`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`. See
 `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 
 ## Required ADRs

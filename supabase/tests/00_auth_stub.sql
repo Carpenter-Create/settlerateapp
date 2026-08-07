@@ -62,20 +62,10 @@ $$;
 
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
--- Legacy subscriptions table referenced by admin-lock migration (not created elsewhere in repo)
-CREATE TABLE IF NOT EXISTS public.subscriptions (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  stripe_customer_id text,
-  stripe_subscription_id text UNIQUE,
-  status text,
-  plan_key text,
-  cancel_at_period_end boolean NOT NULL DEFAULT false,
-  current_period_end timestamptz,
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS subscriptions_user_id_idx ON public.subscriptions(user_id);
+-- public.subscriptions is created by migration
+-- 20260112193137_restore_subscriptions_profiles_provenance.sql (Epic 6 PR 2A).
+-- Do not stub it here — harness/migration-only reconstruction must obtain the
+-- production-backed definition from git migrations.
 
 CREATE OR REPLACE FUNCTION auth.uid()
 RETURNS uuid

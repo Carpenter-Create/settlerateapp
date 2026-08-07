@@ -38,21 +38,23 @@ accepted; PR 0–6 merged. See
 `docs/adr/0005-shared-package-architecture.md` and
 `docs/EXPORT_CONTRACT.md`.
 
-**Epic 6 — Schema Reconciliation** is **In progress — PR 1** (ADR 0006
-and ADR 0007 **accepted**; PR 0 complete/merged). PR 1 = read-only
-production schema capture + drift report (no mutation). See
+**Epic 6 — Schema Reconciliation** is **In progress — PR 2A** (ADR 0006
+and ADR 0007 **accepted**; PR 0–1 complete/merged). PR 2A = schema
+provenance / reconstruction blocker. See
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
-`docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`, and
-`docs/database/SCHEMA_DRIFT_REPORT.md`. **Do not begin Epic 6 PR 2+ or
-Epic 7+ automatically.**
+`docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
+`docs/database/SCHEMA_DRIFT_REPORT.md`, and
+`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`. **Do not begin later
+Epic 6 PR 2 slices or Epic 7+ automatically. Do not apply PR 2A SQL to
+production without separate founder authorization.**
 
 ## Prohibited unless explicitly authorized
 
 - Supabase Auth Dashboard redirect-allowlist changes without founder authorization
 - Changing production Sentry DSNs, project routing, or capture scope without founder authorization
-- Beginning Epic 6 PR 2+ (schema mutation / reconciliation) or Epic 7+ ahead of sequence / dependency gates
-- Mutating production databases (DDL/DML/GRANT) for reconciliation without founder authorization
+- Beginning later Epic 6 PR 2 slices or Epic 7+ ahead of sequence / dependency gates
+- Mutating production databases (DDL/DML/GRANT) / `db push` / `migration repair` without founder authorization
 - Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
 - Next.js platform migration

@@ -61,14 +61,15 @@ accepted; PR 0–6 merged. Authority:
 `docs/adr/0005-shared-package-architecture.md`,
 `docs/EXPORT_CONTRACT.md`, and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 
-**Epic 6 (Schema Reconciliation)** is **In progress — PR 1** (ADR 0006
-and ADR 0007 **accepted**; PR 0 complete/merged). PR 1 = read-only
-production schema capture + drift report (no mutation). PR 2+
-(reconciliation / schema mutation) remain unauthorized. Authority:
+**Epic 6 (Schema Reconciliation)** is **In progress — PR 2A** (ADR 0006
+and ADR 0007 **accepted**; PR 0–1 complete/merged). PR 2A = schema
+provenance / reconstruction blocker (`subscriptions` + scoped `profiles`
+columns). Later PR 2 slices remain unauthorized. Authority:
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
-`docs/database/SCHEMA_DRIFT_REPORT.md`.
+`docs/database/SCHEMA_DRIFT_REPORT.md`,
+`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`.
 **Epic 7 and later have not begun and still require separate explicit
 authorization.**
 

@@ -1,8 +1,8 @@
 # Schema Reconciliation Inventory
 
-**Phase:** 8.1 / Epic 6 PR 1  
+**Phase:** 8.1 / Epic 6 PR 2A  
 **Date:** 2026-08-07  
-**Status:** REPOSITORY EVIDENCE + PRODUCTION CAPTURE (PR 1)
+**Status:** REPOSITORY EVIDENCE + PRODUCTION CAPTURE (PR 1) + PROVENANCE REPAIR (PR 2A)
 
 This document inventories schema objects and consumers discoverable from
 the SettleRate **git repository**. Live production catalog evidence for
@@ -187,8 +187,8 @@ Trigger helpers of note: `handle_new_user`, entitlement/ownership enforcers, `pr
 
 ## High-signal reconciliation candidates
 
-1. **`subscriptions`** — types + Edge + triggers vs no migration CREATE vs harness stub.  
-2. **`profiles` columns** — migrations vs generated types.  
+1. **`subscriptions`** — PR 2A restores orphan migration version `20260112193137` into git (production-backed definition); see `SCHEMA_PROVENANCE_REPAIR_PR2A.md`. Production apply not performed in PR 2A.  
+2. **`profiles` columns** — PR 2A captures the four production columns into the same orphan-version migration; entitlement SoT remains `billing`.  
 3. **Missing from types** — bootstrap/webhook/bypass tables and RPCs.  
 4. **Dual comparison models** and **dual export models**.  
 5. **Advisor leftovers** — blocked on ADR 0011 for removal decisions.  
