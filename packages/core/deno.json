@@ -1,6 +1,7 @@
 {
   "imports": {
-    "@settlerate/core": "./src/index.ts"
+    "@settlerate/core": "./src/index.ts",
+    "@settlerate/core/entitlement": "./src/entitlement/entitlementContract.ts"
   },
   "compilerOptions": {
     "lib": ["deno.ns", "es2020"],

@@ -9,8 +9,9 @@
 
 SettleRate currently duplicates drift-sensitive business contracts between the
 Vite/React client (`src/lib/`) and Supabase Edge Functions
-(`supabase/functions/_shared/`). Two pairs are enforced byte-identical by CI /
-Vitest (`entitlementContract.ts`, `observabilityRedaction.ts`); three more
+(`supabase/functions/_shared/`). After PR 2, entitlement is single-sourced in
+`@settlerate/core` with re-export shims (shim-purity gated). Observability
+redaction remains byte-identical pending a later PR; three more
 pairs are manually kept in sync with “Keep in sync” comments and already show
 comment-only drift (`checkoutMaintenance.ts`,
 `professionalSubscriptionGuard.ts`, `stripeBillingSnapshot.ts`). Export
@@ -78,7 +79,7 @@ Classification key:
 
 | Candidate | Paths today | Class | Rationale |
 |-----------|-------------|-------|-----------|
-| Entitlement contract / evaluation | `src/lib/entitlementContract.ts` ↔ `supabase/functions/_shared/entitlementContract.ts` (byte-identical) | **Move** | Pure; dual consumers; hash-gated |
+| Entitlement contract / evaluation | Canonical: `packages/core/src/entitlement/entitlementContract.ts` (`@settlerate/core/entitlement`); shims at former app/Edge paths | **Move** (PR 2) | Pure; dual consumers; shim-purity gated |
 | Professional price allowlist / plan mapping | Same module (`PROFESSIONAL_PRICE_IDS`, `isAllowlistedProfessionalPrice`, `resolvePlanCodeFromPrice`) | **Move** | Part of entitlement contract |
 | Checkout maintenance parse/response | `src/lib/checkoutMaintenance.ts` ↔ `_shared/checkoutMaintenance.ts` | **Move** | Pure; env string injected by caller |
 | Professional subscription guards | `src/lib/professionalSubscriptionGuard.ts` ↔ `_shared/professionalSubscriptionGuard.ts` | **Move** | Pure; allowlist callback injected |
@@ -353,7 +354,7 @@ Inspected 2026-08-06 on `main` (post Epic 4 closure).
 
 | Pair | Identity |
 |------|----------|
-| `src/lib/entitlementContract.ts` ↔ `_shared/entitlementContract.ts` | Byte-identical; gated by Vitest + `scripts/test-entitlement-sql.mjs` |
+| Entitlement → `@settlerate/core/entitlement` (PR 2); app/Edge shims | Shim-purity + SQL parity gated by Vitest + `scripts/test-entitlement-sql.mjs` |
 | `src/lib/observabilityRedaction.ts` ↔ `_shared/observabilityRedaction.ts` | Byte-identical; gated by Vitest |
 | `src/lib/checkoutMaintenance.ts` ↔ `_shared/checkoutMaintenance.ts` | Logic-identical; comment-only drift |
 | `src/lib/professionalSubscriptionGuard.ts` ↔ `_shared/…` | Logic-identical; comment-only drift |
@@ -441,12 +442,13 @@ Inspected 2026-08-06 on `main` (post Epic 4 closure).
 | PR | Scope | Status |
 |----|--------|--------|
 | **PR 0** | This ADR + minimum governance status updates | Complete / merged |
-| **PR 1** | `packages/core` workspace scaffold (no behavioral migration) | **In progress** |
-| **PR 2** | Entitlement contract extraction | Not authorized — requires separate founder authorization |
+| **PR 1** | `packages/core` workspace scaffold (no behavioral migration) | Complete / merged |
+| **PR 2** | Entitlement contract extraction | **In progress** |
 | **PR 3** | Checkout maintenance, guards, redaction, **pure** billing-snapshot mappers (not `resolveSubscriptionBillingSnapshot`) | Not authorized |
 | **PR 4** | **Pure** customer-resolve helpers (not `resolveCheckoutCustomer`), origin helpers, deterministic Edge observability (not `generateRequestId`) | Not authorized |
 | **PR 5** | Export-related relocation if justified and behavior-preserving | Not authorized |
 | **PR 6** | Remove shims; Epic 5 closure | Not authorized |
 
-**Epic 5 status:** In progress — PR 1 (scaffold only; no business modules
-migrated). Do not begin PR 2–6 automatically.
+**Epic 5 status:** In progress — PR 2 (entitlement contract in
+`@settlerate/core/entitlement`; app/Edge paths are re-export shims). Do not
+begin PR 3–6 automatically.

@@ -3,9 +3,10 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "SettleRate shared deterministic business contracts (Epic 5). Scaffold only in PR 1.",
+  "description": "SettleRate shared deterministic business contracts (Epic 5).",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./entitlement": "./src/entitlement/entitlementContract.ts"
   },
   "files": [
     "src"

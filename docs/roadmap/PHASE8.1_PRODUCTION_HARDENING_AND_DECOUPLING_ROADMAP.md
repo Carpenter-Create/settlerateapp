@@ -55,8 +55,8 @@ Dependency: complete before schema reconciliation.
 
 ### Epic 5 --- Shared Core Package
 
-**Status: In progress — PR 1** (ADR 0005 accepted; PR 0 complete; scaffold
-only — no business migration; see
+**Status: In progress — PR 2** (ADR 0005 accepted; PR 0–1 complete;
+entitlement contract extraction into `@settlerate/core`; see
 `docs/adr/0005-shared-package-architecture.md`).
 
 Create:
@@ -137,10 +137,11 @@ deployment process documented - backups verified - monitoring available
 
 ## Next Approved Execution Step
 
-Epic 1–4 are complete on `main`. Epic 5 is **in progress — PR 1**
-(scaffold only; ADR 0005 accepted; PR 0 complete).
+Epic 1–4 are complete on `main`. Epic 5 is **in progress — PR 2**
+(entitlement extraction; ADR 0005 accepted; PR 0–1 complete).
 
-**Next implementation step (requires separate founder authorization):**
-Epic 5 PR 2 — entitlement contract extraction into `@settlerate/core`.
+**Next implementation step after PR 2 merges (requires separate founder
+authorization):** Epic 5 PR 3 — checkout maintenance, guards, redaction,
+pure billing-snapshot mappers.
 
-Do not begin Epic 5 PR 2–6, Epic 6, or later epics automatically.
+Do not begin Epic 5 PR 3–6, Epic 6, or later epics automatically.
