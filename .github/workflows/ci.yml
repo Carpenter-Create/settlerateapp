@@ -25,6 +25,11 @@ jobs:
           node-version: "22"
           cache: npm
 
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - name: Install dependencies
         run: npm ci
 
@@ -39,6 +44,12 @@ jobs:
 
       - name: Test
         run: npm run test:run
+
+      - name: Deno core and Edge resolution
+        run: npm run test:core-deno-scaffold
+
+      - name: Deno export parity
+        run: npm run test:export-parity-deno
 
       - name: Remove stale entitlement test container
         run: docker rm -f settlerate-entitlement-test 2>/dev/null || true

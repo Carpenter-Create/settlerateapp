@@ -281,8 +281,8 @@ Future Epic 5 implementation PRs must ensure:
 - Browser/Node (Vitest) and Deno consumers prove parity for migrated modules.
 - `npm run verify:benchmarks` remains authoritative for financial BM fixtures.
 - Export parity remains protected (`exportContract` / `exportParity` tests;
-  Deno `test:export-parity-deno` should be wired into CI when export code is
-  touched or as part of Epic 5 closure).
+  Deno `test:core-deno-scaffold` and `test:export-parity-deno` are required
+  CI checks in `.github/workflows/ci.yml`).
 - Entitlement SQL parity (`test:entitlement-sql`) remains protected.
 - No snapshot-only evidence for critical financial or authorization behavior.
 - CI tests every supported runtime/import path for migrated modules.
@@ -395,8 +395,9 @@ Inspected 2026-08-06 on `main` (post Epic 4 closure).
 - Checkout / guards / snapshots: dedicated Vitest files under
   `src/lib/__tests__/`
 - Observability / redaction: Vitest + redaction mirror assert
-- Export: `exportContract.test.ts`, `exportParity.test.ts`, optional
-  `npm run test:export-parity-deno` (**not currently a CI step**)
+- Export / Deno closure: `exportParity.test.ts`,
+  `npm run test:core-deno-scaffold`, `npm run test:export-parity-deno`
+  (required CI steps in `.github/workflows/ci.yml`)
 - Benchmarks: `npm run verify:benchmarks` (financial BM; not shared-core)
 
 ### Unresolved architectural risks
