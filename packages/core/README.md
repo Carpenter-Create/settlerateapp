@@ -10,7 +10,7 @@ Hold only **pure, deterministic, environment-neutral** contracts and
 transformations that must stay identical across browser/Vite, Node
 tests/scripts, and Deno Edge Functions.
 
-## Status (Epic 5 PR 4)
+## Status (Epic 5 PR 5)
 
 | Module | Package surface | Notes |
 |--------|-----------------|-------|
@@ -22,28 +22,30 @@ tests/scripts, and Deno Edge Functions.
 | Customer resolution (pure) | `@settlerate/core/customer-resolution` | PR 4 — **no** `resolveCheckoutCustomer` |
 | App origin policy | `@settlerate/core/app-origin` | PR 4 — string Origin header policy; **no** `Request` |
 | Edge observability (deterministic) | `@settlerate/core/edge-observability` | PR 4 — **no** `generateRequestId` |
+| Export summary (derived JSON) | `@settlerate/core/export-summary` | PR 5 — portable derived → summary; **no** `buildCanonicalScenarioExport` / `buildScenarioData` / `generatedAt` |
 | Scaffold marker | `@settlerate/core` (`SETTLERATE_CORE_SCAFFOLD_MARKER`) | Harmless PR 1 marker |
 
 Compatibility:
 
 - Pure shims under `src/lib/*` and Edge `_shared/*` re-export package subpaths
   (temporary relative bridges on Edge; PR 6 deletion conditions).
-- Runtime adapters retain orchestration / nondeterminism:
+- Runtime adapters retain orchestration / nondeterminism / application wiring:
   - `resolveSubscriptionBillingSnapshot`
   - `resolveCheckoutCustomer` (+ deps)
   - `resolveAppOrigin(Request)`
   - `generateRequestId`
+  - `exportSummaryFromDerivedJson` (client projection)
+  - `mapDerivedForExport` / `buildScenarioData` (server PDF)
+  - `buildCanonicalScenarioExport` (client application)
 
-PR 5–6 remain unauthorized. Epic 6+ remain unauthorized.
+PR 6 remains unauthorized. Epic 6+ remain unauthorized.
 
 ## Public API
 
 Prefer **explicit domain subpaths** (no `@settlerate/core/*` wildcard map):
 
 ```ts
-import { resolveStripeCustomerByUserId } from "@settlerate/core/customer-resolution";
-import { resolveAppOriginFromOriginHeader } from "@settlerate/core/app-origin";
-import { isEdgeObservabilityEnabled, buildEdgeExtra } from "@settlerate/core/edge-observability";
+import { mapDerivedExportSummary } from "@settlerate/core/export-summary";
 ```
 
 The package root re-exports curated named symbols for convenience.
@@ -57,10 +59,9 @@ The package root re-exports curated named symbols for convenience.
 - Network I/O, database queries, auth resolution, env reads
 - Stripe SDK / Supabase client / React / DOM / Node-only / Deno-only APIs
 - `@sentry/*` SDK dependencies
-- Async retrieval / checkout orchestration (`resolveSubscriptionBillingSnapshot`,
-  `resolveCheckoutCustomer`)
-- Nondeterministic helpers (`generateRequestId` / UUID generation)
-- `Request` / Fetch ambient types (adapters read headers and pass strings)
+- Async retrieval / checkout orchestration
+- Nondeterministic helpers (`generateRequestId`, export `generatedAt`)
+- Application scenario export builders and PDF layout adapters
 - Mortgage formula / entitlement / billing / export **semantic** changes
 
 ## Source of truth

@@ -13,7 +13,8 @@
     "./billing-snapshot": "./src/billing/stripeBillingSnapshot.ts",
     "./customer-resolution": "./src/billing/stripeCustomerResolve.ts",
     "./app-origin": "./src/origin/appOrigin.ts",
-    "./edge-observability": "./src/observability/edgeObservability.ts"
+    "./edge-observability": "./src/observability/edgeObservability.ts",
+    "./export-summary": "./src/exports/derivedExportSummary.ts"
   },
   "files": [
     "src"

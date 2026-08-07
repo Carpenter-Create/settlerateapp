@@ -1,7 +1,8 @@
 /**
- * Phase 4 — client/server derived mapper parity (BM-X01).
+ * Phase 4 / Epic 5 PR 5 — derived mapper source-of-truth parity (BM-X01).
  *
- * Exercises BOTH:
+ * Exercises:
+ * - core: `mapDerivedExportSummary` (@settlerate/core/export-summary)
  * - client: `exportSummaryFromDerivedJson` (src/lib/exports/exportContract.ts)
  * - server: `mapDerivedForExport` (supabase/functions/generate-pdf/mapDerivedForExport.ts)
  *
@@ -12,6 +13,7 @@ import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { mapDerivedExportSummary } from "@settlerate/core/export-summary";
 import { exportSummaryFromDerivedJson } from "@/lib/exports/exportContract";
 import {
   mapDerivedForExport,
@@ -46,6 +48,30 @@ function loadFixtures(): ParityFixture[] {
     });
 }
 
+const CLIENT_KEYS = [
+  "financingCostOverHorizon",
+  "principalReductionOverHorizon",
+  "allInMonthlyHousingPayment",
+  "decisionHorizonMonths",
+  "totalInterest",
+  "legacyTotalCost",
+  "monthlyPaymentPrimary",
+  "principalAmount",
+  "ltvRatio",
+  "rateForComparison",
+  "payoffMonths",
+  "calculatorVersion",
+  "activeCalculatorVersion",
+  "originalCalculatorVersion",
+  "isLegacyFlat",
+  "snapshotSource",
+  "paymentDrawAvg",
+  "paymentRepay",
+  "assumedPaymentPi",
+  "gapPayment",
+  "gapAmount",
+] as const;
+
 const SHARED_KEYS = [
   "financingCostOverHorizon",
   "principalReductionOverHorizon",
@@ -68,15 +94,23 @@ const SHARED_KEYS = [
   "gapAmount",
 ] as const;
 
-function pickShared(summary: Record<string, unknown>) {
+const SERVER_ONLY_KEYS = [
+  "monthlyTotal",
+  "monthlyPropertyTax",
+  "monthlyHomeInsurance",
+  "monthlyPMI",
+  "monthlyHOA",
+] as const;
+
+function pick(summary: Record<string, unknown>, keys: readonly string[]) {
   const out: Record<string, unknown> = {};
-  for (const key of SHARED_KEYS) {
+  for (const key of keys) {
     if (key in summary) out[key] = summary[key];
   }
   return out;
 }
 
-describe("exportParity — client mapper vs actual Deno mapDerivedForExport", () => {
+describe("exportParity — core / client / server derived mappers", () => {
   const fixtures = loadFixtures();
 
   it("loads the expected parity fixture set", () => {
@@ -95,7 +129,8 @@ describe("exportParity — client mapper vs actual Deno mapDerivedForExport", ()
   });
 
   for (const fixture of fixtures) {
-    it(`${fixture.name}: both mappers match fixture expected and each other`, () => {
+    it(`${fixture.name}: core, client, and server match fixture expected`, () => {
+      const core = mapDerivedExportSummary(fixture.row.derived, fixture.selection);
       const client = exportSummaryFromDerivedJson(
         fixture.row.derived,
         fixture.selection
@@ -106,19 +141,18 @@ describe("exportParity — client mapper vs actual Deno mapDerivedForExport", ()
       );
 
       for (const [key, value] of Object.entries(fixture.expected)) {
-        expect(client[key as keyof typeof client], `client.${key}`).toEqual(
-          value
-        );
-        expect(server[key as keyof typeof server], `server.${key}`).toEqual(
-          value
-        );
+        expect(core[key as keyof typeof core], `core.${key}`).toEqual(value);
+        expect(client[key as keyof typeof client], `client.${key}`).toEqual(value);
+        expect(server[key as keyof typeof server], `server.${key}`).toEqual(value);
       }
 
-      expect(pickShared(client as unknown as Record<string, unknown>)).toEqual(
-        pickShared(server as unknown as Record<string, unknown>)
+      expect(pick(client as unknown as Record<string, unknown>, SHARED_KEYS)).toEqual(
+        pick(server as unknown as Record<string, unknown>, SHARED_KEYS)
+      );
+      expect(pick(core as unknown as Record<string, unknown>, SHARED_KEYS)).toEqual(
+        pick(server as unknown as Record<string, unknown>, SHARED_KEYS)
       );
 
-      // Unsupported HELOC/assumption component fields must not be fabricated.
       expect(client.paymentDrawAvg).toBeNull();
       expect(server.paymentDrawAvg).toBeNull();
       expect(client.assumedPaymentPi).toBeNull();
@@ -129,6 +163,34 @@ describe("exportParity — client mapper vs actual Deno mapDerivedForExport", ()
       expect(server.gapAmount).toBeNull();
     });
   }
+
+  it("client public result does not expand to server-only escrow keys", () => {
+    const fixture = fixtures.find((f) => f.name === "purchase-active")!;
+    const client = exportSummaryFromDerivedJson(fixture.row.derived, "active");
+    const clientKeys = Object.keys(client).sort();
+    expect(clientKeys).toEqual([...CLIENT_KEYS].sort());
+    for (const key of SERVER_ONLY_KEYS) {
+      expect(clientKeys, key).not.toContain(key);
+    }
+  });
+
+  it("server interestRateFallback overrides missing rateForComparison", () => {
+    const derived = {
+      activeSnapshot: {
+        summary: { financingCostOverHorizon: 1, totalInterest: 1 },
+      },
+    };
+    expect(mapDerivedForExport(derived, "active").rateForComparison).toBe(0);
+    expect(
+      mapDerivedForExport(derived, "active", { interestRateFallback: 5.5 })
+        .rateForComparison
+    ).toBe(5.5);
+    expect(
+      mapDerivedExportSummary(derived, "active", {
+        rateForComparisonFallback: 5.5,
+      }).rateForComparison
+    ).toBe(5.5);
+  });
 
   it("buildScenarioData (server PDF entry) uses mapDerivedForExport for purchase-active", () => {
     const fixture = fixtures.find((f) => f.name === "purchase-active")!;
@@ -170,7 +232,6 @@ describe("exportParity — client mapper vs actual Deno mapDerivedForExport", ()
     expect(data.results.financingCostOverHorizon).toBe(
       fixture.expected.financingCostOverHorizon
     );
-    // ScenarioResults.ltvRatio is numeric; null summary LTV projects to 0 for layout.
     expect(data.results.ltvRatio).toBe(0);
     expect(mapDerivedForExport(fixture.row.derived, "active").ltvRatio).toBeNull();
   });

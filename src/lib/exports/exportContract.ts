@@ -8,6 +8,7 @@
  * See docs/EXPORT_CONTRACT.md.
  */
 
+import { mapDerivedExportSummary } from "@settlerate/core/export-summary";
 import type { MortgageInputs, ScenarioType } from "@/lib/mortgage";
 import {
   CALCULATOR_VERSION,
@@ -255,7 +256,12 @@ export function buildCanonicalScenarioExport(
 }
 
 /**
- * Pure mapper for Supabase `derived` JSON → export summary fields.
+ * Compatibility mapper for Supabase `derived` JSON → client export summary.
+ *
+ * Canonical implementation: `@settlerate/core/export-summary`
+ * (`mapDerivedExportSummary`). This surface projects the shared superset to
+ * the historical client return keys only (no monthlyTotal / escrow fields).
+ *
  * Server counterpart: `mapDerivedForExport` in
  * `supabase/functions/generate-pdf/mapDerivedForExport.ts` (used by generate-pdf).
  * Parity fixtures: `src/lib/__tests__/fixtures/export-parity/` + `exportParity.test.ts`.
@@ -286,104 +292,30 @@ export function exportSummaryFromDerivedJson(
   gapPayment: number | null;
   gapAmount: number | null;
 } {
-  const root =
-    derived && typeof derived === "object"
-      ? (derived as Record<string, unknown>)
-      : {};
-  const activeSnap =
-    root.activeSnapshot && typeof root.activeSnapshot === "object"
-      ? (root.activeSnapshot as Record<string, unknown>)
-      : null;
-  const originalSnap =
-    root.originalSnapshot && typeof root.originalSnapshot === "object"
-      ? (root.originalSnapshot as Record<string, unknown>)
-      : null;
-  const selectedSnap =
-    selection === "original"
-      ? (originalSnap ?? activeSnap)
-      : (activeSnap ?? originalSnap);
-  const summary =
-    selectedSnap?.summary && typeof selectedSnap.summary === "object"
-      ? (selectedSnap.summary as Record<string, unknown>)
-      : null;
-
-  const isLegacyFlat =
-    !activeSnap &&
-    !originalSnap &&
-    (typeof root.loanAmount === "number" ||
-      typeof root.monthlyPrincipalInterest === "number" ||
-      typeof root.totalCost === "number" ||
-      typeof root.financingCostOverHorizon === "number");
-
-  const src = isLegacyFlat ? root : (summary ?? {});
-
-  const num = (value: unknown, fallback = 0) =>
-    typeof value === "number" && !Number.isNaN(value) ? value : fallback;
-  const optionalNum = (value: unknown): number | null =>
-    typeof value === "number" && !Number.isNaN(value) ? value : null;
-
-  const monthlyPaymentPrimary = num(
-    src.monthlyPaymentPrimary ??
-      src.monthlyPrincipalInterest ??
-      src.paymentRepay ??
-      src.paymentTotal
-  );
-  const totalInterest = num(src.totalInterest ?? src.interestTotal);
-  const legacyTotalCost = num(src.totalCost ?? src.costTotal, totalInterest);
-  const decisionHorizonMonths = num(
-    src.decisionHorizonMonths ?? src.payoffMonths,
-    360
-  );
-
-  const activeCalculatorVersion =
-    typeof root.activeCalculatorVersion === "string"
-      ? root.activeCalculatorVersion
-      : typeof root.calculatorVersion === "string"
-        ? root.calculatorVersion
-        : typeof activeSnap?.calculatorVersion === "string"
-          ? (activeSnap.calculatorVersion as string)
-          : "unknown";
-  const originalCalculatorVersion =
-    typeof root.originalCalculatorVersion === "string"
-      ? root.originalCalculatorVersion
-      : typeof originalSnap?.calculatorVersion === "string"
-        ? (originalSnap.calculatorVersion as string)
-        : activeCalculatorVersion;
-  const calculatorVersion =
-    typeof selectedSnap?.calculatorVersion === "string"
-      ? (selectedSnap.calculatorVersion as string)
-      : selection === "original"
-        ? originalCalculatorVersion
-        : activeCalculatorVersion;
-
+  const mapped = mapDerivedExportSummary(derived, selection);
+  // Explicit projection — do not spread the core superset (server-only keys).
   return {
-    financingCostOverHorizon: num(src.financingCostOverHorizon, totalInterest),
-    principalReductionOverHorizon: num(src.principalReductionOverHorizon),
-    allInMonthlyHousingPayment: num(
-      src.allInMonthlyHousingPayment,
-      num(src.monthlyTotal, monthlyPaymentPrimary)
-    ),
-    decisionHorizonMonths,
-    totalInterest,
-    legacyTotalCost,
-    monthlyPaymentPrimary,
-    principalAmount: num(src.principalAmount ?? src.loanAmount ?? src.balanceEndDraw),
-    ltvRatio:
-      src.ltvRatio == null || typeof src.ltvRatio !== "number"
-        ? null
-        : src.ltvRatio,
-    rateForComparison: num(src.rateForComparison),
-    payoffMonths: num(src.payoffMonths, decisionHorizonMonths),
-    calculatorVersion,
-    activeCalculatorVersion,
-    originalCalculatorVersion,
-    isLegacyFlat,
-    snapshotSource: selection,
-    paymentDrawAvg: optionalNum(src.paymentDrawAvg),
-    paymentRepay: optionalNum(src.paymentRepay),
-    assumedPaymentPi: optionalNum(src.assumedPaymentPi),
-    gapPayment: optionalNum(src.gapPayment),
-    gapAmount: optionalNum(src.gapAmount),
+    financingCostOverHorizon: mapped.financingCostOverHorizon,
+    principalReductionOverHorizon: mapped.principalReductionOverHorizon,
+    allInMonthlyHousingPayment: mapped.allInMonthlyHousingPayment,
+    decisionHorizonMonths: mapped.decisionHorizonMonths,
+    totalInterest: mapped.totalInterest,
+    legacyTotalCost: mapped.legacyTotalCost,
+    monthlyPaymentPrimary: mapped.monthlyPaymentPrimary,
+    principalAmount: mapped.principalAmount,
+    ltvRatio: mapped.ltvRatio,
+    rateForComparison: mapped.rateForComparison,
+    payoffMonths: mapped.payoffMonths,
+    calculatorVersion: mapped.calculatorVersion,
+    activeCalculatorVersion: mapped.activeCalculatorVersion,
+    originalCalculatorVersion: mapped.originalCalculatorVersion,
+    isLegacyFlat: mapped.isLegacyFlat,
+    snapshotSource: mapped.snapshotSource,
+    paymentDrawAvg: mapped.paymentDrawAvg,
+    paymentRepay: mapped.paymentRepay,
+    assumedPaymentPi: mapped.assumedPaymentPi,
+    gapPayment: mapped.gapPayment,
+    gapAmount: mapped.gapAmount,
   };
 }
 

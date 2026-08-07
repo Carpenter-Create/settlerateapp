@@ -63,15 +63,27 @@ Use assumption summary semantics only. Do **not** flatten into a standard mortga
 
 ## Server / client parity
 
+- **Canonical derived → export-summary mapper (Epic 5 PR 5):**
+  `packages/core/src/exports/derivedExportSummary.ts`
+  (`@settlerate/core/export-summary`, `mapDerivedExportSummary`)
 - Client layout: `buildCanonicalScenarioExport` → `exportLayout`
-- Client derived mapper: `exportSummaryFromDerivedJson` in `src/lib/exports/exportContract.ts`
-- Server derived mapper (actual generate-pdf path): `mapDerivedForExport` / `buildScenarioData` in `supabase/functions/generate-pdf/mapDerivedForExport.ts`
+  (application-side; not the portable derived mapper)
+- Client derived compatibility surface: `exportSummaryFromDerivedJson` in
+  `src/lib/exports/exportContract.ts` (delegates to core; projects the
+  historical client return key set)
+- Server derived compatibility surface (actual generate-pdf path):
+  `mapDerivedForExport` / `buildScenarioData` in
+  `supabase/functions/generate-pdf/mapDerivedForExport.ts`
+  (`mapDerivedForExport` delegates to core; `buildScenarioData` remains
+  server PDF adapter and must call `mapDerivedForExport`)
 - Shared fixtures: `src/lib/__tests__/fixtures/export-parity/*.json`
 - Automated coverage:
-  - Vitest `exportParity.test.ts` imports the **actual** Deno module and compares both mappers to fixtures
-  - Deno `mapDerivedForExport_test.ts` exercises the same module + fixtures (`deno test supabase/functions/generate-pdf/mapDerivedForExport_test.ts`)
+  - Vitest `exportParity.test.ts` compares **core + client + actual Deno
+    server adapter** against the same fixtures
+  - Deno `mapDerivedForExport_test.ts` exercises the actual server adapter +
+    fixtures (`deno test supabase/functions/generate-pdf/mapDerivedForExport_test.ts`)
 
-**Important:** Client-only mapper tests do **not** prove server parity. The Deno implementation must be imported or run under Deno against the shared fixtures.
+**Important:** Client-only mapper tests do **not** prove server parity. The Deno adapter must be imported or run under Deno against the shared fixtures.
 
 Intentional differences:
 
