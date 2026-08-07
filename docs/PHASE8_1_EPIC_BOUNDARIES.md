@@ -277,9 +277,7 @@ Epic 4 is complete only when all of the following are true:
 
 ## Epic 5 — Shared Core Package
 
-**Status:** **Complete on this branch pending PR 6 merge** (PR 0–5
-merged; PR 6 closes pure shims and Edge package resolution). ADR 0005
-accepted. Epic 6+ remain unauthorized.
+**Status:** **Complete on `main`**. ADR 0005 accepted; PR 0–6 merged.
 Authority: `docs/adr/0005-shared-package-architecture.md`.
 
 **Goal:** Create `packages/core` so deterministic, environment-neutral
@@ -312,8 +310,6 @@ the ADR §11 sequence.
   maintenance behavior during relocation
 - Next.js / AWS / Cloudflare / Supabase-replacement platform migration
 - Publishing packages to the public npm registry
-- Beginning Epic 6+ automatically
-
 **Export fence (hard rule during Phase 8.1):** Authority
 `docs/EXPORT_CONTRACT.md`. Protected surfaces:
 `docs/EXPORT_CONTRACT.md`,
@@ -336,17 +332,52 @@ the ADR §11 sequence.
 | **PR 3** | Checkout maintenance, guards, redaction, pure billing-snapshot mappers (not resolve orchestration) | Complete / merged |
 | **PR 4** | Pure customer-resolve helpers (not checkout orchestration), origin helpers, deterministic Edge observability (not `generateRequestId`) | Complete / merged |
 | **PR 5** | Export-related relocation if justified and behavior-preserving | Complete / merged |
-| **PR 6** | Remove pure shims; Edge package resolution; Epic 5 closure | **In progress** (this slice; closure on merge) |
+| **PR 6** | Remove pure shims; Edge package resolution; Epic 5 closure | Complete / merged |
 
-**Epic 5 closes with PR 6 merge. Do not begin Epic 6+ automatically.**
+**Epic 5 is complete on `main`.**
 
 ---
 
 ## Epic 6 — Schema Reconciliation
 
-Allowed when authorized: compare production schema vs migrations; resolve
-drift; consolidated schema baseline.  
-**Requires Epic 4.** Prefer ADR “Database schema source of truth” first.
+**Status:** **In progress — PR 0** (ADR 0006 + ADR 0007 proposed;
+repository schema inventory). PR 1+ unauthorized. Epic 7+ unauthorized.
+
+Authority (proposed): `docs/adr/0006-database-schema-source-of-truth.md`,
+`docs/adr/0007-legacy-schema-disposition.md`,
+`docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`.
+
+**Goal:** Make the database schema reproducible from git, capture
+production reality read-only before mutation, classify drift (including
+legacy objects), and reconcile without weakening security or changing
+financial/export/entitlement semantics.
+
+**Requires Epic 4** (complete). Prefer accepted ADR 0006 before schema
+mutation PRs.
+
+### Allowed in Epic 6 PR 0 (this slice)
+
+- Propose ADR 0006 (database schema source of truth)
+- Propose ADR 0007 (legacy schema disposition)
+- Repository-only schema inventory and evidence methodology
+- Governance status updates (including Epic 5 complete-on-main correction)
+
+### Prohibited in Epic 6 PR 0
+
+- Creating or editing migrations
+- Production database access or mutation
+- Schema repair, drops, renames, backfills, RLS/grant/RPC changes
+- Regenerating or hand-editing `src/integrations/supabase/types.ts`
+- Beginning PR 1+ or Epic 7+
+
+### Proposed Epic 6 PR sequence
+
+| PR | Scope | Status |
+|----|--------|--------|
+| **PR 0** | ADR 0006 + ADR 0007 + repository inventory + methodology | **In progress** |
+| **PR 1** | Read-only production schema capture + machine-readable drift report (no mutation) | Not authorized |
+| **PR 2+** | Separately authorized reconciliation slices by risk/domain | Not authorized |
+| **Closure** | Clean reconstruction proof; baseline/SoT docs; types regeneration as needed | Not authorized |
 
 ---
 

@@ -33,17 +33,25 @@ ADR 0004 accepted; PR 0–2 merged; PR 3 not required. See
 `docs/adr/0004-rls-testing-standard.md` and
 `docs/security/RLS_COVERAGE_INVENTORY.md`.
 
-**Epic 5 — Shared Core Package** is **complete on this branch pending PR 6
-merge** (PR 0–5 merged; PR 6 removes pure shims and finalizes Edge
-`@settlerate/core/<subpath>` resolution via per-function `deno.json`).
-See `docs/adr/0005-shared-package-architecture.md` and
-`docs/EXPORT_CONTRACT.md`. **Do not begin Epic 6+ automatically.**
+**Epic 5 — Shared Core Package** is **complete on `main`**. ADR 0005
+accepted; PR 0–6 merged. See
+`docs/adr/0005-shared-package-architecture.md` and
+`docs/EXPORT_CONTRACT.md`.
+
+**Epic 6 — Schema Reconciliation** is **In progress — PR 0** (ADR 0006 /
+ADR 0007 proposed; repository inventory only). No migrations, production
+access, or schema mutation in PR 0. See
+`docs/adr/0006-database-schema-source-of-truth.md`,
+`docs/adr/0007-legacy-schema-disposition.md`, and
+`docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`. **Do not begin Epic 6
+PR 1+ or Epic 7+ automatically.**
 
 ## Prohibited unless explicitly authorized
 
 - Supabase Auth Dashboard redirect-allowlist changes without founder authorization
 - Changing production Sentry DSNs, project routing, or capture scope without founder authorization
-- Beginning Epic 6+ ahead of sequence / dependency gates
+- Beginning Epic 6 PR 1+ (production capture / schema mutation) or Epic 7+ ahead of sequence / dependency gates
+- Connecting to or mutating production databases for reconciliation without founder authorization
 - Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
 - Next.js platform migration

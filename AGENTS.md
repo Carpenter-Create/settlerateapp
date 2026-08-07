@@ -56,11 +56,18 @@ production** (activated and verified 2026-08-06). See
 ADR 0004 is accepted. PR 0–2 merged; PR 3 not required. Authority:
 `docs/adr/0004-rls-testing-standard.md`.
 
-**Epic 5 (Shared Core Package)** is **complete on this branch pending PR 6
-merge** (PR 0–5 merged; PR 6 closes shims / Edge package resolution). ADR
-0005 accepted. Authority: `docs/adr/0005-shared-package-architecture.md`,
+**Epic 5 (Shared Core Package)** is **complete on `main`**. ADR 0005
+accepted; PR 0–6 merged. Authority:
+`docs/adr/0005-shared-package-architecture.md`,
 `docs/EXPORT_CONTRACT.md`, and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
-**Epic 6 and later have not begun and still require separate explicit
+
+**Epic 6 (Schema Reconciliation)** is **In progress — PR 0** (ADR 0006 /
+ADR 0007 proposed; repository schema inventory). PR 1+ (production
+capture / reconciliation) remain unauthorized. Authority:
+`docs/adr/0006-database-schema-source-of-truth.md`,
+`docs/adr/0007-legacy-schema-disposition.md`,
+`docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`.
+**Epic 7 and later have not begun and still require separate explicit
 authorization.**
 
 Do not begin AWS / Cloudflare / Next.js platform migration unless explicitly authorized.

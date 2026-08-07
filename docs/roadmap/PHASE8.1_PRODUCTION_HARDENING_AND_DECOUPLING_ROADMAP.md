@@ -55,30 +55,27 @@ Dependency: complete before schema reconciliation.
 
 ### Epic 5 --- Shared Core Package
 
-**Status: Complete on this branch pending PR 6 merge** (ADR 0005
-accepted; PR 0–5 merged; PR 6 removes pure shims and finalizes Edge
-`@settlerate/core/<subpath>` resolution — see
+**Status: Complete on `main`** (ADR 0005 accepted; PR 0–6 merged — see
 `docs/adr/0005-shared-package-architecture.md` and
 `docs/EXPORT_CONTRACT.md`).
 
-Create:
-
-`packages/core`
-
-Shared by frontend and backend for: - entitlement contracts - checkout
-maintenance logic - subscription guards - pure Stripe billing-snapshot
-mappers (not retrieval orchestration)
-
-Goal: prevent business logic drift. See ADR 0005 for symbol-level splits.
+Shared `packages/core` holds entitlement, checkout maintenance,
+subscription guards, pure billing/customer/origin/observability helpers,
+and export-summary mapping. Goal: prevent business-logic drift.
 
 ### Epic 6 --- Schema Reconciliation
 
--   Compare production schema against migrations.
--   Identify undocumented differences.
--   Resolve schema drift.
--   Create consolidated schema baseline.
+**Status: In progress — PR 0** (ADR 0006 / ADR 0007 proposed; repository
+inventory — see `docs/adr/0006-database-schema-source-of-truth.md`,
+`docs/adr/0007-legacy-schema-disposition.md`,
+`docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`).
 
-Dependency: requires Epic 4.
+-   Compare production schema against migrations (after read-only capture).
+-   Identify undocumented differences.
+-   Resolve schema drift under classified, authorized PRs.
+-   Create consolidated schema baseline when authorized.
+
+Dependency: requires Epic 4. PR 1+ unauthorized until separately approved.
 
 ### Epic 7 --- Staging Environment
 
@@ -139,11 +136,11 @@ deployment process documented - backups verified - monitoring available
 
 ## Next Approved Execution Step
 
-Epic 1–4 are complete on `main`. Epic 5 is **complete on this branch
-pending PR 6 merge** (PR 0–5 merged; PR 6 closes pure shims / Edge
-package resolution; ADR 0005 accepted).
+Epic 1–5 are complete on `main`. Epic 6 is **in progress — PR 0**
+(ADR 0006 / ADR 0007 proposed; repository schema inventory).
 
-**Next implementation step after PR 6 merges (requires separate founder
-authorization):** Epic 6 — Schema Reconciliation (and required ADRs).
+**Next implementation step after PR 0 (requires separate founder
+authorization and preferably accepted ADR 0006/0007):** Epic 6 PR 1 —
+read-only production schema capture + drift report (no mutation).
 
-Do not begin Epic 6 or later epics automatically.
+Do not begin Epic 6 PR 1+, Epic 7, or later epics automatically.
