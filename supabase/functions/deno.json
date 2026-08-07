@@ -10,5 +10,6 @@
     "@settlerate/core/app-origin": "../../packages/core/src/origin/appOrigin.ts",
     "@settlerate/core/edge-observability": "../../packages/core/src/observability/edgeObservability.ts",
     "@settlerate/core/export-summary": "../../packages/core/src/exports/derivedExportSummary.ts"
-  }
+  },
+  "nodeModulesDir": "none"
 }
