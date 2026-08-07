@@ -1,9 +1,9 @@
 # ADR 0007: Legacy schema disposition
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-07
 - Epic: Phase 8.1 / Epic 6 (Schema Reconciliation)
-- Deciders: Founder / Adam Carpenter (acceptance pending founder review)
+- Deciders: Founder / Adam Carpenter
 
 ## Context
 
@@ -26,11 +26,14 @@ triggers, views, RLS, grants, operational SQL, Stripe webhook best-effort
 paths, or future/admin processes.
 
 **Epic 6 PR 0 defines the disposition process only.** No destructive SQL.
+Object-level disposition (including `subscriptions`, dual
+comparison/export stacks, and advisor leftovers) remains deferred pending
+production capture and, where applicable, ADR 0011.
 
 Related: ADR 0006 (schema source of truth), ADR 0011 (advisor model —
 still required / not written).
 
-## Decision (proposed)
+## Decision
 
 ### 1. Disposition classes
 
@@ -69,13 +72,15 @@ does not reference the object.
 
 - Destructive disposition (`DROP`, irreversible rename that orphans data,
   policy wipe that opens access) requires a **separately authorized**
-  migration PR after ADR 0006/0007 acceptance (or explicit founder waiver).
+  migration PR (or explicit founder waiver).
 - That PR must include: classification evidence, rollback/backup notes,
   impact on RLS/entitlement/billing/admin, and validation plan
   (`test:entitlement-sql` / RLS suite as applicable).
 - Prefer deprecate → observe → remove over immediate drop when uncertainty
   remains.
 - No destructive SQL in Epic 6 PR 0 or in undocumented Dashboard clicks.
+- Production capture (ADR 0006) must precede reconciliation/mutation that
+  depends on live reality.
 
 ### 4. Interaction with advisor / product decisions
 
@@ -97,10 +102,12 @@ exports):
 
 ## Consequences
 
+- This ADR is **accepted** and binding for Epic 6 legacy disposition.
 - Epic 6 reconciliation PRs must cite disposition classes for legacy
   candidates.
 - CI green on ephemeral Postgres does not alone authorize production drops.
-- Founder review is required before this ADR becomes `accepted`.
+- Object-level classifications for high-signal candidates remain open until
+  production evidence (and ADR 0011 where applicable).
 
 ## Alternatives considered
 
@@ -111,8 +118,3 @@ exports):
   with review.
 - **Dashboard cleanup without migrations.** Rejected — violates ADR 0006
   future-change rule.
-
-## Status note
-
-This file is **proposed**. Do not treat it as binding until founder
-marks it `accepted`.

@@ -8,8 +8,10 @@ This document inventories schema objects and consumers discoverable from
 the SettleRate **git repository**. It does **not** claim live production
 catalog state.
 
-Authority proposals: `docs/adr/0006-database-schema-source-of-truth.md`,
-`docs/adr/0007-legacy-schema-disposition.md` (both **proposed**).
+Authority: `docs/adr/0006-database-schema-source-of-truth.md`,
+`docs/adr/0007-legacy-schema-disposition.md` (both **accepted**).
+Object-level disposition remains deferred pending production capture
+(and ADR 0011 where applicable).
 
 ---
 

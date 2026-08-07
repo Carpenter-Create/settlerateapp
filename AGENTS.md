@@ -61,9 +61,10 @@ accepted; PR 0–6 merged. Authority:
 `docs/adr/0005-shared-package-architecture.md`,
 `docs/EXPORT_CONTRACT.md`, and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 
-**Epic 6 (Schema Reconciliation)** is **In progress — PR 0** (ADR 0006 /
-ADR 0007 proposed; repository schema inventory). PR 1+ (production
-capture / reconciliation) remain unauthorized. Authority:
+**Epic 6 (Schema Reconciliation)** is **In progress — PR 0** (ADR 0006
+and ADR 0007 **accepted**; repository schema inventory). PR 0 remains in
+progress until its draft PR merges. PR 1+ (production capture /
+reconciliation) remain unauthorized. Authority:
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`.

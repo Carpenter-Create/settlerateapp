@@ -46,7 +46,7 @@ Follow the roadmap epic sequence. Do not skip dependency gates:
 3. Epic 3 — Observability (**complete on `main` and production-activated/verified 2026-08-06** — see ADR 0003)  
 4. Epic 4 — RLS Security Test Expansion (**complete on `main`**; see ADR 0004)  
 5. Epic 5 — Shared Core Package (**complete on `main`**; ADR 0005 accepted; PR 0–6 merged)  
-6. Epic 6 — Schema Reconciliation (**In progress — PR 0**; ADR 0006/0007 proposed; requires Epic 4)  
+6. Epic 6 — Schema Reconciliation (**In progress — PR 0**; ADR 0006/0007 accepted; PR 0 until draft PR merges; PR 1+ unauthorized; requires Epic 4)  
 7. Epic 7 — Staging Environment  
 8. Epic 8 — Billing Recovery Capability  
 9. Epic 9 — Deployment Pipeline  
@@ -143,13 +143,13 @@ application surfaces; Edge resolves package subpaths via per-function
 
 | PR | Intent | Status |
 |----|--------|--------|
-| **PR 0** | ADR 0006 + ADR 0007 (proposed) + repository schema inventory + methodology | **In progress** |
+| **PR 0** | ADR 0006 + ADR 0007 (accepted) + repository schema inventory + methodology | **In progress** (until PR merge) |
 | **PR 1** | Read-only production schema capture + machine-readable drift report (no mutation) | Not authorized |
 | **PR 2+** | Separately authorized reconciliation slices | Not authorized |
 
 Epic 6 **PR 0 is documentation/inventory only** — no migrations, no
 production access, no schema mutation. Do not begin PR 1+ or Epic 7+
-automatically. Authority (proposed):
+automatically. Authority (accepted):
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`. See

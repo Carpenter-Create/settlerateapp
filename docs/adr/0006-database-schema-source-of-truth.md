@@ -1,9 +1,9 @@
 # ADR 0006: Database schema source of truth
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-07
 - Epic: Phase 8.1 / Epic 6 (Schema Reconciliation)
-- Deciders: Founder / Adam Carpenter (acceptance pending founder review)
+- Deciders: Founder / Adam Carpenter
 
 ## Context
 
@@ -28,21 +28,24 @@ destructive cleanup without classification.
 
 **Epic 6 PR 0 is ADR + inventory + methodology only.** It does not capture
 production, mutate schema, create migrations, or reconcile objects.
+Production capture must occur before reconciliation or schema mutation
+(Epic 6 PR 1+, separately authorized).
 
 Related: ADR 0004 (RLS testing — ephemeral reconstruction), ADR 0007
 (legacy disposition process),
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`.
 
-## Decision (proposed)
+## Decision
 
 ### 1. Authority hierarchy after Epic 6
 
-Proposed order of authority for **what the schema ought to be** once
-reconciliation is complete and this ADR is **accepted**:
+Order of authority for **what the schema ought to be** once
+reconciliation is complete:
 
-1. **Reviewed migration history in git** (and, if introduced, a
-   founder-accepted consolidated baseline + subsequent incremental
-   migrations) — the durable, reviewable definition of schema intent.
+1. **Reviewed migration history in git** (and, when introduced under a
+   separately authorized Epic 6 slice, a consolidated reproducible
+   baseline + subsequent incremental migrations) — the durable,
+   reviewable definition of schema intent.
 2. **Documented intentional exceptions** (ADR 0007 classifications for
    retained legacy / compatibility objects) — never silent.
 3. **Live production schema** — authoritative for *what currently exists*
@@ -80,6 +83,10 @@ security-relevant extensions.
 
 Drift reports must be **schema-only**. No customer row payloads in git.
 
+**Production capture is a prerequisite** before reconciliation or schema
+mutation. Repository history alone must not erase unknown live objects by
+assumption.
+
 ### 3. Drift classification (before mutation)
 
 Every differing object must be classified before any change:
@@ -103,7 +110,7 @@ business, billing, entitlement, admin, or security semantics. Classification
 
 ### 4. Future change rule (post-reconciliation)
 
-Once Epic 6 closes under an accepted ADR 0006:
+Once Epic 6 closes under this accepted ADR:
 
 - Schema changes originate as **reviewed migrations** in git.
 - Supabase Dashboard / manual production DDL is **prohibited** except a
@@ -115,21 +122,23 @@ Once Epic 6 closes under an accepted ADR 0006:
 - CI should eventually prove **clean reconstruction** of the canonical
   catalog (and remain green for RLS/entitlement SQL gates).
 
-### 5. Baseline strategy (proposed; not implemented in PR 0)
+### 5. Baseline strategy (accepted; implementation deferred)
 
-**Proposal:** preserve the full historical migration chain for audit, and
-authorize (in a later PR) a **consolidated reproducible baseline** for new
-environments, with an explicit baseline boundary documented in-repo.
+**Accepted decision:** preserve the full historical migration chain for
+audit/history **and** establish a documented consolidated reproducible
+baseline boundary for new environments.
 
-Tradeoffs:
+Implementation of that baseline artifact and CI cutover is **deferred** to
+a later separately authorized Epic 6 slice. Epic 6 PR 0 does **not** create
+the baseline.
+
+Tradeoffs considered:
 
 | Approach | Pros | Cons |
 |----------|------|------|
 | Replay all historical migrations forever | Maximal history fidelity | Slow/fragile greenfield; harness stubs (e.g. `subscriptions`) paper over gaps |
 | Squash-only baseline | Fast clean environments | Loses audit narrative unless history retained elsewhere |
-| **History + documented baseline boundary** (proposed) | Clean reconstruct for new envs; history retained | Requires careful cutover and CI wiring |
-
-PR 0 does **not** create the baseline artifact.
+| **History + documented baseline boundary** (**accepted**) | Clean reconstruct for new envs; history retained | Requires careful cutover and CI wiring |
 
 ### 6. Production evidence capture (read-only; later PR)
 
@@ -146,13 +155,14 @@ Preferred process (conceptual; operator credentials **outside git**):
    keys, no customer rows).
 4. Never commit `COPY`/CSV dumps of user, billing, or scenario data.
 
-PR 0 does **not** execute against production.
+PR 0 does **not** execute against production. PR 1 (read-only capture)
+remains separately unauthorized until founder authorization.
 
-### 7. Proposed Epic 6 PR sequence
+### 7. Epic 6 PR sequence
 
 | PR | Scope | Authorization |
 |----|--------|---------------|
-| **PR 0** | ADR 0006 + ADR 0007 + repository inventory + methodology + governance | **This PR** |
+| **PR 0** | ADR 0006 + ADR 0007 + repository inventory + methodology + governance | In progress until PR merge |
 | **PR 1** | Read-only production schema capture + machine-readable drift report; no schema mutation | Separate |
 | **PR 2+** | Separately authorized reconciliation slices by risk/domain | Separate |
 | **Closure** | Prove clean reconstruction; update baseline/SoT docs; regenerate types as needed | Separate |
@@ -175,11 +185,12 @@ checkout maintenance posture; security weakenings “to make green.”
 
 ## Consequences
 
-- Founder review is required before this ADR becomes `accepted`.
-- Implementation PRs must not mutate schema until ADR 0006 is accepted
-  (or founder explicitly authorizes a scoped exception).
+- This ADR is **accepted** and binding for Epic 6 schema work.
+- Schema mutation PRs still require separate authorization and must follow
+  production capture → classification → migration (when needed).
 - Agents treat generated types as derived until regeneration is authorized.
 - Production capture remains a distinct authorized step (PR 1).
+- Baseline implementation remains deferred to a separately authorized slice.
 
 ## Alternatives considered
 
@@ -189,8 +200,5 @@ checkout maintenance posture; security weakenings “to make green.”
 - **Types.ts as SoT.** Rejected — derived; already drifts from migrations.
 - **Immediate squash of all history in PR 0.** Rejected — out of scope;
   loses audit trail without an accepted baseline plan.
-
-## Status note
-
-This file is **proposed**. Do not treat it as binding until founder
-marks it `accepted`.
+- **Replay-forever without a baseline boundary.** Rejected in favor of
+  history + documented baseline boundary (implementation deferred).

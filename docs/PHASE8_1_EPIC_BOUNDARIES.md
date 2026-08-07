@@ -340,10 +340,11 @@ the ADR §11 sequence.
 
 ## Epic 6 — Schema Reconciliation
 
-**Status:** **In progress — PR 0** (ADR 0006 + ADR 0007 proposed;
-repository schema inventory). PR 1+ unauthorized. Epic 7+ unauthorized.
+**Status:** **In progress — PR 0** (ADR 0006 + ADR 0007 **accepted**;
+repository schema inventory). PR 0 remains in progress until its draft PR
+merges. PR 1+ unauthorized. Epic 7+ unauthorized.
 
-Authority (proposed): `docs/adr/0006-database-schema-source-of-truth.md`,
+Authority: `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`.
 
@@ -352,13 +353,15 @@ production reality read-only before mutation, classify drift (including
 legacy objects), and reconcile without weakening security or changing
 financial/export/entitlement semantics.
 
-**Requires Epic 4** (complete). Prefer accepted ADR 0006 before schema
-mutation PRs.
+**Requires Epic 4** (complete). ADR 0006 and ADR 0007 are accepted.
+Production capture must precede reconciliation/mutation. Baseline
+implementation (history + documented consolidated baseline boundary) is
+deferred to a later separately authorized Epic 6 slice.
 
 ### Allowed in Epic 6 PR 0 (this slice)
 
-- Propose ADR 0006 (database schema source of truth)
-- Propose ADR 0007 (legacy schema disposition)
+- Accept ADR 0006 (database schema source of truth)
+- Accept ADR 0007 (legacy schema disposition)
 - Repository-only schema inventory and evidence methodology
 - Governance status updates (including Epic 5 complete-on-main correction)
 
@@ -374,7 +377,7 @@ mutation PRs.
 
 | PR | Scope | Status |
 |----|--------|--------|
-| **PR 0** | ADR 0006 + ADR 0007 + repository inventory + methodology | **In progress** |
+| **PR 0** | ADR 0006 + ADR 0007 (accepted) + repository inventory + methodology | **In progress** (until PR merge) |
 | **PR 1** | Read-only production schema capture + machine-readable drift report (no mutation) | Not authorized |
 | **PR 2+** | Separately authorized reconciliation slices by risk/domain | Not authorized |
 | **Closure** | Clean reconstruction proof; baseline/SoT docs; types regeneration as needed | Not authorized |

@@ -38,9 +38,10 @@ accepted; PR 0–6 merged. See
 `docs/adr/0005-shared-package-architecture.md` and
 `docs/EXPORT_CONTRACT.md`.
 
-**Epic 6 — Schema Reconciliation** is **In progress — PR 0** (ADR 0006 /
-ADR 0007 proposed; repository inventory only). No migrations, production
-access, or schema mutation in PR 0. See
+**Epic 6 — Schema Reconciliation** is **In progress — PR 0** (ADR 0006
+and ADR 0007 **accepted**; repository inventory only). PR 0 remains in
+progress until its draft PR merges. No migrations, production access, or
+schema mutation in PR 0. See
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`, and
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`. **Do not begin Epic 6
