@@ -4,7 +4,7 @@
 
 This document defines the role and entitlement system for the SettleRate application.
 
-For the Phase 6 canonical entitlement matrix, Stripe mapping, and enforcement points, see [`docs/ENTITLEMENT_CONTRACT.md`](./ENTITLEMENT_CONTRACT.md) and `src/lib/entitlementContract.ts`.
+For the Phase 6 canonical entitlement matrix, Stripe mapping, and enforcement points, see [`docs/ENTITLEMENT_CONTRACT.md`](./ENTITLEMENT_CONTRACT.md) and `@settlerate/core/entitlement`.
 
 For creating the first admin in an environment with no admins yet, see [`docs/ADMIN_BOOTSTRAP.md`](./ADMIN_BOOTSTRAP.md) and [`docs/adr/0001-admin-provisioning-model.md`](./adr/0001-admin-provisioning-model.md) (Phase 8.1 Epic 1).
 

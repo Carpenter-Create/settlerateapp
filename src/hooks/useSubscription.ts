@@ -13,7 +13,7 @@ import {
   PlanCode,
   featureAccessFromDecision,
   planCodeToLegacyTier,
-} from "@/lib/entitlementContract";
+} from "@settlerate/core/entitlement";
 import { useCallback, useEffect } from "react";
 import {
   buildAnonymousEntitlementState,

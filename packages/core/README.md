@@ -10,7 +10,7 @@ Hold only **pure, deterministic, environment-neutral** contracts and
 transformations that must stay identical across browser/Vite, Node
 tests/scripts, and Deno Edge Functions.
 
-## Status (Epic 5 PR 5)
+## Status (Epic 5 PR 6 — closure)
 
 | Module | Package surface | Notes |
 |--------|-----------------|-------|
@@ -22,23 +22,35 @@ tests/scripts, and Deno Edge Functions.
 | Customer resolution (pure) | `@settlerate/core/customer-resolution` | PR 4 — **no** `resolveCheckoutCustomer` |
 | App origin policy | `@settlerate/core/app-origin` | PR 4 — string Origin header policy; **no** `Request` |
 | Edge observability (deterministic) | `@settlerate/core/edge-observability` | PR 4 — **no** `generateRequestId` |
-| Export summary (derived JSON) | `@settlerate/core/export-summary` | PR 5 — portable derived → summary; **no** `buildCanonicalScenarioExport` / `buildScenarioData` / `generatedAt` |
+| Export summary (derived JSON) | `@settlerate/core/export-summary` | PR 5 — portable derived → summary |
 | Scaffold marker | `@settlerate/core` (`SETTLERATE_CORE_SCAFFOLD_MARKER`) | Harmless PR 1 marker |
 
-Compatibility:
+### Final resolution (PR 6)
 
-- Pure shims under `src/lib/*` and Edge `_shared/*` re-export package subpaths
-  (temporary relative bridges on Edge; PR 6 deletion conditions).
-- Runtime adapters retain orchestration / nondeterminism / application wiring:
-  - `resolveSubscriptionBillingSnapshot`
-  - `resolveCheckoutCustomer` (+ deps)
-  - `resolveAppOrigin(Request)`
-  - `generateRequestId`
-  - `exportSummaryFromDerivedJson` (client projection)
-  - `mapDerivedForExport` / `buildScenarioData` (server PDF)
-  - `buildCanonicalScenarioExport` (client application)
+- **Browser / Node / Vitest:** npm workspace package exports
+  (`@settlerate/core/<subpath>`).
+- **Deno package proofs:** `packages/core/deno.json`.
+- **Supabase Edge Functions:** per-function
+  `supabase/functions/<name>/deno.json` maps each subpath to
+  `packages/core` source (plus shared `supabase/functions/deno.json` for
+  Edge adapter proof tests).
 
-PR 6 remains unauthorized. Epic 6+ remain unauthorized.
+### Retained outside core
+
+Runtime / application adapters (not deleted):
+
+- `resolveSubscriptionBillingSnapshot` — `_shared` + `src/lib` billing adapters
+- `resolveCheckoutCustomer` / `CheckoutCustomerResolutionDeps` — Edge adapter
+- `resolveAppOrigin(Request)` — Edge adapter
+- `generateRequestId` — Edge adapter
+- `buildScenarioData` / `mapDerivedForExport` — generate-pdf adapter
+- `buildCanonicalScenarioExport` / `generatedAt` — client exportContract
+- Sentry SDK wiring — `src/lib/observability.ts`, `_shared/sentry.ts`
+
+Pure one-line compatibility shims under `src/lib/*` and
+`_shared/{entitlement,checkout,guard,redaction}` are **removed**.
+
+Epic 6+ remain unauthorized.
 
 ## Public API
 
@@ -49,10 +61,6 @@ import { mapDerivedExportSummary } from "@settlerate/core/export-summary";
 ```
 
 The package root re-exports curated named symbols for convenience.
-
-### Deno
-
-`packages/core/deno.json` maps each subpath to its TypeScript source file.
 
 ## Prohibited in core
 
@@ -67,5 +75,5 @@ The package root re-exports curated named symbols for convenience.
 ## Source of truth
 
 Each migrated domain has exactly one business implementation under
-`packages/core/src/`. App/Edge paths are re-export shims or thin runtime
-adapters — never a second copy of pure logic.
+`packages/core/src/`. Consumers import package subpaths directly.
+Runtime adapters may re-export pure symbols alongside orchestration.

@@ -55,9 +55,9 @@ Dependency: complete before schema reconciliation.
 
 ### Epic 5 --- Shared Core Package
 
-**Status: In progress — PR 5** (ADR 0005 accepted; PR 0–4 complete;
-persisted derived → export-summary mapper into `@settlerate/core`;
-export field semantics frozen — see
+**Status: Complete on this branch pending PR 6 merge** (ADR 0005
+accepted; PR 0–5 merged; PR 6 removes pure shims and finalizes Edge
+`@settlerate/core/<subpath>` resolution — see
 `docs/adr/0005-shared-package-architecture.md` and
 `docs/EXPORT_CONTRACT.md`).
 
@@ -139,10 +139,11 @@ deployment process documented - backups verified - monitoring available
 
 ## Next Approved Execution Step
 
-Epic 1–4 are complete on `main`. Epic 5 is **in progress — PR 5**
-(export derived mapper; ADR 0005 accepted; PR 0–4 complete).
+Epic 1–4 are complete on `main`. Epic 5 is **complete on this branch
+pending PR 6 merge** (PR 0–5 merged; PR 6 closes pure shims / Edge
+package resolution; ADR 0005 accepted).
 
-**Next implementation step after PR 5 merges (requires separate founder
-authorization):** Epic 5 PR 6 — remove temporary shims; Epic 5 closure.
+**Next implementation step after PR 6 merges (requires separate founder
+authorization):** Epic 6 — Schema Reconciliation (and required ADRs).
 
-Do not begin Epic 5 PR 6, Epic 6, or later epics automatically.
+Do not begin Epic 6 or later epics automatically.

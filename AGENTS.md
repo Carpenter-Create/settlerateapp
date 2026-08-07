@@ -56,12 +56,9 @@ production** (activated and verified 2026-08-06). See
 ADR 0004 is accepted. PR 0–2 merged; PR 3 not required. Authority:
 `docs/adr/0004-rls-testing-standard.md`.
 
-**Epic 5 (Shared Core Package)** is **In progress — PR 5** (export derived
-mapper). ADR 0005 accepted; PR 0–4 complete/merged. PR 5 centralizes the
-persisted `derived` JSON → export-summary mapper into
-`@settlerate/core/export-summary` without changing export field semantics.
-PR 6 remains unauthorized. Authority:
-`docs/adr/0005-shared-package-architecture.md`,
+**Epic 5 (Shared Core Package)** is **complete on this branch pending PR 6
+merge** (PR 0–5 merged; PR 6 closes shims / Edge package resolution). ADR
+0005 accepted. Authority: `docs/adr/0005-shared-package-architecture.md`,
 `docs/EXPORT_CONTRACT.md`, and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 **Epic 6 and later have not begun and still require separate explicit
 authorization.**

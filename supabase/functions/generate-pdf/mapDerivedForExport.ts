@@ -2,14 +2,10 @@
  * Server-side derived → export summary adapter for generate-pdf.
  *
  * Canonical mapping: `@settlerate/core/export-summary`
- * (`mapDerivedExportSummary`) via temporary relative bridge.
+ * (`mapDerivedExportSummary`) via Edge `deno.json` import map.
  *
  * Plain TypeScript (no Deno runtime imports) so Vitest and Deno can both
  * exercise this exact adapter. Public signatures and option names are frozen.
- *
- * Deletion condition for the relative bridge: remove when Edge Functions
- * resolve `@settlerate/core/export-summary` via an approved Deno/Supabase
- * import map and CI proves Deno + deploy graph without this path (Epic 5 PR 6).
  *
  * See docs/EXPORT_CONTRACT.md § Server / client parity and deployment checklist.
  */
@@ -17,7 +13,7 @@
 import {
   mapDerivedExportSummary,
   type DerivedExportSummary,
-} from "../../../packages/core/src/exports/derivedExportSummary.ts";
+} from "@settlerate/core/export-summary";
 
 export type ExportSnapshotSelection = "active" | "original";
 

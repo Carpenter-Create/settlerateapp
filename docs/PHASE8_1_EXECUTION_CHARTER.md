@@ -45,7 +45,7 @@ Follow the roadmap epic sequence. Do not skip dependency gates:
 2. Epic 2 — Environment and Origin Hygiene (**complete on `main`**; see ADR 0002)  
 3. Epic 3 — Observability (**complete on `main` and production-activated/verified 2026-08-06** — see ADR 0003)  
 4. Epic 4 — RLS Security Test Expansion (**complete on `main`**; see ADR 0004)  
-5. Epic 5 — Shared Core Package (**In progress — PR 5**; ADR 0005 accepted; PR 0–4 complete; export derived mapper)  
+5. Epic 5 — Shared Core Package (**Complete on this branch pending PR 6 merge**; ADR 0005 accepted; PR 0–5 merged; PR 6 closure)  
 6. Epic 6 — Schema Reconciliation (requires Epic 4; Epic 5 packaging preferred before broad schema work)  
 7. Epic 7 — Staging Environment  
 8. Epic 8 — Billing Recovery Capability  
@@ -129,14 +129,14 @@ is not required. Authority: `docs/adr/0004-rls-testing-standard.md`. See
 | **PR 2** | Entitlement contract extraction | Complete / merged |
 | **PR 3** | Checkout maintenance, guards, redaction, pure billing-snapshot mappers (not resolve orchestration) | Complete / merged |
 | **PR 4** | Pure customer-resolve helpers (not checkout orchestration), origin helpers, deterministic Edge observability (not `generateRequestId`) | Complete / merged |
-| **PR 5** | Export-related relocation if justified and behavior-preserving | **In progress** |
-| **PR 6** | Remove shims; Epic 5 closure | Not authorized |
+| **PR 5** | Export-related relocation if justified and behavior-preserving | Complete / merged |
+| **PR 6** | Remove pure shims; Edge package resolution; Epic 5 closure | **In progress** (closure on merge) |
 
-Epic 5 is **in progress (PR 5 — export derived mapper)**. PR 0–4
-complete. PR 5 centralizes `mapDerivedExportSummary` in
-`@settlerate/core/export-summary`; client/server compatibility surfaces
-remain; export field semantics are frozen.
-**Do not begin PR 6 or Epic 6+ automatically.** Authority:
+Epic 5 **closes with PR 6 merge**. Pure contracts live in
+`@settlerate/core/*`; runtime adapters remain under `_shared` /
+application surfaces; Edge resolves package subpaths via per-function
+`deno.json`. Export field semantics remain frozen.
+**Do not begin Epic 6+ automatically.** Authority:
 `docs/adr/0005-shared-package-architecture.md` and
 `docs/EXPORT_CONTRACT.md`. See `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 

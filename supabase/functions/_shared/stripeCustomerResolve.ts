@@ -1,32 +1,27 @@
 /**
- * Runtime adapter + compatibility surface for Stripe customer resolution.
+ * Runtime adapter for Stripe customer resolution.
  *
- * Pure helpers/types: packages/core customer-resolution (temporary relative bridge).
+ * Pure helpers/types: `@settlerate/core/customer-resolution` (via Edge deno.json).
  * Orchestration (`resolveCheckoutCustomer` + deps): retained here — invokes
  * async injected I/O (ADR 0005 runtime-specific).
- *
- * Deletion condition for the relative bridge / re-export surface: remove when
- * Edge Functions resolve `@settlerate/core/customer-resolution` via an approved
- * Deno/Supabase import map and CI proves Deno + deploy graph without this
- * path (Epic 5 PR 6). Orchestration may remain in an Edge adapter indefinitely.
  */
 
 export {
   resolveStripeCustomerByUserId,
   stripeCustomerMetadataSearchQuery,
-} from "../../../packages/core/src/billing/stripeCustomerResolve.ts";
+} from "@settlerate/core/customer-resolution";
 
 export type {
   StripeCustomerLike,
   StripeCustomerResolution,
   CheckoutCustomerResolution,
-} from "../../../packages/core/src/billing/stripeCustomerResolve.ts";
+} from "@settlerate/core/customer-resolution";
 
 import {
   resolveStripeCustomerByUserId,
   type CheckoutCustomerResolution,
   type StripeCustomerLike,
-} from "../../../packages/core/src/billing/stripeCustomerResolve.ts";
+} from "@settlerate/core/customer-resolution";
 
 export interface CheckoutCustomerResolutionDeps {
   getBillingCustomerId: (userId: string) => Promise<string | null | undefined>;

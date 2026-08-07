@@ -9,7 +9,7 @@
  * exposes service-role keys or other server-side secrets.
  *
  * Kept pure (no direct `import.meta.env` read) so it stays independently
- * unit-testable, matching the pattern in `src/lib/checkoutMaintenance.ts`.
+ * unit-testable, matching the pattern in `@settlerate/core/checkout-maintenance`.
  */
 export function buildEdgeFunctionUrl(
   baseUrl: string | null | undefined,

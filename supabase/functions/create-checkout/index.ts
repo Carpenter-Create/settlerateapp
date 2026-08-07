@@ -5,14 +5,14 @@ import {
   PROFESSIONAL_PRICE_IDS,
   PROFESSIONAL_TRIAL_DAYS,
   isAllowlistedProfessionalPrice,
-} from "../_shared/entitlementContract.ts";
+} from "@settlerate/core/entitlement";
 import { resolveAppOrigin } from "../_shared/appOrigin.ts";
 import {
   CHECKOUT_BLOCKING_SUBSCRIPTION_STATUSES,
   billingRowBlocksCheckout,
   checkoutIdempotencyKey,
   stripeSubscriptionsBlockCheckout,
-} from "../_shared/professionalSubscriptionGuard.ts";
+} from "@settlerate/core/subscription-guard";
 import {
   resolveCheckoutCustomer,
   stripeCustomerMetadataSearchQuery,
@@ -20,7 +20,7 @@ import {
 import {
   checkoutMaintenancePayload,
   isCheckoutMaintenanceEnabled,
-} from "../_shared/checkoutMaintenance.ts";
+} from "@settlerate/core/checkout-maintenance";
 import { generateRequestId } from "../_shared/observability.ts";
 import { captureEdgeException, initEdgeSentry } from "../_shared/sentry.ts";
 

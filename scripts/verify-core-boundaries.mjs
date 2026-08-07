@@ -1,17 +1,22 @@
 #!/usr/bin/env node
 /**
- * Epic 5 — static scan of packages/core library source for forbidden imports,
- * plus compatibility-shim purity / runtime-adapter architecture checks.
+ * Epic 5 PR 6 — final architecture boundary scan.
  *
- * Scans packages/core/src library surface (excludes *.test.ts). Deno proofs
- * under packages/core/deno/ are excluded — they may use Deno.test / node:assert.
+ * Proves:
+ * - packages/core has no app/Edge/runtime contamination
+ * - migrated pure logic is not reimplemented outside core
+ * - no temporary relative Edge → packages/core bridges remain in TS sources
+ * - runtime-only symbols remain outside core
+ * - package exports remain explicit (no wildcard)
+ * - Edge deno.json maps all canonical subpaths
  */
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(fileURLToPath(new URL("..", import.meta.url)));
 const coreSrc = join(root, "packages/core/src");
+const violations = [];
 
 const FORBIDDEN = [
   { re: /from\s+["']@\//, label: "application @/ alias" },
@@ -34,7 +39,6 @@ const FORBIDDEN = [
   { re: /\bcrypto\.randomUUID\b/, label: "crypto.randomUUID usage" },
 ];
 
-/** Runtime-only symbols that must not appear as exports/definitions in core. */
 const CORE_FORBIDDEN_DEFINITIONS = [
   {
     re: /export\s+async\s+function\s+resolveSubscriptionBillingSnapshot/,
@@ -61,8 +65,8 @@ const CORE_FORBIDDEN_DEFINITIONS = [
     label: "must not export buildCanonicalScenarioExport (client application)",
   },
   {
-    re: /:\s*Request\b|\bRequest\s*[;,\)\|]/,
-    label: "must not type against Request (DOM/Fetch — keep in adapters)",
+    re: /:\s*Request\b|\bRequest\b/,
+    label: "must not type against Request (DOM/Fetch - keep in adapters)",
     fileIncludes: "/origin/",
   },
   {
@@ -77,6 +81,49 @@ const CORE_FORBIDDEN_DEFINITIONS = [
   },
 ];
 
+const EXPECTED_PACKAGE_EXPORTS = [
+  ".",
+  "./entitlement",
+  "./checkout-maintenance",
+  "./subscription-guard",
+  "./observability-redaction",
+  "./billing-snapshot",
+  "./customer-resolution",
+  "./app-origin",
+  "./edge-observability",
+  "./export-summary",
+];
+
+const EDGE_FUNCTIONS_WITH_DENO_JSON = [
+  "check-subscription",
+  "create-checkout",
+  "customer-portal",
+  "stripe-webhook",
+  "generate-pdf",
+  "export-share",
+];
+
+const CORE_SUBPATH_TARGETS = {
+  "@settlerate/core": "packages/core/src/index.ts",
+  "@settlerate/core/entitlement":
+    "packages/core/src/entitlement/entitlementContract.ts",
+  "@settlerate/core/checkout-maintenance":
+    "packages/core/src/checkout/checkoutMaintenance.ts",
+  "@settlerate/core/subscription-guard":
+    "packages/core/src/checkout/professionalSubscriptionGuard.ts",
+  "@settlerate/core/observability-redaction":
+    "packages/core/src/observability/observabilityRedaction.ts",
+  "@settlerate/core/billing-snapshot":
+    "packages/core/src/billing/stripeBillingSnapshot.ts",
+  "@settlerate/core/customer-resolution":
+    "packages/core/src/billing/stripeCustomerResolve.ts",
+  "@settlerate/core/app-origin": "packages/core/src/origin/appOrigin.ts",
+  "@settlerate/core/edge-observability":
+    "packages/core/src/observability/edgeObservability.ts",
+  "@settlerate/core/export-summary":
+    "packages/core/src/exports/derivedExportSummary.ts",
+};
+
 function walk(dir) {
   const out = [];
   for (const name of readdirSync(dir)) {
@@ -87,8 +134,18 @@ function walk(dir) {
   return out;
 }
 
+function walkAllTs(dir) {
+  const out = [];
+  if (!existsSync(dir)) return out;
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) out.push(...walkAllTs(p));
+    else if (p.endsWith(".ts") || p.endsWith(".tsx")) out.push(p);
+  }
+  return out;
+}
+
 const files = walk(coreSrc);
-const violations = [];
 
 for (const file of files) {
   const rel = relative(root, file);
@@ -105,24 +162,6 @@ for (const file of files) {
     if (rule.re.test(text)) {
       violations.push(`${rel}: ${rule.label}`);
     }
-  }
-}
-
-/** Compatibility shims must remain pure re-exports (Epic 5 PR 2+). */
-function stripTsComments(source) {
-  return source
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^\s*\/\/.*$/gm, "")
-    .trim();
-}
-
-function assertPureReExport(filePath, expectedFrom) {
-  const body = stripTsComments(readFileSync(filePath, "utf8"));
-  const match = /^export\s+\*\s+from\s+["']([^"']+)["']\s*;?\s*$/.exec(body);
-  if (!match || match[1] !== expectedFrom) {
-    violations.push(
-      `${relative(root, filePath)}: must purely re-export ${expectedFrom}`
-    );
   }
 }
 
@@ -199,38 +238,20 @@ function assertEdgeObservabilityRuntimeAdapter(filePath, coreFrom) {
   }
 }
 
-assertPureReExport(
-  join(root, "src/lib/entitlementContract.ts"),
-  "@settlerate/core/entitlement"
-);
-assertPureReExport(
-  join(root, "supabase/functions/_shared/entitlementContract.ts"),
-  "../../../packages/core/src/entitlement/entitlementContract.ts"
-);
-assertPureReExport(
-  join(root, "src/lib/checkoutMaintenance.ts"),
-  "@settlerate/core/checkout-maintenance"
-);
-assertPureReExport(
-  join(root, "supabase/functions/_shared/checkoutMaintenance.ts"),
-  "../../../packages/core/src/checkout/checkoutMaintenance.ts"
-);
-assertPureReExport(
-  join(root, "src/lib/professionalSubscriptionGuard.ts"),
-  "@settlerate/core/subscription-guard"
-);
-assertPureReExport(
-  join(root, "supabase/functions/_shared/professionalSubscriptionGuard.ts"),
-  "../../../packages/core/src/checkout/professionalSubscriptionGuard.ts"
-);
-assertPureReExport(
-  join(root, "src/lib/observabilityRedaction.ts"),
-  "@settlerate/core/observability-redaction"
-);
-assertPureReExport(
-  join(root, "supabase/functions/_shared/observabilityRedaction.ts"),
-  "../../../packages/core/src/observability/observabilityRedaction.ts"
-);
+function assertDeletedPureShim(relPath) {
+  if (existsSync(join(root, relPath))) {
+    violations.push(`${relPath}: obsolete pure compatibility shim must be deleted`);
+  }
+}
+
+assertDeletedPureShim("src/lib/entitlementContract.ts");
+assertDeletedPureShim("src/lib/checkoutMaintenance.ts");
+assertDeletedPureShim("src/lib/professionalSubscriptionGuard.ts");
+assertDeletedPureShim("src/lib/observabilityRedaction.ts");
+assertDeletedPureShim("supabase/functions/_shared/entitlementContract.ts");
+assertDeletedPureShim("supabase/functions/_shared/checkoutMaintenance.ts");
+assertDeletedPureShim("supabase/functions/_shared/professionalSubscriptionGuard.ts");
+assertDeletedPureShim("supabase/functions/_shared/observabilityRedaction.ts");
 
 assertBillingRuntimeAdapter(
   join(root, "src/lib/stripeBillingSnapshot.ts"),
@@ -238,20 +259,19 @@ assertBillingRuntimeAdapter(
 );
 assertBillingRuntimeAdapter(
   join(root, "supabase/functions/_shared/stripeBillingSnapshot.ts"),
-  "../../../packages/core/src/billing/stripeBillingSnapshot.ts"
+  "@settlerate/core/billing-snapshot"
 );
-
 assertCustomerRuntimeAdapter(
   join(root, "supabase/functions/_shared/stripeCustomerResolve.ts"),
-  "../../../packages/core/src/billing/stripeCustomerResolve.ts"
+  "@settlerate/core/customer-resolution"
 );
 assertAppOriginRuntimeAdapter(
   join(root, "supabase/functions/_shared/appOrigin.ts"),
-  "../../../packages/core/src/origin/appOrigin.ts"
+  "@settlerate/core/app-origin"
 );
 assertEdgeObservabilityRuntimeAdapter(
   join(root, "supabase/functions/_shared/observability.ts"),
-  "../../../packages/core/src/observability/edgeObservability.ts"
+  "@settlerate/core/edge-observability"
 );
 
 function assertExportSummaryDelegation() {
@@ -283,7 +303,6 @@ function assertExportSummaryDelegation() {
       `${relative(root, client)}: exportSummaryFromDerivedJson must delegate to mapDerivedExportSummary`
     );
   }
-  // Reimplementation smell: snapshot/legacy detection should not remain in client mapper.
   if (/const isLegacyFlat\s*=/.test(clientText)) {
     violations.push(
       `${relative(root, client)}: must not reimplement isLegacyFlat (delegate to core)`
@@ -296,9 +315,9 @@ function assertExportSummaryDelegation() {
   }
 
   const serverText = readFileSync(server, "utf8");
-  if (!serverText.includes("packages/core/src/exports/derivedExportSummary.ts")) {
+  if (!serverText.includes("@settlerate/core/export-summary")) {
     violations.push(
-      `${relative(root, server)}: must import canonical core derivedExportSummary`
+      `${relative(root, server)}: must import canonical @settlerate/core/export-summary`
     );
   }
   if (!/mapDerivedExportSummary\s*\(/.test(serverText)) {
@@ -319,6 +338,116 @@ function assertExportSummaryDelegation() {
 }
 
 assertExportSummaryDelegation();
+
+function assertNoRelativeCoreBridges() {
+  const scanRoots = [
+    join(root, "src"),
+    join(root, "supabase/functions"),
+  ];
+  const bridgeRe = /from\s+["'][^"']*packages\/core\/src[^"']*["']/;
+  for (const scanRoot of scanRoots) {
+    for (const file of walkAllTs(scanRoot)) {
+      const rel = relative(root, file).replace(/\\/g, "/");
+      // deno.json is not TS; tests may mention historical paths in strings —
+      // only flag actual import/export from relative packages/core bridges.
+      const text = readFileSync(file, "utf8");
+      if (bridgeRe.test(text)) {
+        violations.push(
+          `${rel}: temporary relative packages/core bridge must be removed (use @settlerate/core/<subpath>)`
+        );
+      }
+    }
+  }
+}
+
+assertNoRelativeCoreBridges();
+
+function assertPackageExportsExplicit() {
+  const pkg = JSON.parse(
+    readFileSync(join(root, "packages/core/package.json"), "utf8")
+  );
+  const exports = pkg.exports ?? {};
+  if ("./*" in exports) {
+    violations.push("packages/core/package.json: wildcard package export is forbidden");
+  }
+  for (const key of EXPECTED_PACKAGE_EXPORTS) {
+    if (!(key in exports)) {
+      violations.push(`packages/core/package.json: missing explicit export ${key}`);
+    }
+  }
+}
+
+assertPackageExportsExplicit();
+
+function assertEdgeDenoImportMaps() {
+  for (const fn of EDGE_FUNCTIONS_WITH_DENO_JSON) {
+    const denoPath = join(root, "supabase/functions", fn, "deno.json");
+    if (!existsSync(denoPath)) {
+      violations.push(`supabase/functions/${fn}/deno.json: missing Edge import map`);
+      continue;
+    }
+    const cfg = JSON.parse(readFileSync(denoPath, "utf8"));
+    const imports = cfg.imports ?? {};
+    for (const [specifier, targetRel] of Object.entries(CORE_SUBPATH_TARGETS)) {
+      const mapped = imports[specifier];
+      if (typeof mapped !== "string") {
+        violations.push(
+          `supabase/functions/${fn}/deno.json: missing import ${specifier}`
+        );
+        continue;
+      }
+      // Resolve mapped path relative to the deno.json directory.
+      const abs = resolve(join(root, "supabase/functions", fn), mapped);
+      const expectedAbs = resolve(root, targetRel);
+      if (abs !== expectedAbs) {
+        violations.push(
+          `supabase/functions/${fn}/deno.json: ${specifier} must resolve to ${targetRel}`
+        );
+      }
+      if (!existsSync(abs)) {
+        violations.push(
+          `supabase/functions/${fn}/deno.json: ${specifier} target missing on disk`
+        );
+      }
+    }
+  }
+
+  const shared = join(root, "supabase/functions/deno.json");
+  if (!existsSync(shared)) {
+    violations.push("supabase/functions/deno.json: missing shared Edge import map for proofs");
+  } else {
+    const cfg = JSON.parse(readFileSync(shared, "utf8"));
+    for (const specifier of Object.keys(CORE_SUBPATH_TARGETS)) {
+      if (!(specifier in (cfg.imports ?? {}))) {
+        violations.push(
+          `supabase/functions/deno.json: missing import ${specifier}`
+        );
+      }
+    }
+  }
+}
+
+assertEdgeDenoImportMaps();
+
+function assertNoKeepInSyncMirrors() {
+  const scanRoots = [
+    join(root, "src/lib"),
+    join(root, "supabase/functions/_shared"),
+    join(root, "packages/core/src"),
+  ];
+  for (const scanRoot of scanRoots) {
+    for (const file of walkAllTs(scanRoot)) {
+      const text = readFileSync(file, "utf8");
+      if (/Keep in sync/i.test(text)) {
+        violations.push(
+          `${relative(root, file)}: obsolete Keep in sync mirror comment remains`
+        );
+      }
+    }
+  }
+}
+
+assertNoKeepInSyncMirrors();
 
 if (violations.length > 0) {
   console.error("packages/core boundary violations:");

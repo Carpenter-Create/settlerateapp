@@ -4,8 +4,8 @@
  * Deno-only (uses an `npm:` specifier import), so this file is never
  * imported by the Node/vitest test suite. Its logic is intentionally thin:
  * all decision/redaction logic lives in the portable, unit-tested
- * `./observability.ts` and `./observabilityRedaction.ts` modules — this
- * file only wires the Sentry Deno SDK to those pure helpers.
+ * `./observability.ts` adapter and `@settlerate/core/observability-redaction`
+ * — this file only wires the Sentry Deno SDK to those helpers.
  *
  * Inert by construction: `initEdgeSentry` and `captureEdgeException` are
  * both no-ops whenever `SENTRY_DSN` is absent/blank
@@ -17,7 +17,7 @@
  */
 import * as Sentry from "npm:@sentry/deno@^8";
 import { buildEdgeExtra, generateRequestId, isEdgeObservabilityEnabled } from "./observability.ts";
-import { redactBreadcrumb, redactEvent } from "./observabilityRedaction.ts";
+import { redactBreadcrumb, redactEvent } from "@settlerate/core/observability-redaction";
 
 let initializedForDsn: string | null = null;
 

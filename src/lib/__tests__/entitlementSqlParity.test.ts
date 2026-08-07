@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import entitlementCases from "@/lib/__fixtures__/entitlementCases.json";
@@ -24,20 +24,6 @@ const PROTECTED_FEATURES = [
 ] as const;
 
 const cases = entitlementCases as EntitlementCaseFixture[];
-
-function stripTsComments(source: string): string {
-  return source
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^\s*\/\/.*$/gm, "")
-    .trim();
-}
-
-function assertPureReExport(filePath: string, expectedFrom: string): void {
-  const body = stripTsComments(readFileSync(filePath, "utf8"));
-  const match = /^export\s+\*\s+from\s+["']([^"']+)["']\s*;?\s*$/.exec(body);
-  expect(match, `${filePath} must be a pure re-export`).not.toBeNull();
-  expect(match?.[1]).toBe(expectedFrom);
-}
 
 describe("entitlementSqlParity fixtures (TypeScript evaluator)", () => {
   const referenceNow = new Date();
@@ -74,16 +60,12 @@ describe("entitlementSqlParity fixtures (TypeScript evaluator)", () => {
 });
 
 describe("entitlementContract source-of-truth", () => {
-  it("app and Edge paths are pure re-export shims to canonical core", () => {
+  it("obsolete pure entitlement shims are deleted", () => {
     const root = process.cwd();
-    assertPureReExport(
-      join(root, "src/lib/entitlementContract.ts"),
-      "@settlerate/core/entitlement"
-    );
-    assertPureReExport(
-      join(root, "supabase/functions/_shared/entitlementContract.ts"),
-      "../../../packages/core/src/entitlement/entitlementContract.ts"
-    );
+    expect(existsSync(join(root, "src/lib/entitlementContract.ts"))).toBe(false);
+    expect(
+      existsSync(join(root, "supabase/functions/_shared/entitlementContract.ts"))
+    ).toBe(false);
   });
 
   it("canonical core module contains entitlement business logic", () => {

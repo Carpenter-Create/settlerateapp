@@ -1,28 +1,14 @@
 /**
- * Compatibility + source-of-truth proof for observability redaction shims.
+ * Final architecture proof for observability redaction package import.
  * Full behavioral coverage: packages/core/src/observability/observabilityRedaction.test.ts
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { redactEvent, scrubString } from "@/lib/observabilityRedaction";
+import { redactEvent, scrubString } from "@settlerate/core/observability-redaction";
 
-function stripTsComments(source: string): string {
-  return source
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^\s*\/\/.*$/gm, "")
-    .trim();
-}
-
-function assertPureReExport(filePath: string, expectedFrom: string): void {
-  const body = stripTsComments(readFileSync(filePath, "utf8"));
-  const match = /^export\s+\*\s+from\s+["']([^"']+)["']\s*;?\s*$/.exec(body);
-  expect(match, `${filePath} must be a pure re-export`).not.toBeNull();
-  expect(match?.[1]).toBe(expectedFrom);
-}
-
-describe("observabilityRedaction app compatibility shim", () => {
-  it("resolves redaction via @/lib re-export", () => {
+describe("observabilityRedaction canonical package import", () => {
+  it("resolves redaction via @settlerate/core/observability-redaction", () => {
     expect(scrubString("a@b.co")).toBe("[REDACTED]");
     expect(
       redactEvent({
@@ -32,16 +18,12 @@ describe("observabilityRedaction app compatibility shim", () => {
     ).toEqual({ user_id: "u1" });
   });
 
-  it("app and Edge paths are pure re-export shims to canonical core", () => {
+  it("obsolete pure shims are deleted", () => {
     const root = process.cwd();
-    assertPureReExport(
-      join(root, "src/lib/observabilityRedaction.ts"),
-      "@settlerate/core/observability-redaction"
-    );
-    assertPureReExport(
-      join(root, "supabase/functions/_shared/observabilityRedaction.ts"),
-      "../../../packages/core/src/observability/observabilityRedaction.ts"
-    );
+    expect(existsSync(join(root, "src/lib/observabilityRedaction.ts"))).toBe(false);
+    expect(
+      existsSync(join(root, "supabase/functions/_shared/observabilityRedaction.ts"))
+    ).toBe(false);
   });
 
   it("canonical module contains redaction business logic", () => {

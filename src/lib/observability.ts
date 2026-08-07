@@ -12,10 +12,10 @@
  * product analytics, no advertising tracking, no performance tracing, no
  * request/response body capture. `defaultIntegrations`/`integrations: []`
  * plus `beforeSend`/`beforeBreadcrumb` redaction hooks (fail-closed) are
- * the enforcement points — see src/lib/observabilityRedaction.ts.
+ * the enforcement points — see `@settlerate/core/observability-redaction`.
  */
 import * as Sentry from "@sentry/react";
-import { redactBreadcrumb, redactEvent } from "@/lib/observabilityRedaction";
+import { redactBreadcrumb, redactEvent } from "@settlerate/core/observability-redaction";
 
 /** Minimal structural validation — not full DSN-format verification, just enough to reject empty/garbage values. */
 export function isValidSentryDsn(dsn: string | null | undefined): boolean {

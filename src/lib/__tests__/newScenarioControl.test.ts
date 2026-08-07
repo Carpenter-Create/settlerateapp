@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FREE_SCENARIO_LIMIT } from "@/lib/entitlementContract";
+import { FREE_SCENARIO_LIMIT } from "@settlerate/core/entitlement";
 import { resolveNewScenarioControl } from "@/lib/newScenarioControl";
 
 describe("resolveNewScenarioControl", () => {

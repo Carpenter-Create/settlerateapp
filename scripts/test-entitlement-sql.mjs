@@ -9,7 +9,7 @@
  * - Concurrent free-tier limit + TS↔SQL entitlement parity
  */
 import { execSync } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
@@ -325,22 +325,9 @@ function stripTsComments(source) {
     .trim();
 }
 
-function assertPureReExport(filePath, expectedFrom) {
-  const body = stripTsComments(readFileSync(filePath, "utf8"));
-  const match = /^export\s+\*\s+from\s+["']([^"']+)["']\s*;?\s*$/.exec(body);
-  if (!match) {
-    throw new Error(`${filePath} must be a pure re-export (no business logic)`);
-  }
-  if (match[1] !== expectedFrom) {
-    throw new Error(
-      `${filePath}: expected re-export from ${expectedFrom}, got ${match[1]}`
-    );
-  }
-}
-
 /**
- * Source-of-truth gate (replaces obsolete byte-identical dual-tree hash).
- * App + Edge paths must remain pure shims; business logic lives only in core.
+ * Source-of-truth gate (Epic 5 PR 6 final architecture).
+ * Pure entitlement logic lives only in core; obsolete shims are deleted.
  */
 function verifyEntitlementSourceOfTruth() {
   const canonical = join(
@@ -364,13 +351,14 @@ function verifyEntitlementSourceOfTruth() {
     throw new Error("canonical entitlementContract must not be a re-export shim");
   }
 
-  assertPureReExport(appShim, "@settlerate/core/entitlement");
-  assertPureReExport(
-    edgeShim,
-    "../../../packages/core/src/entitlement/entitlementContract.ts"
-  );
+  if (existsSync(appShim)) {
+    throw new Error("obsolete app entitlement shim must be deleted");
+  }
+  if (existsSync(edgeShim)) {
+    throw new Error("obsolete Edge entitlement shim must be deleted");
+  }
 
-  process.stdout.write("Entitlement source-of-truth (shims → core) OK\n");
+  process.stdout.write("Entitlement source-of-truth (canonical core only) OK\n");
 }
 
 async function main() {

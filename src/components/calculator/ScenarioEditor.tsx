@@ -20,7 +20,7 @@ import { calculateAssumption, DEFAULT_ASSUMPTION_INPUTS } from "@/lib/assumption
 import { RateMeta, DEFAULT_RATE_META, isRateLocked } from "@/lib/rateMeta";
 import { Scenario, SaveStatus } from "@/hooks/useScenarios";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { FREE_SCENARIO_LIMIT } from "@/lib/entitlementContract";
+import { FREE_SCENARIO_LIMIT } from "@settlerate/core/entitlement";
 import { cn } from "@/lib/utils";
 import { PercentInput } from "./PercentInput";
 import { InputField } from "./InputField";

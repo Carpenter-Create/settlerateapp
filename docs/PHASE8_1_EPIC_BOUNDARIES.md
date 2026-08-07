@@ -127,8 +127,8 @@ verification record and operational baseline).
 
 - ADR 0003 accepted; governance updated (PR 0)
 - PR 1: client Sentry foundation (`src/lib/observability.ts`), shared
-  fail-closed redaction (`src/lib/observabilityRedaction.ts`, mirrored to
-  `supabase/functions/_shared/observabilityRedaction.ts`), top-level React
+  fail-closed redaction (`@settlerate/core/observability-redaction`),
+  top-level React
   error boundary (`src/components/system/ErrorBoundary.tsx`), Edge Function
   observability foundation (`supabase/functions/_shared/observability.ts`,
   `supabase/functions/_shared/sentry.ts`) wired into all six covered
@@ -277,12 +277,9 @@ Epic 4 is complete only when all of the following are true:
 
 ## Epic 5 — Shared Core Package
 
-**Status:** **In progress — PR 5** (export derived mapper). ADR 0005
-accepted; PR 0–4 complete/merged. PR 5 moves the persisted `derived` JSON
-→ export-summary mapper into `@settlerate/core/export-summary` while
-preserving client/server public compatibility surfaces and export field
-semantics (`docs/EXPORT_CONTRACT.md` fence).
-PR 6 remains unauthorized. Epic 6+ remain unauthorized.
+**Status:** **Complete on this branch pending PR 6 merge** (PR 0–5
+merged; PR 6 closes pure shims and Edge package resolution). ADR 0005
+accepted. Epic 6+ remain unauthorized.
 Authority: `docs/adr/0005-shared-package-architecture.md`.
 
 **Goal:** Create `packages/core` so deterministic, environment-neutral
@@ -309,7 +306,6 @@ the ADR §11 sequence.
 
 ### Prohibited in Epic 5
 
-- Beginning PR 6 (shim removal / Epic 5 closure) ahead of authorization
 - Changing export field semantics (`docs/EXPORT_CONTRACT.md` fence)
 - Changing mortgage formulas, benchmarks, entitlement outcomes, plan
   mappings, scenario limits, billing interpretation, or checkout
@@ -339,11 +335,10 @@ the ADR §11 sequence.
 | **PR 2** | Entitlement contract extraction | Complete / merged |
 | **PR 3** | Checkout maintenance, guards, redaction, pure billing-snapshot mappers (not resolve orchestration) | Complete / merged |
 | **PR 4** | Pure customer-resolve helpers (not checkout orchestration), origin helpers, deterministic Edge observability (not `generateRequestId`) | Complete / merged |
-| **PR 5** | Export-related relocation if justified and behavior-preserving | **In progress** (this slice) |
-| **PR 6** | Remove shims; Epic 5 closure | Not authorized |
+| **PR 5** | Export-related relocation if justified and behavior-preserving | Complete / merged |
+| **PR 6** | Remove pure shims; Edge package resolution; Epic 5 closure | **In progress** (this slice; closure on merge) |
 
-**Epic 5 is in progress (PR 5 — export derived mapper). Do not begin
-PR 6 or Epic 6+ automatically.**
+**Epic 5 closes with PR 6 merge. Do not begin Epic 6+ automatically.**
 
 ---
 

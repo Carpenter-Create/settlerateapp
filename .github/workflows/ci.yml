@@ -25,6 +25,11 @@ jobs:
           node-version: "22"
           cache: npm
 
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - name: Install dependencies
         run: npm ci
 
@@ -39,6 +44,20 @@ jobs:
 
       - name: Test
         run: npm run test:run
+
+      # DENO_NO_PACKAGE_JSON: Edge deno.json workspaces have no package.json.
+      # After npm ci, Deno 2 may auto-resolve the repo root package.json and
+      # fail while linking npm packages. These proofs use only import-map
+      # paths + node: builtins — disable package.json auto-resolution.
+      - name: Deno core and Edge resolution
+        env:
+          DENO_NO_PACKAGE_JSON: "1"
+        run: npm run test:core-deno-scaffold
+
+      - name: Deno export parity
+        env:
+          DENO_NO_PACKAGE_JSON: "1"
+        run: npm run test:export-parity-deno
 
       - name: Remove stale entitlement test container
         run: docker rm -f settlerate-entitlement-test 2>/dev/null || true
