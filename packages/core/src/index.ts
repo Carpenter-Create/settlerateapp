@@ -15,6 +15,7 @@
  * - `@settlerate/core/customer-resolution` (pure helpers only)
  * - `@settlerate/core/app-origin` (string Origin header policy)
  * - `@settlerate/core/edge-observability` (deterministic helpers only)
+ * - `@settlerate/core/export-summary` (persisted derived → export summary)
  */
 
 /** Inert resolution marker (PR 1). Harmless alongside real contracts. */
@@ -118,3 +119,11 @@ export {
 } from "./observability/edgeObservability.ts";
 
 export type { EdgeObservabilityContext } from "./observability/edgeObservability.ts";
+
+export { mapDerivedExportSummary } from "./exports/derivedExportSummary.ts";
+
+export type {
+  ExportSnapshotSelection,
+  MapDerivedExportSummaryOptions,
+  DerivedExportSummary,
+} from "./exports/derivedExportSummary.ts";

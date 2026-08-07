@@ -53,9 +53,27 @@ const CORE_FORBIDDEN_DEFINITIONS = [
     label: "must not export generateRequestId (nondeterministic runtime)",
   },
   {
+    re: /export\s+function\s+buildScenarioData/,
+    label: "must not export buildScenarioData (server PDF adapter)",
+  },
+  {
+    re: /export\s+function\s+buildCanonicalScenarioExport/,
+    label: "must not export buildCanonicalScenarioExport (client application)",
+  },
+  {
     re: /:\s*Request\b|\bRequest\s*[;,\)\|]/,
     label: "must not type against Request (DOM/Fetch — keep in adapters)",
     fileIncludes: "/origin/",
+  },
+  {
+    re: /\bnew\s+Date\s*\(/,
+    label: "must not use new Date() (export-summary must stay deterministic)",
+    fileIncludes: "/exports/",
+  },
+  {
+    re: /\bDate\.now\s*\(/,
+    label: "must not use Date.now() (export-summary must stay deterministic)",
+    fileIncludes: "/exports/",
   },
 ];
 
@@ -235,6 +253,72 @@ assertEdgeObservabilityRuntimeAdapter(
   join(root, "supabase/functions/_shared/observability.ts"),
   "../../../packages/core/src/observability/edgeObservability.ts"
 );
+
+function assertExportSummaryDelegation() {
+  const canonical = join(
+    root,
+    "packages/core/src/exports/derivedExportSummary.ts"
+  );
+  const client = join(root, "src/lib/exports/exportContract.ts");
+  const server = join(
+    root,
+    "supabase/functions/generate-pdf/mapDerivedForExport.ts"
+  );
+
+  const canonicalText = readFileSync(canonical, "utf8");
+  if (!/export\s+function\s+mapDerivedExportSummary/.test(canonicalText)) {
+    violations.push(
+      `${relative(root, canonical)}: must export mapDerivedExportSummary`
+    );
+  }
+
+  const clientText = readFileSync(client, "utf8");
+  if (!clientText.includes("@settlerate/core/export-summary")) {
+    violations.push(
+      `${relative(root, client)}: must import canonical @settlerate/core/export-summary`
+    );
+  }
+  if (!/mapDerivedExportSummary\s*\(/.test(clientText)) {
+    violations.push(
+      `${relative(root, client)}: exportSummaryFromDerivedJson must delegate to mapDerivedExportSummary`
+    );
+  }
+  // Reimplementation smell: snapshot/legacy detection should not remain in client mapper.
+  if (/const isLegacyFlat\s*=/.test(clientText)) {
+    violations.push(
+      `${relative(root, client)}: must not reimplement isLegacyFlat (delegate to core)`
+    );
+  }
+  if (!/export\s+function\s+buildCanonicalScenarioExport/.test(clientText)) {
+    violations.push(
+      `${relative(root, client)}: must retain buildCanonicalScenarioExport application-side`
+    );
+  }
+
+  const serverText = readFileSync(server, "utf8");
+  if (!serverText.includes("packages/core/src/exports/derivedExportSummary.ts")) {
+    violations.push(
+      `${relative(root, server)}: must import canonical core derivedExportSummary`
+    );
+  }
+  if (!/mapDerivedExportSummary\s*\(/.test(serverText)) {
+    violations.push(
+      `${relative(root, server)}: mapDerivedForExport must delegate to mapDerivedExportSummary`
+    );
+  }
+  if (/const isLegacyFlat\s*=/.test(serverText)) {
+    violations.push(
+      `${relative(root, server)}: must not reimplement isLegacyFlat (delegate to core)`
+    );
+  }
+  if (!/export\s+function\s+buildScenarioData/.test(serverText)) {
+    violations.push(
+      `${relative(root, server)}: must retain buildScenarioData server-side`
+    );
+  }
+}
+
+assertExportSummaryDelegation();
 
 if (violations.length > 0) {
   console.error("packages/core boundary violations:");

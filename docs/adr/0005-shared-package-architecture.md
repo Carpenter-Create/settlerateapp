@@ -9,18 +9,19 @@
 
 SettleRate currently duplicates drift-sensitive business contracts between the
 Vite/React client (`src/lib/`) and Supabase Edge Functions
-(`supabase/functions/_shared/`). After PR 2–4, entitlement, checkout
+(`supabase/functions/_shared/`). After PR 2–5, entitlement, checkout
 maintenance, subscription guards, observability redaction, pure billing
 snapshot mappers, pure customer-resolution helpers, pure app-origin policy,
-and deterministic Edge observability helpers are single-sourced in
-`@settlerate/core` with re-export shims / runtime adapters (shim-purity
-gated). Remaining shared/runtime boundaries are limited to modules
-intentionally retained outside core, including Stripe customer-resolution
-orchestration (`resolveCheckoutCustomer`), nondeterministic Edge request-ID
-generation (`generateRequestId`), and export-runtime mappings.
-Runtime-specific orchestration remains in adapters where required. Export
-semantics are protected by `docs/EXPORT_CONTRACT.md` with a client builder
-and a server derived-JSON mapper that must stay semantically aligned.
+deterministic Edge observability helpers, and the persisted derived →
+export-summary mapper are single-sourced in `@settlerate/core` with
+re-export shims / runtime adapters (shim-purity gated). Remaining
+shared/runtime boundaries are limited to modules intentionally retained
+outside core, including Stripe customer-resolution orchestration
+(`resolveCheckoutCustomer`), nondeterministic Edge request-ID generation
+(`generateRequestId`), client `buildCanonicalScenarioExport` /
+`generatedAt`, and server PDF `buildScenarioData` / layout. Runtime-specific
+orchestration remains in adapters where required. Export field semantics
+remain protected by `docs/EXPORT_CONTRACT.md`.
 
 Roadmap Epic 5 calls for a shared `packages/core` so these contracts have one
 canonical implementation across browser, Node test/scripts, and Deno Edge
@@ -99,8 +100,8 @@ Classification key:
 | Client Sentry init / capture | `src/lib/observability.ts` | **Runtime-specific** | `@sentry/react`, `import.meta.env` |
 | Edge Sentry SDK wiring | `_shared/sentry.ts` | **Runtime-specific** | `npm:@sentry/deno`, Deno env |
 | Observability release helper | `src/lib/observabilityRelease.ts` | **Runtime-specific** | Build/CI env (`VERCEL_GIT_COMMIT_SHA` / `GITHUB_SHA`) for Vite |
-| Export summary from derived JSON / server mapper | `src/lib/exports/exportContract.ts` (`exportSummaryFromDerivedJson`) + `supabase/functions/generate-pdf/mapDerivedForExport.ts` | **Unresolved → prefer Move if decoupling succeeds** | Semantic parity today via fixtures; unify only if types can be shared without pulling the mortgage engine or changing `docs/EXPORT_CONTRACT.md` |
-| Canonical scenario export builder | `src/lib/exports/exportContract.ts` (`buildCanonicalScenarioExport`) | **Unresolved** | Depends on `@/lib/mortgage`, `@/lib/scenarioContract`, `@/lib/scenarioPersistence` types — may need type extraction first |
+| Export summary from derived JSON / server mapper | Canonical: `packages/core/src/exports/derivedExportSummary.ts` (`@settlerate/core/export-summary`); client/server compatibility surfaces retained | **Move** (PR 5) | Pure persisted-derived mapper; client projects narrower keys; server retains `interestRateFallback` + `buildScenarioData` |
+| Canonical scenario export builder | `src/lib/exports/exportContract.ts` (`buildCanonicalScenarioExport`) | **Runtime-specific** / application | Depends on `@/lib/mortgage`, `@/lib/scenarioContract`, `@/lib/scenarioPersistence`; stays application-side in PR 5 |
 | Export HTML layout | `src/lib/exports/exportLayout.ts` | **Runtime-specific** | Presentation adapter |
 | Export PDF / print | `src/lib/exports/exportPDF.ts` | **Runtime-specific** | DOM (`document`, `window.print`) |
 | UI Stripe price display / PRICING | `src/lib/stripe.ts` | **Runtime-specific** | UI amounts; may import allowlist symbols from core |
@@ -364,7 +365,7 @@ Inspected 2026-08-06 on `main` (post Epic 4 closure).
 | Customer-resolution pure helpers → `@settlerate/core/customer-resolution` (PR 4) | Edge adapter retains `resolveCheckoutCustomer` + deps |
 | App-origin pure policy → `@settlerate/core/app-origin` (PR 4) | Edge adapter retains `resolveAppOrigin(Request)` |
 | Edge observability deterministic helpers → `@settlerate/core/edge-observability` (PR 4) | Edge adapter retains `generateRequestId` |
-| Export client vs `generate-pdf/mapDerivedForExport.ts` | Semantic parity via fixtures — not a file copy |
+| Export derived summary → `@settlerate/core/export-summary` (PR 5) | Client/server adapters delegate; fixtures + Deno adapter prove parity |
 
 ### Current runtime consumers (representative)
 
@@ -448,11 +449,11 @@ Inspected 2026-08-06 on `main` (post Epic 4 closure).
 | **PR 1** | `packages/core` workspace scaffold (no behavioral migration) | Complete / merged |
 | **PR 2** | Entitlement contract extraction | Complete / merged |
 | **PR 3** | Checkout maintenance, guards, redaction, **pure** billing-snapshot mappers (not `resolveSubscriptionBillingSnapshot`) | Complete / merged |
-| **PR 4** | **Pure** customer-resolve helpers (not `resolveCheckoutCustomer`), origin helpers, deterministic Edge observability (not `generateRequestId`) | **In progress** |
-| **PR 5** | Export-related relocation if justified and behavior-preserving | Not authorized |
+| **PR 4** | **Pure** customer-resolve helpers (not `resolveCheckoutCustomer`), origin helpers, deterministic Edge observability (not `generateRequestId`) | Complete / merged |
+| **PR 5** | Export-related relocation if justified and behavior-preserving | **In progress** |
 | **PR 6** | Remove shims; Epic 5 closure | Not authorized |
 
-**Epic 5 status:** In progress — PR 4 (pure customer-resolution, app-origin
-policy, deterministic Edge observability in `@settlerate/core`;
-`resolveCheckoutCustomer` and `generateRequestId` remain runtime-only).
-Do not begin PR 5–6 automatically.
+**Epic 5 status:** In progress — PR 5 (canonical
+`mapDerivedExportSummary` in `@settlerate/core/export-summary`;
+client/server adapters retain public APIs; export field semantics frozen).
+Do not begin PR 6 automatically.

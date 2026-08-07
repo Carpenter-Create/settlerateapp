@@ -56,14 +56,13 @@ production** (activated and verified 2026-08-06). See
 ADR 0004 is accepted. PR 0–2 merged; PR 3 not required. Authority:
 `docs/adr/0004-rls-testing-standard.md`.
 
-**Epic 5 (Shared Core Package)** is **In progress — PR 4** (runtime-boundary
-extraction). ADR 0005 accepted; PR 0–3 complete/merged. PR 4 centralizes
-pure customer-resolution helpers, pure app-origin policy, and deterministic
-Edge observability helpers into `@settlerate/core`
-(`resolveCheckoutCustomer` and `generateRequestId` remain runtime-only).
-PR 5–6 remain unauthorized. Authority:
-`docs/adr/0005-shared-package-architecture.md` and
-`docs/PHASE8_1_EPIC_BOUNDARIES.md`.
+**Epic 5 (Shared Core Package)** is **In progress — PR 5** (export derived
+mapper). ADR 0005 accepted; PR 0–4 complete/merged. PR 5 centralizes the
+persisted `derived` JSON → export-summary mapper into
+`@settlerate/core/export-summary` without changing export field semantics.
+PR 6 remains unauthorized. Authority:
+`docs/adr/0005-shared-package-architecture.md`,
+`docs/EXPORT_CONTRACT.md`, and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 **Epic 6 and later have not begun and still require separate explicit
 authorization.**
 

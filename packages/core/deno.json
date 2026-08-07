@@ -8,7 +8,8 @@
     "@settlerate/core/billing-snapshot": "./src/billing/stripeBillingSnapshot.ts",
     "@settlerate/core/customer-resolution": "./src/billing/stripeCustomerResolve.ts",
     "@settlerate/core/app-origin": "./src/origin/appOrigin.ts",
-    "@settlerate/core/edge-observability": "./src/observability/edgeObservability.ts"
+    "@settlerate/core/edge-observability": "./src/observability/edgeObservability.ts",
+    "@settlerate/core/export-summary": "./src/exports/derivedExportSummary.ts"
   },
   "compilerOptions": {
     "lib": ["deno.ns", "es2020"],
