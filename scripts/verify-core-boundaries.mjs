@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Epic 5 — static scan of packages/core library source for forbidden imports,
- * plus entitlement compatibility-shim purity checks (PR 2+).
+ * plus compatibility-shim purity / billing-adapter architecture checks.
  *
  * Scans packages/core/src library surface (excludes *.test.ts). Deno proofs
  * under packages/core/deno/ are excluded — they may use Deno.test / node:assert.
@@ -20,6 +20,8 @@ const FORBIDDEN = [
   { re: /from\s+["']react(?:-dom)?["']/, label: "react import" },
   { re: /from\s+["']@supabase\//, label: "Supabase client import" },
   { re: /from\s+["']stripe["']/, label: "Stripe SDK import" },
+  { re: /from\s+["']@sentry\//, label: "Sentry SDK import" },
+  { re: /from\s+["']npm:@sentry\//, label: "Sentry Deno npm import" },
   { re: /from\s+["']node:/, label: "Node built-in import" },
   {
     re: /from\s+["'](?:fs|path|crypto|process|child_process|url|os|http|https)["']/,
@@ -27,6 +29,8 @@ const FORBIDDEN = [
   },
   { re: /\bDeno\./, label: "Deno global usage" },
   { re: /from\s+["']npm:/, label: "Deno npm: specifier" },
+  { re: /\bprocess\.env\b/, label: "process.env usage" },
+  { re: /\bimport\.meta\.env\b/, label: "import.meta.env usage" },
 ];
 
 function walk(dir) {
@@ -50,6 +54,11 @@ for (const file of files) {
       violations.push(`${rel}: ${rule.label}`);
     }
   }
+  if (/export\s+async\s+function\s+resolveSubscriptionBillingSnapshot/.test(text)) {
+    violations.push(
+      `${rel}: must not export resolveSubscriptionBillingSnapshot (runtime orchestration)`
+    );
+  }
 }
 
 /** Compatibility shims must remain pure re-exports (Epic 5 PR 2+). */
@@ -70,6 +79,23 @@ function assertPureReExport(filePath, expectedFrom) {
   }
 }
 
+function assertBillingRuntimeAdapter(filePath, coreFrom) {
+  const text = readFileSync(filePath, "utf8");
+  const rel = relative(root, filePath);
+  if (!/export\s+async\s+function\s+resolveSubscriptionBillingSnapshot/.test(text)) {
+    violations.push(`${rel}: must retain resolveSubscriptionBillingSnapshot locally`);
+  }
+  if (!text.includes(coreFrom)) {
+    violations.push(`${rel}: must import pure billing symbols from ${coreFrom}`);
+  }
+  // Mapper implementation must not be duplicated — only one "export function mapSubscription"
+  if (/export\s+function\s+mapSubscriptionToBillingSnapshot\s*\(/.test(text)) {
+    violations.push(
+      `${rel}: must not redefine mapSubscriptionToBillingSnapshot (re-export from core)`
+    );
+  }
+}
+
 assertPureReExport(
   join(root, "src/lib/entitlementContract.ts"),
   "@settlerate/core/entitlement"
@@ -77,6 +103,39 @@ assertPureReExport(
 assertPureReExport(
   join(root, "supabase/functions/_shared/entitlementContract.ts"),
   "../../../packages/core/src/entitlement/entitlementContract.ts"
+);
+assertPureReExport(
+  join(root, "src/lib/checkoutMaintenance.ts"),
+  "@settlerate/core/checkout-maintenance"
+);
+assertPureReExport(
+  join(root, "supabase/functions/_shared/checkoutMaintenance.ts"),
+  "../../../packages/core/src/checkout/checkoutMaintenance.ts"
+);
+assertPureReExport(
+  join(root, "src/lib/professionalSubscriptionGuard.ts"),
+  "@settlerate/core/subscription-guard"
+);
+assertPureReExport(
+  join(root, "supabase/functions/_shared/professionalSubscriptionGuard.ts"),
+  "../../../packages/core/src/checkout/professionalSubscriptionGuard.ts"
+);
+assertPureReExport(
+  join(root, "src/lib/observabilityRedaction.ts"),
+  "@settlerate/core/observability-redaction"
+);
+assertPureReExport(
+  join(root, "supabase/functions/_shared/observabilityRedaction.ts"),
+  "../../../packages/core/src/observability/observabilityRedaction.ts"
+);
+
+assertBillingRuntimeAdapter(
+  join(root, "src/lib/stripeBillingSnapshot.ts"),
+  "@settlerate/core/billing-snapshot"
+);
+assertBillingRuntimeAdapter(
+  join(root, "supabase/functions/_shared/stripeBillingSnapshot.ts"),
+  "../../../packages/core/src/billing/stripeBillingSnapshot.ts"
 );
 
 if (violations.length > 0) {

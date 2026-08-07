@@ -45,7 +45,7 @@ Follow the roadmap epic sequence. Do not skip dependency gates:
 2. Epic 2 — Environment and Origin Hygiene (**complete on `main`**; see ADR 0002)  
 3. Epic 3 — Observability (**complete on `main` and production-activated/verified 2026-08-06** — see ADR 0003)  
 4. Epic 4 — RLS Security Test Expansion (**complete on `main`**; see ADR 0004)  
-5. Epic 5 — Shared Core Package (**In progress — PR 2**; ADR 0005 accepted; PR 0–1 complete; entitlement extraction)  
+5. Epic 5 — Shared Core Package (**In progress — PR 3**; ADR 0005 accepted; PR 0–2 complete; shared pure contracts)  
 6. Epic 6 — Schema Reconciliation (requires Epic 4; Epic 5 packaging preferred before broad schema work)  
 7. Epic 7 — Staging Environment  
 8. Epic 8 — Billing Recovery Capability  
@@ -126,16 +126,17 @@ is not required. Authority: `docs/adr/0004-rls-testing-standard.md`. See
 |----|--------|--------|
 | **PR 0** | Shared package architecture ADR (0005) + minimum governance status | Complete / merged |
 | **PR 1** | `packages/core` workspace scaffold (no behavioral migration) | Complete / merged |
-| **PR 2** | Entitlement contract extraction | **In progress** |
-| **PR 3** | Checkout maintenance, guards, redaction, pure billing-snapshot mappers (not resolve orchestration) | Not authorized |
+| **PR 2** | Entitlement contract extraction | Complete / merged |
+| **PR 3** | Checkout maintenance, guards, redaction, pure billing-snapshot mappers (not resolve orchestration) | **In progress** |
 | **PR 4** | Pure customer-resolve helpers (not checkout orchestration), origin helpers, deterministic Edge observability (not `generateRequestId`) | Not authorized |
 | **PR 5** | Export-related relocation if justified and behavior-preserving | Not authorized |
 | **PR 6** | Remove shims; Epic 5 closure | Not authorized |
 
-Epic 5 is **in progress (PR 2 — entitlement extraction)**. PR 0–1
-complete. PR 2 moves the entitlement contract into
-`@settlerate/core/entitlement` with compatibility re-export shims.
-**Do not begin PR 3–6 or Epic 6+ automatically.** Authority:
+Epic 5 is **in progress (PR 3 — shared pure contracts)**. PR 0–2
+complete. PR 3 centralizes checkout maintenance, subscription guards,
+observability redaction, and pure billing-snapshot mappers; leaves
+`resolveSubscriptionBillingSnapshot` in runtime adapters.
+**Do not begin PR 4–6 or Epic 6+ automatically.** Authority:
 `docs/adr/0005-shared-package-architecture.md`. See
 `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 

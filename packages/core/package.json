@@ -6,7 +6,11 @@
   "description": "SettleRate shared deterministic business contracts (Epic 5).",
   "exports": {
     ".": "./src/index.ts",
-    "./entitlement": "./src/entitlement/entitlementContract.ts"
+    "./entitlement": "./src/entitlement/entitlementContract.ts",
+    "./checkout-maintenance": "./src/checkout/checkoutMaintenance.ts",
+    "./subscription-guard": "./src/checkout/professionalSubscriptionGuard.ts",
+    "./observability-redaction": "./src/observability/observabilityRedaction.ts",
+    "./billing-snapshot": "./src/billing/stripeBillingSnapshot.ts"
   },
   "files": [
     "src"
