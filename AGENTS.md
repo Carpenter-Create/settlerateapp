@@ -53,14 +53,17 @@ production** (activated and verified 2026-08-06). See
 `docs/adr/0003-observability-policy.md`.
 
 **Epic 4 (RLS Security Test Expansion)** is **complete on `main`**.
-ADR 0004 is accepted. PR 0–2 merged (inventory + core matrix + remaining
-relations / administrative paths). PR 3 is **not required** — CI already
-gates the full RLS suite via `npm run test:entitlement-sql` in
-`.github/workflows/ci.yml`, and all Epic 4 acceptance criteria were met
-in PRs 1–2. Authority: `docs/adr/0004-rls-testing-standard.md` and
+ADR 0004 is accepted. PR 0–2 merged; PR 3 not required. Authority:
+`docs/adr/0004-rls-testing-standard.md`.
+
+**Epic 5 (Shared Core Package)** is **In progress — PR 0** (ADR 0005
+accepted). PR 0 is documentation/governance only — it does **not** create
+`packages/core`, modify workspaces, or move runtime code. Epic 5
+implementation PRs (scaffold and extractions) remain unauthorized.
+Authority: `docs/adr/0005-shared-package-architecture.md` and
 `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
-**Epic 5 and later have not begun and still require separate explicit
-authorization** (next gated step: Epic 5 ADR-first planning / ADR 0005).
+**Epic 6 and later have not begun and still require separate explicit
+authorization.**
 
 Do not begin AWS / Cloudflare / Next.js platform migration unless explicitly authorized.
 
