@@ -1,41 +1,23 @@
 /**
- * Portable observability core for Supabase Edge Functions — Phase 8.1
- * Epic 3 (ADR 0003).
+ * Edge observability adapter — Phase 8.1 Epic 3 / Epic 5 PR 4.
  *
- * Contains no Deno-specific globals and no remote/`npm:` imports, so it can
- * be unit tested directly under vitest (see
- * src/lib/__tests__/edgeObservability.test.ts), mirroring the pattern used
- * by supabase/functions/_shared/appOrigin.ts and
- * supabase/functions/_shared/checkoutMaintenance.ts.
+ * Deterministic helpers: packages/core edge-observability (temporary relative bridge).
+ * Nondeterministic request-ID generation (`crypto.randomUUID`) retained here.
  *
- * The actual Sentry Deno SDK wiring (which requires an `npm:` specifier
- * import and therefore cannot load under Node/vitest) lives in
- * supabase/functions/_shared/sentry.ts and calls into these pure helpers.
+ * Deletion condition for the relative bridge / re-export surface: remove when
+ * Edge Functions resolve `@settlerate/core/edge-observability` via an approved
+ * Deno/Supabase import map and CI proves Deno + deploy graph without this
+ * path (Epic 5 PR 6). `generateRequestId` remains a runtime adapter concern.
  */
 
-import { redactExtra } from "./observabilityRedaction.ts";
+export {
+  isEdgeObservabilityEnabled,
+  buildEdgeExtra,
+} from "../../../packages/core/src/observability/edgeObservability.ts";
 
-/** No-op unless a non-empty SENTRY_DSN secret is configured. Fails closed (absent/blank → disabled). */
-export function isEdgeObservabilityEnabled(dsn: string | null | undefined): boolean {
-  return typeof dsn === "string" && dsn.trim() !== "";
-}
+export type { EdgeObservabilityContext } from "../../../packages/core/src/observability/edgeObservability.ts";
 
 /** Correlation identifier for a single function invocation. */
 export function generateRequestId(): string {
   return crypto.randomUUID();
-}
-
-export interface EdgeObservabilityContext {
-  function_name: string;
-  request_id: string;
-  [key: string]: unknown;
-}
-
-/**
- * Builds the allowlisted `extra` payload attached to a captured exception.
- * Delegates to the shared redaction policy so Edge Functions apply the same
- * fail-closed scrubbing as the client.
- */
-export function buildEdgeExtra(context: EdgeObservabilityContext): Record<string, unknown> {
-  return redactExtra(context);
 }

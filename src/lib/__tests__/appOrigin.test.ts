@@ -1,7 +1,12 @@
+/**
+ * Edge adapter compatibility for resolveAppOrigin(Request).
+ * Pure origin policy: packages/core/src/origin/appOrigin.test.ts
+ */
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_APP_ORIGIN,
   resolveAppOrigin,
+  resolveAppOriginFromOriginHeader,
 } from "../../../supabase/functions/_shared/appOrigin";
 
 function requestWithOrigin(origin: string | null): Request {
@@ -15,7 +20,29 @@ function requestWithOrigin(origin: string | null): Request {
   });
 }
 
-describe("resolveAppOrigin", () => {
+describe("resolveAppOrigin Edge adapter", () => {
+  it("matches pure header resolution for allowlisted and rejected origins", () => {
+    const cases = [
+      "https://app.settlerate.com",
+      "http://localhost:5173",
+      "http://localhost:8080",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:8080",
+      "https://evil.example",
+      "https://app.settlerate.com.evil.example",
+      "https://vpcxzbaxhpucvevnkalo.lovable.app",
+      "https://settlerate.com",
+      "http://localhost:3000",
+      null,
+    ] as const;
+
+    for (const origin of cases) {
+      const viaRequest = resolveAppOrigin(requestWithOrigin(origin));
+      const viaHeader = resolveAppOriginFromOriginHeader(origin);
+      expect(viaRequest, String(origin)).toBe(viaHeader);
+    }
+  });
+
   it("allows the canonical production origin", () => {
     expect(resolveAppOrigin(requestWithOrigin("https://app.settlerate.com"))).toBe(
       "https://app.settlerate.com"

@@ -1,31 +1,32 @@
 /**
- * A Stripe customer is eligible for application binding only when its immutable
- * application user id matches exactly. Email addresses are not an ownership signal.
+ * Runtime adapter + compatibility surface for Stripe customer resolution.
+ *
+ * Pure helpers/types: packages/core customer-resolution (temporary relative bridge).
+ * Orchestration (`resolveCheckoutCustomer` + deps): retained here — invokes
+ * async injected I/O (ADR 0005 runtime-specific).
+ *
+ * Deletion condition for the relative bridge / re-export surface: remove when
+ * Edge Functions resolve `@settlerate/core/customer-resolution` via an approved
+ * Deno/Supabase import map and CI proves Deno + deploy graph without this
+ * path (Epic 5 PR 6). Orchestration may remain in an Edge adapter indefinitely.
  */
-export interface StripeCustomerLike {
-  id: string;
-  metadata?: Record<string, string | undefined> | null;
-}
 
-export type StripeCustomerResolution =
-  | { kind: "none" }
-  | { kind: "unique"; customerId: string }
-  | { kind: "ambiguous" };
+export {
+  resolveStripeCustomerByUserId,
+  stripeCustomerMetadataSearchQuery,
+} from "../../../packages/core/src/billing/stripeCustomerResolve.ts";
 
-export function resolveStripeCustomerByUserId(
-  customers: readonly StripeCustomerLike[],
-  userId: string
-): StripeCustomerResolution {
-  const matches = customers.filter((customer) => customer.metadata?.user_id === userId);
+export type {
+  StripeCustomerLike,
+  StripeCustomerResolution,
+  CheckoutCustomerResolution,
+} from "../../../packages/core/src/billing/stripeCustomerResolve.ts";
 
-  if (matches.length === 0) return { kind: "none" };
-  if (matches.length === 1) return { kind: "unique", customerId: matches[0].id };
-  return { kind: "ambiguous" };
-}
-
-export function stripeCustomerMetadataSearchQuery(userId: string): string {
-  return `metadata['user_id']:'${userId}'`;
-}
+import {
+  resolveStripeCustomerByUserId,
+  type CheckoutCustomerResolution,
+  type StripeCustomerLike,
+} from "../../../packages/core/src/billing/stripeCustomerResolve.ts";
 
 export interface CheckoutCustomerResolutionDeps {
   getBillingCustomerId: (userId: string) => Promise<string | null | undefined>;
@@ -33,11 +34,6 @@ export interface CheckoutCustomerResolutionDeps {
   isCustomerBoundToOtherUser: (customerId: string, userId: string) => Promise<boolean>;
   createCustomer: (input: { email: string; userId: string }) => Promise<string>;
 }
-
-export type CheckoutCustomerResolution =
-  | { kind: "resolved"; customerId: string; requiresBillingMapUpsert: boolean }
-  | { kind: "ambiguous" }
-  | { kind: "bound_elsewhere" };
 
 /**
  * Resolves checkout ownership from the app's billing map or Stripe metadata only.

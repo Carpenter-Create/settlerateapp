@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Epic 5 — static scan of packages/core library source for forbidden imports,
- * plus compatibility-shim purity / billing-adapter architecture checks.
+ * plus compatibility-shim purity / runtime-adapter architecture checks.
  *
  * Scans packages/core/src library surface (excludes *.test.ts). Deno proofs
  * under packages/core/deno/ are excluded — they may use Deno.test / node:assert.
@@ -31,6 +31,32 @@ const FORBIDDEN = [
   { re: /from\s+["']npm:/, label: "Deno npm: specifier" },
   { re: /\bprocess\.env\b/, label: "process.env usage" },
   { re: /\bimport\.meta\.env\b/, label: "import.meta.env usage" },
+  { re: /\bcrypto\.randomUUID\b/, label: "crypto.randomUUID usage" },
+];
+
+/** Runtime-only symbols that must not appear as exports/definitions in core. */
+const CORE_FORBIDDEN_DEFINITIONS = [
+  {
+    re: /export\s+async\s+function\s+resolveSubscriptionBillingSnapshot/,
+    label: "must not export resolveSubscriptionBillingSnapshot (runtime orchestration)",
+  },
+  {
+    re: /export\s+async\s+function\s+resolveCheckoutCustomer/,
+    label: "must not export resolveCheckoutCustomer (runtime orchestration)",
+  },
+  {
+    re: /export\s+interface\s+CheckoutCustomerResolutionDeps/,
+    label: "must not export CheckoutCustomerResolutionDeps (runtime deps)",
+  },
+  {
+    re: /export\s+function\s+generateRequestId/,
+    label: "must not export generateRequestId (nondeterministic runtime)",
+  },
+  {
+    re: /:\s*Request\b|\bRequest\s*[;,\)\|]/,
+    label: "must not type against Request (DOM/Fetch — keep in adapters)",
+    fileIncludes: "/origin/",
+  },
 ];
 
 function walk(dir) {
@@ -54,10 +80,13 @@ for (const file of files) {
       violations.push(`${rel}: ${rule.label}`);
     }
   }
-  if (/export\s+async\s+function\s+resolveSubscriptionBillingSnapshot/.test(text)) {
-    violations.push(
-      `${rel}: must not export resolveSubscriptionBillingSnapshot (runtime orchestration)`
-    );
+  for (const rule of CORE_FORBIDDEN_DEFINITIONS) {
+    if (rule.fileIncludes && !file.replace(/\\/g, "/").includes(rule.fileIncludes)) {
+      continue;
+    }
+    if (rule.re.test(text)) {
+      violations.push(`${rel}: ${rule.label}`);
+    }
   }
 }
 
@@ -88,11 +117,67 @@ function assertBillingRuntimeAdapter(filePath, coreFrom) {
   if (!text.includes(coreFrom)) {
     violations.push(`${rel}: must import pure billing symbols from ${coreFrom}`);
   }
-  // Mapper implementation must not be duplicated — only one "export function mapSubscription"
   if (/export\s+function\s+mapSubscriptionToBillingSnapshot\s*\(/.test(text)) {
     violations.push(
       `${rel}: must not redefine mapSubscriptionToBillingSnapshot (re-export from core)`
     );
+  }
+}
+
+function assertCustomerRuntimeAdapter(filePath, coreFrom) {
+  const text = readFileSync(filePath, "utf8");
+  const rel = relative(root, filePath);
+  if (!/export\s+async\s+function\s+resolveCheckoutCustomer/.test(text)) {
+    violations.push(`${rel}: must retain resolveCheckoutCustomer locally`);
+  }
+  if (!/export\s+interface\s+CheckoutCustomerResolutionDeps/.test(text)) {
+    violations.push(`${rel}: must retain CheckoutCustomerResolutionDeps locally`);
+  }
+  if (!text.includes(coreFrom)) {
+    violations.push(`${rel}: must import pure customer-resolution symbols from ${coreFrom}`);
+  }
+  if (/export\s+function\s+resolveStripeCustomerByUserId\s*\(/.test(text)) {
+    violations.push(
+      `${rel}: must not redefine resolveStripeCustomerByUserId (re-export from core)`
+    );
+  }
+}
+
+function assertAppOriginRuntimeAdapter(filePath, coreFrom) {
+  const text = readFileSync(filePath, "utf8");
+  const rel = relative(root, filePath);
+  if (!/export\s+function\s+resolveAppOrigin\s*\(\s*req:\s*Request/.test(text)) {
+    violations.push(`${rel}: must retain resolveAppOrigin(req: Request)`);
+  }
+  if (!text.includes(coreFrom)) {
+    violations.push(`${rel}: must import pure app-origin symbols from ${coreFrom}`);
+  }
+  if (/export\s+function\s+resolveAppOriginFromOriginHeader\s*\(/.test(text)) {
+    violations.push(
+      `${rel}: must not redefine resolveAppOriginFromOriginHeader (re-export from core)`
+    );
+  }
+}
+
+function assertEdgeObservabilityRuntimeAdapter(filePath, coreFrom) {
+  const text = readFileSync(filePath, "utf8");
+  const rel = relative(root, filePath);
+  if (!/export\s+function\s+generateRequestId\s*\(/.test(text)) {
+    violations.push(`${rel}: must retain generateRequestId locally`);
+  }
+  if (!/\bcrypto\.randomUUID\b/.test(text)) {
+    violations.push(`${rel}: generateRequestId must continue using crypto.randomUUID`);
+  }
+  if (!text.includes(coreFrom)) {
+    violations.push(`${rel}: must import deterministic edge-observability from ${coreFrom}`);
+  }
+  if (/export\s+function\s+isEdgeObservabilityEnabled\s*\(/.test(text)) {
+    violations.push(
+      `${rel}: must not redefine isEdgeObservabilityEnabled (re-export from core)`
+    );
+  }
+  if (/export\s+function\s+buildEdgeExtra\s*\(/.test(text)) {
+    violations.push(`${rel}: must not redefine buildEdgeExtra (re-export from core)`);
   }
 }
 
@@ -136,6 +221,19 @@ assertBillingRuntimeAdapter(
 assertBillingRuntimeAdapter(
   join(root, "supabase/functions/_shared/stripeBillingSnapshot.ts"),
   "../../../packages/core/src/billing/stripeBillingSnapshot.ts"
+);
+
+assertCustomerRuntimeAdapter(
+  join(root, "supabase/functions/_shared/stripeCustomerResolve.ts"),
+  "../../../packages/core/src/billing/stripeCustomerResolve.ts"
+);
+assertAppOriginRuntimeAdapter(
+  join(root, "supabase/functions/_shared/appOrigin.ts"),
+  "../../../packages/core/src/origin/appOrigin.ts"
+);
+assertEdgeObservabilityRuntimeAdapter(
+  join(root, "supabase/functions/_shared/observability.ts"),
+  "../../../packages/core/src/observability/edgeObservability.ts"
 );
 
 if (violations.length > 0) {
