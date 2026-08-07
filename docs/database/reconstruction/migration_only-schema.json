@@ -1,0 +1,4876 @@
+{
+  "constraints": [
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "advisor_access_requests_pkey",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "advisor_access_requests",
+      "type": "PRIMARY KEY"
+    },
+    {
+      "definition": "FOREIGN KEY (reviewed_by) REFERENCES auth.users(id)",
+      "name": "advisor_access_requests_reviewed_by_fkey",
+      "referencedSchema": "auth",
+      "referencedTable": "users",
+      "schema": "public",
+      "table": "advisor_access_requests",
+      "type": "FOREIGN KEY"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'approved'::text, 'denied'::text])))",
+      "name": "advisor_access_requests_status_check",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "advisor_access_requests",
+      "type": "CHECK"
+    },
+    {
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "name": "advisor_access_requests_user_id_fkey",
+      "referencedSchema": "auth",
+      "referencedTable": "users",
+      "schema": "public",
+      "table": "advisor_access_requests",
+      "type": "FOREIGN KEY"
+    },
+    {
+      "definition": "UNIQUE (user_id)",
+      "name": "advisor_access_requests_user_id_key",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "advisor_access_requests",
+      "type": "UNIQUE"
+    },
+    {
+      "definition": "PRIMARY KEY (user_id)",
+      "name": "billing_pkey",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "billing",
+      "type": "PRIMARY KEY"
+    },
+    {
+      "definition": "UNIQUE (stripe_customer_id)",
+      "name": "billing_stripe_customer_id_key",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "billing",
+      "type": "UNIQUE"
+    },
+    {
+      "definition": "UNIQUE (stripe_subscription_id)",
+      "name": "billing_stripe_subscription_id_key",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "billing",
+      "type": "UNIQUE"
+    },
+    {
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "name": "billing_user_id_fkey",
+      "referencedSchema": "auth",
+      "referencedTable": "users",
+      "schema": "public",
+      "table": "billing",
+      "type": "FOREIGN KEY"
+    },
+    {
+      "definition": "FOREIGN KEY (comparison_id) REFERENCES saved_comparisons(id) ON DELETE CASCADE",
+      "name": "comparison_items_comparison_id_fkey",
+      "referencedSchema": "public",
+      "referencedTable": "saved_comparisons",
+      "schema": "public",
+      "table": "comparison_items",
+      "type": "FOREIGN KEY"
+    },
+    {
+      "definition": "UNIQUE (comparison_id, scenario_id)",
+      "name": "comparison_items_comparison_id_scenario_id_key",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "comparison_items",
+      "type": "UNIQUE"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "comparison_items_pkey",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "comparison_items",
+      "type": "PRIMARY KEY"
+    },
+    {
+      "definition": "FOREIGN KEY (comparison_id) REFERENCES saved_comparisons(id) ON DELETE CASCADE",
+      "name": "comparison_versions_comparison_id_fkey",
+      "referencedSchema": "public",
+      "referencedTable": "saved_comparisons",
+      "schema": "public",
+      "table": "comparison_versions",
+      "type": "FOREIGN KEY"
+    },
+    {
+      "definition": "UNIQUE (comparison_id, version_number)",
+      "name": "comparison_versions_comparison_id_version_number_key",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "comparison_versions",
+      "type": "UNIQUE"
+    },
+    {
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "name": "comparison_versions_created_by_fkey",
+      "referencedSchema": "auth",
+      "referencedTable": "users",
+      "schema": "public",
+      "table": "comparison_versions",
+      "type": "FOREIGN KEY"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "comparison_versions_pkey",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "comparison_versions",
+      "type": "PRIMARY KEY"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "contact_messages_pkey",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "contact_messages",
+      "type": "PRIMARY KEY"
+    },
+    {
+      "definition": "FOREIGN KEY (reviewed_by) REFERENCES auth.users(id)",
+      "name": "contact_messages_reviewed_by_fkey",
+      "referencedSchema": "auth",
+      "referencedTable": "users",
+      "schema": "public",
+      "table": "contact_messages",
+      "type": "FOREIGN KEY"
+    },
+    {
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "contact_messages_user_id_fkey",
+      "referencedSchema": "auth",
+      "referencedTable": "users",
+      "schema": "public",
+      "table": "contact_messages",
+      "type": "FOREIGN KEY"
+    },
+    {
+      "definition": "FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "name": "profiles_id_fkey",
+      "referencedSchema": "auth",
+      "referencedTable": "users",
+      "schema": "public",
+      "table": "profiles",
+      "type": "FOREIGN KEY"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "profiles_pkey",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "profiles",
+      "type": "PRIMARY KEY"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "saved_comparisons_pkey",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "saved_comparisons",
+      "type": "PRIMARY KEY"
+    },
+    {
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "name": "saved_comparisons_user_id_fkey",
+      "referencedSchema": "auth",
+      "referencedTable": "users",
+      "schema": "public",
+      "table": "saved_comparisons",
+      "type": "FOREIGN KEY"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "scenarios_pkey",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "scenarios",
+      "type": "PRIMARY KEY"
+    },
+    {
+      "definition": "CHECK ((scenario_type = ANY (ARRAY['purchase'::text, 'refinance'::text])))",
+      "name": "scenarios_scenario_type_check",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "scenarios",
+      "type": "CHECK"
+    },
+    {
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "name": "scenarios_user_id_fkey",
+      "referencedSchema": "auth",
+      "referencedTable": "users",
+      "schema": "public",
+      "table": "scenarios",
+      "type": "FOREIGN KEY"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "user_roles_pkey",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "user_roles",
+      "type": "PRIMARY KEY"
+    },
+    {
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "name": "user_roles_user_id_fkey",
+      "referencedSchema": "auth",
+      "referencedTable": "users",
+      "schema": "public",
+      "table": "user_roles",
+      "type": "FOREIGN KEY"
+    },
+    {
+      "definition": "UNIQUE (user_id, role)",
+      "name": "user_roles_user_id_role_key",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "user_roles",
+      "type": "UNIQUE"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "buckets_pkey",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "storage",
+      "table": "buckets",
+      "type": "PRIMARY KEY"
+    },
+    {
+      "definition": "FOREIGN KEY (bucket_id) REFERENCES storage.buckets(id)",
+      "name": "objects_bucket_id_fkey",
+      "referencedSchema": "storage",
+      "referencedTable": "buckets",
+      "schema": "storage",
+      "table": "objects",
+      "type": "FOREIGN KEY"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "objects_pkey",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "storage",
+      "table": "objects",
+      "type": "PRIMARY KEY"
+    }
+  ],
+  "enums": [
+    {
+      "name": "app_role",
+      "schema": "public",
+      "values": [
+        "admin",
+        "moderator",
+        "user",
+        "advisor"
+      ]
+    }
+  ],
+  "extensions": [
+    {
+      "name": "plpgsql",
+      "schema": "pg_catalog",
+      "version": "1.0"
+    },
+    {
+      "name": "pgcrypto",
+      "schema": "public",
+      "version": "1.3"
+    }
+  ],
+  "functions": [
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "9545c7728e7824da806d0e154be07afbcf32124663553ca9cb5ef7f531dcab25",
+      "definitionRedacted": false,
+      "identityArgs": "request_id uuid, approve boolean",
+      "language": "plpgsql",
+      "name": "approve_advisor_request",
+      "returnType": "json",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "db4ffff028873da5cb47e8e2269c27ead2e43599842f9eaf1e2aaef684cb4fdf",
+      "definitionRedacted": false,
+      "identityArgs": "bytea",
+      "language": "c",
+      "name": "armor",
+      "returnType": "text",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "d7149b80bc9353ae8619d6b30fe2fbf55835b2f0b8d40946a8a2ffed8cd06077",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, text[], text[]",
+      "language": "c",
+      "name": "armor",
+      "returnType": "text",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "591f322099cdb2147b414ab6198e871b586a92c3e6d55e922fd57598ef1ebc89",
+      "definitionRedacted": false,
+      "identityArgs": "text, text",
+      "language": "c",
+      "name": "crypt",
+      "returnType": "text",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "c566a0d63cfdc19f3b793c843dbc5ac7a4efbdcb7a186628f1d8c9a340992c2e",
+      "definitionRedacted": false,
+      "identityArgs": "text",
+      "language": "c",
+      "name": "dearmor",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "ae2dcb5aec1b71b14a079106473e68332a3cedc9aeb144104695ef4f0129433c",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, bytea, text",
+      "language": "c",
+      "name": "decrypt",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "479caeef667287ff402586793c50b8a731fdf4a416f4c88514f64f7dcc3edf79",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, bytea, bytea, text",
+      "language": "c",
+      "name": "decrypt_iv",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "80ee243bb975482cebe0c882dde1cfd062a2d4fe4a66b3f96dfebbf0b29cb5ca",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, text",
+      "language": "c",
+      "name": "digest",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "124dccf4fa7554899e3c698925fb8818b516daf19a0dd3507dfd94bd52909b88",
+      "definitionRedacted": false,
+      "identityArgs": "text, text",
+      "language": "c",
+      "name": "digest",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "bb1337a84062942dd2bd1b051147de9cad7940d8e4655f3222bbfdc4f324ba86",
+      "definitionRedacted": false,
+      "identityArgs": "source_scenario_id uuid, new_name text",
+      "language": "plpgsql",
+      "name": "duplicate_scenario",
+      "returnType": "uuid",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "fd10ad8c5f206ff894fd986863657dfab6f0f6c2311e9a8171d1c8f9185a366f",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, bytea, text",
+      "language": "c",
+      "name": "encrypt",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "e73397ad3aea7989236b8eb15d3e26e2a535cded042fda51a7ebe03a33680fa3",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, bytea, bytea, text",
+      "language": "c",
+      "name": "encrypt_iv",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "3e5d4a298efb95a8c94a2e47a06244bb747c33f2400461b01531b7b12bc010b6",
+      "definitionRedacted": false,
+      "identityArgs": "integer",
+      "language": "c",
+      "name": "gen_random_bytes",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "25638e75fc207943fb8c90fd9b288fc578f1895e6efa498bbbb9c348bab75ca3",
+      "definitionRedacted": false,
+      "identityArgs": "",
+      "language": "c",
+      "name": "gen_random_uuid",
+      "returnType": "uuid",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "4804fccf376c05f751913792c8aecff27c8955d6db09902c57d9723cf3db2b10",
+      "definitionRedacted": false,
+      "identityArgs": "text",
+      "language": "c",
+      "name": "gen_salt",
+      "returnType": "text",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "18b38955c3d8ac21f639aeefbd6c345134b33e2cbe2e560673c9086015d4f643",
+      "definitionRedacted": false,
+      "identityArgs": "text, integer",
+      "language": "c",
+      "name": "gen_salt",
+      "returnType": "text",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "9a73c71a12ba93513055376929ca6ca19c3262ad9ddeb5c8a02fd7b3c1078400",
+      "definitionRedacted": false,
+      "identityArgs": "target_user_id uuid",
+      "language": "plpgsql",
+      "name": "get_effective_tier",
+      "returnType": "text",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "STABLE"
+    },
+    {
+      "containsSecretLikeLiteral": true,
+      "definitionFingerprint": "e9e7c324d58a710933e3288067a0279dc4562d9f9558b8bbec6586c7a6bf3aba",
+      "definitionRedacted": true,
+      "identityArgs": "",
+      "language": "plpgsql",
+      "name": "grant_admin_on_signup",
+      "returnType": "trigger",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "fcc49d6794a3ed937b43cd6987dcca05e2b1a17d552b06ff9dde6fdaedf6ae07",
+      "definitionRedacted": false,
+      "identityArgs": "",
+      "language": "plpgsql",
+      "name": "handle_new_user",
+      "returnType": "trigger",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "5506e560b7779ac4ef2d9a656aafe3e24b4e036121464e60dec1008af8f05acb",
+      "definitionRedacted": false,
+      "identityArgs": "_user_id uuid, _role app_role",
+      "language": "sql",
+      "name": "has_role",
+      "returnType": "boolean",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "STABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "113fd543511a4b0e578190991d390af2653090d976f498ee65b9c0dedd9e2412",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, bytea, text",
+      "language": "c",
+      "name": "hmac",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "6b7a87a21f69a4f927b52b636b3b195833e70a89b995b8248a1eb540bf8aebbb",
+      "definitionRedacted": false,
+      "identityArgs": "text, text, text",
+      "language": "c",
+      "name": "hmac",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "a5668a4d254e443753cd0c31a0c67dc15cbb5cca18659b33f9bfc24696e0ba19",
+      "definitionRedacted": false,
+      "identityArgs": "uid uuid",
+      "language": "sql",
+      "name": "is_admin",
+      "returnType": "boolean",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "STABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "6f0149c2e6d67006e877676d65bc713ee9e50c2bed5def491e72b94031c927af",
+      "definitionRedacted": false,
+      "identityArgs": "uid uuid",
+      "language": "sql",
+      "name": "is_advisor",
+      "returnType": "boolean",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "STABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "8f41202734763b1a8c939353657908f658c773e0af73da9e98376b80541ef5d2",
+      "definitionRedacted": false,
+      "identityArgs": "",
+      "language": "plpgsql",
+      "name": "list_pending_advisor_requests",
+      "returnType": "SETOF advisor_access_requests",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "76b3763c98beef0c55df38bbeadb989c78602e695b43138d8a8632fa265649aa",
+      "definitionRedacted": false,
+      "identityArgs": "",
+      "language": "plpgsql",
+      "name": "normalize_admin_billing_insert",
+      "returnType": "trigger",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "ac60bc5af106d5c213df59d56f92e71292cfc39667ef649be6ceac4d02f4d854",
+      "definitionRedacted": false,
+      "identityArgs": "text, OUT key text, OUT value text",
+      "language": "c",
+      "name": "pgp_armor_headers",
+      "returnType": "SETOF record",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "d769d3a75aaf5dfdf00f4a1457532c56e65a0e9b04b6e968fb7958d4fc75422e",
+      "definitionRedacted": false,
+      "identityArgs": "bytea",
+      "language": "c",
+      "name": "pgp_key_id",
+      "returnType": "text",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "894a93085937fdf29e3a3f5570b9b906f678d59a2c469ae311347c1862967980",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, bytea",
+      "language": "c",
+      "name": "pgp_pub_decrypt",
+      "returnType": "text",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "e3cace7ae2a8cb3472125d613935cffa1e520dbbc33c94261156357b05069b2e",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, bytea, text",
+      "language": "c",
+      "name": "pgp_pub_decrypt",
+      "returnType": "text",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "682e9df46a0297830e973abd4a799a8d667f4673d03c7c16c9b07d22c2062878",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, bytea, text, text",
+      "language": "c",
+      "name": "pgp_pub_decrypt",
+      "returnType": "text",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "332805431b8a49290591eac0b42cff25f5839d0c104e34daa0bb8f11d603b0c1",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, bytea",
+      "language": "c",
+      "name": "pgp_pub_decrypt_bytea",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "46a1d20972c28adb7fe916b0b5d1c1ee0172fa56e7bcc1a78fde14038c248b54",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, bytea, text",
+      "language": "c",
+      "name": "pgp_pub_decrypt_bytea",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "5116c861b7912d89456065021ae8f917b61cd317aecef33ad7a59d7654941f31",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, bytea, text, text",
+      "language": "c",
+      "name": "pgp_pub_decrypt_bytea",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "6fc65f69a342baaf36cd9acb3377961b7d1ecd511ce3e1634c2baaba438ad2c3",
+      "definitionRedacted": false,
+      "identityArgs": "text, bytea",
+      "language": "c",
+      "name": "pgp_pub_encrypt",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "690f2a590a982d99dbe8eef3e17fbbee1b1b173ae24d1ca16290690f9f87a2d4",
+      "definitionRedacted": false,
+      "identityArgs": "text, bytea, text",
+      "language": "c",
+      "name": "pgp_pub_encrypt",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "27e5da163964c8fc6c7896f0d3225f126f4fd807c1046937d4a131ef9f777773",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, bytea",
+      "language": "c",
+      "name": "pgp_pub_encrypt_bytea",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "f0fb74a2f873c08eb994e5cbd4f70850b90cddd19094a19a30783a10a18045a1",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, bytea, text",
+      "language": "c",
+      "name": "pgp_pub_encrypt_bytea",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "5a0c2ceb815303b3cbae7c555191529bde22bc202a1005ad8080d40a7273a0d5",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, text",
+      "language": "c",
+      "name": "pgp_sym_decrypt",
+      "returnType": "text",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "04ea7eb20d69fd20422e1fd16a6a7febfa47509dc0fc3ca27123db8574c06f62",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, text, text",
+      "language": "c",
+      "name": "pgp_sym_decrypt",
+      "returnType": "text",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "bfbc21b4c0535cccf97d1c0821fb1b0e78cba917cfa23f60a28dc4c5528437f8",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, text",
+      "language": "c",
+      "name": "pgp_sym_decrypt_bytea",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "38060617cad7da4af3ec3c1aeb23a39f931be5a04050dd961e6a7a9ca6b8e95e",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, text, text",
+      "language": "c",
+      "name": "pgp_sym_decrypt_bytea",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "4363b0ef60e3183efca1bef3a5516f624c4d8a28169580f7a9d78c5155cec303",
+      "definitionRedacted": false,
+      "identityArgs": "text, text",
+      "language": "c",
+      "name": "pgp_sym_encrypt",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "2f016bc9276f05bc98ff9e5e9677ff83570631649a2513a3f031ec362eb43b4d",
+      "definitionRedacted": false,
+      "identityArgs": "text, text, text",
+      "language": "c",
+      "name": "pgp_sym_encrypt",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "74a3ff713523d0d61e52a97e51411708826f90d1722e1e7d08d2a9f542b7ec49",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, text",
+      "language": "c",
+      "name": "pgp_sym_encrypt_bytea",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "48aa7cc7acd97708f773bd4f181d95ebba1eeef643011ac3daa8c814a6528ce3",
+      "definitionRedacted": false,
+      "identityArgs": "bytea, text, text",
+      "language": "c",
+      "name": "pgp_sym_encrypt_bytea",
+      "returnType": "bytea",
+      "schema": "public",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "7238957646d96d6e6b1cbf20aad716295ec078f88cf18c706e161002dce2acf0",
+      "definitionRedacted": false,
+      "identityArgs": "",
+      "language": "plpgsql",
+      "name": "protect_admin_billing",
+      "returnType": "trigger",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "b5a64d150bddcdde6d2e973b2414c7aebabc8ae1249f1d6922cc498aaa9ab42c",
+      "definitionRedacted": false,
+      "identityArgs": "",
+      "language": "plpgsql",
+      "name": "protect_admin_role_deletion",
+      "returnType": "trigger",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "791e4fee55e78f2a977320685e552f478d70e7511a7134a352a39a35c3f29533",
+      "definitionRedacted": false,
+      "identityArgs": "",
+      "language": "plpgsql",
+      "name": "tg_set_billing_updated_at",
+      "returnType": "trigger",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "a7e19c50f6f9a783dc83aba553028280a4103176411415c42d717a72c6f722e1",
+      "definitionRedacted": false,
+      "identityArgs": "",
+      "language": "plpgsql",
+      "name": "tg_set_comparison_version_number",
+      "returnType": "trigger",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "3550cbc264ec576641ded02ac54d0bd93735bdfc141c00c9a755febeb3a09e3a",
+      "definitionRedacted": false,
+      "identityArgs": "",
+      "language": "plpgsql",
+      "name": "tg_set_scenarios_updated_at",
+      "returnType": "trigger",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "cef6cba6c16e48c22b7acc41543d40d645cf432c2446b18d61aa4f03b45b3922",
+      "definitionRedacted": false,
+      "identityArgs": "",
+      "language": "plpgsql",
+      "name": "tg_set_updated_at",
+      "returnType": "trigger",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "ce942c37a83ca41e54b64bb32b6d357dafa45264cecb2ad87817682cf71126ce",
+      "definitionRedacted": false,
+      "identityArgs": "name text",
+      "language": "sql",
+      "name": "foldername",
+      "returnType": "text[]",
+      "schema": "storage",
+      "searchPath": null,
+      "securityDefiner": false,
+      "volatile": "IMMUTABLE"
+    }
+  ],
+  "grants": [
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "approve_advisor_request(request_id uuid, approve boolean)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "approve_advisor_request(request_id uuid, approve boolean)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "armor(bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "armor(bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "armor(bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "armor(bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "armor(bytea, text[], text[])",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "armor(bytea, text[], text[])",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "armor(bytea, text[], text[])",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "armor(bytea, text[], text[])",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "crypt(text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "crypt(text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "crypt(text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "crypt(text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "dearmor(text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "dearmor(text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "dearmor(text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "dearmor(text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "decrypt(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "decrypt(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "decrypt(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "decrypt(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "decrypt_iv(bytea, bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "decrypt_iv(bytea, bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "decrypt_iv(bytea, bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "decrypt_iv(bytea, bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "digest(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "digest(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "digest(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "digest(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "digest(text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "digest(text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "digest(text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "digest(text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "duplicate_scenario(source_scenario_id uuid, new_name text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "duplicate_scenario(source_scenario_id uuid, new_name text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "encrypt(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "encrypt(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "encrypt(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "encrypt(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "encrypt_iv(bytea, bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "encrypt_iv(bytea, bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "encrypt_iv(bytea, bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "encrypt_iv(bytea, bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "gen_random_bytes(integer)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "gen_random_bytes(integer)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "gen_random_bytes(integer)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "gen_random_bytes(integer)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "gen_random_uuid()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "gen_random_uuid()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "gen_random_uuid()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "gen_random_uuid()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "gen_salt(text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "gen_salt(text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "gen_salt(text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "gen_salt(text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "gen_salt(text, integer)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "gen_salt(text, integer)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "gen_salt(text, integer)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "gen_salt(text, integer)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "get_effective_tier(target_user_id uuid)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "anon",
+      "isGrantable": false,
+      "objectName": "get_effective_tier(target_user_id uuid)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "get_effective_tier(target_user_id uuid)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "get_effective_tier(target_user_id uuid)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "grant_admin_on_signup()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "grant_admin_on_signup()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "handle_new_user()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "handle_new_user()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "has_role(_user_id uuid, _role app_role)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "has_role(_user_id uuid, _role app_role)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "hmac(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "hmac(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "hmac(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "hmac(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "hmac(text, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "hmac(text, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "hmac(text, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "hmac(text, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "is_admin(uid uuid)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "is_admin(uid uuid)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "is_advisor(uid uuid)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "is_advisor(uid uuid)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "list_pending_advisor_requests()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "list_pending_advisor_requests()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "normalize_admin_billing_insert()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "normalize_admin_billing_insert()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_armor_headers(text, OUT key text, OUT value text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_armor_headers(text, OUT key text, OUT value text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_armor_headers(text, OUT key text, OUT value text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_armor_headers(text, OUT key text, OUT value text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_key_id(bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_key_id(bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_key_id(bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_key_id(bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt(bytea, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt(bytea, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt(bytea, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt(bytea, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt(bytea, bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt(bytea, bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt(bytea, bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt(bytea, bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt_bytea(bytea, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt_bytea(bytea, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt_bytea(bytea, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt_bytea(bytea, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt_bytea(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt_bytea(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt_bytea(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt_bytea(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt_bytea(bytea, bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt_bytea(bytea, bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt_bytea(bytea, bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_pub_decrypt_bytea(bytea, bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt(text, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt(text, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt(text, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt(text, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt(text, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt(text, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt(text, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt(text, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt_bytea(bytea, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt_bytea(bytea, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt_bytea(bytea, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt_bytea(bytea, bytea)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt_bytea(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt_bytea(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt_bytea(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_pub_encrypt_bytea(bytea, bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt(bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt(bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt(bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt(bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt_bytea(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt_bytea(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt_bytea(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt_bytea(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt_bytea(bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt_bytea(bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt_bytea(bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_sym_decrypt_bytea(bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt(text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt(text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt(text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt(text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt(text, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt(text, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt(text, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt(text, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt_bytea(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt_bytea(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt_bytea(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt_bytea(bytea, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt_bytea(bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "authenticated",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt_bytea(bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt_bytea(bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "pgp_sym_encrypt_bytea(bytea, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "protect_admin_billing()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "protect_admin_billing()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "protect_admin_role_deletion()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "protect_admin_role_deletion()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "tg_set_billing_updated_at()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "tg_set_billing_updated_at()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "tg_set_comparison_version_number()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "tg_set_comparison_version_number()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "tg_set_scenarios_updated_at()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "tg_set_scenarios_updated_at()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "tg_set_updated_at()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "tg_set_updated_at()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "advisor_access_requests",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "advisor_access_requests",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "advisor_access_requests",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "advisor_access_requests",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "advisor_access_requests",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "advisor_access_requests",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "advisor_access_requests",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "billing",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "billing",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "billing",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "billing",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "billing",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "billing",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "billing",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "comparison_items",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "comparison_items",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "comparison_items",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "comparison_items",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "comparison_items",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "comparison_items",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "comparison_items",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "comparison_versions",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "comparison_versions",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "comparison_versions",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "comparison_versions",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "comparison_versions",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "comparison_versions",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "comparison_versions",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "contact_messages",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "contact_messages",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "contact_messages",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "contact_messages",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "contact_messages",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "contact_messages",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "contact_messages",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "profiles",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "profiles",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "profiles",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "profiles",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "profiles",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "profiles",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "profiles",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "saved_comparisons",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "saved_comparisons",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "saved_comparisons",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "saved_comparisons",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "saved_comparisons",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "saved_comparisons",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "saved_comparisons",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "scenarios",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "scenarios",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "scenarios",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "scenarios",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "scenarios",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "scenarios",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "scenarios",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "user_roles",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "user_roles",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "user_roles",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "user_roles",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "user_roles",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "user_roles",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "user_roles",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "v_comparison_latest_version",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "v_comparison_latest_version",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "v_comparison_latest_version",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "v_comparison_latest_version",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "v_comparison_latest_version",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "v_comparison_latest_version",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "v_comparison_latest_version",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "PUBLIC",
+      "isGrantable": false,
+      "objectName": "foldername(name text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "foldername(name text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "buckets",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "buckets",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "buckets",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "buckets",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "buckets",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "buckets",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "buckets",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "objects",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "objects",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "objects",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "objects",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "objects",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "objects",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "storage"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "objects",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "storage"
+    }
+  ],
+  "indexes": [
+    {
+      "definition": "CREATE UNIQUE INDEX advisor_access_requests_pkey ON public.advisor_access_requests USING btree (id)",
+      "name": "advisor_access_requests_pkey",
+      "schema": "public",
+      "table": "advisor_access_requests",
+      "unique": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX advisor_access_requests_user_id_key ON public.advisor_access_requests USING btree (user_id)",
+      "name": "advisor_access_requests_user_id_key",
+      "schema": "public",
+      "table": "advisor_access_requests",
+      "unique": true
+    },
+    {
+      "definition": "CREATE INDEX idx_advisor_access_requests_created_at ON public.advisor_access_requests USING btree (created_at)",
+      "name": "idx_advisor_access_requests_created_at",
+      "schema": "public",
+      "table": "advisor_access_requests",
+      "unique": false
+    },
+    {
+      "definition": "CREATE INDEX idx_advisor_access_requests_status ON public.advisor_access_requests USING btree (status)",
+      "name": "idx_advisor_access_requests_status",
+      "schema": "public",
+      "table": "advisor_access_requests",
+      "unique": false
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX billing_pkey ON public.billing USING btree (user_id)",
+      "name": "billing_pkey",
+      "schema": "public",
+      "table": "billing",
+      "unique": true
+    },
+    {
+      "definition": "CREATE INDEX billing_stripe_customer_id_idx ON public.billing USING btree (stripe_customer_id)",
+      "name": "billing_stripe_customer_id_idx",
+      "schema": "public",
+      "table": "billing",
+      "unique": false
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX billing_stripe_customer_id_key ON public.billing USING btree (stripe_customer_id)",
+      "name": "billing_stripe_customer_id_key",
+      "schema": "public",
+      "table": "billing",
+      "unique": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX billing_stripe_subscription_id_key ON public.billing USING btree (stripe_subscription_id)",
+      "name": "billing_stripe_subscription_id_key",
+      "schema": "public",
+      "table": "billing",
+      "unique": true
+    },
+    {
+      "definition": "CREATE INDEX billing_subscription_status_idx ON public.billing USING btree (subscription_status)",
+      "name": "billing_subscription_status_idx",
+      "schema": "public",
+      "table": "billing",
+      "unique": false
+    },
+    {
+      "definition": "CREATE INDEX comparison_items_comparison_id_idx ON public.comparison_items USING btree (comparison_id)",
+      "name": "comparison_items_comparison_id_idx",
+      "schema": "public",
+      "table": "comparison_items",
+      "unique": false
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX comparison_items_comparison_id_scenario_id_key ON public.comparison_items USING btree (comparison_id, scenario_id)",
+      "name": "comparison_items_comparison_id_scenario_id_key",
+      "schema": "public",
+      "table": "comparison_items",
+      "unique": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX comparison_items_pkey ON public.comparison_items USING btree (id)",
+      "name": "comparison_items_pkey",
+      "schema": "public",
+      "table": "comparison_items",
+      "unique": true
+    },
+    {
+      "definition": "CREATE INDEX comparison_items_scenario_id_idx ON public.comparison_items USING btree (scenario_id)",
+      "name": "comparison_items_scenario_id_idx",
+      "schema": "public",
+      "table": "comparison_items",
+      "unique": false
+    },
+    {
+      "definition": "CREATE INDEX comparison_versions_comparison_id_idx ON public.comparison_versions USING btree (comparison_id)",
+      "name": "comparison_versions_comparison_id_idx",
+      "schema": "public",
+      "table": "comparison_versions",
+      "unique": false
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX comparison_versions_comparison_id_version_number_key ON public.comparison_versions USING btree (comparison_id, version_number)",
+      "name": "comparison_versions_comparison_id_version_number_key",
+      "schema": "public",
+      "table": "comparison_versions",
+      "unique": true
+    },
+    {
+      "definition": "CREATE INDEX comparison_versions_created_at_idx ON public.comparison_versions USING btree (created_at DESC)",
+      "name": "comparison_versions_created_at_idx",
+      "schema": "public",
+      "table": "comparison_versions",
+      "unique": false
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX comparison_versions_pkey ON public.comparison_versions USING btree (id)",
+      "name": "comparison_versions_pkey",
+      "schema": "public",
+      "table": "comparison_versions",
+      "unique": true
+    },
+    {
+      "definition": "CREATE INDEX contact_messages_created_at_idx ON public.contact_messages USING btree (created_at DESC)",
+      "name": "contact_messages_created_at_idx",
+      "schema": "public",
+      "table": "contact_messages",
+      "unique": false
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX contact_messages_pkey ON public.contact_messages USING btree (id)",
+      "name": "contact_messages_pkey",
+      "schema": "public",
+      "table": "contact_messages",
+      "unique": true
+    },
+    {
+      "definition": "CREATE INDEX contact_messages_status_idx ON public.contact_messages USING btree (status)",
+      "name": "contact_messages_status_idx",
+      "schema": "public",
+      "table": "contact_messages",
+      "unique": false
+    },
+    {
+      "definition": "CREATE INDEX profiles_created_at_idx ON public.profiles USING btree (created_at DESC)",
+      "name": "profiles_created_at_idx",
+      "schema": "public",
+      "table": "profiles",
+      "unique": false
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX profiles_pkey ON public.profiles USING btree (id)",
+      "name": "profiles_pkey",
+      "schema": "public",
+      "table": "profiles",
+      "unique": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX saved_comparisons_pkey ON public.saved_comparisons USING btree (id)",
+      "name": "saved_comparisons_pkey",
+      "schema": "public",
+      "table": "saved_comparisons",
+      "unique": true
+    },
+    {
+      "definition": "CREATE INDEX saved_comparisons_updated_at_idx ON public.saved_comparisons USING btree (updated_at DESC)",
+      "name": "saved_comparisons_updated_at_idx",
+      "schema": "public",
+      "table": "saved_comparisons",
+      "unique": false
+    },
+    {
+      "definition": "CREATE INDEX saved_comparisons_user_id_idx ON public.saved_comparisons USING btree (user_id)",
+      "name": "saved_comparisons_user_id_idx",
+      "schema": "public",
+      "table": "saved_comparisons",
+      "unique": false
+    },
+    {
+      "definition": "CREATE INDEX scenarios_is_archived_idx ON public.scenarios USING btree (is_archived)",
+      "name": "scenarios_is_archived_idx",
+      "schema": "public",
+      "table": "scenarios",
+      "unique": false
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX scenarios_pkey ON public.scenarios USING btree (id)",
+      "name": "scenarios_pkey",
+      "schema": "public",
+      "table": "scenarios",
+      "unique": true
+    },
+    {
+      "definition": "CREATE INDEX scenarios_updated_at_idx ON public.scenarios USING btree (updated_at DESC)",
+      "name": "scenarios_updated_at_idx",
+      "schema": "public",
+      "table": "scenarios",
+      "unique": false
+    },
+    {
+      "definition": "CREATE INDEX scenarios_user_id_idx ON public.scenarios USING btree (user_id)",
+      "name": "scenarios_user_id_idx",
+      "schema": "public",
+      "table": "scenarios",
+      "unique": false
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX user_roles_pkey ON public.user_roles USING btree (id)",
+      "name": "user_roles_pkey",
+      "schema": "public",
+      "table": "user_roles",
+      "unique": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX user_roles_user_id_role_key ON public.user_roles USING btree (user_id, role)",
+      "name": "user_roles_user_id_role_key",
+      "schema": "public",
+      "table": "user_roles",
+      "unique": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX buckets_pkey ON storage.buckets USING btree (id)",
+      "name": "buckets_pkey",
+      "schema": "storage",
+      "table": "buckets",
+      "unique": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX objects_pkey ON storage.objects USING btree (id)",
+      "name": "objects_pkey",
+      "schema": "storage",
+      "table": "objects",
+      "unique": true
+    }
+  ],
+  "meta": {
+    "capturedAt": "2026-08-07T19:22:52.064Z",
+    "gitSha": "7d4d8eae83479117528bf1bfa771c6c10ffcc190",
+    "projectRef": null,
+    "readOnly": true,
+    "schemas": [
+      "public",
+      "storage"
+    ],
+    "surface": "migration_only",
+    "tooling": {
+      "node": "v26.0.0",
+      "pg": "8.22.0",
+      "postgresServer": "16.14"
+    }
+  },
+  "migrationVersions": [],
+  "policies": [
+    {
+      "cmd": "DELETE",
+      "name": "advisor_requests_delete_admin",
+      "permissive": "PERMISSIVE",
+      "qual": "is_admin(auth.uid())",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "advisor_access_requests",
+      "withCheck": null
+    },
+    {
+      "cmd": "INSERT",
+      "name": "advisor_requests_insert_own",
+      "permissive": "PERMISSIVE",
+      "qual": null,
+      "roles": "{public}",
+      "schema": "public",
+      "table": "advisor_access_requests",
+      "withCheck": "(auth.uid() = user_id)"
+    },
+    {
+      "cmd": "SELECT",
+      "name": "advisor_requests_select",
+      "permissive": "PERMISSIVE",
+      "qual": "((auth.uid() = user_id) OR is_admin(auth.uid()))",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "advisor_access_requests",
+      "withCheck": null
+    },
+    {
+      "cmd": "UPDATE",
+      "name": "advisor_requests_update_admin",
+      "permissive": "PERMISSIVE",
+      "qual": "is_admin(auth.uid())",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "advisor_access_requests",
+      "withCheck": "is_admin(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "name": "billing_select_own",
+      "permissive": "PERMISSIVE",
+      "qual": "(auth.uid() = user_id)",
+      "roles": "{authenticated}",
+      "schema": "public",
+      "table": "billing",
+      "withCheck": null
+    },
+    {
+      "cmd": "DELETE",
+      "name": "comparison_items_delete_parent_owner",
+      "permissive": "PERMISSIVE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM saved_comparisons sc\n  WHERE ((sc.id = comparison_items.comparison_id) AND (sc.user_id = auth.uid()))))",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "comparison_items",
+      "withCheck": null
+    },
+    {
+      "cmd": "INSERT",
+      "name": "comparison_items_insert_parent_owner",
+      "permissive": "PERMISSIVE",
+      "qual": null,
+      "roles": "{public}",
+      "schema": "public",
+      "table": "comparison_items",
+      "withCheck": "(EXISTS ( SELECT 1\n   FROM saved_comparisons sc\n  WHERE ((sc.id = comparison_items.comparison_id) AND (sc.user_id = auth.uid()))))"
+    },
+    {
+      "cmd": "SELECT",
+      "name": "comparison_items_select_parent_owner",
+      "permissive": "PERMISSIVE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM saved_comparisons sc\n  WHERE ((sc.id = comparison_items.comparison_id) AND (sc.user_id = auth.uid()))))",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "comparison_items",
+      "withCheck": null
+    },
+    {
+      "cmd": "UPDATE",
+      "name": "comparison_items_update_parent_owner",
+      "permissive": "PERMISSIVE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM saved_comparisons sc\n  WHERE ((sc.id = comparison_items.comparison_id) AND (sc.user_id = auth.uid()))))",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "comparison_items",
+      "withCheck": "(EXISTS ( SELECT 1\n   FROM saved_comparisons sc\n  WHERE ((sc.id = comparison_items.comparison_id) AND (sc.user_id = auth.uid()))))"
+    },
+    {
+      "cmd": "DELETE",
+      "name": "comparison_versions_delete_parent_owner",
+      "permissive": "PERMISSIVE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM saved_comparisons sc\n  WHERE ((sc.id = comparison_versions.comparison_id) AND (sc.user_id = auth.uid()))))",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "comparison_versions",
+      "withCheck": null
+    },
+    {
+      "cmd": "INSERT",
+      "name": "comparison_versions_insert_parent_owner",
+      "permissive": "PERMISSIVE",
+      "qual": null,
+      "roles": "{public}",
+      "schema": "public",
+      "table": "comparison_versions",
+      "withCheck": "((auth.uid() = created_by) AND (EXISTS ( SELECT 1\n   FROM saved_comparisons sc\n  WHERE ((sc.id = comparison_versions.comparison_id) AND (sc.user_id = auth.uid())))))"
+    },
+    {
+      "cmd": "SELECT",
+      "name": "comparison_versions_select_parent_owner",
+      "permissive": "PERMISSIVE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM saved_comparisons sc\n  WHERE ((sc.id = comparison_versions.comparison_id) AND (sc.user_id = auth.uid()))))",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "comparison_versions",
+      "withCheck": null
+    },
+    {
+      "cmd": "INSERT",
+      "name": "contact_messages_insert_public",
+      "permissive": "PERMISSIVE",
+      "qual": null,
+      "roles": "{anon,authenticated}",
+      "schema": "public",
+      "table": "contact_messages",
+      "withCheck": "true"
+    },
+    {
+      "cmd": "SELECT",
+      "name": "contact_messages_select_admin",
+      "permissive": "PERMISSIVE",
+      "qual": "has_role(auth.uid(), 'admin'::app_role)",
+      "roles": "{authenticated}",
+      "schema": "public",
+      "table": "contact_messages",
+      "withCheck": null
+    },
+    {
+      "cmd": "UPDATE",
+      "name": "contact_messages_update_admin",
+      "permissive": "PERMISSIVE",
+      "qual": "has_role(auth.uid(), 'admin'::app_role)",
+      "roles": "{authenticated}",
+      "schema": "public",
+      "table": "contact_messages",
+      "withCheck": "has_role(auth.uid(), 'admin'::app_role)"
+    },
+    {
+      "cmd": "INSERT",
+      "name": "profiles_insert_own",
+      "permissive": "PERMISSIVE",
+      "qual": null,
+      "roles": "{authenticated}",
+      "schema": "public",
+      "table": "profiles",
+      "withCheck": "(auth.uid() = id)"
+    },
+    {
+      "cmd": "SELECT",
+      "name": "profiles_select_own",
+      "permissive": "PERMISSIVE",
+      "qual": "(auth.uid() = id)",
+      "roles": "{authenticated}",
+      "schema": "public",
+      "table": "profiles",
+      "withCheck": null
+    },
+    {
+      "cmd": "UPDATE",
+      "name": "profiles_update_own",
+      "permissive": "PERMISSIVE",
+      "qual": "(auth.uid() = id)",
+      "roles": "{authenticated}",
+      "schema": "public",
+      "table": "profiles",
+      "withCheck": "(auth.uid() = id)"
+    },
+    {
+      "cmd": "DELETE",
+      "name": "saved_comparisons_delete_own",
+      "permissive": "PERMISSIVE",
+      "qual": "(auth.uid() = user_id)",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "saved_comparisons",
+      "withCheck": null
+    },
+    {
+      "cmd": "INSERT",
+      "name": "saved_comparisons_insert_own",
+      "permissive": "PERMISSIVE",
+      "qual": null,
+      "roles": "{public}",
+      "schema": "public",
+      "table": "saved_comparisons",
+      "withCheck": "(auth.uid() = user_id)"
+    },
+    {
+      "cmd": "SELECT",
+      "name": "saved_comparisons_select_own",
+      "permissive": "PERMISSIVE",
+      "qual": "(auth.uid() = user_id)",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "saved_comparisons",
+      "withCheck": null
+    },
+    {
+      "cmd": "UPDATE",
+      "name": "saved_comparisons_update_own",
+      "permissive": "PERMISSIVE",
+      "qual": "(auth.uid() = user_id)",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "saved_comparisons",
+      "withCheck": "(auth.uid() = user_id)"
+    },
+    {
+      "cmd": "DELETE",
+      "name": "scenarios_delete_own",
+      "permissive": "PERMISSIVE",
+      "qual": "(auth.uid() = user_id)",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "scenarios",
+      "withCheck": null
+    },
+    {
+      "cmd": "INSERT",
+      "name": "scenarios_insert_own",
+      "permissive": "PERMISSIVE",
+      "qual": null,
+      "roles": "{public}",
+      "schema": "public",
+      "table": "scenarios",
+      "withCheck": "(auth.uid() = user_id)"
+    },
+    {
+      "cmd": "SELECT",
+      "name": "scenarios_select_own",
+      "permissive": "PERMISSIVE",
+      "qual": "(auth.uid() = user_id)",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "scenarios",
+      "withCheck": null
+    },
+    {
+      "cmd": "UPDATE",
+      "name": "scenarios_update_own",
+      "permissive": "PERMISSIVE",
+      "qual": "(auth.uid() = user_id)",
+      "roles": "{public}",
+      "schema": "public",
+      "table": "scenarios",
+      "withCheck": "(auth.uid() = user_id)"
+    },
+    {
+      "cmd": "DELETE",
+      "name": "Admins can delete roles",
+      "permissive": "PERMISSIVE",
+      "qual": "has_role(auth.uid(), 'admin'::app_role)",
+      "roles": "{authenticated}",
+      "schema": "public",
+      "table": "user_roles",
+      "withCheck": null
+    },
+    {
+      "cmd": "INSERT",
+      "name": "Admins can insert roles",
+      "permissive": "PERMISSIVE",
+      "qual": null,
+      "roles": "{authenticated}",
+      "schema": "public",
+      "table": "user_roles",
+      "withCheck": "has_role(auth.uid(), 'admin'::app_role)"
+    },
+    {
+      "cmd": "SELECT",
+      "name": "Admins can view all roles",
+      "permissive": "PERMISSIVE",
+      "qual": "has_role(auth.uid(), 'admin'::app_role)",
+      "roles": "{authenticated}",
+      "schema": "public",
+      "table": "user_roles",
+      "withCheck": null
+    }
+  ],
+  "reconstruction": {
+    "appliedMigrations": [
+      {
+        "file": "20260111225012_b0b472d4-22c7-4d14-8ba0-342f602cf561.sql",
+        "status": "applied"
+      },
+      {
+        "file": "20260111225031_6be0e759-6b5c-420a-9e9a-8987baf40b54.sql",
+        "status": "applied"
+      },
+      {
+        "file": "20260111225221_d0b95515-6670-46ae-bbec-bb5327070b61.sql",
+        "status": "applied"
+      },
+      {
+        "file": "20260111231451_d1ea5b47-5987-4c94-a7c8-cb27af2c1e62.sql",
+        "status": "applied"
+      },
+      {
+        "file": "20260112050830_15957e05-d542-4a70-87ce-4212599581f9.sql",
+        "status": "applied"
+      },
+      {
+        "file": "20260112073255_b843502b-023c-47cf-9db8-5fbc6d281c66.sql",
+        "status": "applied"
+      },
+      {
+        "file": "20260112073558_411e0f0a-36a9-4f3f-bc0f-fdd94a6cd14d.sql",
+        "status": "applied"
+      },
+      {
+        "file": "20260112073631_1853b0c8-51b4-45b7-b8b2-1d55c64670c4.sql",
+        "status": "applied"
+      },
+      {
+        "file": "20260112203733_51ef1406-018c-4980-a999-4185a1b4b43e.sql",
+        "status": "applied"
+      },
+      {
+        "error": "relation \"public.subscriptions\" does not exist",
+        "file": "20260112204012_f094f5d3-2c93-436a-96ac-809c5761f37f.sql",
+        "status": "failed"
+      }
+    ],
+    "error": "relation \"public.subscriptions\" does not exist",
+    "failedAtMigration": "20260112204012_f094f5d3-2c93-436a-96ac-809c5761f37f.sql",
+    "mode": "migration_only",
+    "success": false
+  },
+  "rowCounts": [],
+  "tables": [
+    {
+      "columns": [
+        {
+          "dataType": "uuid",
+          "default": "gen_random_uuid()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "id",
+          "ordinalPosition": 1,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "uuid",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "user_id",
+          "ordinalPosition": 2,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "full_name",
+          "ordinalPosition": 3,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "company",
+          "ordinalPosition": 4,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "website",
+          "ordinalPosition": 5,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "role_title",
+          "ordinalPosition": 6,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "email",
+          "ordinalPosition": 7,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "notes",
+          "ordinalPosition": 8,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": "'pending'::text",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "status",
+          "ordinalPosition": 9,
+          "udtName": "text"
+        },
+        {
+          "dataType": "uuid",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "reviewed_by",
+          "ordinalPosition": 10,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "reviewed_at",
+          "ordinalPosition": 11,
+          "udtName": "timestamptz"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "created_at",
+          "ordinalPosition": 12,
+          "udtName": "timestamptz"
+        }
+      ],
+      "name": "advisor_access_requests",
+      "rlsEnabled": true,
+      "rlsForced": false,
+      "schema": "public"
+    },
+    {
+      "columns": [
+        {
+          "dataType": "uuid",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "user_id",
+          "ordinalPosition": 1,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "stripe_customer_id",
+          "ordinalPosition": 2,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "stripe_subscription_id",
+          "ordinalPosition": 3,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "subscription_status",
+          "ordinalPosition": 4,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "price_id",
+          "ordinalPosition": 5,
+          "udtName": "text"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "current_period_end",
+          "ordinalPosition": 6,
+          "udtName": "timestamptz"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "updated_at",
+          "ordinalPosition": 7,
+          "udtName": "timestamptz"
+        }
+      ],
+      "name": "billing",
+      "rlsEnabled": true,
+      "rlsForced": false,
+      "schema": "public"
+    },
+    {
+      "columns": [
+        {
+          "dataType": "uuid",
+          "default": "gen_random_uuid()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "id",
+          "ordinalPosition": 1,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "uuid",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "comparison_id",
+          "ordinalPosition": 2,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "scenario_id",
+          "ordinalPosition": 3,
+          "udtName": "text"
+        },
+        {
+          "dataType": "integer",
+          "default": "0",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "sort_order",
+          "ordinalPosition": 4,
+          "udtName": "int4"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "label_override",
+          "ordinalPosition": 5,
+          "udtName": "text"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "created_at",
+          "ordinalPosition": 6,
+          "udtName": "timestamptz"
+        }
+      ],
+      "name": "comparison_items",
+      "rlsEnabled": true,
+      "rlsForced": false,
+      "schema": "public"
+    },
+    {
+      "columns": [
+        {
+          "dataType": "uuid",
+          "default": "gen_random_uuid()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "id",
+          "ordinalPosition": 1,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "uuid",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "comparison_id",
+          "ordinalPosition": 2,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "uuid",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "created_by",
+          "ordinalPosition": 3,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "integer",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "version_number",
+          "ordinalPosition": 4,
+          "udtName": "int4"
+        },
+        {
+          "dataType": "integer",
+          "default": "1",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "schema_version",
+          "ordinalPosition": 5,
+          "udtName": "int4"
+        },
+        {
+          "dataType": "jsonb",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "snapshot",
+          "ordinalPosition": 6,
+          "udtName": "jsonb"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "assumptions_hash",
+          "ordinalPosition": 7,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "note",
+          "ordinalPosition": 8,
+          "udtName": "text"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "created_at",
+          "ordinalPosition": 9,
+          "udtName": "timestamptz"
+        }
+      ],
+      "name": "comparison_versions",
+      "rlsEnabled": true,
+      "rlsForced": false,
+      "schema": "public"
+    },
+    {
+      "columns": [
+        {
+          "dataType": "uuid",
+          "default": "gen_random_uuid()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "id",
+          "ordinalPosition": 1,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "created_at",
+          "ordinalPosition": 2,
+          "udtName": "timestamptz"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "full_name",
+          "ordinalPosition": 3,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "email",
+          "ordinalPosition": 4,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "topic",
+          "ordinalPosition": 5,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "message",
+          "ordinalPosition": 6,
+          "udtName": "text"
+        },
+        {
+          "dataType": "uuid",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "user_id",
+          "ordinalPosition": 7,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "text",
+          "default": "'new'::text",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "status",
+          "ordinalPosition": 8,
+          "udtName": "text"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "reviewed_at",
+          "ordinalPosition": 9,
+          "udtName": "timestamptz"
+        },
+        {
+          "dataType": "uuid",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "reviewed_by",
+          "ordinalPosition": 10,
+          "udtName": "uuid"
+        }
+      ],
+      "name": "contact_messages",
+      "rlsEnabled": true,
+      "rlsForced": false,
+      "schema": "public"
+    },
+    {
+      "columns": [
+        {
+          "dataType": "uuid",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "id",
+          "ordinalPosition": 1,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "full_name",
+          "ordinalPosition": 2,
+          "udtName": "text"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "created_at",
+          "ordinalPosition": 3,
+          "udtName": "timestamptz"
+        }
+      ],
+      "name": "profiles",
+      "rlsEnabled": true,
+      "rlsForced": false,
+      "schema": "public"
+    },
+    {
+      "columns": [
+        {
+          "dataType": "uuid",
+          "default": "gen_random_uuid()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "id",
+          "ordinalPosition": 1,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "uuid",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "user_id",
+          "ordinalPosition": 2,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "name",
+          "ordinalPosition": 3,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "description",
+          "ordinalPosition": 4,
+          "udtName": "text"
+        },
+        {
+          "dataType": "boolean",
+          "default": "false",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "is_archived",
+          "ordinalPosition": 5,
+          "udtName": "bool"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "created_at",
+          "ordinalPosition": 6,
+          "udtName": "timestamptz"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "updated_at",
+          "ordinalPosition": 7,
+          "udtName": "timestamptz"
+        }
+      ],
+      "name": "saved_comparisons",
+      "rlsEnabled": true,
+      "rlsForced": false,
+      "schema": "public"
+    },
+    {
+      "columns": [
+        {
+          "dataType": "uuid",
+          "default": "gen_random_uuid()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "id",
+          "ordinalPosition": 1,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "uuid",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "user_id",
+          "ordinalPosition": 2,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "name",
+          "ordinalPosition": 3,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "scenario_type",
+          "ordinalPosition": 4,
+          "udtName": "text"
+        },
+        {
+          "dataType": "integer",
+          "default": "1",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "schema_version",
+          "ordinalPosition": 5,
+          "udtName": "int4"
+        },
+        {
+          "dataType": "jsonb",
+          "default": "'{}'::jsonb",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "inputs",
+          "ordinalPosition": 6,
+          "udtName": "jsonb"
+        },
+        {
+          "dataType": "jsonb",
+          "default": "'{}'::jsonb",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "derived",
+          "ordinalPosition": 7,
+          "udtName": "jsonb"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "assumptions_hash",
+          "ordinalPosition": 8,
+          "udtName": "text"
+        },
+        {
+          "dataType": "boolean",
+          "default": "false",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "is_archived",
+          "ordinalPosition": 9,
+          "udtName": "bool"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "created_at",
+          "ordinalPosition": 10,
+          "udtName": "timestamptz"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "updated_at",
+          "ordinalPosition": 11,
+          "udtName": "timestamptz"
+        }
+      ],
+      "name": "scenarios",
+      "rlsEnabled": true,
+      "rlsForced": false,
+      "schema": "public"
+    },
+    {
+      "columns": [
+        {
+          "dataType": "uuid",
+          "default": "gen_random_uuid()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "id",
+          "ordinalPosition": 1,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "uuid",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "user_id",
+          "ordinalPosition": 2,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "USER-DEFINED",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "role",
+          "ordinalPosition": 3,
+          "udtName": "app_role"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "created_at",
+          "ordinalPosition": 4,
+          "udtName": "timestamptz"
+        }
+      ],
+      "name": "user_roles",
+      "rlsEnabled": true,
+      "rlsForced": false,
+      "schema": "public"
+    },
+    {
+      "columns": [
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "id",
+          "ordinalPosition": 1,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "name",
+          "ordinalPosition": 2,
+          "udtName": "text"
+        },
+        {
+          "dataType": "boolean",
+          "default": "false",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "public",
+          "ordinalPosition": 3,
+          "udtName": "bool"
+        },
+        {
+          "dataType": "bigint",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "file_size_limit",
+          "ordinalPosition": 4,
+          "udtName": "int8"
+        },
+        {
+          "dataType": "ARRAY",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "allowed_mime_types",
+          "ordinalPosition": 5,
+          "udtName": "_text"
+        }
+      ],
+      "name": "buckets",
+      "rlsEnabled": false,
+      "rlsForced": false,
+      "schema": "storage"
+    },
+    {
+      "columns": [
+        {
+          "dataType": "uuid",
+          "default": "gen_random_uuid()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "id",
+          "ordinalPosition": 1,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "bucket_id",
+          "ordinalPosition": 2,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "name",
+          "ordinalPosition": 3,
+          "udtName": "text"
+        },
+        {
+          "dataType": "uuid",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "owner",
+          "ordinalPosition": 4,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "created_at",
+          "ordinalPosition": 5,
+          "udtName": "timestamptz"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "updated_at",
+          "ordinalPosition": 6,
+          "udtName": "timestamptz"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "last_accessed_at",
+          "ordinalPosition": 7,
+          "udtName": "timestamptz"
+        },
+        {
+          "dataType": "jsonb",
+          "default": "'{}'::jsonb",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "metadata",
+          "ordinalPosition": 8,
+          "udtName": "jsonb"
+        }
+      ],
+      "name": "objects",
+      "rlsEnabled": true,
+      "rlsForced": false,
+      "schema": "storage"
+    }
+  ],
+  "triggers": [
+    {
+      "enabled": true,
+      "events": [
+        "INSERT",
+        "UPDATE"
+      ],
+      "functionName": "protect_admin_billing",
+      "functionSchema": "public",
+      "level": "ROW",
+      "name": "protect_admin_billing_trigger",
+      "schema": "public",
+      "table": "billing",
+      "timing": "BEFORE"
+    },
+    {
+      "enabled": true,
+      "events": [
+        "UPDATE"
+      ],
+      "functionName": "tg_set_billing_updated_at",
+      "functionSchema": "public",
+      "level": "ROW",
+      "name": "set_billing_updated_at",
+      "schema": "public",
+      "table": "billing",
+      "timing": "BEFORE"
+    },
+    {
+      "enabled": true,
+      "events": [
+        "INSERT"
+      ],
+      "functionName": "tg_set_comparison_version_number",
+      "functionSchema": "public",
+      "level": "ROW",
+      "name": "set_comparison_version_number",
+      "schema": "public",
+      "table": "comparison_versions",
+      "timing": "BEFORE"
+    },
+    {
+      "enabled": true,
+      "events": [
+        "UPDATE"
+      ],
+      "functionName": "tg_set_updated_at",
+      "functionSchema": "public",
+      "level": "ROW",
+      "name": "set_saved_comparisons_updated_at",
+      "schema": "public",
+      "table": "saved_comparisons",
+      "timing": "BEFORE"
+    },
+    {
+      "enabled": true,
+      "events": [
+        "UPDATE"
+      ],
+      "functionName": "tg_set_scenarios_updated_at",
+      "functionSchema": "public",
+      "level": "ROW",
+      "name": "set_scenarios_updated_at",
+      "schema": "public",
+      "table": "scenarios",
+      "timing": "BEFORE"
+    },
+    {
+      "enabled": true,
+      "events": [
+        "DELETE"
+      ],
+      "functionName": "protect_admin_role_deletion",
+      "functionSchema": "public",
+      "level": "ROW",
+      "name": "protect_admin_role_deletion_trigger",
+      "schema": "public",
+      "table": "user_roles",
+      "timing": "BEFORE"
+    }
+  ],
+  "views": [
+    {
+      "definition": " SELECT DISTINCT ON (comparison_id) id,\n    comparison_id,\n    created_by,\n    version_number,\n    schema_version,\n    snapshot,\n    assumptions_hash,\n    note,\n    created_at\n   FROM comparison_versions cv\n  ORDER BY comparison_id, version_number DESC;",
+      "name": "v_comparison_latest_version",
+      "schema": "public",
+      "securityInvoker": true
+    }
+  ]
+}

@@ -1,17 +1,19 @@
 # Schema Reconciliation Inventory
 
-**Phase:** 8.1 / Epic 6 PR 0  
+**Phase:** 8.1 / Epic 6 PR 1  
 **Date:** 2026-08-07  
-**Status:** REPOSITORY EVIDENCE ONLY  
+**Status:** REPOSITORY EVIDENCE + PRODUCTION CAPTURE (PR 1)
 
 This document inventories schema objects and consumers discoverable from
-the SettleRate **git repository**. It does **not** claim live production
-catalog state.
+the SettleRate **git repository**. Live production catalog evidence for
+PR 1 is in `docs/database/production-schema/` and
+`docs/database/SCHEMA_DRIFT_REPORT.md` (sanitized; no row payloads).
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md` (both **accepted**).
-Object-level disposition remains deferred pending production capture
-(and ADR 0011 where applicable).
+Object-level disposition remains deferred pending classified
+reconciliation (PR 2+) and ADR 0011 where applicable.
+`INTENTIONAL_LEGACY_MAP` remains empty until a disposition is accepted.
 
 ---
 
@@ -20,7 +22,7 @@ Object-level disposition remains deferred pending production capture
 | Label | Meaning |
 |-------|---------|
 | **REPOSITORY EVIDENCE** | Derived from migrations, types, code, docs, CI SQL tests in this repo |
-| **PRODUCTION EVIDENCE NOT YET CAPTURED** | Requires authorized read-only production capture (Epic 6 PR 1+) |
+| **PRODUCTION EVIDENCE (PR 1)** | Read-only sanitized capture — see `docs/database/production-schema/` and `docs/database/SCHEMA_DRIFT_REPORT.md` |
 
 Everything below is **REPOSITORY EVIDENCE** unless explicitly marked otherwise.
 
@@ -194,15 +196,23 @@ Trigger helpers of note: `handle_new_user`, entitlement/ownership enforcers, `pr
 
 ---
 
-## Proposed read-only production capture (PR 1+)
+## Read-only production capture (PR 1)
 
-Not executed in PR 0.
+Executed in Epic 6 PR 1 (read-only; no mutation):
 
-1. Operator credentials outside git.  
-2. Schema-only dump / catalog listing (tables, columns, functions, policies, grants).  
-3. Machine-readable diff vs repository reconstruction (ADR 0006 surfaces A vs B).  
-4. Classify each diff (ADR 0006 §3); disposition for legacy (ADR 0007).  
-5. No customer row data in the repository.
+1. Operator auth via Supabase CLI linked project (`vpcxzbaxhpucvevnkalo`) —
+   Management API temporary login role; no credentials committed.  
+2. Schema-only catalog capture (tables, columns, functions, policies, grants,
+   storage, migration metadata; allowlisted COUNT(*) only).  
+3. Machine-readable drift vs migration-only + harness reconstructions
+   (ADR 0006 surfaces A vs B1/B2) plus types.ts and consumer annotations.  
+4. Classify each diff (ADR 0006 §3); disposition for legacy remains
+   deferred (ADR 0007) — `INTENTIONAL_LEGACY_MAP` empty.  
+5. No customer row data in the repository (sanitizer fail-closed).
+
+Canonical outputs: `docs/database/production-schema/`,
+`docs/database/reconstruction/`, `docs/database/SCHEMA_DRIFT_REPORT.md`,
+`docs/database/schema-drift-report.json`.
 
 ---
 
@@ -211,7 +221,7 @@ Not executed in PR 0.
 | Status | Meaning |
 |--------|---------|
 | `inventory_only` | Listed from repo; no production compare yet |
-| `awaiting_production_capture` | Needs PR 1 evidence |
+| `captured_classified` | PR 1 evidence present; mutation not yet authorized |
 | `classified` | Drift class assigned; mutation not yet authorized |
 | `reconciled` | Migration/types/docs aligned under authorized PR |
 

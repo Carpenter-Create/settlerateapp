@@ -1,0 +1,20 @@
+{
+  "capturedAt": "2026-08-07T19:11:42.048Z",
+  "counts": {
+    "constraints": 76,
+    "enums": 4,
+    "extensions": 5,
+    "functions": 56,
+    "grants": 818,
+    "indexes": 83,
+    "migrationVersions": 31,
+    "policies": 56,
+    "rowCounts": 19,
+    "tables": 27,
+    "triggers": 20,
+    "views": 1
+  },
+  "gitSha": "7d4d8eae83479117528bf1bfa771c6c10ffcc190",
+  "projectRef": "vpcxzbaxhpucvevnkalo",
+  "status": "captured"
+}

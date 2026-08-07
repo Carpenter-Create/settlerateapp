@@ -31,8 +31,8 @@ is **unresolved** — do not invent the outcome in code.
 | 0003 | Observability policy | `0003-observability-policy.md` | Epic 3 | accepted (Epic 3 complete; production activated and verified 2026-08-06) |
 | 0004 | RLS testing standard | `0004-rls-testing-standard.md` | Epic 4 | accepted (Epic 4 complete; PR 3 not required) |
 | 0005 | Shared package architecture | `0005-shared-package-architecture.md` | Epic 5 | accepted (Epic 5 complete on `main`) |
-| 0006 | Database schema source of truth | `0006-database-schema-source-of-truth.md` | Epic 6 | **accepted** (Epic 6 PR 0 in progress until PR merge; PR 1+ unauthorized) |
-| 0007 | Legacy schema disposition | `0007-legacy-schema-disposition.md` | Epic 6 | **accepted** (Epic 6 PR 0 in progress until PR merge; PR 1+ unauthorized) |
+| 0006 | Database schema source of truth | `0006-database-schema-source-of-truth.md` | Epic 6 | **accepted** (Epic 6 PR 1 in progress: read-only capture + drift; PR 2+ unauthorized) |
+| 0007 | Legacy schema disposition | `0007-legacy-schema-disposition.md` | Epic 6 | **accepted** (Epic 6 PR 1 in progress: read-only capture + drift; PR 2+ unauthorized) |
 | 0008 | Environment topology | `0008-environment-topology.md` | Epic 7 | required / not yet written |
 | 0009 | Billing recovery guarantee | `0009-billing-recovery-guarantee.md` | Epic 8 | required / not yet written |
 | 0010 | Backup and restore policy | `0010-backup-and-restore-policy.md` | Epic 10 | required / not yet written |

@@ -162,8 +162,8 @@ remains separately unauthorized until founder authorization.
 
 | PR | Scope | Authorization |
 |----|--------|---------------|
-| **PR 0** | ADR 0006 + ADR 0007 + repository inventory + methodology + governance | In progress until PR merge |
-| **PR 1** | Read-only production schema capture + machine-readable drift report; no schema mutation | Separate |
+| **PR 0** | ADR 0006 + ADR 0007 + repository inventory + methodology + governance | Complete / merged |
+| **PR 1** | Read-only production schema capture + machine-readable drift report; no schema mutation | In progress |
 | **PR 2+** | Separately authorized reconciliation slices by risk/domain | Separate |
 | **Closure** | Prove clean reconstruction; update baseline/SoT docs; regenerate types as needed | Separate |
 
@@ -189,7 +189,8 @@ checkout maintenance posture; security weakenings “to make green.”
 - Schema mutation PRs still require separate authorization and must follow
   production capture → classification → migration (when needed).
 - Agents treat generated types as derived until regeneration is authorized.
-- Production capture remains a distinct authorized step (PR 1).
+- Production capture is Epic 6 PR 1 (read-only; in progress). Reconciliation
+  / mutation remains a distinct later authorized step (PR 2+).
 - Baseline implementation remains deferred to a separately authorized slice.
 
 ## Alternatives considered
