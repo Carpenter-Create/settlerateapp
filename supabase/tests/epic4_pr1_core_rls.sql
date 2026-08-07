@@ -130,6 +130,7 @@ DECLARE
     'public.saved_comparisons',
     'public.scenarios',
     'public.stripe_webhook_events',
+    'public.subscriptions',
     'public.user_comparisons',
     'public.user_roles',
     'storage.objects'
@@ -158,12 +159,12 @@ BEGIN
     AND c.relrowsecurity = true;
 
   PERFORM test.assert_true(
-    format('inventory: exactly 19 RLS-enabled relations (got %s)', v_rel_count),
-    v_rel_count = 19
+    format('inventory: exactly 20 RLS-enabled relations (got %s)', v_rel_count),
+    v_rel_count = 20
   );
   PERFORM test.assert_true(
-    format('inventory: exactly 55 effective policies (got %s)', v_pol_count),
-    v_pol_count = 55
+    format('inventory: exactly 56 effective policies (got %s)', v_pol_count),
+    v_pol_count = 56
   );
 
   SELECT string_agg(t, ', ' ORDER BY t) INTO v_missing

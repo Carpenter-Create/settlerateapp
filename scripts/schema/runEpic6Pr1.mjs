@@ -38,7 +38,7 @@ export async function runEpic6Pr1() {
   process.stdout.write("[schema:epic6-pr1] Reconstructing migration_only (TRUE migration-only reconstruction)...\n");
   const migrationOnlyResult = await reconstructLocal({ mode: "migration_only" });
   process.stdout.write(
-    `[schema:epic6-pr1] migration_only reconstruction: ${migrationOnlyResult.success ? "SUCCEEDED" : `FAILED at ${migrationOnlyResult.failedAtMigration ?? "capture step"} (this is expected evidence if public.subscriptions is the blocker)`}\n`
+    `[schema:epic6-pr1] migration_only reconstruction: ${migrationOnlyResult.success ? "SUCCEEDED" : `FAILED at ${migrationOnlyResult.failedAtMigration ?? "capture step"}`}\n`
   );
 
   process.stdout.write("[schema:epic6-pr1] Reconstructing harness (TEST-HARNESS reconstruction)...\n");

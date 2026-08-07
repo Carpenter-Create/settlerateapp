@@ -93,6 +93,8 @@ POL|scenarios_select_own|SELECT|PUBLIC|(auth.uid() = user_id)|
 POL|scenarios_update_own|UPDATE|PUBLIC|(auth.uid() = user_id)|(auth.uid() = user_id)
 REL|public|stripe_webhook_events|true|false
 POL|NONE
+REL|public|subscriptions|true|false
+POL|subscriptions_select_own|SELECT|PUBLIC|(auth.uid() = user_id)|
 REL|public|user_comparisons|true|false
 POL|Users can create their own comparisons|INSERT|PUBLIC||(auth.uid() = user_id)
 POL|Users can delete their own comparisons|DELETE|PUBLIC|(auth.uid() = user_id)|
