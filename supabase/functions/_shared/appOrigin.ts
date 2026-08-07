@@ -1,29 +1,23 @@
 /**
- * Allowlisted browser origins for Checkout / Portal return URLs.
+ * Edge adapter for application-origin allowlist policy.
  *
- * Matching is exact-string only (see `resolveAppOrigin` below) — no prefix,
- * suffix, or substring matching. This intentionally rejects lookalike /
- * deceptive-suffix origins (e.g. `https://app.settlerate.com.evil.example`)
- * that would pass a naive `startsWith` / `includes` check.
+ * Pure policy: packages/core app-origin (temporary relative bridge).
+ * Request header reading stays here — core must not depend on Request/DOM.
  *
- * The obsolete Lovable preview origin (`https://vpcxzbaxhpucvevnkalo.lovable.app`)
- * was removed in Phase 8.1 Epic 2 PR 2 (ADR 0002) as it is no longer used.
+ * Deletion condition for the relative bridge: remove when Edge Functions
+ * resolve `@settlerate/core/app-origin` via an approved Deno/Supabase import
+ * map and CI proves Deno + deploy graph without this path (Epic 5 PR 6).
+ * A thin Request adapter may remain indefinitely.
  */
-const ALLOWED_ORIGINS = [
-  "https://app.settlerate.com",
-  "http://localhost:5173",
-  "http://localhost:8080",
-  "http://127.0.0.1:5173",
-  "http://127.0.0.1:8080",
-] as const;
 
-/** Canonical production application origin used when request Origin is absent or not allowlisted. */
-export const DEFAULT_APP_ORIGIN = "https://app.settlerate.com";
+export {
+  DEFAULT_APP_ORIGIN,
+  resolveAppOriginFromOriginHeader,
+} from "../../../packages/core/src/origin/appOrigin.ts";
 
+import { resolveAppOriginFromOriginHeader } from "../../../packages/core/src/origin/appOrigin.ts";
+
+/** Resolve Checkout/Portal return origin from the request Origin header. */
 export function resolveAppOrigin(req: Request): string {
-  const origin = req.headers.get("origin");
-  if (origin && (ALLOWED_ORIGINS as readonly string[]).includes(origin)) {
-    return origin;
-  }
-  return DEFAULT_APP_ORIGIN;
+  return resolveAppOriginFromOriginHeader(req.headers.get("origin"));
 }

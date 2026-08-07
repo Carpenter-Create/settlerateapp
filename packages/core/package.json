@@ -10,7 +10,10 @@
     "./checkout-maintenance": "./src/checkout/checkoutMaintenance.ts",
     "./subscription-guard": "./src/checkout/professionalSubscriptionGuard.ts",
     "./observability-redaction": "./src/observability/observabilityRedaction.ts",
-    "./billing-snapshot": "./src/billing/stripeBillingSnapshot.ts"
+    "./billing-snapshot": "./src/billing/stripeBillingSnapshot.ts",
+    "./customer-resolution": "./src/billing/stripeCustomerResolve.ts",
+    "./app-origin": "./src/origin/appOrigin.ts",
+    "./edge-observability": "./src/observability/edgeObservability.ts"
   },
   "files": [
     "src"

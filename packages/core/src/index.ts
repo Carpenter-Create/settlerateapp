@@ -12,6 +12,9 @@
  * - `@settlerate/core/subscription-guard`
  * - `@settlerate/core/observability-redaction`
  * - `@settlerate/core/billing-snapshot` (pure mappers only)
+ * - `@settlerate/core/customer-resolution` (pure helpers only)
+ * - `@settlerate/core/app-origin` (string Origin header policy)
+ * - `@settlerate/core/edge-observability` (deterministic helpers only)
  */
 
 /** Inert resolution marker (PR 1). Harmless alongside real contracts. */
@@ -92,3 +95,26 @@ export type {
   StripeInvoiceLike,
   StripeSubscriptionBillingSnapshot,
 } from "./billing/stripeBillingSnapshot.ts";
+
+export {
+  resolveStripeCustomerByUserId,
+  stripeCustomerMetadataSearchQuery,
+} from "./billing/stripeCustomerResolve.ts";
+
+export type {
+  StripeCustomerLike,
+  StripeCustomerResolution,
+  CheckoutCustomerResolution,
+} from "./billing/stripeCustomerResolve.ts";
+
+export {
+  DEFAULT_APP_ORIGIN,
+  resolveAppOriginFromOriginHeader,
+} from "./origin/appOrigin.ts";
+
+export {
+  isEdgeObservabilityEnabled,
+  buildEdgeExtra,
+} from "./observability/edgeObservability.ts";
+
+export type { EdgeObservabilityContext } from "./observability/edgeObservability.ts";

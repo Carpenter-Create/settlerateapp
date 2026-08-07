@@ -1,10 +1,14 @@
+/**
+ * Runtime-adapter coverage for resolveCheckoutCustomer.
+ * Pure matching/query coverage: packages/core/src/billing/stripeCustomerResolve.test.ts
+ */
 import { describe, expect, it, vi } from "vitest";
 import {
   resolveCheckoutCustomer,
   resolveStripeCustomerByUserId,
-  stripeCustomerMetadataSearchQuery,
   type CheckoutCustomerResolutionDeps,
 } from "../../../supabase/functions/_shared/stripeCustomerResolve";
+import * as coreCustomer from "@settlerate/core/customer-resolution";
 
 const USER_A = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 const USER_B = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
@@ -22,41 +26,18 @@ function makeCheckoutDeps(
   };
 }
 
-describe("resolveStripeCustomerByUserId", () => {
-  it("returns none when no customer has matching user metadata", () => {
-    expect(
-      resolveStripeCustomerByUserId(
-        [{ id: "cus_other", metadata: { user_id: USER_B } }],
-        USER_A
-      )
-    ).toEqual({ kind: "none" });
-  });
-
-  it("returns the unique matching customer", () => {
+describe("stripeCustomerResolve runtime adapter", () => {
+  it("re-exports pure helpers from core", () => {
     expect(
       resolveStripeCustomerByUserId(
         [{ id: "cus_user_a", metadata: { user_id: USER_A } }],
         USER_A
       )
     ).toEqual({ kind: "unique", customerId: "cus_user_a" });
-  });
-
-  it("fails closed when multiple customers have matching user metadata", () => {
     expect(
-      resolveStripeCustomerByUserId(
-        [
-          { id: "cus_user_a_1", metadata: { user_id: USER_A } },
-          { id: "cus_user_a_2", metadata: { user_id: USER_A } },
-        ],
-        USER_A
-      )
-    ).toEqual({ kind: "ambiguous" });
-  });
-
-  it("uses a metadata-only Stripe search query", () => {
-    expect(stripeCustomerMetadataSearchQuery(USER_A)).toBe(
-      `metadata['user_id']:'${USER_A}'`
-    );
+      Object.prototype.hasOwnProperty.call(coreCustomer, "resolveCheckoutCustomer")
+    ).toBe(false);
+    expect(typeof resolveCheckoutCustomer).toBe("function");
   });
 });
 
@@ -132,5 +113,19 @@ describe("resolveCheckoutCustomer", () => {
       email: "shared@example.com",
     });
     expect(deps).not.toHaveProperty("findCustomersByEmail");
+  });
+
+  it("returns bound_elsewhere when the unique customer is owned by another user", async () => {
+    const deps = makeCheckoutDeps({
+      findCustomersByUserMetadata: vi.fn(async () => [
+        { id: "cus_taken", metadata: { user_id: USER_A } },
+      ]),
+      isCustomerBoundToOtherUser: vi.fn(async () => true),
+    });
+
+    await expect(resolveCheckoutCustomer({ userId: USER_A, email: EMAIL_A }, deps)).resolves.toEqual({
+      kind: "bound_elsewhere",
+    });
+    expect(deps.createCustomer).not.toHaveBeenCalled();
   });
 });

@@ -1,9 +1,14 @@
+/**
+ * Edge observability adapter coverage (incl. generateRequestId).
+ * Deterministic helpers: packages/core/src/observability/edgeObservability.test.ts
+ */
 import { describe, expect, it } from "vitest";
 import {
   buildEdgeExtra,
   generateRequestId,
   isEdgeObservabilityEnabled,
 } from "../../../supabase/functions/_shared/observability";
+import * as coreEdgeObs from "@settlerate/core/edge-observability";
 
 describe("isEdgeObservabilityEnabled — no-op without SENTRY_DSN", () => {
   it("is disabled when the DSN is absent, null, or blank", () => {
@@ -29,6 +34,13 @@ describe("generateRequestId — correlation ID generation", () => {
   it("generates a fresh ID on every call", () => {
     const ids = new Set(Array.from({ length: 20 }, () => generateRequestId()));
     expect(ids.size).toBe(20);
+  });
+
+  it("remains runtime-only (absent from core edge-observability)", () => {
+    expect(
+      Object.prototype.hasOwnProperty.call(coreEdgeObs, "generateRequestId")
+    ).toBe(false);
+    expect(typeof generateRequestId).toBe("function");
   });
 });
 

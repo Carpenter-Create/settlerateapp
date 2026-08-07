@@ -10,7 +10,7 @@ Hold only **pure, deterministic, environment-neutral** contracts and
 transformations that must stay identical across browser/Vite, Node
 tests/scripts, and Deno Edge Functions.
 
-## Status (Epic 5 PR 3)
+## Status (Epic 5 PR 4)
 
 | Module | Package surface | Notes |
 |--------|-----------------|-------|
@@ -19,27 +19,31 @@ tests/scripts, and Deno Edge Functions.
 | Professional subscription guard | `@settlerate/core/subscription-guard` | PR 3 |
 | Observability redaction | `@settlerate/core/observability-redaction` | PR 3 |
 | Billing snapshot (pure) | `@settlerate/core/billing-snapshot` | PR 3 — **no** `resolveSubscriptionBillingSnapshot` |
+| Customer resolution (pure) | `@settlerate/core/customer-resolution` | PR 4 — **no** `resolveCheckoutCustomer` |
+| App origin policy | `@settlerate/core/app-origin` | PR 4 — string Origin header policy; **no** `Request` |
+| Edge observability (deterministic) | `@settlerate/core/edge-observability` | PR 4 — **no** `generateRequestId` |
 | Scaffold marker | `@settlerate/core` (`SETTLERATE_CORE_SCAFFOLD_MARKER`) | Harmless PR 1 marker |
 
 Compatibility:
 
-- App paths under `src/lib/*` re-export package subpaths (pure shims), except
-  `stripeBillingSnapshot.ts` which is a **runtime adapter**: re-exports pure
-  symbols from core and retains `resolveSubscriptionBillingSnapshot`.
-- Edge `_shared/*` uses temporary relative bridges into `packages/core`
-  (deletion conditions documented in each shim/adapter).
+- Pure shims under `src/lib/*` and Edge `_shared/*` re-export package subpaths
+  (temporary relative bridges on Edge; PR 6 deletion conditions).
+- Runtime adapters retain orchestration / nondeterminism:
+  - `resolveSubscriptionBillingSnapshot`
+  - `resolveCheckoutCustomer` (+ deps)
+  - `resolveAppOrigin(Request)`
+  - `generateRequestId`
 
-PR 4–6 remain unauthorized. Epic 6+ remain unauthorized.
+PR 5–6 remain unauthorized. Epic 6+ remain unauthorized.
 
 ## Public API
 
 Prefer **explicit domain subpaths** (no `@settlerate/core/*` wildcard map):
 
 ```ts
-import { isCheckoutMaintenanceEnabled } from "@settlerate/core/checkout-maintenance";
-import { billingRowBlocksCheckout } from "@settlerate/core/subscription-guard";
-import { redactEvent } from "@settlerate/core/observability-redaction";
-import { mapSubscriptionToBillingSnapshot } from "@settlerate/core/billing-snapshot";
+import { resolveStripeCustomerByUserId } from "@settlerate/core/customer-resolution";
+import { resolveAppOriginFromOriginHeader } from "@settlerate/core/app-origin";
+import { isEdgeObservabilityEnabled, buildEdgeExtra } from "@settlerate/core/edge-observability";
 ```
 
 The package root re-exports curated named symbols for convenience.
@@ -53,9 +57,10 @@ The package root re-exports curated named symbols for convenience.
 - Network I/O, database queries, auth resolution, env reads
 - Stripe SDK / Supabase client / React / DOM / Node-only / Deno-only APIs
 - `@sentry/*` SDK dependencies
-- Async retrieval orchestration (`resolveSubscriptionBillingSnapshot`,
+- Async retrieval / checkout orchestration (`resolveSubscriptionBillingSnapshot`,
   `resolveCheckoutCustomer`)
-- Nondeterministic helpers (e.g. `crypto.randomUUID` request-ID generation)
+- Nondeterministic helpers (`generateRequestId` / UUID generation)
+- `Request` / Fetch ambient types (adapters read headers and pass strings)
 - Mortgage formula / entitlement / billing / export **semantic** changes
 
 ## Source of truth

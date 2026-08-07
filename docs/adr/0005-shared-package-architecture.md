@@ -9,16 +9,18 @@
 
 SettleRate currently duplicates drift-sensitive business contracts between the
 Vite/React client (`src/lib/`) and Supabase Edge Functions
-(`supabase/functions/_shared/`). After PR 2–3, entitlement, checkout
-maintenance, subscription guards, observability redaction, and pure billing
-snapshot mappers are single-sourced in `@settlerate/core` with re-export
-shims / runtime adapters (shim-purity gated). Remaining shared/runtime
-boundaries are limited to modules intentionally retained outside core,
-including Stripe customer-resolution orchestration, Edge observability
-runtime helpers, and export-runtime mappings. Runtime-specific orchestration
-remains in adapters where required. Export semantics are protected by
-`docs/EXPORT_CONTRACT.md` with a client builder and a server derived-JSON
-mapper that must stay semantically aligned.
+(`supabase/functions/_shared/`). After PR 2–4, entitlement, checkout
+maintenance, subscription guards, observability redaction, pure billing
+snapshot mappers, pure customer-resolution helpers, pure app-origin policy,
+and deterministic Edge observability helpers are single-sourced in
+`@settlerate/core` with re-export shims / runtime adapters (shim-purity
+gated). Remaining shared/runtime boundaries are limited to modules
+intentionally retained outside core, including Stripe customer-resolution
+orchestration (`resolveCheckoutCustomer`), nondeterministic Edge request-ID
+generation (`generateRequestId`), and export-runtime mappings.
+Runtime-specific orchestration remains in adapters where required. Export
+semantics are protected by `docs/EXPORT_CONTRACT.md` with a client builder
+and a server derived-JSON mapper that must stay semantically aligned.
 
 Roadmap Epic 5 calls for a shared `packages/core` so these contracts have one
 canonical implementation across browser, Node test/scripts, and Deno Edge
@@ -87,12 +89,12 @@ Classification key:
 | Professional subscription guards | Canonical: `packages/core/src/checkout/professionalSubscriptionGuard.ts` (`@settlerate/core/subscription-guard`); shims at former paths | **Move** (PR 3) | Pure; allowlist callback injected |
 | Stripe billing snapshot — pure mappers/types | Canonical: `packages/core/src/billing/stripeBillingSnapshot.ts` (`@settlerate/core/billing-snapshot`) | **Move** (PR 3) | Deterministic structural mapping; no network |
 | Stripe billing snapshot — retrieval orchestration | Runtime adapters: `src/lib/stripeBillingSnapshot.ts`, `_shared/stripeBillingSnapshot.ts` (`resolveSubscriptionBillingSnapshot`) | **Runtime-specific** (Stripe/runtime adapter) | Invokes injected retrieve; DI does not make it side-effect-free |
-| Stripe customer resolve — pure types/helpers | `_shared/stripeCustomerResolve.ts`: `StripeCustomerLike`; `StripeCustomerResolution`; `resolveStripeCustomerByUserId`; `stripeCustomerMetadataSearchQuery` (and other purely structural types as appropriate) | **Move** | Deterministic selection/query-string helpers |
-| Stripe customer resolve — checkout orchestration | Same file: `resolveCheckoutCustomer` (+ `CheckoutCustomerResolutionDeps` wiring used only by it) | **Shared + adapters** / **Runtime-specific** orchestration | Injected deps may query billing, search Stripe, verify ownership, and create customers — stays in Edge/Stripe adapter |
+| Stripe customer resolve — pure types/helpers | Canonical: `packages/core/src/billing/stripeCustomerResolve.ts` (`@settlerate/core/customer-resolution`) | **Move** (PR 4) | Deterministic selection/query-string helpers |
+| Stripe customer resolve — checkout orchestration | Runtime adapter: `_shared/stripeCustomerResolve.ts` (`resolveCheckoutCustomer` + `CheckoutCustomerResolutionDeps`) | **Runtime-specific** orchestration | Injected deps may query billing, search Stripe, verify ownership, and create customers — stays in Edge/Stripe adapter |
 | Observability redaction | Canonical: `packages/core/src/observability/observabilityRedaction.ts` (`@settlerate/core/observability-redaction`); shims at former paths | **Move** (PR 3) | Pure; dual consumers; shim-purity gated |
-| Edge observability — deterministic helpers | `_shared/observability.ts`: `isEdgeObservabilityEnabled`; `buildEdgeExtra`; `EdgeObservabilityContext` (and structural types) | **Move** | Pure/deterministic; not a copy of client observability |
-| Edge observability — request ID generation | `_shared/observability.ts`: `generateRequestId` | **Runtime-specific** | Uses `crypto.randomUUID()` — environment-neutral but **nondeterministic**; keep in adapter. Core may hold ID types, validation/normalization, or accept an injected ID |
-| App origin allowlist for Checkout/Portal | `_shared/appOrigin.ts` | **Shared + adapters** | Pure allowlist + `Request` (Fetch standard). Keep function-local wiring in Edge adapters |
+| Edge observability — deterministic helpers | Canonical: `packages/core/src/observability/edgeObservability.ts` (`@settlerate/core/edge-observability`) | **Move** (PR 4) | Pure/deterministic; not a copy of client observability |
+| Edge observability — request ID generation | Runtime adapter: `_shared/observability.ts` (`generateRequestId`) | **Runtime-specific** | Uses `crypto.randomUUID()` — environment-neutral but **nondeterministic**; keep in adapter |
+| App origin allowlist for Checkout/Portal | Canonical pure: `packages/core/src/origin/appOrigin.ts` (`@settlerate/core/app-origin`); Edge `resolveAppOrigin(Request)` adapter | **Shared + adapters** (PR 4) | Pure string Origin policy in core; Request header reading in Edge adapter |
 | Auth redirect origin helper | `src/lib/authRedirect.ts` | **Shared + adapters** | Shared origin-allowlist constants may live in core; `VITE_APP_ORIGIN` injection stays browser-side. Do not merge APIs blindly with `appOrigin` |
 | Client Sentry init / capture | `src/lib/observability.ts` | **Runtime-specific** | `@sentry/react`, `import.meta.env` |
 | Edge Sentry SDK wiring | `_shared/sentry.ts` | **Runtime-specific** | `npm:@sentry/deno`, Deno env |
@@ -359,8 +361,9 @@ Inspected 2026-08-06 on `main` (post Epic 4 closure).
 | Entitlement → `@settlerate/core/entitlement` (PR 2); app/Edge shims | Shim-purity + SQL parity gated by Vitest + `scripts/test-entitlement-sql.mjs` |
 | Checkout / guards / redaction → core subpaths (PR 3); app/Edge shims | Shim-purity gated by `verify-core-boundaries` + Vitest |
 | Billing pure mappers → `@settlerate/core/billing-snapshot` (PR 3) | Architecture tests prove `resolveSubscriptionBillingSnapshot` is runtime-only |
-| `_shared/stripeCustomerResolve.ts` | No `src/lib` copy; Vitest imports Edge file; **contains both** pure helpers and `resolveCheckoutCustomer` orchestration |
-| `_shared/observability.ts` | Not a client copy; mixes deterministic helpers with nondeterministic `generateRequestId` |
+| Customer-resolution pure helpers → `@settlerate/core/customer-resolution` (PR 4) | Edge adapter retains `resolveCheckoutCustomer` + deps |
+| App-origin pure policy → `@settlerate/core/app-origin` (PR 4) | Edge adapter retains `resolveAppOrigin(Request)` |
+| Edge observability deterministic helpers → `@settlerate/core/edge-observability` (PR 4) | Edge adapter retains `generateRequestId` |
 | Export client vs `generate-pdf/mapDerivedForExport.ts` | Semantic parity via fixtures — not a file copy |
 
 ### Current runtime consumers (representative)
@@ -444,12 +447,12 @@ Inspected 2026-08-06 on `main` (post Epic 4 closure).
 | **PR 0** | This ADR + minimum governance status updates | Complete / merged |
 | **PR 1** | `packages/core` workspace scaffold (no behavioral migration) | Complete / merged |
 | **PR 2** | Entitlement contract extraction | Complete / merged |
-| **PR 3** | Checkout maintenance, guards, redaction, **pure** billing-snapshot mappers (not `resolveSubscriptionBillingSnapshot`) | **In progress** |
-| **PR 4** | **Pure** customer-resolve helpers (not `resolveCheckoutCustomer`), origin helpers, deterministic Edge observability (not `generateRequestId`) | Not authorized |
+| **PR 3** | Checkout maintenance, guards, redaction, **pure** billing-snapshot mappers (not `resolveSubscriptionBillingSnapshot`) | Complete / merged |
+| **PR 4** | **Pure** customer-resolve helpers (not `resolveCheckoutCustomer`), origin helpers, deterministic Edge observability (not `generateRequestId`) | **In progress** |
 | **PR 5** | Export-related relocation if justified and behavior-preserving | Not authorized |
 | **PR 6** | Remove shims; Epic 5 closure | Not authorized |
 
-**Epic 5 status:** In progress — PR 3 (checkout maintenance, subscription
-guards, observability redaction, pure billing-snapshot mappers in
-`@settlerate/core`; `resolveSubscriptionBillingSnapshot` remains
-runtime-only). Do not begin PR 4–6 automatically.
+**Epic 5 status:** In progress — PR 4 (pure customer-resolution, app-origin
+policy, deterministic Edge observability in `@settlerate/core`;
+`resolveCheckoutCustomer` and `generateRequestId` remain runtime-only).
+Do not begin PR 5–6 automatically.

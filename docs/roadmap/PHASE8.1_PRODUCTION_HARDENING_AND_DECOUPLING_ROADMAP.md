@@ -55,9 +55,9 @@ Dependency: complete before schema reconciliation.
 
 ### Epic 5 --- Shared Core Package
 
-**Status: In progress — PR 3** (ADR 0005 accepted; PR 0–2 complete;
-checkout maintenance, subscription guards, redaction, pure billing
-snapshot mappers into `@settlerate/core`; see
+**Status: In progress — PR 4** (ADR 0005 accepted; PR 0–3 complete;
+pure customer-resolution, app-origin policy, deterministic Edge
+observability helpers into `@settlerate/core`; see
 `docs/adr/0005-shared-package-architecture.md`).
 
 Create:
@@ -138,11 +138,11 @@ deployment process documented - backups verified - monitoring available
 
 ## Next Approved Execution Step
 
-Epic 1–4 are complete on `main`. Epic 5 is **in progress — PR 3**
-(shared pure contracts; ADR 0005 accepted; PR 0–2 complete).
+Epic 1–4 are complete on `main`. Epic 5 is **in progress — PR 4**
+(runtime-boundary extraction; ADR 0005 accepted; PR 0–3 complete).
 
-**Next implementation step after PR 3 merges (requires separate founder
-authorization):** Epic 5 PR 4 — pure customer-resolve helpers, origin
-helpers, deterministic Edge observability helpers.
+**Next implementation step after PR 4 merges (requires separate founder
+authorization):** Epic 5 PR 5 — export-related relocation if justified
+and behavior-preserving.
 
-Do not begin Epic 5 PR 4–6, Epic 6, or later epics automatically.
+Do not begin Epic 5 PR 5–6, Epic 6, or later epics automatically.
