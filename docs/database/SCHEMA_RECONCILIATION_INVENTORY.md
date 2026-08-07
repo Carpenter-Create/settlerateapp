@@ -6,10 +6,10 @@
 
 This document inventories schema objects and consumers discoverable from
 the SettleRate **git repository**. Live production catalog evidence for
-PR 1 (reused in PR 2B after ledger verification) is in
-`docs/database/production-schema/` and the refreshed
-`docs/database/SCHEMA_DRIFT_REPORT.md` (sanitized; no row payloads).
-PR 2B before/after analysis:
+PR 1 (reused in PR 2B after ledger **and** full normalized schema
+fingerprint verification) is in `docs/database/production-schema/` and
+the refreshed `docs/database/SCHEMA_DRIFT_REPORT.md` (sanitized; no row
+payloads). PR 2B before/after analysis:
 `docs/database/SCHEMA_DRIFT_REFRESH_PR2B.md`.
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`,
@@ -49,8 +49,11 @@ Everything below is **REPOSITORY EVIDENCE** unless explicitly marked otherwise.
 ## Production evidence status
 
 PR 1 captured a sanitized production catalog
-(`2026-08-07T21:23:22.944Z`). PR 2B verified the production migration
-ledger is unchanged (31/31 identical) and **reused** that capture.
+(`2026-08-07T21:23:22.944Z`). PR 2B **reused** that capture after verifying
+both (1) unchanged migration ledger (31/31 identical) and (2) identical
+full normalized production schema fingerprint from a fresh read-only
+temporary capture (see `SCHEMA_DRIFT_REFRESH_PR2B.md`). Ledger equality
+alone is not treated as proof of schema equality.
 
 Still not asserted from capture alone (ADR 0007 / ops):
 

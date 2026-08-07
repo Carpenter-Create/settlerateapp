@@ -19,12 +19,19 @@ app/Edge behavior is authorized by this document.
 
 | Item | Value |
 |------|--------|
-| Capture reused | **Yes** — PR 1 sanitized catalog |
-| Capture timestamp | `2026-08-07T21:23:22.944Z` |
+| Capture reused | **Yes** — PR 1 sanitized catalog retained |
+| Canonical capture timestamp | `2026-08-07T21:23:22.944Z` |
 | Project ref | `vpcxzbaxhpucvevnkalo` |
-| Recapture | **Not performed** |
+| Canonical content fingerprint | `fa5c3bbc0f22e521bc43140e64569d0b3364b061dccd9d303f55fa2996fdc38c` |
+| Recapture committed | **No** (temporary verification capture deleted after identical compare) |
 
-### Ledger verification (read-only, before reuse)
+Production evidence reuse was verified by **both** an unchanged migration
+ledger **and** an identical full normalized schema fingerprint from a
+fresh read-only temporary capture. Migration-ledger equality alone does
+**not** prove schema equality (Dashboard / out-of-band DDL could change
+catalog state without a new `schema_migrations` row).
+
+### 1) Migration ledger verification (read-only)
 
 Linked Supabase CLI query against
 `supabase_migrations.schema_migrations` (wrapped in `BEGIN READ ONLY` /
@@ -33,9 +40,38 @@ Linked Supabase CLI query against
 - Captured versions: **31**
 - Live versions: **31**
 - Symmetric difference: **empty**
-- Result: **identical** → reuse PR 1 capture; do not refresh timestamps
+- Result: **identical**
 
-No production mutation occurred.
+### 2) Full normalized schema fingerprint verification (read-only)
+
+Temporary untracked capture via approved linked mechanism
+(`npm run schema:capture -- --linked`, tooling
+`epic6-pr1-schema-capture/1.1.1`):
+
+- Protections: `BEGIN READ ONLY` / `COMMIT` (current transaction);
+  client-side single-statement SELECT/SHOW allowlist; sanitizer fail-closed
+- Temporary capture timestamp: `2026-08-07T23:16:14.542Z`
+- Destination: `/tmp/settlerate-pr2b-verify/production-schema-catalog.TMP.json`
+  (never committed)
+
+Compared against the committed PR 1 catalog using
+`normalizeCatalog` + `fingerprintCatalogContent` /
+`fingerprintCatalogObjects`, plus separate normalized fingerprints for
+grants, extensions, and migration metadata, and section compares
+(tables/columns+RLS, views, enums, functions, triggers, constraints,
+indexes, policies, grants):
+
+| Check | Result |
+|-------|--------|
+| `catalogContentFingerprint` | **identical** (`fa5c3bbc…dc38c`) |
+| Per-object fingerprint map | **identical** (0 only-in-A / only-in-B / changed) |
+| Grants fingerprint | **identical** |
+| Extensions fingerprint | **identical** |
+| Migration versions fingerprint | **identical** |
+| Section compare non-matches | **0** |
+
+Outcome: retain original PR 1 production artifact and timestamp; delete
+temporary capture; no production mutation occurred.
 
 ---
 

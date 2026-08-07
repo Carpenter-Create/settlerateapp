@@ -363,8 +363,9 @@ deferred to a later separately authorized Epic 6 slice.
 
 ### Allowed in Epic 6 PR 2B (this slice)
 
-- Reuse verified PR 1 production capture (or read-only recapture only if
-  migration ledger/schema materially changed)
+- Reuse PR 1 production capture only after read-only verification of both
+  unchanged migration ledger **and** identical full normalized schema
+  fingerprint (or recapture if either differs)
 - Fresh migration-only (+ optional harness) reconstruction
 - Regenerate drift artifacts and before/after analysis vs PR 1
 - Grant-security **reporting** only (no GRANT mutation)
