@@ -45,8 +45,8 @@ Follow the roadmap epic sequence. Do not skip dependency gates:
 2. Epic 2 — Environment and Origin Hygiene (**complete on `main`**; see ADR 0002)  
 3. Epic 3 — Observability (**complete on `main` and production-activated/verified 2026-08-06** — see ADR 0003)  
 4. Epic 4 — RLS Security Test Expansion (**complete on `main`**; see ADR 0004)  
-5. Epic 5 — Shared Core Package (**Complete on this branch pending PR 6 merge**; ADR 0005 accepted; PR 0–5 merged; PR 6 closure)  
-6. Epic 6 — Schema Reconciliation (requires Epic 4; Epic 5 packaging preferred before broad schema work)  
+5. Epic 5 — Shared Core Package (**complete on `main`**; ADR 0005 accepted; PR 0–6 merged)  
+6. Epic 6 — Schema Reconciliation (**In progress — PR 0**; ADR 0006/0007 accepted; PR 0 until draft PR merges; PR 1+ unauthorized; requires Epic 4)  
 7. Epic 7 — Staging Environment  
 8. Epic 8 — Billing Recovery Capability  
 9. Epic 9 — Deployment Pipeline  
@@ -130,15 +130,30 @@ is not required. Authority: `docs/adr/0004-rls-testing-standard.md`. See
 | **PR 3** | Checkout maintenance, guards, redaction, pure billing-snapshot mappers (not resolve orchestration) | Complete / merged |
 | **PR 4** | Pure customer-resolve helpers (not checkout orchestration), origin helpers, deterministic Edge observability (not `generateRequestId`) | Complete / merged |
 | **PR 5** | Export-related relocation if justified and behavior-preserving | Complete / merged |
-| **PR 6** | Remove pure shims; Edge package resolution; Epic 5 closure | **In progress** (closure on merge) |
+| **PR 6** | Remove pure shims; Edge package resolution; Epic 5 closure | Complete / merged |
 
-Epic 5 **closes with PR 6 merge**. Pure contracts live in
+Epic 5 is **complete on `main`**. Pure contracts live in
 `@settlerate/core/*`; runtime adapters remain under `_shared` /
 application surfaces; Edge resolves package subpaths via per-function
-`deno.json`. Export field semantics remain frozen.
-**Do not begin Epic 6+ automatically.** Authority:
+`deno.json`. Export field semantics remain frozen. Authority:
 `docs/adr/0005-shared-package-architecture.md` and
-`docs/EXPORT_CONTRACT.md`. See `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
+`docs/EXPORT_CONTRACT.md`.
+
+## PR discipline for Epic 6
+
+| PR | Intent | Status |
+|----|--------|--------|
+| **PR 0** | ADR 0006 + ADR 0007 (accepted) + repository schema inventory + methodology | **In progress** (until PR merge) |
+| **PR 1** | Read-only production schema capture + machine-readable drift report (no mutation) | Not authorized |
+| **PR 2+** | Separately authorized reconciliation slices | Not authorized |
+
+Epic 6 **PR 0 is documentation/inventory only** — no migrations, no
+production access, no schema mutation. Do not begin PR 1+ or Epic 7+
+automatically. Authority (accepted):
+`docs/adr/0006-database-schema-source-of-truth.md`,
+`docs/adr/0007-legacy-schema-disposition.md`,
+`docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`. See
+`docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 
 ## Required ADRs
 

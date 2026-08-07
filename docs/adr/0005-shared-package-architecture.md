@@ -451,13 +451,13 @@ Inspected 2026-08-06 on `main` (post Epic 4 closure).
 | **PR 3** | Checkout maintenance, guards, redaction, **pure** billing-snapshot mappers (not `resolveSubscriptionBillingSnapshot`) | Complete / merged |
 | **PR 4** | **Pure** customer-resolve helpers (not `resolveCheckoutCustomer`), origin helpers, deterministic Edge observability (not `generateRequestId`) | Complete / merged |
 | **PR 5** | Export-related relocation if justified and behavior-preserving | Complete / merged |
-| **PR 6** | Remove pure shims; Edge package resolution; Epic 5 closure | **In progress** (closure on merge) |
+| **PR 6** | Remove pure shims; Edge package resolution; Epic 5 closure | Complete / merged |
 
-**Epic 5 status:** Complete on this branch pending PR 6 merge.
+**Epic 5 status:** Complete on `main` (PR 0–6 merged).
 Canonical pure modules live under `@settlerate/core/*`. Pure
 compatibility shims are removed. Runtime adapters remain
 (`resolveSubscriptionBillingSnapshot`, `resolveCheckoutCustomer`,
 `resolveAppOrigin(Request)`, `generateRequestId`, `buildScenarioData`,
 `buildCanonicalScenarioExport`). Edge Functions resolve package
 subpaths via per-function `supabase/functions/<name>/deno.json`
-(Supabase-recommended). Do not begin Epic 6+ automatically.
+(Supabase-recommended).
