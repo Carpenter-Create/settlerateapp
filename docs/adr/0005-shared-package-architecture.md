@@ -12,12 +12,13 @@ Vite/React client (`src/lib/`) and Supabase Edge Functions
 (`supabase/functions/_shared/`). After PR 2–3, entitlement, checkout
 maintenance, subscription guards, observability redaction, and pure billing
 snapshot mappers are single-sourced in `@settlerate/core` with re-export
-shims / runtime adapters (shim-purity gated). Three more
-pairs are manually kept in sync with “Keep in sync” comments and already show
-comment-only drift (`checkoutMaintenance.ts`,
-`professionalSubscriptionGuard.ts`, `stripeBillingSnapshot.ts`). Export
-semantics are protected by `docs/EXPORT_CONTRACT.md` with a client builder and
-a server derived-JSON mapper that must stay semantically aligned.
+shims / runtime adapters (shim-purity gated). Remaining shared/runtime
+boundaries are limited to modules intentionally retained outside core,
+including Stripe customer-resolution orchestration, Edge observability
+runtime helpers, and export-runtime mappings. Runtime-specific orchestration
+remains in adapters where required. Export semantics are protected by
+`docs/EXPORT_CONTRACT.md` with a client builder and a server derived-JSON
+mapper that must stay semantically aligned.
 
 Roadmap Epic 5 calls for a shared `packages/core` so these contracts have one
 canonical implementation across browser, Node test/scripts, and Deno Edge
