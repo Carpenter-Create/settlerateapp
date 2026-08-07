@@ -206,9 +206,10 @@ and do not reopen Epic 3. Do not begin Epic 4 automatically.
 
 ## Epic 4 — RLS Security Test Expansion
 
-**Status:** **In progress — PR 1.** ADR 0004 accepted (PR 0 merged). PR 1
-adds the authoritative RLS coverage inventory, harness wiring, and the
-core user-owned owner / non-owner / anon matrix. PR 2–3 remain unauthorized.
+**Status:** **In progress — PR 2.** ADR 0004 accepted (PR 0 merged). PR 1
+complete and merged (inventory + core user-owned matrix). PR 2 covers
+remaining relation classes (export/share, billing support, roles/admin,
+public-ish, storage) and administrative paths. PR 3 remains unauthorized.
 Authority: `docs/adr/0004-rls-testing-standard.md`,
 `docs/security/RLS_COVERAGE_INVENTORY.md`.
 
@@ -260,11 +261,11 @@ Epic 4 is complete only when all of the following are true:
 | PR | Scope | Status |
 |----|--------|--------|
 | **PR 0** | ADR 0004 + minimum governance status updates | Complete / merged |
-| **PR 1** | Coverage inventory + harness wiring; owner / non-owner / anon matrix for core user-owned tables | **In progress** (this slice) |
-| **PR 2** | Remaining in-scope relations + administrative path assertions | Not authorized — requires separate founder authorization |
+| **PR 1** | Coverage inventory + harness wiring; owner / non-owner / anon matrix for core user-owned tables | Complete / merged |
+| **PR 2** | Remaining in-scope relations + administrative path assertions | **In progress** (this slice) |
 | **PR 3** | CI gate completion / acceptance-criteria gap closure (if needed) | Not authorized — requires separate founder authorization |
 
-**Epic 4 is in progress (PR 1). Do not begin PR 2–3 or Epic 5+
+**Epic 4 is in progress (PR 2). Do not begin PR 3 or Epic 5+
 automatically.**
 
 ---

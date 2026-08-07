@@ -2,7 +2,9 @@
 /**
  * Applies repo migrations to ephemeral Postgres and runs:
  * - Epic 4 PR 1 RLS inventory + core owner/non-owner/anon matrix
- * - Epic 1 admin bootstrap / legacy trigger removal / admin RPC return types
+ * - Epic 1 admin bootstrap (creates approved admin fixture)
+ * - Epic 4 PR 2 remaining relations + administrative path matrix
+ * - Epic 1 legacy trigger removal / admin RPC return types
  * - Phase 6 entitlement + function-grant SQL assertions
  * - Concurrent free-tier limit + TS↔SQL entitlement parity
  */
@@ -109,6 +111,10 @@ async function applyMigrations(client) {
     -- RLS / privilege checks under SET ROLE anon, not missing GRANT (ADR 0004 §5).
     GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon;
     GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon;
+    -- Test-only: storage.objects is outside the public GRANT ALL overlay.
+    GRANT USAGE ON SCHEMA storage TO anon, authenticated, service_role;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON storage.objects TO anon, authenticated, service_role;
+    GRANT SELECT ON storage.buckets TO anon, authenticated, service_role;
     GRANT USAGE ON SCHEMA test TO authenticated, service_role, anon;
     GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA test TO authenticated, service_role, anon;
     ALTER TABLE public.scenarios FORCE ROW LEVEL SECURITY;
@@ -136,9 +142,13 @@ async function runSqlAssertions(client) {
   // epic1_admin_bootstrap.sql requires a true zero-admin starting state.
   // Once it creates an admin, that admin can never be fully removed again in
   // this test run (public.protect_admin_role_deletion_trigger), so
-  // epic1_remove_admin_trigger.sql runs second and reuses that admin.
+  // epic1_remove_admin_trigger.sql runs later and reuses that admin.
+  // Epic 4 PR 2 admin-path matrix consumes the same approved bootstrap admin
+  // and must run before Phase 6 entitlement fixtures contaminate assumptions.
   process.stdout.write("Running epic1_admin_bootstrap.sql assertions...\n");
   await psqlFile(client, join(root, "supabase/tests/epic1_admin_bootstrap.sql"));
+  process.stdout.write("Running epic4_pr2_remaining_rls.sql assertions...\n");
+  await psqlFile(client, join(root, "supabase/tests/epic4_pr2_remaining_rls.sql"));
   process.stdout.write("Running epic1_remove_admin_trigger.sql assertions...\n");
   await psqlFile(client, join(root, "supabase/tests/epic1_remove_admin_trigger.sql"));
   process.stdout.write("Running fix_admin_rpc_return_types.sql assertions...\n");

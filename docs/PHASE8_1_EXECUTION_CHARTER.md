@@ -44,7 +44,7 @@ Follow the roadmap epic sequence. Do not skip dependency gates:
 1. Epic 1 — Admin Provisioning Security (**complete on `main` and fully effective in production**)  
 2. Epic 2 — Environment and Origin Hygiene (**complete on `main`**; see ADR 0002)  
 3. Epic 3 — Observability (**complete on `main` and production-activated/verified 2026-08-06** — see ADR 0003)  
-4. Epic 4 — RLS Security Test Expansion (**In progress — PR 1**; complete before schema reconciliation; see ADR 0004)  
+4. Epic 4 — RLS Security Test Expansion (**In progress — PR 2**; complete before schema reconciliation; see ADR 0004)  
 5. Epic 5 — Shared Core Package  
 6. Epic 6 — Schema Reconciliation (requires Epic 4)  
 7. Epic 7 — Staging Environment  
@@ -109,16 +109,16 @@ breadcrumb policy) do not reopen Epic 3.
 | PR | Intent | Status |
 |----|--------|--------|
 | **PR 0** | RLS testing standard ADR (0004) + minimum governance status | Complete / merged |
-| **PR 1** | Coverage inventory + harness; core user-owned owner/non-owner/anon matrix | **In progress** |
-| **PR 2** | Remaining relations + administrative path assertions | Not authorized — requires separate founder authorization |
+| **PR 1** | Coverage inventory + harness; core user-owned owner/non-owner/anon matrix | Complete / merged |
+| **PR 2** | Remaining relations + administrative path assertions | **In progress** |
 | **PR 3** | CI gate / acceptance-criteria gap closure (if needed) | Not authorized — requires separate founder authorization |
 
-Epic 4 is **in progress (PR 1)**. PR 1 adds
-`docs/security/RLS_COVERAGE_INVENTORY.md`, wires
-`supabase/tests/epic4_pr1_core_rls.sql` into `npm run test:entitlement-sql`,
-and asserts the core user-owned owner / non-owner / anon matrix. **Do not
-change policies/migrations, begin PR 2–3, or begin Epic 5+ automatically.**
-Authority: `docs/adr/0004-rls-testing-standard.md`. See
+Epic 4 is **in progress (PR 2)**. PR 1 is complete and merged. PR 2 adds
+`supabase/tests/epic4_pr2_remaining_rls.sql` for remaining relation classes
+and administrative paths (wired after Epic 1 bootstrap in
+`npm run test:entitlement-sql`). **Do not change policies/migrations, begin
+PR 3, or begin Epic 5+ automatically.** Authority:
+`docs/adr/0004-rls-testing-standard.md`. See
 `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 
 ## Required ADRs

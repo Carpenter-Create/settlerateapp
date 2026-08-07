@@ -2,7 +2,7 @@
 
 **Authority:** `docs/adr/0004-rls-testing-standard.md`  
 **Generated from:** ephemeral Postgres after full repository migration chain + harness FORCE on `public.scenarios`  
-**Epic 4 PR:** PR 1 (core user-owned matrix)  
+**Epic 4 PR:** PR 2 (remaining relations + administrative paths)  
 **Date:** 2026-08-06  
 **Catalog fingerprint (SHA-256):** `89b3814561919ca98f6f3a8674d74d26ce545be694a61074a38f184f20b73412`  
 **Fingerprint fixture:** `supabase/tests/fixtures/epic4_pr1_rls_catalog.sha256`
@@ -11,33 +11,34 @@
 
 - RLS-enabled relations: **19**
 - Policies: **55**
-- PR 1 behavioral coverage: core user-owned class only
-- PR 2 deferred: export/share, billing/entitlement support, roles/admin, public-ish, storage (+ admin path matrix)
+- PR 1 behavioral coverage: core user-owned class (`supabase/tests/epic4_pr1_core_rls.sql`) — complete / merged
+- PR 2 behavioral coverage: export/share, billing/entitlement support, roles/admin, public-ish, storage (+ admin path matrix) — `supabase/tests/epic4_pr2_remaining_rls.sql`
+- PR 3: unauthorized
 - Drift gate: `supabase/tests/epic4_pr1_core_rls.sql` compares live catalog fingerprint to the committed fixture (not self-derived).
 
 ## Classification
 
 | Schema | Relation | RLS enabled | RLS forced | Class | PR coverage | Deferral reason |
 |--------|----------|-------------|------------|-------|-------------|-----------------|
-| `public` | `admin_audit_log` | true | false | roles/admin | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
-| `public` | `admin_bootstrap_tokens` | true | false | roles/admin | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
-| `public` | `advisor_access_requests` | true | false | roles/admin | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
-| `public` | `billing` | true | false | billing/entitlement support | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `admin_audit_log` | true | false | roles/admin | PR 2 executable | — |
+| `public` | `admin_bootstrap_tokens` | true | false | roles/admin | PR 2 executable | — |
+| `public` | `advisor_access_requests` | true | false | roles/admin | PR 2 executable | — |
+| `public` | `billing` | true | false | billing/entitlement support | PR 2 executable | — |
 | `public` | `comparison_items` | true | false | core user-owned | PR 1 executable | — |
-| `public` | `comparison_shares` | true | false | export/share | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `comparison_shares` | true | false | export/share | PR 2 executable | — |
 | `public` | `comparison_versions` | true | false | core user-owned | PR 1 executable | — |
-| `public` | `contact_messages` | true | false | public-ish | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
-| `public` | `entitlement_bypass_log` | true | false | billing/entitlement support | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
-| `public` | `export_files` | true | false | export/share | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
-| `public` | `export_shares` | true | false | export/share | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
-| `public` | `pdf_exports` | true | false | export/share | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `contact_messages` | true | false | public-ish | PR 2 executable | — |
+| `public` | `entitlement_bypass_log` | true | false | billing/entitlement support | PR 2 executable | — |
+| `public` | `export_files` | true | false | export/share | PR 2 executable | — |
+| `public` | `export_shares` | true | false | export/share | PR 2 executable | — |
+| `public` | `pdf_exports` | true | false | export/share | PR 2 executable | — |
 | `public` | `profiles` | true | false | core user-owned | PR 1 executable | — |
 | `public` | `saved_comparisons` | true | false | core user-owned | PR 1 executable | — |
 | `public` | `scenarios` | true | true (harness FORCE) | core user-owned | PR 1 executable | — |
-| `public` | `stripe_webhook_events` | true | false | billing/entitlement support | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `stripe_webhook_events` | true | false | billing/entitlement support | PR 2 executable | — |
 | `public` | `user_comparisons` | true | false | core user-owned | PR 1 executable | — |
-| `public` | `user_roles` | true | false | roles/admin | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
-| `storage` | `objects` | true | false | storage | Deferred to PR 2 | Outside PR 1 core user-owned class (ADR 0004 / Epic 4 PR sequence) |
+| `public` | `user_roles` | true | false | roles/admin | PR 2 executable | — |
+| `storage` | `objects` | true | false | storage | PR 2 executable | — |
 
 ## Policies (effective)
 
@@ -199,9 +200,29 @@ No effective policies
 | `comparison_items` | via parent `saved_comparisons` | parent owner only | parent owner; cross-parent re-parent denied | parent owner | Indirect ownership |
 | `comparison_versions` | via parent | parent owner **and** `created_by = auth.uid()` | **UPDATE revoked** from `anon`/`authenticated` | parent owner | Immutable versions |
 
+## PR 2 operation notes (remaining classes)
+
+| Relation | SELECT | INSERT | UPDATE | DELETE | Notes |
+|----------|--------|--------|--------|--------|-------|
+| `pdf_exports` | owner yes / others no | own + `assert_export_source_owned_by_user` | own + source assert | own yes | Policies `TO authenticated`; admin not implicit bypass |
+| `export_files` | owner yes | own `owner_user_id` | **no UPDATE policy** (0 rows) | own yes | Entity ownership not checked by RLS |
+| `export_shares` | via parent `export_files` | parent owner + `created_by_user_id` | parent owner | parent owner | Indirect ownership |
+| `comparison_shares` | via parent `saved_comparisons` | parent owner + `created_by` | parent owner | parent owner | Policies `TO authenticated` |
+| `billing` | own yes | **no INSERT policy** | **no UPDATE policy** | **no DELETE policy** | Client read-only by design |
+| `stripe_webhook_events` | deny-all client | deny-all client | deny-all client | deny-all client | RLS on, **no effective policies** |
+| `entitlement_bypass_log` | deny-all client | deny-all client | deny-all client | deny-all client | RLS on, **no effective policies** |
+| `user_roles` | admin only | admin only | **no UPDATE policy** | admin (not last admin) | Non-admin cannot self-read |
+| `admin_audit_log` | admin only | **no INSERT policy** | **no UPDATE policy** | **no DELETE policy** | Writes via SECURITY DEFINER RPCs |
+| `admin_bootstrap_tokens` | deny-all client | deny-all client | deny-all client | deny-all client | RLS on, **no effective policies**; bootstrap RPCs only |
+| `advisor_access_requests` | owner or admin | own `user_id` | admin only | admin only | |
+| `contact_messages` | admin only | **anon + authenticated** (`WITH CHECK true`) | admin only | **no DELETE policy** | Intentional public insert |
+| `storage.objects` | own folder under `exports` | own folder | own folder | own folder | Path first segment = `auth.uid()`; admin not bypass |
+
 ## Notes
 
 - Inventory is catalog-derived (`pg_class` / `pg_policy`); not from production.
-- Harness grants test-only `SELECT/INSERT/UPDATE/DELETE` to `anon` so anonymous denials are RLS-attributable.
+- Harness grants test-only `SELECT/INSERT/UPDATE/DELETE` to `anon` on `public` tables so anonymous denials are RLS-attributable.
+- Harness also grants test-only DML on `storage.objects` (and USAGE on `storage`) — storage is outside the public GRANT overlay.
 - `public.scenarios` is `FORCE ROW LEVEL SECURITY` in the harness (existing Phase 6 practice); fingerprint includes that harness state.
 - Anonymous insert assertions require prior `has_table_privilege('anon', …)` checks and accept only RLS-policy errors (not generic permission denied).
+- PR 2 admin identity is the Epic 1 approved bootstrap admin (`a1000000-0000-0000-0000-00000000a001`), created before PR 2 runs.
