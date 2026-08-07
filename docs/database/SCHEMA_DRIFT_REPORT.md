@@ -1,6 +1,6 @@
 # Schema Drift Report
 
-Generated: 2026-08-07T19:22:54.391Z
+Generated: 2026-08-07T21:23:23.383Z
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`, `docs/adr/0007-legacy-schema-disposition.md`. This report is evidence only — no mutation is authorized by its contents (`mutationRecommendation` is always `NONE`).
 
@@ -8,7 +8,7 @@ Authority: `docs/adr/0006-database-schema-source-of-truth.md`, `docs/adr/0007-le
 
 | Surface | Available | Notes |
 |---|---|---|
-| production (A) | yes | projectRef=vpcxzbaxhpucvevnkalo; captured 2026-08-07T19:11:42.048Z |
+| production (A) | yes | projectRef=vpcxzbaxhpucvevnkalo; captured 2026-08-07T21:23:22.944Z |
 | migration_only (B, TRUE reconstruction) | yes | reconstruction FAILED at 20260112204012_f094f5d3-2c93-436a-96ac-809c5761f37f.sql (expected if public.subscriptions is required before its stub would exist) |
 | harness (TEST-HARNESS reconstruction) | yes | reconstruction succeeded |
 | types.ts (C, derived) | yes | never authoritative (ADR 0006 §1.5) |

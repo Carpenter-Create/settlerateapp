@@ -7,7 +7,9 @@
  *      forced into BEGIN READ ONLY.
  *   2. --linked                     — Supabase CLI Management API via
  *      `supabase db query --linked` (temporary login role). Each statement
- *      is preceded by SET default_transaction_read_only = on.
+ *      is allowlisted (SELECT/SHOW only) and wrapped in
+ *      `BEGIN READ ONLY; …; COMMIT;` so the *current* transaction is
+ *      read-only (not merely `default_transaction_read_only`).
  *
  * Introspects pg_catalog/information_schema only, and writes a sanitized,
  * normalized catalog JSON artifact. Never mutates the target database,
@@ -37,12 +39,12 @@ import process from "node:process";
 import pg from "pg";
 
 import { buildCatalog } from "./lib/catalogSql.mjs";
-import { createLinkedQueryClient } from "./lib/linkedQueryClient.mjs";
+import { createLinkedQueryClient, LINKED_READ_ONLY_PROTECTIONS } from "./lib/linkedQueryClient.mjs";
 import { normalizeCatalog, stableStringify } from "./lib/normalize.mjs";
 import { assertCatalogIsSafeToWrite, assertNoHighConfidenceSecrets, requireDatabaseUrlEnv } from "./lib/sanitize.mjs";
 
 const VALID_SURFACES = new Set(["production", "migration_only", "harness"]);
-const TOOLING_VERSION = "epic6-pr1-schema-capture/1.1.0";
+const TOOLING_VERSION = "epic6-pr1-schema-capture/1.1.1";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..", "..");
@@ -179,7 +181,7 @@ export async function captureFromDatabase({ surface, out, projectRef, gitSha, li
         postgresServer: rawCatalog.postgresServer,
         authMethod,
         readOnlyProtections: useLinked
-          ? ["SET default_transaction_read_only = on (per statement)", "catalogSql SELECT-only"]
+          ? [...LINKED_READ_ONLY_PROTECTIONS]
           : [
               "SET default_transaction_read_only = on",
               "BEGIN READ ONLY",

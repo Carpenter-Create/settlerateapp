@@ -8611,8 +8611,8 @@
     }
   ],
   "meta": {
-    "capturedAt": "2026-08-07T19:11:42.048Z",
-    "gitSha": "7d4d8eae83479117528bf1bfa771c6c10ffcc190",
+    "capturedAt": "2026-08-07T21:23:22.944Z",
+    "gitSha": "22681ccb8692dad38b5cd4265154d51bf1b4ae9d",
     "projectRef": "vpcxzbaxhpucvevnkalo",
     "readOnly": true,
     "schemas": [
@@ -8626,10 +8626,11 @@
       "pg": null,
       "postgresServer": "17.6",
       "readOnlyProtections": [
-        "SET default_transaction_read_only = on (per statement)",
+        "BEGIN READ ONLY / COMMIT (current transaction)",
+        "client SELECT/SHOW allowlist (single statement)",
         "catalogSql SELECT-only"
       ],
-      "version": "epic6-pr1-schema-capture/1.1.0"
+      "version": "epic6-pr1-schema-capture/1.1.1"
     }
   },
   "migrationVersions": [
