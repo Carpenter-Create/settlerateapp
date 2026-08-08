@@ -37,10 +37,11 @@
 
 ## Auth / origin controls
 
-- Auth email redirects: `src/lib/authRedirect.ts` — production default + localhost allowlist only.
-- Stripe Checkout/Portal return Origin: `packages/core/src/origin/appOrigin.ts` — same allowlist pattern.
-- `https://staging.settlerate.com` is allowlisted for auth/Stripe origins under
-  ADR 0008 (Epic 7 PR 1). Arbitrary `*.vercel.app` hosts remain rejected.
+- Auth email redirects: `src/lib/authRedirect.ts` — production default + exact
+  allowlist of localhost **and** `https://staging.settlerate.com` (Epic 7 PR 1).
+- Stripe Checkout/Portal return Origin: `packages/core/src/origin/appOrigin.ts` —
+  same allowlist pattern.
+- Arbitrary `*.vercel.app` hosts remain rejected until added as exact entries.
 - Production Supabase Auth Dashboard redirect allowlist changes remain separately gated (must not be used to “fix” staging by pointing at production Auth).
 
 ## Stripe / Phase 7B
