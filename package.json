@@ -20,6 +20,7 @@
     "test:entitlement-sql": "node scripts/test-entitlement-sql.mjs",
     "billing:recover": "node --experimental-strip-types scripts/billing/recoverBilling.mjs",
     "test:schema-capture": "vitest run scripts/schema/__tests__",
+    "test:deploy": "vitest run scripts/deploy/__tests__",
     "schema:capture": "node scripts/schema/captureFromDatabase.mjs",
     "schema:reconstruct": "node scripts/schema/reconstructLocal.mjs",
     "schema:gen-types": "node scripts/schema/generateTypesFromMigrationOnly.mjs",

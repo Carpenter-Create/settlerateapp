@@ -33,3 +33,8 @@ dist-ssr
 # Supabase CLI local temp
 supabase/.temp/
 .vercel
+
+# Epic 9 local deploy artifacts
+staging-migration-ledger.json
+staging-verify.json
+production-deploy-plan.json
