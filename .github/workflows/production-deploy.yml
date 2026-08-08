@@ -1,0 +1,125 @@
+name: Production Deploy
+
+# DEFINE ONLY under Epic 9 — default mode is plan (no mutation).
+# Requires GitHub Environment `production-deploy` approval (required reviewers).
+# Never triggered by push/PR. Never applies migrations in Epic 9 tooling.
+on:
+  workflow_dispatch:
+    inputs:
+      git_sha:
+        description: "Exact staging-verified commit SHA to plan"
+        required: true
+        type: string
+      mode:
+        description: "plan (default) or apply (blocked unless founder unlock)"
+        required: true
+        type: choice
+        default: plan
+        options:
+          - plan
+          - apply
+      allow_unverified_sha:
+        description: "Emergency override — still cannot mutate under Epic 9"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  statuses: read
+
+jobs:
+  production-gate:
+    name: Production gate (${{ inputs.mode }})
+    runs-on: ubuntu-latest
+    environment: production-deploy
+    env:
+      DEPLOY_GIT_SHA: ${{ inputs.git_sha }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      # Epic 9: keep apply unlock unset. Do not set these secrets/vars for Epic 9.
+      ALLOW_PRODUCTION_DEPLOY: ${{ vars.ALLOW_PRODUCTION_DEPLOY }}
+      PRODUCTION_DEPLOY_CONFIRM: ${{ vars.PRODUCTION_DEPLOY_CONFIRM }}
+    steps:
+      - name: Assert production environment identity
+        run: |
+          echo "environment=production-deploy"
+          echo "production_supabase_ref=vpcxzbaxhpucvevnkalo"
+          echo "staging_supabase_ref_forbidden=gkhbalfpxjtleypbabjo"
+          echo "mode=${{ inputs.mode }}"
+          echo "git_sha=${DEPLOY_GIT_SHA}"
+          if [ "${{ inputs.mode }}" = "apply" ]; then
+            echo "NOTE: apply remains blocked by scripts unless founder unlock vars are set."
+          fi
+
+      - name: Checkout pinned SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.git_sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve staging-verified status
+        id: verified
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.inputs.git_sha;
+            // Newest statuses first — require the latest staging-verified
+            // result to be success (stale historical success must not promote).
+            const statuses = await github.rest.repos.listCommitStatusesForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: sha,
+              per_page: 100,
+            });
+            const latest = statuses.data.find((s) => s.context === 'staging-verified');
+            const ok = latest && latest.state === 'success';
+            core.setOutput('sha', ok ? sha : '');
+            if (!ok) {
+              core.warning(
+                latest
+                  ? `Latest staging-verified state is ${latest.state}`
+                  : 'No staging-verified status for SHA'
+              );
+            }
+
+      - name: Run production deploy gate
+        env:
+          STAGING_VERIFIED_SHA: ${{ steps.verified.outputs.sha }}
+          GITHUB_SHA: ${{ inputs.git_sha }}
+        run: |
+          EXTRA=()
+          if [ "${{ inputs.allow_unverified_sha }}" = "true" ]; then
+            EXTRA+=(--allow-unverified-sha)
+          fi
+          node scripts/deploy/productionDeployGate.mjs \
+            --mode "${{ inputs.mode }}" \
+            --project-ref vpcxzbaxhpucvevnkalo \
+            --git-sha "${{ inputs.git_sha }}" \
+            --out production-deploy-plan.json \
+            "${EXTRA[@]}"
+
+      - name: Upload plan artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-plan-${{ inputs.git_sha }}
+          path: production-deploy-plan.json
+          if-no-files-found: warn
+
+      - name: Fail closed if apply requested
+        if: ${{ always() && inputs.mode == 'apply' }}
+        run: |
+          echo "production apply is not executable under Epic 9 tooling" >&2
+          exit 1

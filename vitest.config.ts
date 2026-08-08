@@ -11,6 +11,7 @@ export default defineConfig({
       "src/lib/__tests__/**/*.test.ts",
       "packages/core/src/**/*.test.ts",
       "scripts/schema/__tests__/**/*.test.mjs",
+      "scripts/deploy/__tests__/**/*.test.mjs",
     ],
     globals: false,
     reporters: ["verbose"],
