@@ -1,6 +1,6 @@
 # Schema Drift Report
 
-Generated: 2026-08-08T03:32:00.817Z
+Generated: 2026-08-08T03:46:03.823Z
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`, `docs/adr/0007-legacy-schema-disposition.md`. This report is evidence only — no mutation is authorized by its contents (`mutationRecommendation` is always `NONE`).
 
@@ -20,7 +20,7 @@ ADR 0006 requires both a TRUE migration-only reconstruction and a TEST-HARNESS r
 ### A. Migration-only (TRUE reconstruction)
 
 - Result: **SUCCEEDED**
-- Applied migrations: 32
+- Applied migrations: 33
 - Tables reconstructed: 21
 
 ### B. Harness (TEST-HARNESS reconstruction)
@@ -32,13 +32,13 @@ ADR 0006 requires both a TRUE migration-only reconstruction and a TEST-HARNESS r
 
 ## Summary
 
-Total classified drift records: **2141**. High-priority non-match records: **472**.
+Total classified drift records: **2146**. High-priority non-match records: **472**.
 
 | Class | Count |
 |---|---|
 | `definition_mismatch` | 4 |
 | `function_rpc_mismatch` | 2 |
-| `grant_mismatch` | 1419 |
+| `grant_mismatch` | 1424 |
 | `match` | 532 |
 | `policy_rls_mismatch` | 2 |
 | `production_missing_repo_object` | 74 |
@@ -47,15 +47,15 @@ Total classified drift records: **2141**. High-priority non-match records: **472
 | Compare surface | Count |
 |---|---|
 | `harness` | 1061 |
-| `migration_only` | 1080 |
+| `migration_only` | 1085 |
 
 ## Grant mismatches
 
-Total `grant_mismatch` records: **1419**.
+Total `grant_mismatch` records: **1424**.
 
 | Issue | Count |
 |---|---|
-| `privilege_only_in_a` | 1129 |
+| `privilege_only_in_a` | 1134 |
 | `privilege_only_in_b` | 290 |
 
 Privilege identity compared: schema + object type + object identity (function signature where applicable) + grantee + privilege type + is_grantable.
@@ -724,6 +724,7 @@ Also review grant_mismatch / policy_rls_mismatch / function_rpc_mismatch class t
 | `grant:function:public.generate_share_token()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.generate_share_token()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.generate_share_token()` | migration_only | `grant_mismatch` |  |
+| `grant:function:public.generate_share_token()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.handle_new_user()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.handle_new_user()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.handle_new_user()` | migration_only | `grant_mismatch` |  |
@@ -873,6 +874,10 @@ Also review grant_mismatch / policy_rls_mismatch / function_rpc_mismatch class t
 | `grant:function:public.tg_set_updated_at()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.tg_set_updated_at()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.touch_comparison_share(p_token text)` | migration_only | `grant_mismatch` |  |
+| `grant:function:public.touch_comparison_share(p_token text)` | migration_only | `grant_mismatch` |  |
+| `grant:function:public.touch_comparison_share(p_token text)` | migration_only | `grant_mismatch` |  |
+| `grant:function:public.validate_comparison_share(p_token text)` | migration_only | `grant_mismatch` |  |
+| `grant:function:public.validate_comparison_share(p_token text)` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.validate_comparison_share(p_token text)` | migration_only | `grant_mismatch` |  |
 | `grant:table:public.admin_audit_log` | migration_only | `grant_mismatch` |  |
 | `grant:table:public.admin_audit_log` | migration_only | `grant_mismatch` |  |
@@ -2180,6 +2185,7 @@ Informational delta between harness and migration-only reconstructions. After PR
 
 | Object | Class |
 |---|---|
+| `grant:function:public.generate_share_token()` | `grant_mismatch` |
 | `grant:function:public.handle_new_user()` | `grant_mismatch` |
 | `grant:function:public.handle_new_user()` | `grant_mismatch` |
 | `grant:function:public.is_professional_price(p_price_id text)` | `grant_mismatch` |
@@ -2203,6 +2209,10 @@ Informational delta between harness and migration-only reconstructions. After PR
 | `grant:function:public.tg_set_scenarios_updated_at()` | `grant_mismatch` |
 | `grant:function:public.tg_set_updated_at()` | `grant_mismatch` |
 | `grant:function:public.tg_set_updated_at()` | `grant_mismatch` |
+| `grant:function:public.touch_comparison_share(p_token text)` | `grant_mismatch` |
+| `grant:function:public.touch_comparison_share(p_token text)` | `grant_mismatch` |
+| `grant:function:public.validate_comparison_share(p_token text)` | `grant_mismatch` |
+| `grant:function:public.validate_comparison_share(p_token text)` | `grant_mismatch` |
 | `grant:table:public.subscriptions` | `grant_mismatch` |
 | `grant:table:public.subscriptions` | `grant_mismatch` |
 | `grant:table:public.subscriptions` | `grant_mismatch` |

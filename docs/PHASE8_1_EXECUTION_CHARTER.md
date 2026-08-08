@@ -46,7 +46,7 @@ Follow the roadmap epic sequence. Do not skip dependency gates:
 3. Epic 3 — Observability (**complete on `main` and production-activated/verified 2026-08-06** — see ADR 0003)  
 4. Epic 4 — RLS Security Test Expansion (**complete on `main`**; see ADR 0004)  
 5. Epic 5 — Shared Core Package (**complete on `main`**; ADR 0005 accepted; PR 0–6 merged)  
-6. Epic 6 — Schema Reconciliation (**In progress — autonomous repository completion train**; ADR 0006/0007 accepted; PR 0–2C complete/merged; PR 2D–2J + closure authorized for repository-only work; production apply NOT authorized until consolidated apply package; requires Epic 4)  
+6. Epic 6 — Schema Reconciliation (**complete on `main` (repository)**; ADR 0006/0007 accepted; PR 0–2J + closure; production apply NOT authorized until consolidated apply package; ADR 0011 still required for advisor drops; requires Epic 4)  
 7. Epic 7 — Staging Environment  
 8. Epic 8 — Billing Recovery Capability  
 9. Epic 9 — Deployment Pipeline  
@@ -151,20 +151,16 @@ application surfaces; Edge resolves package subpaths via per-function
 | **PR 2D** | First least-privilege grant remediation (repo + local proof; prod apply gated) | **Complete / merged** |
 | **PR 2E** | Generated types reconciliation | **Complete / merged** |
 | **PR 2F** | RPC / function EXECUTE reconciliation | **Complete / merged** |
-| **PR 2G** | Storage / platform drift normalization | **In progress** |
-| **PR 2H** | Dual comparison / export model disposition | **In progress** |
-| **PR 2I** | Advisor / ADR 0011 check | **In progress** (retain; ADR 0011 still required) |
-| **PR 2J** | Consolidated schema baseline | Authorized (autonomous train) |
-| **Closure** | Reconstruction proof; classified drift; production apply package | Authorized (autonomous train) |
+| **PR 2G** | Storage / platform drift normalization | **Complete / merged** |
+| **PR 2H** | Dual comparison / export model disposition | **Complete / merged** |
+| **PR 2I** | Advisor / ADR 0011 check | **Complete / merged** (retain; ADR 0011 still required) |
+| **PR 2J** | Consolidated schema baseline | **Complete** |
+| **Closure** | Reconstruction proof; classified drift; production apply package | **Complete** |
 
-Epic 6 proceeds under the Autonomous Completion Master Prompt for
-**repository-only** work. **Production apply is NOT authorized** until
-founder approval of `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`.
-Authority (accepted): `docs/adr/0006-database-schema-source-of-truth.md`,
-`docs/adr/0007-legacy-schema-disposition.md`,
-`docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`,
-`docs/database/GRANT_REMEDIATION_PR2D.md`. See
-`docs/PHASE8_1_EPIC_BOUNDARIES.md`.
+Epic 6 **repository** work is complete. **Production apply is NOT
+authorized** until founder approval of
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. See
+`docs/database/EPIC6_CLOSURE.md` and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 
 ## Required ADRs
 
