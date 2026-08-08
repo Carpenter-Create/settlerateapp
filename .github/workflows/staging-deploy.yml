@@ -1,9 +1,12 @@
 name: Staging Deploy
 
 # Automated staging promotion for a pinned SHA (ADR 0014).
+# Runs after CI succeeds on main (not in parallel with validate).
 # SPA authority remains Vercel Git → settlerate-app-staging (no Actions SPA deploy).
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
     inputs:
@@ -23,15 +26,31 @@ permissions:
 jobs:
   staging:
     name: Deploy staging (migrate → edge → verify)
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     environment: staging
     env:
-      DEPLOY_GIT_SHA: ${{ inputs.git_sha || github.sha }}
       STAGING_APP_ORIGIN: https://settlerate-app-staging.vercel.app
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       VITE_SUPABASE_URL: https://example.supabase.co
       VITE_SUPABASE_PUBLISHABLE_KEY: public-anon-key-for-ci-only
     steps:
+      - name: Pin deploy SHA
+        id: pin
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SHA="${{ inputs.git_sha }}"
+            if [ -z "$SHA" ]; then SHA="${{ github.sha }}"; fi
+          else
+            SHA="${{ github.event.workflow_run.head_sha }}"
+          fi
+          if [ -z "$SHA" ]; then
+            echo "REFUSE: empty deploy SHA" >&2
+            exit 1
+          fi
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "DEPLOY_GIT_SHA=$SHA" >> "$GITHUB_ENV"
+
       - name: Refuse empty staging credentials
         run: |
           if [ -z "${SUPABASE_ACCESS_TOKEN}" ]; then
@@ -42,7 +61,7 @@ jobs:
       - name: Checkout pinned SHA
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.DEPLOY_GIT_SHA }}
+          ref: ${{ steps.pin.outputs.sha }}
 
       - name: Record provenance
         run: |
@@ -52,6 +71,7 @@ jobs:
           echo "environment=staging"
           echo "supabase_ref=gkhbalfpxjtleypbabjo"
           echo "production_ref_forbidden=vpcxzbaxhpucvevnkalo"
+          echo "trigger=${{ github.event_name }}"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -80,15 +100,17 @@ jobs:
         run: node scripts/deploy/verifyStagingDeploy.mjs --out staging-verify.json
 
       - name: Upload provenance artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: staging-deploy-${{ env.DEPLOY_GIT_SHA }}
+          name: staging-deploy-${{ steps.pin.outputs.sha }}
           path: |
             staging-migration-ledger.json
             staging-verify.json
           if-no-files-found: warn
 
       - name: Publish staging-verified commit status
+        if: success()
         uses: actions/github-script@v7
         with:
           script: |
@@ -100,5 +122,22 @@ jobs:
               state: 'success',
               context: 'staging-verified',
               description: `Staging verified for ${sha.slice(0, 7)}`,
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });
+
+      - name: Publish staging-verified failure status
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = process.env.DEPLOY_GIT_SHA;
+            if (!sha) return;
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha,
+              state: 'failure',
+              context: 'staging-verified',
+              description: `Staging verification failed for ${sha.slice(0, 7)}`,
               target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
             });

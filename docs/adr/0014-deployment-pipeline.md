@@ -110,13 +110,16 @@ automation must refuse and require a documented special rollout (hard stop).
 
 ### 6. Staging automation
 
-On `main` (after CI) and `workflow_dispatch`:
+Triggered by CI `workflow_run` success on `main` (not in parallel with
+validate) and by `workflow_dispatch` (environment restricted to `main`):
 
-- Pin checkout to the release SHA
+- Pin checkout to the release SHA (`workflow_run.head_sha` or input)
 - Migration ledger check + apply pending to staging
 - Deploy Edge with `--project-ref gkhbalfpxjtleypbabjo --use-api`
 - Isolation / smoke checks (deterministic; no production data)
-- Publish `staging-verified` commit status for that SHA
+- Publish `staging-verified` success **or failure** commit status for that SHA
+- Production promotion requires the **latest** `staging-verified` status to
+  be success (stale historical success must not promote)
 - Concurrency group prevents overlapping staging deploys
 
 ### 7. Production approval gate

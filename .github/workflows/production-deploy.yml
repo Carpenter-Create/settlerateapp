@@ -75,18 +75,23 @@ jobs:
         with:
           script: |
             const sha = context.payload.inputs.git_sha;
+            // Newest statuses first — require the latest staging-verified
+            // result to be success (stale historical success must not promote).
             const statuses = await github.rest.repos.listCommitStatusesForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: sha,
               per_page: 100,
             });
-            const hit = statuses.data.find(
-              (s) => s.context === 'staging-verified' && s.state === 'success'
-            );
-            core.setOutput('sha', hit ? sha : '');
-            if (!hit) {
-              core.warning('No successful staging-verified status for SHA');
+            const latest = statuses.data.find((s) => s.context === 'staging-verified');
+            const ok = latest && latest.state === 'success';
+            core.setOutput('sha', ok ? sha : '');
+            if (!ok) {
+              core.warning(
+                latest
+                  ? `Latest staging-verified state is ${latest.state}`
+                  : 'No staging-verified status for SHA'
+              );
             }
 
       - name: Run production deploy gate

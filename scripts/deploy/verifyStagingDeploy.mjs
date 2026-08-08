@@ -128,7 +128,7 @@ async function main() {
     ok,
     role: "staging",
     projectRef,
-    gitSha: process.env.GITHUB_SHA || process.env.DEPLOY_GIT_SHA || null,
+    gitSha: process.env.DEPLOY_GIT_SHA || process.env.GITHUB_SHA || null,
     stagingOrigin: STAGING_ORIGIN,
     comparison,
     checks,

@@ -71,7 +71,7 @@ async function main() {
     ok: comparison.status !== "diverged",
     role,
     projectRef,
-    gitSha: process.env.GITHUB_SHA || process.env.DEPLOY_GIT_SHA || null,
+    gitSha: process.env.DEPLOY_GIT_SHA || process.env.GITHUB_SHA || null,
     comparison,
     // Staging may apply pending when ledger is not diverged.
     stagingApplyEligible:

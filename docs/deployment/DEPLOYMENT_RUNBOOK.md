@@ -27,10 +27,11 @@ GitHub Actions must **not** deploy the SPA (double-deploy risk).
 
 Workflow: `.github/workflows/staging-deploy.yml`
 
-- Trigger: `push` to `main`, or `workflow_dispatch`
-- Environment: `staging` (secret: `SUPABASE_ACCESS_TOKEN`)
+- Trigger: CI `workflow_run` success on `main`, or `workflow_dispatch`
+- Environment: `staging` (secret: `SUPABASE_ACCESS_TOKEN`; branch policy: `main`)
 - Concurrency: `staging-deploy` (no cancel-in-progress)
-- Order: migration ledger → apply pending → Edge `--project-ref` + `--use-api` → verify → `staging-verified` status
+- Order: migration ledger → apply pending → Edge `--project-ref` + `--use-api` → verify → `staging-verified` success/failure status
+- Production promotion uses the **latest** `staging-verified` status only
 
 Local equivalents:
 
