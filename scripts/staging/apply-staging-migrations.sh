@@ -24,8 +24,20 @@ cd "$ROOT"
 echo "[staging] linking ${STAGING_REF}..."
 supabase link --project-ref "${STAGING_REF}" --yes
 
+linked="$(cat supabase/.temp/project-ref 2>/dev/null || true)"
+if [[ "${linked}" != "${STAGING_REF}" ]]; then
+  echo "[staging] REFUSE: linked project is '${linked}', expected '${STAGING_REF}'" >&2
+  exit 1
+fi
+
 echo "[staging] applying pgcrypto preflight (idempotent)..."
 supabase db query --linked --file "$PREFLIGHT"
+
+linked="$(cat supabase/.temp/project-ref 2>/dev/null || true)"
+if [[ "${linked}" != "${STAGING_REF}" ]]; then
+  echo "[staging] REFUSE: linked project changed to '${linked}' before push" >&2
+  exit 1
+fi
 
 echo "[staging] pushing pending git migrations..."
 supabase db push --linked --yes

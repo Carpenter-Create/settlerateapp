@@ -43,9 +43,12 @@ bash scripts/staging/apply-staging-migrations.sh
 Manual equivalent:
 
 1. `supabase link --project-ref gkhbalfpxjtleypbabjo --yes`
-2. `supabase db query --linked --file scripts/staging/preflight-pgcrypto-wrappers.sql`
-3. `supabase db push --linked --yes`
-4. **Always** `supabase link --project-ref vpcxzbaxhpucvevnkalo --yes`
+2. Confirm `supabase/.temp/project-ref` equals `gkhbalfpxjtleypbabjo` (refuse if not)
+3. `supabase db query --linked --file scripts/staging/preflight-pgcrypto-wrappers.sql`
+4. `supabase db push --linked --yes`
+5. **Always** `supabase link --project-ref vpcxzbaxhpucvevnkalo --yes`
+
+Do **not** run the preflight SQL while the CLI is linked to production.
 
 ### Known historical quirk (not a staging blocker)
 
