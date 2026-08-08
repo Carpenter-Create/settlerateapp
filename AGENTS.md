@@ -71,11 +71,13 @@ disposition. Authority:
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` (execution record).
 **Epic 7 (Staging Environment)** is **in progress** under founder
-authorization. ADR 0008 is **accepted**. Authority:
-`docs/adr/0008-environment-topology.md`,
-`docs/environment/EPIC7_ENVIRONMENT_INVENTORY.md`. Do not resume Phase 7B
-from Epic 7. **Epic 8 and later have not begun** and still require separate
-explicit authorization.
+authorization. ADR 0008 is **accepted**. Staging Supabase project
+`gkhbalfpxjtleypbabjo` has git migrations applied to tip (PR 2 docs).
+Authority: `docs/adr/0008-environment-topology.md`,
+`docs/environment/EPIC7_ENVIRONMENT_INVENTORY.md`,
+`docs/staging/STAGING_DATABASE.md`. Do not resume Phase 7B from Epic 7.
+**Epic 8 and later have not begun** and still require separate explicit
+authorization.
 
 Do not begin AWS / Cloudflare / Next.js platform migration unless explicitly authorized.
 

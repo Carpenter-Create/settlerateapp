@@ -11,7 +11,7 @@
 | Tier | Present? | Evidence |
 |------|----------|----------|
 | Local development | Yes | Vite + `.env` / `.env.example`; localhost origin allowlist |
-| Staging | **Provisioning** | Supabase project `gkhbalfpxjtleypbabjo` created; SPA/Vercel + migrations continue in Epic 7 PRs |
+| Staging | **Partial** | Supabase `gkhbalfpxjtleypbabjo` created; git migrations applied to tip `20260808040000` (PR 2); SPA/Vercel + Edge continue in PR 3+ |
 | Production | Yes | Vercel SPA → `https://app.settlerate.com`; Supabase `vpcxzbaxhpucvevnkalo` |
 | Vercel Preview as staging substitute | **No** (and unsafe as default) | ADR 0002 deferred staging; auth/Stripe allowlists reject non-local non-prod origins |
 
