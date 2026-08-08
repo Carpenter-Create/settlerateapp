@@ -8,7 +8,7 @@
 
 ## Final main SHA
 
-`3da7accf08768e7abacc964117dc772bb02bd684` (closure tip after #89)
+`b22aacde9ccf8389af3470da3e108cfb21def43c` (#90 tip hygiene)
 
 Implementation merge SHA: `01ff92c0beb646f46c9b8b8225322bb1d63b4b9a` (#87)
 
