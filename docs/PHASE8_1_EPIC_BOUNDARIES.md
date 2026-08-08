@@ -424,7 +424,7 @@ Stripe / Supabase secrets. Do not resume Phase 7B.
 | **PR 2** | Staging Supabase migrations + seed/isolation docs | **Complete / merged** |
 | **PR 3** | Staging Edge / auth / export / observability wiring | **Complete / merged** |
 | **PR 4** | Stripe test-mode staging integration | **Complete / merged** |
-| **PR 5** | Smoke / parity / Phase 7B readiness (not resume) | **This PR** (E2E operator-gated after merge) |
+| **PR 5** | Smoke / parity / Phase 7B readiness (not resume) | **Complete / merged** (E2E operator-gated) |
 
 ---
 

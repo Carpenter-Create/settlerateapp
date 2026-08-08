@@ -40,7 +40,7 @@
 | #70 PR2 database | `e63f533` |
 | #71 PR3 Edge/observability/Vercel | `ef86fb3` |
 | #72 PR4 Stripe test catalog | `d7c6cf1` |
-| #73 PR5 smoke/closure (this PR) | merge SHA recorded after merge |
+| #73 PR5 smoke/closure | `c4f92be140298f8fca5f53bb67f95f26c031b335` |
 
 ## Identifiers
 
