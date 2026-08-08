@@ -91,25 +91,19 @@ jobs:
         run: npm run test:deploy
 
       - name: Apply staging migrations (if pending)
+        id: migrate
         run: bash scripts/deploy/applyStagingMigrations.sh
 
       - name: Deploy staging Edge Functions
+        id: edge
         run: bash scripts/deploy/deployStagingFunctions.sh
 
       - name: Verify staging deploy
+        id: verify
         run: node scripts/deploy/verifyStagingDeploy.mjs --out staging-verify.json
 
-      - name: Upload provenance artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: staging-deploy-${{ steps.pin.outputs.sha }}
-          path: |
-            staging-migration-ledger.json
-            staging-verify.json
-          if-no-files-found: warn
-
       - name: Publish staging-verified commit status
+        id: status_ok
         if: success()
         uses: actions/github-script@v7
         with:
@@ -126,7 +120,9 @@ jobs:
             });
 
       - name: Publish staging-verified failure status
-        if: failure()
+        # Only when migrate/edge/verify failed — not when later artifact upload fails
+        # after a successful verification (would incorrectly block promotion).
+        if: ${{ always() && (steps.migrate.outcome == 'failure' || steps.edge.outcome == 'failure' || steps.verify.outcome == 'failure') }}
         uses: actions/github-script@v7
         with:
           script: |
@@ -141,3 +137,14 @@ jobs:
               description: `Staging verification failed for ${sha.slice(0, 7)}`,
               target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
             });
+
+      - name: Upload provenance artifacts
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-deploy-${{ steps.pin.outputs.sha }}
+          path: |
+            staging-migration-ledger.json
+            staging-verify.json
+          if-no-files-found: warn
