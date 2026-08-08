@@ -46,11 +46,12 @@ ADR 0007 **accepted**; PR 0–2J + closure). See
 **Do not mutate production without separate founder authorization.**
 ADR 0011 remains required for destructive advisor work.
 
-**Epic 7 — Staging Environment** is **in progress** (founder-authorized;
-ADR 0008 **accepted**). See `docs/adr/0008-environment-topology.md` and
-`docs/environment/EPIC7_ENVIRONMENT_INVENTORY.md`. Staging must remain
-production-isolated (separate Supabase + Vercel + Stripe test). Do not
-resume Phase 7B from Epic 7.
+**Epic 7 — Staging Environment** repository/infrastructure work is
+**complete** (founder-authorized; ADR 0008 **accepted**; PR 0–5). See
+`docs/staging/EPIC7_CLOSURE.md`. Staging must remain production-isolated
+(separate Supabase + Vercel + Stripe test). Operator E2E smoke may remain
+open per `docs/staging/STAGING_SMOKE.md`. Do not resume Phase 7B from
+Epic 7 (`docs/staging/PHASE7B_READINESS_FROM_EPIC7.md`).
 
 ## Prohibited unless explicitly authorized
 
