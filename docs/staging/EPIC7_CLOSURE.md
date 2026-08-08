@@ -16,8 +16,7 @@ origin fail-closed behavior, and observability environment separation.
 - Epic 8 and ADR 0011 have **not** begun.
 - Production Supabase `vpcxzbaxhpucvevnkalo` was **not** mutated by Epic 7 ops.
 
-**Final `main` SHA:** record at merge of this closure PR (see git history /
-PR table below after merge).
+**Final `main` SHA:** `0da650bb75ea3652c66e80329d3b37d5662a9acc` (closure PR #78); SHA polish may follow.
 
 ## Closure criteria
 
@@ -71,7 +70,7 @@ PR table below after merge).
 | #75 | Staging Vercel origin allowlist | `5eae5ae` |
 | #76 | Auth/admin evidence | `b6c32a2` |
 | #77 | Invalid-key hard-stop record | `6d4e3c6` |
-| (this) | E2E completion / COMPLETE | pending merge |
+| #78 | E2E completion / COMPLETE | `0da650bb75ea3652c66e80329d3b37d5662a9acc` |
 
 ## Runtime verification evidence (2026-08-08)
 
