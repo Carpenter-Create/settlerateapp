@@ -42,6 +42,17 @@ Before any production apply:
 
 ---
 
+### 2. `20260808030000_epic6_pr2f_rpc_execute_least_privilege.sql`
+
+| Field | Value |
+|-------|--------|
+| Purpose | High-confidence RPC EXECUTE least-privilege (admin/webhook helper/plan helpers/trigger-only) |
+| Expected production change | Revoke PUBLIC/anon (and client where listed) EXECUTE; preserve authenticated admin RPCs and service_role trigger/webhook helpers |
+| Precondition | PR 2F merged; PR 2D tip preferably applied first (independent but ordered) |
+| Validation | `docs/database/RPC_EXECUTE_REMEDIATION_PR2F.md` + `epic6_pr2f_rpc_execute.sql` |
+| Rollback | GRANT statements in `RPC_EXECUTE_REMEDIATION_PR2F.md` |
+| Blast radius | Privilege-only; deferred advisor/share/`has_role`/`is_admin` unchanged |
+
 ## Not included yet
 
 Later Epic 6 tip migrations that introduce production-facing SQL will be

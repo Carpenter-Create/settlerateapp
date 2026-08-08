@@ -169,6 +169,16 @@ async function runSqlAssertions(client) {
   );
   process.stdout.write("Running epic6_pr2d_grant_privileges.sql assertions...\n");
   await psqlFile(client, join(root, "supabase/tests/epic6_pr2d_grant_privileges.sql"));
+
+  // Epic 6 PR 2F: re-apply tip EXECUTE remediation after any overlay noise,
+  // then assert the RPC privilege contract.
+  process.stdout.write("Re-applying Epic 6 PR 2F RPC EXECUTE remediation...\n");
+  await psqlFile(
+    client,
+    join(root, "supabase/migrations/20260808030000_epic6_pr2f_rpc_execute_least_privilege.sql")
+  );
+  process.stdout.write("Running epic6_pr2f_rpc_execute.sql assertions...\n");
+  await psqlFile(client, join(root, "supabase/tests/epic6_pr2f_rpc_execute.sql"));
 }
 
 async function runConcurrentLimitTest(client) {

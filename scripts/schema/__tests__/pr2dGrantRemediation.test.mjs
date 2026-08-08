@@ -103,6 +103,7 @@ describe("PR 2D migration-only grant least privilege", () => {
     const migrationDir = join(root, "supabase/migrations");
     const files = readdirSync(migrationDir).filter((f) => f.endsWith(".sql")).sort();
     expect(files.some((f) => f.includes("epic6_pr2d_grant_least_privilege"))).toBe(true);
+    expect(files.some((f) => f.includes("epic6_pr2f_rpc_execute_least_privilege"))).toBe(true);
 
     for (const file of files) {
       await client.query(readFileSync(join(migrationDir, file), "utf8"));
@@ -120,6 +121,11 @@ describe("PR 2D migration-only grant least privilege", () => {
 
   it("applies privilege SQL assertions from epic6_pr2d_grant_privileges.sql", async () => {
     const sql = readFileSync(join(root, "supabase/tests/epic6_pr2d_grant_privileges.sql"), "utf8");
+    await expect(client.query(sql)).resolves.toBeTruthy();
+  });
+
+  it("applies RPC EXECUTE assertions from epic6_pr2f_rpc_execute.sql", async () => {
+    const sql = readFileSync(join(root, "supabase/tests/epic6_pr2f_rpc_execute.sql"), "utf8");
     await expect(client.query(sql)).resolves.toBeTruthy();
   });
 
