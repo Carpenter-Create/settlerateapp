@@ -16,6 +16,19 @@ export function isEdgeObservabilityEnabled(dsn: string | null | undefined): bool
   return typeof dsn === "string" && dsn.trim() !== "";
 }
 
+/**
+ * Resolve Sentry `environment` tag (ADR 0008 staging separation).
+ * Blank/absent configured values fall back to `fallback` (production default).
+ */
+export function resolveSentryEnvironment(
+  configured: string | null | undefined,
+  fallback = "production"
+): string {
+  if (typeof configured !== "string") return fallback;
+  const trimmed = configured.trim();
+  return trimmed !== "" ? trimmed : fallback;
+}
+
 export interface EdgeObservabilityContext {
   function_name: string;
   request_id: string;

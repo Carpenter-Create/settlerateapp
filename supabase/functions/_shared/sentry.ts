@@ -16,7 +16,12 @@
  * Reference: https://supabase.com/docs/guides/functions/examples/sentry-monitoring
  */
 import * as Sentry from "npm:@sentry/deno@^8";
-import { buildEdgeExtra, generateRequestId, isEdgeObservabilityEnabled } from "./observability.ts";
+import {
+  buildEdgeExtra,
+  generateRequestId,
+  isEdgeObservabilityEnabled,
+  resolveSentryEnvironment,
+} from "./observability.ts";
 import { redactBreadcrumb, redactEvent } from "@settlerate/core/observability-redaction";
 
 let initializedForDsn: string | null = null;
@@ -24,15 +29,21 @@ let initializedForDsn: string | null = null;
 /**
  * Idempotent, fail-soft. Safe to call on every cold start with whatever
  * `Deno.env.get("SENTRY_DSN")` returns, including `undefined`.
+ *
+ * Environment defaults to production. Staging Edge secrets must set
+ * `SENTRY_ENVIRONMENT=staging` (ADR 0008) so events never look like prod.
  */
-export function initEdgeSentry(dsn: string | null | undefined, environment = "production"): void {
+export function initEdgeSentry(
+  dsn: string | null | undefined,
+  environment: string | null | undefined = "production"
+): void {
   if (!isEdgeObservabilityEnabled(dsn)) return;
   if (initializedForDsn === dsn) return;
 
   try {
     Sentry.init({
       dsn,
-      environment,
+      environment: resolveSentryEnvironment(environment, "production"),
       // No auto-instrumentation: prevents automatic request/response,
       // console, or fetch breadcrumbs from ever being generated.
       defaultIntegrations: false,

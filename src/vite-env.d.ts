@@ -23,6 +23,12 @@ interface ImportMetaEnv {
    */
   readonly VITE_SENTRY_DSN?: string;
   /**
+   * Optional. Sentry environment tag override (e.g. `staging`). Staging SPA
+   * builds use Vite `MODE === "production"`; without this override events would
+   * incorrectly tag as `production`. Authority: ADR 0008.
+   */
+  readonly VITE_SENTRY_ENVIRONMENT?: string;
+  /**
    * Optional. Deterministic release identifier injected at build time by
    * `vite.config.ts` (not read from a real `VITE_*` env file/secret) —
    * see `src/lib/observabilityRelease.ts`. Not a secret: a public commit

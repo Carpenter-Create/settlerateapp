@@ -27,6 +27,7 @@ import {
 } from "./mapDerivedForExport.ts";
 import { generateRequestId } from "../_shared/observability.ts";
 import { captureEdgeException, initEdgeSentry } from "../_shared/sentry.ts";
+import "../_shared/ensureCoreAssets.ts";
 
 // CORS headers
 const corsHeaders = {
@@ -40,7 +41,7 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
 // Inert without a SENTRY_DSN secret — see supabase/functions/_shared/sentry.ts.
 const SENTRY_DSN = Deno.env.get("SENTRY_DSN");
-initEdgeSentry(SENTRY_DSN);
+initEdgeSentry(SENTRY_DSN, Deno.env.get("SENTRY_ENVIRONMENT"));
 
 // ============================================================================
 // BRAND CONSTANTS - Matches exportLayout.ts

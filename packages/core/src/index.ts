@@ -115,6 +115,7 @@ export {
 
 export {
   isEdgeObservabilityEnabled,
+  resolveSentryEnvironment,
   buildEdgeExtra,
 } from "./observability/edgeObservability.ts";
 
