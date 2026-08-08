@@ -31,7 +31,10 @@ Workflow: `.github/workflows/staging-deploy.yml`
 - Environment: `staging` (secret: `SUPABASE_ACCESS_TOKEN`; branch policy: `main`)
 - Concurrency: `staging-deploy` (no cancel-in-progress)
 - Order: migration ledger → apply pending → Edge `--project-ref` + `--use-api` → verify → `staging-verified` success/failure status
-- Production promotion uses the **latest** `staging-verified` status only
+- Deploy secret is step-scoped (not present during `npm ci`)
+- `workflow_dispatch` requires SHA ⊆ `origin/main` and a successful CI `validate` check
+- Production promotion uses the **latest** `staging-verified` status only, and
+  only if created by `github-actions[bot]` with an Actions run `target_url`
 
 Local equivalents:
 

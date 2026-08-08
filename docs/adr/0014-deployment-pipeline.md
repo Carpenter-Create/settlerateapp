@@ -119,7 +119,11 @@ validate) and by `workflow_dispatch` (environment restricted to `main`):
 - Isolation / smoke checks (deterministic; no production data)
 - Publish `staging-verified` success **or failure** commit status for that SHA
 - Production promotion requires the **latest** `staging-verified` status to
-  be success (stale historical success must not promote)
+  be success **and** authored by `github-actions[bot]` with an Actions run URL
+  (stale or forged statuses must not promote)
+- `workflow_dispatch` may only target SHAs on `main` that already passed CI
+- Deploy credentials are step-scoped; checkout-controlled unit tests are not
+  re-run in the secret-bearing job (CI already covers `test:deploy`)
 - Concurrency group prevents overlapping staging deploys
 
 ### 7. Production approval gate

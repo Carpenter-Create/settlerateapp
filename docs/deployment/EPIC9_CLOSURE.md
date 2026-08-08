@@ -136,10 +136,14 @@ Artifacts: staging verify/ledger upload; production plan JSON with `gitSha` + pe
 
 ## Known non-blocking follow-ups
 
-- Optional `VERCEL_TOKEN` for SPA SHA wait/verify (Vercel Git remains authoritative)
+- Optional `VERCEL_TOKEN` for SPA SHA wait/verify (Vercel Git remains authoritative;
+  Actions does not claim SPA SHA identity on `workflow_dispatch` of older SHAs)
 - Node 20 action deprecation warnings on runners (platform)
 - Future founder package for production apply of post-tip migrations (Epic 8 activation separate)
-- Prefer environment-scoped least-privilege Supabase tokens if org tooling allows later
+- Prefer **staging-only** Supabase access tokens (project-scoped) if org tooling allows —
+  Management API PATs remain powerful if exfiltrated from mutate steps
+- Post-closure security hardening PR addresses secret step-scoping, trusted
+  `staging-verified` creator checks, and dispatch SHA∈main+CI gates
 
 ## Fence status
 
