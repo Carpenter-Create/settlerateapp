@@ -343,8 +343,8 @@ the ADR §11 sequence.
 **Status:** **COMPLETE** — repository closure and production remediation
 applied/verified (ADR 0006 + ADR 0007 **accepted**; PR 0–2J + closure;
 tip package applied 2026-08-08). Founder FD-* decisions are **ACCEPTED**.
-ADR 0011 remains required for destructive advisor disposition. Epic 7 is
-**COMPLETE**. Epic 8 is separately authorized (in progress). See
+ADR 0011 remains required for destructive advisor disposition. Epic 7 and
+Epic 8 are **COMPLETE**. See
 `docs/database/EPIC6_CLOSURE.md` and
 `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` (execution record).
 
