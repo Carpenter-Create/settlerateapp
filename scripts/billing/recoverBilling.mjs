@@ -33,14 +33,12 @@ function parseArgs(argv) {
     userId: null,
     customerId: null,
     confirmStagingApply: false,
-    allowProduction: false,
   };
   for (const arg of argv) {
     if (arg.startsWith("--mode=")) out.mode = arg.slice("--mode=".length);
     else if (arg.startsWith("--user=")) out.userId = arg.slice("--user=".length);
     else if (arg.startsWith("--customer=")) out.customerId = arg.slice("--customer=".length);
     else if (arg === "--confirm-staging-apply") out.confirmStagingApply = true;
-    else if (arg === "--allow-production") out.allowProduction = true;
   }
   return out;
 }
@@ -111,22 +109,12 @@ async function main() {
     process.exit(2);
   }
 
-  if (projectRef === PRODUCTION_REF && !args.allowProduction) {
+  // Epic 8 absolute fence: no production targeting (read or write), no CLI bypass.
+  if (projectRef === PRODUCTION_REF) {
     console.error(
       JSON.stringify({
         result: "blocked",
         reason: "production_project_blocked",
-        projectRef,
-      })
-    );
-    process.exit(3);
-  }
-
-  if (args.mode === "apply" && projectRef === PRODUCTION_REF) {
-    console.error(
-      JSON.stringify({
-        result: "blocked",
-        reason: "production_apply_forbidden_under_epic8",
         projectRef,
       })
     );
@@ -146,6 +134,16 @@ async function main() {
   if (args.mode === "apply" && !args.confirmStagingApply) {
     console.error("apply requires --confirm-staging-apply");
     process.exit(2);
+  }
+
+  if (args.mode === "apply" && process.env.BILLING_RECOVERY_ALLOW_APPLY !== "staging") {
+    console.error(
+      JSON.stringify({
+        result: "blocked",
+        reason: "set_BILLING_RECOVERY_ALLOW_APPLY=staging_for_apply",
+      })
+    );
+    process.exit(3);
   }
 
   const supabase = createClient(supabaseUrl, serviceKey, {

@@ -38,9 +38,15 @@ Never expect Event payloads in stdout (ids/counts/summaries only).
 
 ## Apply (staging only)
 
+1. Run dry-run and keep the printed `current` snapshot.
+2. Apply only when dry-run `result` is success/noop with an inspectable `proposed`.
+
 ```bash
+export BILLING_RECOVERY_ALLOW_APPLY=staging
 npm run billing:recover -- --mode=apply --user=<uuid> --confirm-staging-apply
 ```
+
+Production project targeting is hard-blocked (no CLI bypass).
 
 Re-run dry-run afterward; expect `noop` / empty diffs.
 

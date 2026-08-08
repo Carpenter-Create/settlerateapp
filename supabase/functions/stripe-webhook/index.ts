@@ -584,6 +584,36 @@ serve(async (req) => {
       last_stripe_event_at: new Date(event.created * 1000).toISOString(),
     };
 
+    // ADR 0009 Layer B before derived billing write (fail closed if evidence incomplete)
+    if (appliedSubscriptionSource) {
+      const { error: layerBError } = await supabase.rpc(
+        "set_stripe_event_applied_subscription_source",
+        {
+          p_event_id: event.id,
+          p_applied_subscription_source: appliedSubscriptionSource,
+        }
+      );
+      if (layerBError) {
+        await releaseClaim();
+        logWebhook({
+          event_type: eventType,
+          stripe_customer_id: stripeCustomerId,
+          app_user_id: appUserId,
+          user_role: "user",
+          action_taken: "error",
+          details: {
+            error: layerBError.message,
+            phase: "record_applied_subscription_source",
+            event_id: event.id,
+          },
+        });
+        return new Response(JSON.stringify({ error: "Evidence Layer B persistence failed" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const { error: billingError } = await supabase
       .from("billing")
       .upsert(billingData, { onConflict: "user_id" });
@@ -627,36 +657,6 @@ serve(async (req) => {
           user_role: "user",
           action_taken: "subscriptions_sync_skipped",
           details: { error: subError.message },
-        });
-      }
-    }
-
-    // ADR 0009 Layer B: persist the Subscription source used for this apply
-    if (appliedSubscriptionSource) {
-      const { error: layerBError } = await supabase.rpc(
-        "set_stripe_event_applied_subscription_source",
-        {
-          p_event_id: event.id,
-          p_applied_subscription_source: appliedSubscriptionSource,
-        }
-      );
-      if (layerBError) {
-        await releaseClaim();
-        logWebhook({
-          event_type: eventType,
-          stripe_customer_id: stripeCustomerId,
-          app_user_id: appUserId,
-          user_role: "user",
-          action_taken: "error",
-          details: {
-            error: layerBError.message,
-            phase: "record_applied_subscription_source",
-            event_id: event.id,
-          },
-        });
-        return new Response(JSON.stringify({ error: "Evidence Layer B persistence failed" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }
