@@ -11,6 +11,12 @@ describe("resolveAppOriginFromOriginHeader", () => {
     );
   });
 
+  it("allows the approved staging origin", () => {
+    expect(
+      resolveAppOriginFromOriginHeader("https://staging.settlerate.com")
+    ).toBe("https://staging.settlerate.com");
+  });
+
   it("allows each approved localhost origin", () => {
     expect(resolveAppOriginFromOriginHeader("http://localhost:5173")).toBe(
       "http://localhost:5173"

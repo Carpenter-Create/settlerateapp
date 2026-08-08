@@ -11,7 +11,7 @@
 | Tier | Present? | Evidence |
 |------|----------|----------|
 | Local development | Yes | Vite + `.env` / `.env.example`; localhost origin allowlist |
-| Staging | **No** | No staging files, hostname, Supabase project, or Vercel staging project |
+| Staging | **Provisioning** | Supabase project `gkhbalfpxjtleypbabjo` created; SPA/Vercel + migrations continue in Epic 7 PRs |
 | Production | Yes | Vercel SPA → `https://app.settlerate.com`; Supabase `vpcxzbaxhpucvevnkalo` |
 | Vercel Preview as staging substitute | **No** (and unsafe as default) | ADR 0002 deferred staging; auth/Stripe allowlists reject non-local non-prod origins |
 
@@ -39,7 +39,8 @@
 
 - Auth email redirects: `src/lib/authRedirect.ts` — production default + localhost allowlist only.
 - Stripe Checkout/Portal return Origin: `packages/core/src/origin/appOrigin.ts` — same allowlist pattern.
-- `https://staging.settlerate.com` is currently **rejected** (falls back to production origin) — intentional until Epic 7 allowlists it under ADR 0008.
+- `https://staging.settlerate.com` is allowlisted for auth/Stripe origins under
+  ADR 0008 (Epic 7 PR 1). Arbitrary `*.vercel.app` hosts remain rejected.
 - Production Supabase Auth Dashboard redirect allowlist changes remain separately gated (must not be used to “fix” staging by pointing at production Auth).
 
 ## Stripe / Phase 7B
