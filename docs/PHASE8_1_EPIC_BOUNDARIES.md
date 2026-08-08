@@ -36,7 +36,7 @@ controlled bootstrap process.
 - Shared `packages/core` extraction (Epic 5)
 - Schema reconciliation or broad DDL (Epic 6)
 - Staging environment build-out (Epic 7)
-- Billing recovery / raw Stripe payload work (Epic 8)
+- Billing recovery work (Epic 8; historically gated — now separately authorized)
 - Deployment pipeline redesign (Epic 9)
 - Backup/restore campaigns (Epic 10)
 
@@ -344,7 +344,7 @@ the ADR §11 sequence.
 applied/verified (ADR 0006 + ADR 0007 **accepted**; PR 0–2J + closure;
 tip package applied 2026-08-08). Founder FD-* decisions are **ACCEPTED**.
 ADR 0011 remains required for destructive advisor disposition. Epic 7 is
-**COMPLETE**. Epic 8+ unauthorized. See
+**COMPLETE**. Epic 8 is separately authorized (in progress). See
 `docs/database/EPIC6_CLOSURE.md` and
 `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` (execution record).
 
@@ -378,7 +378,7 @@ the consolidated tip apply are complete.
   without a new founder-authorized package
 - Product/formula/export/billing/entitlement semantic changes
 - Destructive legacy drops without ADR 0007 evidence
-- Inventing advisor intent (ADR 0011); Epic 8+
+- Inventing advisor intent (ADR 0011); Epic 9+
 
 ### Epic 6 PR sequence (complete)
 
@@ -405,7 +405,7 @@ the consolidated tip apply are complete.
 
 **Status:** **COMPLETE** (founder-authorized; ADR 0008 **accepted**).
 Runtime E2E verified 2026-08-08 — see `docs/staging/EPIC7_CLOSURE.md`.
-Phase 7B is **not** resumed. Epic 8+ remain unauthorized.
+Phase 7B is **not** resumed. Epic 8 is separately authorized.
 
 Authority: `docs/adr/0008-environment-topology.md`,
 `docs/environment/EPIC7_ENVIRONMENT_INVENTORY.md`,
@@ -430,8 +430,48 @@ Stripe / Supabase secrets. Do not resume Phase 7B.
 
 ## Epic 8 — Billing Recovery Capability
 
-Allowed when authorized: preserve raw Stripe event payloads; reconstruction
-process; recovery validation.  
+**Status:** **In progress** (founder-authorized autonomous train; ADR 0009
+**accepted** in PR 0).
+
+Authority: `docs/adr/0009-billing-recovery-guarantee.md`,
+`docs/billing/EPIC8_BILLING_RECOVERY_INVENTORY.md`.
+
+**Goal:** Establish a defensible billing recovery capability so SettleRate
+can reconstruct authoritative billing/entitlement state from durable,
+authenticated Stripe event evidence after processing failure or derived
+billing-state loss — without redesigning pricing, entitlements, checkout,
+or Phase 7B.
+
+**Retained evidence (ADR 0009):** verified Stripe Event JSON + immutable
+scalars — **not** an unrestricted raw-body/header dump; never secrets.
+
+Allowed under this authorization:
+
+- Durable event evidence schema/migrations (repo + staging apply only)
+- Webhook ingestion changes that preserve signature verification and
+  current entitlement/price semantics
+- Deterministic reconstruction (prefer `@settlerate/core`)
+- Dry-run / compare / staging apply recovery tooling
+- Staging recovery drills (Stripe TEST; project `gkhbalfpxjtleypbabjo`)
+- Tests, runbook, Epic 8 closure record
+
+### Prohibited / HARD STOP
+
+- Production mutation (Supabase `vpcxzbaxhpucvevnkalo`, Edge, Auth, Stripe
+  live, Vercel prod, secrets, billing rows, recovery apply)
+- Phase 7B resume / public checkout / disable production
+  `CHECKOUT_MAINTENANCE`
+- Material billing/entitlement/plan/price/export/formula semantic changes
+- ADR 0011 / advisor work; Epic 9+
+- Live Stripe; recovery side effects (charges, emails, Stripe object
+  mutation)
+- Sending retained Event payloads to Sentry (ADR 0003)
+
+| PR | Scope | Status |
+|----|--------|--------|
+| **PR 0** | ADR 0009 + inventory + governance | **This PR** |
+| **A+** | Durable evidence → ingestion → reconstruction → tool → tests → staging drill → runbook → closure | Pending (derived from inventory §6) |
+
 Respect Phase 7B pause and maintenance gate; do not open public checkout.
 
 ---

@@ -76,8 +76,10 @@ disposition. Authority:
 test catalog/webhook, Auth, billing entitlement, and export/storage E2E are
 verified. Phase 7B is **not** resumed
 (`docs/staging/PHASE7B_READINESS_FROM_EPIC7.md`). Authority:
-`docs/staging/EPIC7_CLOSURE.md`. **Epic 8 and later have not begun** and
-still require separate explicit authorization.
+`docs/staging/EPIC7_CLOSURE.md`. **Epic 8 (Billing Recovery Capability)** is
+**authorized and in progress** (ADR 0009 **accepted**; inventory
+`docs/billing/EPIC8_BILLING_RECOVERY_INVENTORY.md`). Production mutation,
+Phase 7B resume, ADR 0011, and Epic 9+ remain separately gated.
 
 Do not begin AWS / Cloudflare / Next.js platform migration unless explicitly authorized.
 
@@ -98,12 +100,13 @@ npm run build
 **Allowed by default:** inspect the repo, create a dedicated branch, edit within authorized phase/epic/PR scope, run validation, create bounded commits, push the branch, open or update a **draft** PR.
 
 **Requires explicit authorization:** resume Phase 7B live smoke / beta /
-public checkout, begin Epic 8+, or mutate production outside an explicitly
+public checkout, begin Epic 9+, or mutate production outside an explicitly
 authorized package.
 
-**Epic 6 note:** repository + production tip remediation are complete.
-ADR 0011 remains founder-gated. Epic 7 is **COMPLETE**. Epic 8+ remain
-founder-gated.
+**Epic 6–8 note:** Epic 6 tip remediation and Epic 7 staging are complete.
+Epic 8 is authorized for repository + staging recovery work only.
+ADR 0011 and Epic 9+ remain founder-gated. Do not apply Epic 8 migrations
+or recovery to production without a separate founder package.
 
 ## Phase boundaries
 

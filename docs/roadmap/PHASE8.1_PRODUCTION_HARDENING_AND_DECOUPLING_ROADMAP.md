@@ -76,22 +76,25 @@ closure — see `docs/database/EPIC6_CLOSURE.md` and
 -   Documented consolidated schema baseline boundary (PR 2J; history preserved).
 -   Tip privilege package applied to production (`20260808020000`–`40000`).
 
-Dependency: requires Epic 4 (met). Epic 7 authorized separately (in
-progress). Epic 8+ unauthorized. ADR 0011 remains open for destructive
-advisor disposition.
+Dependency: requires Epic 4 (met). Epic 7 **COMPLETE**. Epic 8 authorized
+separately (in progress). ADR 0011 remains open for destructive advisor
+disposition.
 
 ### Epic 7 --- Staging Environment
 
-**Status: In progress** (ADR 0008 accepted). Establish: staging database
+**Status: COMPLETE** (ADR 0008 accepted; E2E verified). Staging database
 (separate Supabase project) - staging application environment (separate
 Vercel project) - Stripe test configuration - staging administrator process
-- deployment workflow. See `docs/adr/0008-environment-topology.md`.
+- deployment workflow. See `docs/adr/0008-environment-topology.md` and
+`docs/staging/EPIC7_CLOSURE.md`.
 
 ### Epic 8 --- Billing Recovery Capability
 
--   Preserve raw Stripe event payloads.
--   Create billing reconstruction process.
--   Validate recovery workflow.
+**Status: In progress** (ADR 0009 accepted; PR 0). Per ADR 0009:
+
+-   Preserve verified Stripe Event JSON (recovery-authoritative evidence).
+-   Create billing reconstruction process (dry-run / compare / apply).
+-   Validate recovery workflow (staging drills; production apply blocked).
 
 ### Epic 9 --- Deployment Pipeline
 
@@ -143,8 +146,8 @@ deployment process documented - backups verified - monitoring available
 
 Epic 1–7 are complete on `main` (Epic 6 includes verified production tip
 remediation; Epic 7 staging E2E verified — see `docs/staging/EPIC7_CLOSURE.md`).
-ADR 0011 remains open for destructive advisor disposition. Epic 8+
-is **not begun** and requires separate authorization.
+Epic 8 is **authorized and in progress** (ADR 0009). ADR 0011 remains open
+for destructive advisor disposition. Epic 9+ require separate authorization.
 
-Do not begin Epic 8 or later epics automatically. Do not resume Phase 7B
-from Epic 7.
+Do not begin Epic 9 or later epics automatically. Do not resume Phase 7B
+from Epic 7 or Epic 8.
