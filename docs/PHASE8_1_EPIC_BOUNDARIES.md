@@ -479,35 +479,31 @@ Respect Phase 7B pause and maintenance gate; do not open public checkout.
 
 ## Epic 9 — Deployment Pipeline
 
-**Status:** **In progress** (founder-authorized; ADR 0014 **accepted**).
+**Status:** **COMPLETE** (founder-authorized; ADR 0014 **accepted**;
+staging pipeline runtime-proven; production approval gate proven without
+mutation).
 
 Authority: `docs/adr/0014-deployment-pipeline.md`,
-`docs/deployment/EPIC9_DEPLOYMENT_INVENTORY.md`.
+`docs/deployment/EPIC9_CLOSURE.md`,
+`docs/deployment/DEPLOYMENT_RUNBOOK.md`.
 
-**Goal:** Safe reproducible promotion: CI → staging deploy/verify → explicit
-production approval gate → controlled production deploy (define only under
-this Epic; **do not execute** production mutation).
+**Delivered:** CI → staging migrate/Edge/verify → `staging-verified` SHA
+status → `workflow_dispatch` production plan with `production-deploy`
+environment approval. Production apply remains founder-gated and was **not**
+executed. Epic 8 production migrations remain pending/unapplied.
 
-Allowed under this authorization:
-
-- Staging migration apply / Edge deploy / verification automation
-- Migration ledger controls (fail closed on divergence)
-- Production workflow **plan** mode + approval environment
-- Docs/runbooks/closure
-
-### Prohibited / HARD STOP
+### Still prohibited without separate founder package
 
 - Actual production SPA/Edge/schema/secrets mutation
 - Applying Epic 8 (`20260808200000`) or other pending migrations to production
 - Changing production Vercel Git integration
 - Phase 7B resume / disable production `CHECKOUT_MAINTENANCE`
 - ADR 0011 / Epic 10+
-- Actions SPA deploy that doubles Vercel Git
 
 | PR | Scope | Status |
 |----|--------|--------|
-| **PR 0** | ADR 0014 + inventory + governance | **This PR** |
-| **PR 1+** | Scripts, workflows, staging proof, production gate proof, closure | Pending |
+| **#87** | ADR 0014 + scripts/workflows + Bugbot fixes | **Merged** |
+| **Closure** | `EPIC9_CLOSURE.md` + governance COMPLETE | This PR |
 
 ---
 

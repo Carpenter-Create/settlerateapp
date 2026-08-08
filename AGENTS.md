@@ -80,7 +80,9 @@ verified. Phase 7B is **not** resumed
 **COMPLETE** (ADR 0009 **accepted**; staging recovery drill verified).
 Authority: `docs/adr/0009-billing-recovery-guarantee.md`,
 `docs/billing/EPIC8_CLOSURE.md`. **Epic 9 (Deployment Pipeline)** is
-**authorized and in progress** (ADR 0014). Production deployment execution,
+**COMPLETE** (ADR 0014 **accepted**; staging automation + production
+approval gate proven). Authority: `docs/adr/0014-deployment-pipeline.md`,
+`docs/deployment/EPIC9_CLOSURE.md`. Production deployment execution,
 Epic 8 production activation, Phase 7B resume, ADR 0011, and Epic 10+ remain
 separately gated.
 
@@ -106,9 +108,9 @@ npm run build
 public checkout, begin Epic 10+, execute production deployment, or mutate
 production outside an explicitly authorized package.
 
-**Epic 6–9 note:** Epic 6–8 are complete. Epic 9 may automate staging and
-define production gates only — **not** execute production deploys or apply
-Epic 8 migrations to production. ADR 0011 and Epic 10+ remain founder-gated.
+**Epic 6–9 note:** Epic 6–9 are complete. Production deploy apply and Epic 8
+production activation remain founder-gated. ADR 0011 and Epic 10+ remain
+founder-gated.
 
 ## Phase boundaries
 
