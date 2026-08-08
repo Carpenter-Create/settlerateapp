@@ -1,9 +1,9 @@
-# Staging Smoke Checklist (Epic 7 PR 5)
+# Staging Smoke Checklist (Epic 7)
 
 **Authority:** `docs/adr/0008-environment-topology.md`  
 **Prerequisites:** `STAGING_DATABASE.md`, `STAGING_EDGE.md`, `STAGING_STRIPE.md`, `STAGING_DEPLOYMENT.md`
 
-## Automated / evidence probes (repo session)
+## Automated / evidence probes
 
 | Probe | Expected | Status |
 |-------|----------|--------|
@@ -14,21 +14,27 @@
 | Staging Edge functions ACTIVE | 7 functions | Done |
 | Staging Supabase ref ≠ production | `gkhbalfpxjtleypbabjo` vs `vpcxzbaxhpucvevnkalo` | Done |
 | Cross-mode Stripe fence unit tests | green in CI | Done |
+| SPA host | `https://settlerate-app-staging.vercel.app` | Done |
+| SPA Supabase host baked in | `gkhbalfpxjtleypbabjo` (not production) | Done |
+| Exact origin allowlist includes Vercel host | app + core allowlists | Done (this PR) |
+| Staging Auth Site URL | staging Vercel origin | Done |
+| Staging Auth redirects | staging (+ optional custom/local) | Done |
+| Production Auth Site URL unchanged | `https://app.settlerate.com` | Done (read-only verified) |
+| Staging Edge `CHECKOUT_MAINTENANCE` | `false` | Done |
+| Staging Edge `SENTRY_ENVIRONMENT` | `staging` | Done |
+| Staging Edge `STRIPE_WEBHOOK_SECRET` | set (rotated webhook) | Done |
+| Staging Edge `STRIPE_SECRET_KEY` | `sk_test_…` | **Open — HARD STOP** |
 
-## Operator activation (required before end-to-end smoke)
+## Remaining operator activation
 
 | Step | Owner | Status |
 |------|-------|--------|
-| Set staging Edge `STRIPE_SECRET_KEY` (`sk_test_…`) | Founder / ops Dashboard | **Open** |
-| Set staging Edge `STRIPE_WEBHOOK_SECRET` (`whsec_…` for `we_1U2BGEC56u2NxRIt4U7MBnqg`) | Founder / ops | **Open** |
-| Set staging `CHECKOUT_MAINTENANCE=false` | Founder / ops | **Open** |
-| Set staging `SENTRY_ENVIRONMENT=staging` (+ optional staging DSN) | Founder / ops | **Open** |
-| Connect GitHub → Vercel `settlerate-app-staging` and deploy | Founder / ops | **Open** |
-| Configure staging Auth Site URL + redirects (staging project only) | Founder / ops | **Open** |
-| DNS / TLS for `staging.settlerate.com` (or allowlist exact Vercel host) | Founder / ops | **Open** |
-| Enable Vercel Deployment Protection if available | Founder / ops | **Open** |
+| Set staging Edge `STRIPE_SECRET_KEY` (`sk_test_…` for SettleRate acct `acct_1U0irnC56u2NxRIt`) | Founder | **Open / HARD STOP** |
+| Optional DNS / TLS for `staging.settlerate.com` | Founder / ops | Optional |
+| Enable Vercel Deployment Protection if available | Founder / ops | Optional |
+| Full Auth/billing/export E2E after `sk_test_` | Founder / ops | Blocked on secret |
 
-## End-to-end smoke (after operator activation)
+## End-to-end smoke (after `sk_test_` secret)
 
 Use **synthetic** emails only (`*@example.invalid` or dedicated staging inbox).
 

@@ -11,10 +11,22 @@ describe("resolveAppOriginFromOriginHeader", () => {
     );
   });
 
-  it("allows the approved staging origin", () => {
+  it("allows the approved staging origins", () => {
     expect(
       resolveAppOriginFromOriginHeader("https://staging.settlerate.com")
     ).toBe("https://staging.settlerate.com");
+    expect(
+      resolveAppOriginFromOriginHeader("https://settlerate-app-staging.vercel.app")
+    ).toBe("https://settlerate-app-staging.vercel.app");
+  });
+
+  it("rejects lookalike or other vercel.app staging hosts", () => {
+    expect(
+      resolveAppOriginFromOriginHeader("https://settlerate-app-staging-preview.vercel.app")
+    ).toBe(DEFAULT_APP_ORIGIN);
+    expect(
+      resolveAppOriginFromOriginHeader("https://evil-settlerate-app-staging.vercel.app")
+    ).toBe(DEFAULT_APP_ORIGIN);
   });
 
   it("allows each approved localhost origin", () => {

@@ -21,6 +21,10 @@
 const ALLOWED_ORIGINS = [
   "https://app.settlerate.com",
   "https://staging.settlerate.com",
+  // Exact Vercel production hostname for project settlerate-app-staging
+  // (used until custom-domain DNS for staging.settlerate.com exists).
+  // Intentionally NOT a wildcard — other *.vercel.app hosts remain rejected.
+  "https://settlerate-app-staging.vercel.app",
   "http://localhost:5173",
   "http://localhost:8080",
   "http://127.0.0.1:5173",

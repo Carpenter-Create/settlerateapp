@@ -32,15 +32,21 @@ describe("resolveAuthOrigin", () => {
 
   it("uses the production default for an unapproved (but well-formed) origin", () => {
     expect(resolveAuthOrigin("https://evil.example")).toBe(DEFAULT_APP_ORIGIN);
-    expect(resolveAuthOrigin("https://settlerate-app-staging.vercel.app")).toBe(
+    expect(resolveAuthOrigin("https://settlerate-app-staging-preview.vercel.app")).toBe(
+      DEFAULT_APP_ORIGIN
+    );
+    expect(resolveAuthOrigin("https://evil-settlerate-app-staging.vercel.app")).toBe(
       DEFAULT_APP_ORIGIN
     );
     expect(resolveAuthOrigin("http://localhost:3000")).toBe(DEFAULT_APP_ORIGIN);
   });
 
-  it("accepts the approved staging origin exactly", () => {
+  it("accepts the approved staging origins exactly", () => {
     expect(resolveAuthOrigin("https://staging.settlerate.com")).toBe(
       "https://staging.settlerate.com"
+    );
+    expect(resolveAuthOrigin("https://settlerate-app-staging.vercel.app")).toBe(
+      "https://settlerate-app-staging.vercel.app"
     );
   });
 

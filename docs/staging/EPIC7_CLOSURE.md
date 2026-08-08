@@ -7,7 +7,8 @@
 ## Status
 
 **Repository / infrastructure foundation: COMPLETE**  
-**End-to-end staging activation smoke: OPEN (operator-gated)**  
+**Staging Auth + SPA origin activation: IN PROGRESS (this train)**  
+**Stripe test checkout E2E: BLOCKED** — SettleRate `sk_test_…` not available to agent tooling  
 **Phase 7B resume: NOT authorized**
 
 ## Closure criteria
@@ -19,17 +20,17 @@
 | 3 | Production isolation proven (project refs, empty data, tip divergence) | **Met** |
 | 4 | Staging environment reproducible (scripts + docs) | **Met** |
 | 5 | Database reconstruction/migrations work on staging | **Met** (tip `20260808143109`) |
-| 6 | Auth works in staging | **Open** — Auth Site URL + SPA deploy |
-| 7 | Edge Functions work in staging | **Met** (deployed ACTIVE); full invoke smoke open |
+| 6 | Auth works in staging | **Partial** — Site URL + redirects configured on staging; SPA origin allowlisted; signup E2E pending redeploy + email |
+| 7 | Edge Functions work in staging | **Met** (deployed ACTIVE); billing invoke needs `sk_test_` |
 | 8 | Export/storage paths work | **Partial** — bucket + functions present; E2E open |
-| 9 | Observability environment-separated | **Met** in code; DSN optional |
-| 10 | Stripe test-mode path works if included | **Partial** — catalog/webhook/fence done; secrets Dashboard open |
+| 9 | Observability environment-separated | **Met** in code; Edge `SENTRY_ENVIRONMENT=staging`; DSN optional |
+| 10 | Stripe test-mode path works if included | **Partial** — catalog/webhook/fence + webhook secret; **`STRIPE_SECRET_KEY` HARD STOP** |
 | 11 | Synthetic data strategy documented | **Met** (`STAGING_SEED_POLICY.md`) |
 | 12 | No production secrets/data in staging | **Met** (empty tables; secrets contract) |
 | 13 | CI/deployment path documented | **Met** |
-| 14 | Smoke validation passes | **Open** — see `STAGING_SMOKE.md` |
+| 14 | Smoke validation passes | **Partial** — see `STAGING_SMOKE.md` |
 | 15 | Phase 7B readiness report produced | **Met** (`PHASE7B_READINESS_FROM_EPIC7.md`) |
-| 16 | Governance updated | **Met** (this PR) |
+| 16 | Governance updated | **Met** |
 
 ## Merged PR train
 
@@ -41,6 +42,8 @@
 | #71 PR3 Edge/observability/Vercel | `ef86fb3` |
 | #72 PR4 Stripe test catalog | `d7c6cf1` |
 | #73 PR5 smoke/closure | `c4f92be140298f8fca5f53bb67f95f26c031b335` |
+| #74 closure SHA polish | `e43e4dd` |
+| Staging Vercel origin activation | this PR (pending merge) |
 
 ## Identifiers
 
@@ -49,15 +52,31 @@
 | Staging Supabase | `gkhbalfpxjtleypbabjo` |
 | Production Supabase | `vpcxzbaxhpucvevnkalo` |
 | Staging Vercel | `settlerate-app-staging` (`prj_GMmcFJmTAQnpXRtwux8VqUzM6wGo`) |
-| Staging origin (planned) | `https://staging.settlerate.com` |
-| Stripe test webhook | `we_1U2BGEC56u2NxRIt4U7MBnqg` |
+| Staging origin (active) | `https://settlerate-app-staging.vercel.app` |
+| Staging origin (planned DNS) | `https://staging.settlerate.com` |
+| Stripe test webhook (active) | `we_1U2DA3C56u2NxRItrLZk7FMx` |
 
-## Explicit non-completions (founder ops)
+## Hard stop (exact)
 
-1. Staging Edge Stripe secrets via Dashboard  
-2. Vercel GitHub connect + first SPA production deploy on staging project  
-3. Staging Auth redirect configuration  
-4. Optional DNS for `staging.settlerate.com`  
-5. Full E2E smoke checklist execution  
+**Missing credential:** SettleRate Stripe **test-mode** secret key (`sk_test_…` for `acct_1U0irnC56u2NxRIt`).
 
-Epic 8+ remains unauthorized until separately approved.
+- Local Stripe CLI profiles are other businesses (not SettleRate).
+- Stripe MCP can manage test catalog/webhooks but does not expose Dashboard secret keys.
+- No `sk_test_` for SettleRate is present in repo env files.
+
+**Founder action (staging only):**
+
+```bash
+supabase secrets set STRIPE_SECRET_KEY=sk_test_… --project-ref gkhbalfpxjtleypbabjo
+bash scripts/staging/deploy-staging-functions.sh
+```
+
+Do **not** set `sk_live_…`. Do **not** change production secrets.
+
+## Production boundary confirmation
+
+- Production Auth Site URL remains `https://app.settlerate.com` (read-only verified).
+- Production migration tip remains `20260808040000`.
+- Phase 7B remains paused; production checkout maintenance must stay enabled.
+- Epic 8 has **not** begun.
+- ADR 0011 has **not** begun.
