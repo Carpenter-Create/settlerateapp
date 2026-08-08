@@ -97,6 +97,17 @@ That means: do not redefine export fields, field meanings, omission rules, snaps
 
 **Never begin the next phase or Epic 10+ automatically.**
 
+# Agentic Engineering v1
+
+When a founder **Authorization Packet** is present, follow
+`docs/agentic/AGENTIC_ENGINEERING_V1.md`: Orchestrator / Implementer /
+Independent Reviewer roles; implement → validate → review → repair loop;
+`MAX_REPAIR_CYCLES = 2`; hard STOP and founder-gate rules; emit a
+**Completion Packet**. Implementer and Independent Reviewer must be separate
+sessions for `PASS`. `PASS` never means merge. This governance layer does not
+authorize Epic 10+, Phase 7B, Epic 8 production activation, ADR 0011, or
+production mutation.
+
 # Agent Autonomy
 
 Unless a prompt says otherwise, agents **may**:
