@@ -15,6 +15,7 @@
  * the enforcement points — see `@settlerate/core/observability-redaction`.
  */
 import * as Sentry from "@sentry/react";
+import { resolveSentryEnvironment } from "@settlerate/core/edge-observability";
 import { redactBreadcrumb, redactEvent } from "@settlerate/core/observability-redaction";
 
 /** Minimal structural validation — not full DSN-format verification, just enough to reject empty/garbage values. */
@@ -51,6 +52,19 @@ export function resolveClientRelease(): string | undefined {
   return typeof value === "string" && value.trim() !== "" ? value.trim() : undefined;
 }
 
+/**
+ * Staging builds are Vite `MODE === "production"` but must not tag Sentry as
+ * production. Set `VITE_SENTRY_ENVIRONMENT=staging` on the staging SPA.
+ * Authority: docs/adr/0008-environment-topology.md.
+ */
+export function resolveClientSentryEnvironment(
+  mode: string | null | undefined,
+  configured: string | null | undefined = import.meta.env.VITE_SENTRY_ENVIRONMENT
+): string {
+  const fallback = mode === "production" ? "production" : (mode?.trim() || "development");
+  return resolveSentryEnvironment(configured, fallback);
+}
+
 let attempted = false;
 let enabled = false;
 
@@ -72,7 +86,7 @@ export function initObservability(): void {
   try {
     Sentry.init({
       dsn,
-      environment: mode,
+      environment: resolveClientSentryEnvironment(mode),
       release: resolveClientRelease(),
       integrations: [],
       tracesSampleRate: 0,

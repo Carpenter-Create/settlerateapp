@@ -16,6 +16,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { generateRequestId } from "../_shared/observability.ts";
 import { captureEdgeException, initEdgeSentry } from "../_shared/sentry.ts";
+import "../_shared/ensureCoreAssets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,7 +29,7 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 // Inert without a SENTRY_DSN secret — see supabase/functions/_shared/sentry.ts.
 const SENTRY_DSN = Deno.env.get("SENTRY_DSN");
-initEdgeSentry(SENTRY_DSN);
+initEdgeSentry(SENTRY_DSN, Deno.env.get("SENTRY_ENVIRONMENT"));
 
 // Generate a cryptographically secure random token (min 32 chars per DB constraint)
 function generateToken(length = 48): string {

@@ -2,8 +2,23 @@ import { describe, expect, it } from "vitest";
 import {
   buildEdgeExtra,
   isEdgeObservabilityEnabled,
+  resolveSentryEnvironment,
 } from "@settlerate/core/edge-observability";
 import * as edgeObservability from "@settlerate/core/edge-observability";
+
+describe("resolveSentryEnvironment", () => {
+  it("falls back when configured value is absent or blank", () => {
+    expect(resolveSentryEnvironment(undefined)).toBe("production");
+    expect(resolveSentryEnvironment(null)).toBe("production");
+    expect(resolveSentryEnvironment("")).toBe("production");
+    expect(resolveSentryEnvironment("   ", "staging")).toBe("staging");
+  });
+
+  it("returns trimmed configured environment", () => {
+    expect(resolveSentryEnvironment("staging")).toBe("staging");
+    expect(resolveSentryEnvironment("  staging  ")).toBe("staging");
+  });
+});
 
 describe("isEdgeObservabilityEnabled", () => {
   it("is disabled when the DSN is absent, null, empty, or whitespace", () => {

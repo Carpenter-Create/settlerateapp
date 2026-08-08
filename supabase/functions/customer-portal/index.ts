@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { handleCustomerPortalRequest } from "./handler.ts";
 import { stripeCustomerMetadataSearchQuery } from "../_shared/stripeCustomerResolve.ts";
 import { captureEdgeException, initEdgeSentry } from "../_shared/sentry.ts";
+import "../_shared/ensureCoreAssets.ts";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -12,7 +13,7 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
 
 // Inert without a SENTRY_DSN secret — see supabase/functions/_shared/sentry.ts.
 const SENTRY_DSN = Deno.env.get("SENTRY_DSN");
-initEdgeSentry(SENTRY_DSN);
+initEdgeSentry(SENTRY_DSN, Deno.env.get("SENTRY_ENVIRONMENT"));
 
 serve(async (req) => {
   logStep("Function started");

@@ -14,10 +14,11 @@ import {
 } from "../_shared/stripeBillingSnapshot.ts";
 import { generateRequestId } from "../_shared/observability.ts";
 import { captureEdgeException, initEdgeSentry } from "../_shared/sentry.ts";
+import "../_shared/ensureCoreAssets.ts";
 
 // Inert without a SENTRY_DSN secret — see supabase/functions/_shared/sentry.ts.
 const SENTRY_DSN = Deno.env.get("SENTRY_DSN");
-initEdgeSentry(SENTRY_DSN);
+initEdgeSentry(SENTRY_DSN, Deno.env.get("SENTRY_ENVIRONMENT"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

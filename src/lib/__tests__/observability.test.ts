@@ -81,6 +81,19 @@ describe("initObservability / captureException — default (test) mode, no DSN",
   });
 });
 
+describe("resolveClientSentryEnvironment", () => {
+  it("defaults production builds to production unless overridden", async () => {
+    const { resolveClientSentryEnvironment } = await import("@/lib/observability");
+    expect(resolveClientSentryEnvironment("production", undefined)).toBe("production");
+    expect(resolveClientSentryEnvironment("production", "staging")).toBe("staging");
+  });
+
+  it("falls back to mode outside production when override blank", async () => {
+    const { resolveClientSentryEnvironment } = await import("@/lib/observability");
+    expect(resolveClientSentryEnvironment("development", "")).toBe("development");
+  });
+});
+
 describe("resolveClientRelease", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -134,6 +147,13 @@ describe("initObservability — simulated production with a valid DSN", () => {
     expect(config.integrations).toEqual([]);
     expect(typeof config.beforeSend).toBe("function");
     expect(typeof config.beforeBreadcrumb).toBe("function");
+  });
+
+  it("tags staging SPA builds as staging when VITE_SENTRY_ENVIRONMENT is set", async () => {
+    vi.stubEnv("VITE_SENTRY_ENVIRONMENT", "staging");
+    const { initObservability } = await import("@/lib/observability");
+    initObservability();
+    expect(sentryInit.mock.calls[0][0].environment).toBe("staging");
   });
 
   it("passes no release when VITE_SENTRY_RELEASE was not injected at build time", async () => {

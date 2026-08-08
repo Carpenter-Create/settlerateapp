@@ -7,6 +7,7 @@
 
 export {
   isEdgeObservabilityEnabled,
+  resolveSentryEnvironment,
   buildEdgeExtra,
 } from "@settlerate/core/edge-observability";
 
