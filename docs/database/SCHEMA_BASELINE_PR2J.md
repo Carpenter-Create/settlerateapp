@@ -56,8 +56,9 @@ npm run schema:drift
 2. Prove with `schema:reconstruct -- --mode migration_only` and focused SQL tests.
 3. Regenerate types only when the client contract changes (`schema:gen-types`).
 4. Refresh drift artifacts when comparing to production evidence.
-5. Append production-facing SQL to `EPIC6_PRODUCTION_APPLY_PLAN.md` (or successor
-   apply plan) — **do not** apply to production without founder authorization.
+5. Append production-facing SQL to a founder-gated apply plan (successor to
+   `EPIC6_PRODUCTION_APPLY_PLAN.md`) — **do not** apply to production without
+   founder authorization.
 6. Prefer GRANT/REVOKE tip migrations over rewriting objects when possible.
 
 ## Dual sources of truth — forbidden
@@ -70,6 +71,7 @@ npm run schema:drift
 
 ## Production
 
-This PR does **not** rewrite production migration history or apply any
-migration. Production remains on the pre-remediation grant state until the
-consolidated apply package is founder-authorized.
+This PR (2J) did **not** rewrite production migration history or apply any
+migration at merge time. The consolidated tip package was later applied on
+**2026-08-08** (see `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` and
+`docs/database/EPIC6_CLOSURE.md`).

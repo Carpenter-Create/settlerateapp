@@ -46,7 +46,7 @@ Follow the roadmap epic sequence. Do not skip dependency gates:
 3. Epic 3 — Observability (**complete on `main` and production-activated/verified 2026-08-06** — see ADR 0003)  
 4. Epic 4 — RLS Security Test Expansion (**complete on `main`**; see ADR 0004)  
 5. Epic 5 — Shared Core Package (**complete on `main`**; ADR 0005 accepted; PR 0–6 merged)  
-6. Epic 6 — Schema Reconciliation (**complete on `main` (repository)**; ADR 0006/0007 accepted; PR 0–2J + closure; production apply NOT authorized until consolidated apply package; ADR 0011 still required for advisor drops; requires Epic 4)  
+6. Epic 6 — Schema Reconciliation (**COMPLETE** — repository + production tip remediation applied/verified 2026-08-08; ADR 0006/0007 accepted; PR 0–2J + closure; ADR 0011 still required for advisor drops; requires Epic 4)  
 7. Epic 7 — Staging Environment  
 8. Epic 8 — Billing Recovery Capability  
 9. Epic 9 — Deployment Pipeline  
@@ -148,19 +148,20 @@ application surfaces; Edge resolves package subpaths via per-function
 | **PR 2A** | Schema provenance / reconstruction blocker (`subscriptions` + scoped `profiles` columns) | **Complete / merged** |
 | **PR 2B** | Post-provenance drift refresh (evidence only) | **Complete / merged** |
 | **PR 2C** | Grant/security classification + founder decision package (evidence only) | **Complete / merged** |
-| **PR 2D** | First least-privilege grant remediation (repo + local proof; prod apply gated) | **Complete / merged** |
+| **PR 2D** | First least-privilege grant remediation (repo + local proof; later production-applied) | **Complete / merged + applied** |
 | **PR 2E** | Generated types reconciliation | **Complete / merged** |
-| **PR 2F** | RPC / function EXECUTE reconciliation | **Complete / merged** |
+| **PR 2F** | RPC / function EXECUTE reconciliation | **Complete / merged + applied** |
 | **PR 2G** | Storage / platform drift normalization | **Complete / merged** |
-| **PR 2H** | Dual comparison / export model disposition | **Complete / merged** |
+| **PR 2H** | Dual comparison / export model disposition | **Complete / merged + applied** |
 | **PR 2I** | Advisor / ADR 0011 check | **Complete / merged** (retain; ADR 0011 still required) |
 | **PR 2J** | Consolidated schema baseline | **Complete** |
 | **Closure** | Reconstruction proof; classified drift; production apply package | **Complete** |
+| **Production apply** | Consolidated tip package (`20260808020000`–`40000`) | **Complete** (2026-08-08) |
 
-Epic 6 **repository** work is complete. **Production apply is NOT
-authorized** until founder approval of
-`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. See
-`docs/database/EPIC6_CLOSURE.md` and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
+Epic 6 is **COMPLETE** (repository closure and production tip remediation
+applied/verified). See `docs/database/EPIC6_CLOSURE.md` and
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` (execution record).
+Epic 7+ and ADR 0011 remain separately gated.
 
 ## Required ADRs
 

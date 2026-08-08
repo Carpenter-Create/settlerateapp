@@ -65,17 +65,19 @@ and export-summary mapping. Goal: prevent business-logic drift.
 
 ### Epic 6 --- Schema Reconciliation
 
-**Status: Complete on `main` (repository)** (ADR 0006 / ADR 0007
-**accepted**; PR 0–2J + closure — see `docs/database/EPIC6_CLOSURE.md`).
+**Status: COMPLETE** — repository closure and production tip remediation
+applied/verified 2026-08-08 (ADR 0006 / ADR 0007 **accepted**; PR 0–2J +
+closure — see `docs/database/EPIC6_CLOSURE.md` and
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`).
 
 -   Compare production schema against migrations (after read-only capture).
 -   Identify undocumented differences.
 -   Resolve schema drift under classified, authorized PRs.
 -   Documented consolidated schema baseline boundary (PR 2J; history preserved).
+-   Tip privilege package applied to production (`20260808020000`–`40000`).
 
-Dependency: requires Epic 4 (met). Production apply of tip migrations remains
-founder-gated via `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. Epic 7+
-unauthorized.
+Dependency: requires Epic 4 (met). Epic 7+ unauthorized. ADR 0011 remains
+open for destructive advisor disposition.
 
 ### Epic 7 --- Staging Environment
 
@@ -136,9 +138,8 @@ deployment process documented - backups verified - monitoring available
 
 ## Next Approved Execution Step
 
-Epic 1–6 (repository) are complete on `main`. Epic 6 production apply is
-**not** authorized until founder approval of
-`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. ADR 0011 remains open for
-destructive advisor disposition.
+Epic 1–6 are complete on `main` (Epic 6 includes verified production tip
+remediation). ADR 0011 remains open for destructive advisor disposition.
+Epic 7+ is **not begun** and requires separate authorization.
 
 Do not begin Epic 7 or later epics automatically.

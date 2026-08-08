@@ -340,11 +340,12 @@ the ADR §11 sequence.
 
 ## Epic 6 — Schema Reconciliation
 
-**Status:** **Complete on `main` (repository)** (ADR 0006 + ADR 0007
-**accepted**; PR 0–2J + closure). Founder FD-* decisions are **ACCEPTED**.
-**Production mutation remains NOT authorized** until founder approval of
-`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. ADR 0011 remains required
-for destructive advisor disposition. Epic 7+ unauthorized.
+**Status:** **COMPLETE** — repository closure and production remediation
+applied/verified (ADR 0006 + ADR 0007 **accepted**; PR 0–2J + closure;
+tip package applied 2026-08-08). Founder FD-* decisions are **ACCEPTED**.
+ADR 0011 remains required for destructive advisor disposition. Epic 7+
+unauthorized. See `docs/database/EPIC6_CLOSURE.md` and
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` (execution record).
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
@@ -360,25 +361,25 @@ legacy objects), and reconcile without weakening security or changing
 financial/export/entitlement semantics.
 
 **Requires Epic 4** (complete). ADR 0006 and ADR 0007 are accepted.
-Production capture must precede reconciliation/mutation. Baseline
-implementation (history + documented consolidated baseline boundary) is
-part of the autonomous train (PR 2J), still without production apply.
+Production capture preceded reconciliation/mutation. Baseline
+implementation (history + documented consolidated baseline boundary) and
+the consolidated tip apply are complete.
 
-### Allowed in Epic 6 autonomous train (repository only)
+### Epic 6 train (complete)
 
-- Sequential PR 2D–2J + closure slices as justified by evidence
-- Tip migrations, tests, types regeneration, docs/governance updates
-- Draft → Ready → merge of repository-only Epic 6 PRs after convergence
-- Maintain cumulative `EPIC6_PRODUCTION_APPLY_PLAN.md` (docs only)
+- Sequential PR 2D–2J + closure slices completed on `main`
+- Tip migrations applied to production 2026-08-08 (see execution record)
+- Docs/governance updated to reflect production completion
 
 ### Prohibited without HARD STOP / founder gate
 
-- Any production mutation (`db push`, GRANT/REVOKE/DDL/DML, migration repair)
+- Further production mutation (`db push`, GRANT/REVOKE/DDL/DML, migration repair)
+  without a new founder-authorized package
 - Product/formula/export/billing/entitlement semantic changes
 - Destructive legacy drops without ADR 0007 evidence
 - Inventing advisor intent (ADR 0011); Epic 7+
 
-### Proposed Epic 6 PR sequence
+### Epic 6 PR sequence (complete)
 
 | PR | Scope | Status |
 |----|--------|--------|
@@ -387,14 +388,15 @@ part of the autonomous train (PR 2J), still without production apply.
 | **PR 2A** | Schema provenance / reconstruction blocker (`subscriptions` + scoped `profiles` columns) | **Complete / merged** |
 | **PR 2B** | Post-provenance drift refresh (evidence only) | **Complete / merged** |
 | **PR 2C** | Grant/security classification + founder decision package (evidence only) | **Complete / merged** |
-| **PR 2D** | First least-privilege grant remediation (repo + local proof; prod apply gated) | **Complete / merged** |
+| **PR 2D** | First least-privilege grant remediation (repo + local proof; later production-applied) | **Complete / merged + applied** |
 | **PR 2E** | Generated types reconciliation | **Complete / merged** |
-| **PR 2F** | RPC / function EXECUTE reconciliation | **Complete / merged** |
+| **PR 2F** | RPC / function EXECUTE reconciliation | **Complete / merged + applied** |
 | **PR 2G** | Storage / platform drift normalization | **Complete / merged** |
-| **PR 2H** | Dual comparison / export model disposition | **Complete / merged** |
+| **PR 2H** | Dual comparison / export model disposition | **Complete / merged + applied** |
 | **PR 2I** | Advisor / ADR 0011 check | **Complete / merged** (retain; ADR 0011 still required for drops) |
-| **PR 2J** | Consolidated schema baseline | **Complete** (this PR) |
-| **Closure** | Clean reconstruction proof; classified remaining drift; production apply package | **Complete** (this PR) |
+| **PR 2J** | Consolidated schema baseline | **Complete / merged** |
+| **Closure** | Clean reconstruction proof; classified remaining drift; production apply package | **Complete / merged** |
+| **Production apply** | Consolidated tip package (`20260808020000`–`40000`) | **Complete** (2026-08-08) |
 
 ---
 
