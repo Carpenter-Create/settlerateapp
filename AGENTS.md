@@ -61,15 +61,15 @@ accepted; PR 0–6 merged. Authority:
 `docs/adr/0005-shared-package-architecture.md`,
 `docs/EXPORT_CONTRACT.md`, and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 
-**Epic 6 (Schema Reconciliation)** is **complete on `main` (repository)**
-(ADR 0006 and ADR 0007 **accepted**; PR 0–2J + closure). Founder FD-*
-decisions are **accepted**. **Production mutation is NOT authorized** until
-founder approval of `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. ADR 0011
-remains required for destructive advisor disposition. Authority:
+**Epic 6 (Schema Reconciliation)** is **COMPLETE** — repository closure and
+production remediation applied/verified (ADR 0006 and ADR 0007 **accepted**;
+PR 0–2J + closure; tip package applied 2026-08-08). Founder FD-* decisions
+are **accepted**. ADR 0011 remains required for destructive advisor
+disposition. Authority:
 `docs/database/EPIC6_CLOSURE.md`,
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
-`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`.
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` (execution record).
 **Epic 7 and later have not begun and still require separate explicit
 authorization.**
 
@@ -91,12 +91,12 @@ npm run build
 
 **Allowed by default:** inspect the repo, create a dedicated branch, edit within authorized phase/epic/PR scope, run validation, create bounded commits, push the branch, open or update a **draft** PR.
 
-**Requires explicit authorization:** commit to `main` outside the Epic 6
-autonomous train, resume Phase 7B live smoke / beta / public checkout,
-begin Epic 7+, or mutate production.
+**Requires explicit authorization:** resume Phase 7B live smoke / beta /
+public checkout, begin Epic 7+, or mutate production outside an explicitly
+authorized package.
 
-**Epic 6 note:** repository work is complete. Production apply and Epic 7+
-remain founder-gated.
+**Epic 6 note:** repository + production tip remediation are complete.
+ADR 0011 and Epic 7+ remain founder-gated.
 
 ## Phase boundaries
 

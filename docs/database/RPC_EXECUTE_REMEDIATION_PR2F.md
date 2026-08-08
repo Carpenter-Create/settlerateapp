@@ -1,7 +1,9 @@
 # RPC EXECUTE Remediation — Epic 6 PR 2F
 
 **Phase:** 8.1 / Epic 6 PR 2F  
-**Status:** Repository implementation + local proof — **production apply NOT AUTHORIZED**  
+**Status:** Repository implementation + local proof — **production applied
+2026-08-08** (consolidated Epic 6 package; see
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`)  
 **Migration:** `supabase/migrations/20260808030000_epic6_pr2f_rpc_execute_least_privilege.sql`
 
 ## Authority
@@ -53,4 +55,6 @@ GRANT EXECUTE ON FUNCTION public.tg_set_comparison_version_number() TO anon, aut
 
 ## Production apply
 
-Appended to `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. Not authorized in this PR.
+Appended to `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` during the
+repository train; **applied to production 2026-08-08** as version
+`20260808030000` (execution record in that file). No rollback.

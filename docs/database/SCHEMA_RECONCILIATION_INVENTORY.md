@@ -189,7 +189,8 @@ Trigger helpers of note: `handle_new_user`, entitlement/ownership enforcers, `pr
 
 ## High-signal reconciliation candidates (post-PR 2C)
 
-1. **Grant / security remediation** — PR 2D/2F tip migrations in repo; production apply gated.  
+1. **Grant / security remediation** — PR 2D/2F/2H tip migrations in repo;
+   production tip package applied 2026-08-08.  
 2. **Generated types** — PR 2E regenerated; `generated_types_mismatch` cleared.  
 3. **Dual comparison/export models** — **legacy_temporarily_retained** (PR 2H); no DROP.  
 4. **Advisor leftovers** — **legacy_temporarily_retained** until ADR 0011 (PR 2I check).  

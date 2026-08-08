@@ -2,7 +2,8 @@
 
 **Phase:** 8.1 / Epic 6 PR 2H  
 **Authority:** ADR 0007  
-**Status:** Disposition recorded — **no DROP**; production destructive apply NOT authorized
+**Status:** Disposition recorded — **no DROP**; tip privilege remediation
+**production-applied 2026-08-08**; destructive DROP still NOT authorized
 
 ## Active (canonical)
 
@@ -33,7 +34,10 @@ legacy share helpers with no App/Edge `.rpc` consumers:
 - `validate_comparison_share(text)`
 - `touch_comparison_share(text)`
 
-Tables/views/triggers unchanged. Production apply gated.
+Tables/views/triggers unchanged. Tip EXECUTE remediation applied to
+production 2026-08-08 as `20260808040000` (see
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`). Destructive table DROP
+remains unauthorized.
 
 ## Exit criteria for a future destructive PR (not this PR)
 

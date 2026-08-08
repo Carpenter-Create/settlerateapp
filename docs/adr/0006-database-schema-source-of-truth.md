@@ -197,8 +197,10 @@ checkout maintenance posture; security weakenings “to make green.”
 - PR 2B refreshed the post-provenance drift baseline (evidence only).
 - PR 2C classified grant/security least-privilege decisions (founder FD-*
   accepted).
-- PR 2D–2J + closure complete on the repository; production apply remains
-  separately gated via `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`.
+- PR 2D–2J + closure complete on the repository; consolidated tip package
+  applied to production 2026-08-08 (see
+  `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` execution record and
+  `docs/database/EPIC6_CLOSURE.md`).
 - Baseline boundary documented in `docs/database/SCHEMA_BASELINE_PR2J.md`.
 
 ## Alternatives considered

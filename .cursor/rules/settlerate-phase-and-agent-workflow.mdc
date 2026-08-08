@@ -38,12 +38,13 @@ accepted; PR 0–6 merged. See
 `docs/adr/0005-shared-package-architecture.md` and
 `docs/EXPORT_CONTRACT.md`.
 
-**Epic 6 — Schema Reconciliation** is **complete on `main` (repository)**
-(ADR 0006 and ADR 0007 **accepted**; PR 0–2J + closure). See
+**Epic 6 — Schema Reconciliation** is **COMPLETE** (repository closure and
+production tip remediation applied/verified 2026-08-08; ADR 0006 and
+ADR 0007 **accepted**; PR 0–2J + closure). See
 `docs/database/EPIC6_CLOSURE.md` and
-`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. **Do not mutate
-production without separate founder authorization of the consolidated
-apply package.** ADR 0011 remains required for destructive advisor work.
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` (execution record).
+**Do not mutate production without separate founder authorization.**
+ADR 0011 remains required for destructive advisor work.
 
 ## Prohibited unless explicitly authorized
 
@@ -93,7 +94,8 @@ Agents **may not** without explicit authorization:
 - Commit directly to `main`
 - Mark a draft PR ready for review / approve / merge (except when a later
   prompt explicitly restores Epic-scoped autonomy)
-- Mutate production databases / apply Epic 6 migrations to production
+- Mutate production databases / apply migrations to production without a
+  separate founder-authorized package
 - Begin Epic 7+ or resume Phase 7B live smoke / beta / public checkout
 - Disable `CHECKOUT_MAINTENANCE` or open public Checkout while Phase 7B is paused
 

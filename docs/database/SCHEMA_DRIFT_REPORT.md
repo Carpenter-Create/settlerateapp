@@ -60,7 +60,14 @@ Total `grant_mismatch` records: **1424**.
 
 Privilege identity compared: schema + object type + object identity (function signature where applicable) + grantee + privilege type + is_grantable.
 
-After Epic 6 PR 2D tip migration (`20260808020000_*`), new `privilege_only_in_a` grant rows for revoked client privileges are **approved remediation pending production application** — not a regression. See `docs/database/GRANT_REMEDIATION_PR2D.md`. Production capture is unchanged until a founder-authorized apply.
+After Epic 6 PR 2D tip migration (`20260808020000_*`), new
+`privilege_only_in_a` grant rows for revoked client privileges were
+**approved remediation pending production application** in the
+pre-apply drift snapshot — not a regression. Those tip privileges were
+**applied to production 2026-08-08**. See
+`docs/database/GRANT_REMEDIATION_PR2D.md` and
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. Committed drift artifacts
+in this file remain historical evidence until a future refresh.
 
 ## High-priority candidate resolutions (evidence only)
 

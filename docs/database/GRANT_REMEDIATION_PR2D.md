@@ -1,7 +1,9 @@
 # Grant Remediation — Epic 6 PR 2D
 
 **Phase:** 8.1 / Epic 6 PR 2D  
-**Status:** Repository implementation + local proof — **production apply NOT AUTHORIZED**  
+**Status:** Repository implementation + local proof — **production applied
+2026-08-08** (consolidated Epic 6 package; see
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`)  
 **Migration:** `supabase/migrations/20260808020000_epic6_pr2d_grant_least_privilege.sql`
 
 ## Accepted authority
@@ -59,12 +61,14 @@ Tables:
 - RLS enabled state and `subscriptions_select_own` policy text (unchanged)
 - Function bodies, triggers, ownership, data
 
-### Intentionally deferred
+### Intentionally deferred (from the PR 2D slice)
 
 - Broader RPC EXECUTE remediation (`has_role`, `is_admin`, admin/bootstrap/webhook/entitlement/export RPCs, etc.)
 - Legacy dual-model SELECT/DML grant decisions
 - Removing `subscriptions_select_own` after it becomes unreachable for clients
-- Production apply of this migration
+
+(Production apply of this migration was deferred from PR 2D and completed
+in the consolidated package on 2026-08-08.)
 
 ## Rationale
 
@@ -88,7 +92,7 @@ None for current app/Edge paths if consumers match PR 2C evidence. If a regressi
 |---------|---------|
 | **PRODUCTION CURRENT** | Pre-remediation broad privileges (PR 1 capture unchanged) |
 | **REPOSITORY TARGET** | Least-privilege after tip migration on clean reconstruction |
-| New `privilege_only_in_a` rows for revoked privileges | **Approved remediation pending production application** — not a regression |
+| New `privilege_only_in_a` rows for revoked privileges (pre-apply) | Were approved remediation pending production application — **applied 2026-08-08** |
 
 Observed after refreshing drift against tip migration (migration_only = 31 migrations):
 
@@ -104,24 +108,30 @@ subscriptions client privilege revokes now present only in production.
 PR 2C decision package (700 public-facing inventory mismatches at accept
 time) and is not rewritten.
 
-Do not claim production is reconciled until this migration is applied under a separate founder gate.
+Historical note: prior to 2026-08-08, production was not reconciled until
+this migration was applied under a separate founder gate. That apply is
+now complete (see `EPIC6_PRODUCTION_APPLY_PLAN.md`).
 
-## Production preconditions (NOT AUTHORIZED YET)
+## Production outcome
 
-Before production apply:
+Applied as part of the consolidated Epic 6 package on **2026-08-08**
+(version `20260808020000`). See
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` for the execution record,
+fingerprints, and verification outcome. No rollback.
+
+### Historical production preconditions (satisfied)
 
 1. PR 2D merged to `main`
 2. Production schema fingerprint / migration ledger re-verified read-only
 3. Exact pending migration version confirmed (`20260808020000`)
-4. Founder explicit apply authorization for this migration only
+4. Founder explicit apply authorization for the consolidated package
 5. Backup / rollback posture confirmed
-6. Post-apply read-only grant capture planned
+6. Post-apply read-only grant capture planned and executed
 
-### Production apply procedure (NOT AUTHORIZED)
+### Historical apply procedure (executed)
 
 ```text
-# NOT AUTHORIZED in PR 2D. Document only.
-# After founder apply authorization:
+# Executed 2026-08-08 as part of consolidated Epic 6 package:
 # 1) Confirm linked project + backup
 # 2) Apply only 20260808020000_epic6_pr2d_grant_least_privilege.sql via approved process
 # 3) Do NOT migration repair / db push unrelated changes
