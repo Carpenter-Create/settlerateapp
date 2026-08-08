@@ -167,8 +167,9 @@ remains separately unauthorized until founder authorization.
 | **PR 2A** | Schema provenance / reconstruction blocker (`subscriptions` + scoped `profiles` columns) | Complete / merged |
 | **PR 2B** | Post-provenance drift refresh (evidence only) | Complete / merged |
 | **PR 2C** | Grant/security classification + founder decision package (evidence only) | Complete / merged |
-| **PR 2D** | First least-privilege grant remediation (repo + local proof; prod apply gated) | In progress (autonomous train) |
-| **PR 2E–2J** | Types, RPC EXECUTE, storage, dual-model, advisor check, baseline | Autonomous train (repo only) |
+| **PR 2D** | First least-privilege grant remediation (repo + local proof; prod apply gated) | Complete / merged |
+| **PR 2E** | Generated types reconciliation | In progress (autonomous train) |
+| **PR 2F–2J** | RPC EXECUTE, storage, dual-model, advisor check, baseline | Autonomous train (repo only) |
 | **Closure** | Prove clean reconstruction; update baseline/SoT docs; regenerate types as needed | Autonomous train (repo only) |
 
 Suggested slice grouping (to refine from drift report):

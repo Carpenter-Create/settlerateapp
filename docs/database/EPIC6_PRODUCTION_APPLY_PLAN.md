@@ -44,7 +44,10 @@ Before any production apply:
 
 ## Not included yet
 
-Later Epic 6 tip migrations (PR 2E+ are primarily types/docs or additional GRANT
-migrations) will be appended here when they introduce production-facing SQL.
+Later Epic 6 tip migrations that introduce production-facing SQL will be
+appended here when merged.
 
-Generated-types-only PRs do not add production migrations.
+### PR 2E note
+
+`TYPES_RECONCILIATION_PR2E.md` — generated types only; **no production
+migration**.
