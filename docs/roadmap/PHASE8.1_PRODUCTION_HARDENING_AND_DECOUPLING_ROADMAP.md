@@ -81,8 +81,10 @@ open for destructive advisor disposition.
 
 ### Epic 7 --- Staging Environment
 
-Establish: - staging database - staging application environment - Stripe
-test configuration - staging administrator process - deployment workflow
+**Status: In progress** (ADR 0008 accepted). Establish: staging database
+(separate Supabase project) - staging application environment (separate
+Vercel project) - Stripe test configuration - staging administrator process
+- deployment workflow. See `docs/adr/0008-environment-topology.md`.
 
 ### Epic 8 --- Billing Recovery Capability
 
@@ -139,7 +141,9 @@ deployment process documented - backups verified - monitoring available
 ## Next Approved Execution Step
 
 Epic 1–6 are complete on `main` (Epic 6 includes verified production tip
-remediation). ADR 0011 remains open for destructive advisor disposition.
-Epic 7+ is **not begun** and requires separate authorization.
+remediation). Epic 7 is **in progress** under founder authorization (ADR
+0008). ADR 0011 remains open for destructive advisor disposition. Epic 8+
+is **not begun** and requires separate authorization.
 
-Do not begin Epic 7 or later epics automatically.
+Do not begin Epic 8 or later epics automatically. Do not resume Phase 7B
+from Epic 7.

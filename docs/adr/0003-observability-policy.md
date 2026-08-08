@@ -59,9 +59,9 @@ No other Edge Function is in scope for Epic 3 monitoring instrumentation.
   absent.
 - Local development must never send events to the production Sentry
   project.
-- Production is the only initially monitored environment. Staging remains
-  deferred to Epic 7 (`docs/adr/0008-environment-topology.md`, not yet
-  written).
+- Production is the only initially monitored environment. Staging
+  observability separation is defined by Epic 7
+  (`docs/adr/0008-environment-topology.md`, **accepted**).
 
 ### 4. Prohibited captured data
 

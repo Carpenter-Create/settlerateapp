@@ -402,9 +402,16 @@ the consolidated tip apply are complete.
 
 ## Epic 7 — Staging Environment
 
+**Status:** **In progress** (founder-authorized). ADR 0008 **accepted**.
+PR 0 = ADR + inventory. Later PRs provision/wire staging under ADR 0008.
+
+Authority: `docs/adr/0008-environment-topology.md`,
+`docs/environment/EPIC7_ENVIRONMENT_INVENTORY.md`.
+
 Allowed when authorized: staging database/app, Stripe **test** configuration,
 staging admin process, deployment workflow.  
-Do not point staging at live Stripe secrets.
+Do not point staging at live Stripe secrets. Do not mutate production Auth /
+Stripe / Supabase secrets. Do not resume Phase 7B.
 
 ---
 
