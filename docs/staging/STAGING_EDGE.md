@@ -50,13 +50,13 @@ Configure in the **staging** Supabase Auth settings (HARD STOP if done on produc
 
 | Setting | Value |
 |---------|--------|
-| Site URL | `https://staging.settlerate.com` (or exact staging Vercel hostname once allowlisted) |
-| Additional redirect URLs | Same staging origin(s); local origins only if intentionally staging-linked |
+| Site URL | `https://settlerate-app-staging.vercel.app` (**configured**) |
+| Additional redirect URLs | Staging Vercel host, `https://staging.settlerate.com/**`, local origins (**configured**) |
 | Email | Synthetic testers only; do not use production SMTP |
 
-Application allowlist already includes `https://staging.settlerate.com` (PR 1).
-If the public staging host is a specific `*.vercel.app` URL, add that **exact**
-origin in app allowlists in a follow-up commit before using it for Auth.
+Application allowlists include `https://staging.settlerate.com` and the exact
+Vercel production hostname `https://settlerate-app-staging.vercel.app`
+(no `*.vercel.app` wildcards). Production Auth was not mutated.
 
 ## Export / storage
 
@@ -85,17 +85,13 @@ Production env on that project (staging SPA) currently includes:
 
 - `VITE_SUPABASE_URL` → staging Supabase
 - `VITE_SUPABASE_PUBLISHABLE_KEY` → staging anon
-- `VITE_APP_ORIGIN` → `https://staging.settlerate.com`
+- `VITE_APP_ORIGIN` → `https://settlerate-app-staging.vercel.app`
 - `VITE_SENTRY_ENVIRONMENT` → `staging`
 
-Still required before SPA smoke:
+SPA is deployed from GitHub to this project. Optional follow-ups:
 
-1. Connect GitHub repo `Carpenter-Create/settlerateapp` to this Vercel project
-   (or `vercel deploy` from an authorized operator) — do not point the
-   production `settlerate-app` project at staging env.
-2. Enable Deployment Protection when available.
-3. Attach custom domain `staging.settlerate.com` when DNS is ready.
-4. Configure staging Supabase Auth Site URL / redirects for that origin.
+1. Enable Deployment Protection when available.
+2. Attach custom domain `staging.settlerate.com` when DNS is ready (already allowlisted).
 
 ## Isolation falsification (PR 3)
 

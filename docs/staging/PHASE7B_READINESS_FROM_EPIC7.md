@@ -2,31 +2,32 @@
 
 **Date:** 2026-08-08  
 **Authority:** Epic 7 kickoff; `docs/PHASE7B_LIVE_STRIPE_CUTOVER_PLAN.md`  
-**Verdict:** Phase 7B is **NOT ready to resume**. Staging foundation is in place;
-operator activation + end-to-end staging smoke remain.
+**Verdict:** Phase 7B is **NOT ready to resume**. Staging topology and Auth/SPA
+activation advanced; Stripe test checkout remains blocked on SettleRate
+`sk_test_…`.
 
 ## Questions answered
 
 ### Is staging production-like enough?
 
-**Partially.** Isolated Supabase project, migration tip through Epic 7 test-price
-allowlist, seven Edge Functions deployed, separate Vercel project with staging
-client env, Stripe **test** catalog + webhook endpoint created, observability
-environment tagging implemented.
+**Mostly for non-billing paths.** Isolated Supabase + Vercel projects, migration
+tip through Epic 7 test-price allowlist, seven Edge Functions deployed, SPA at
+`https://settlerate-app-staging.vercel.app`, staging Auth Site URL/redirects
+configured, Stripe **test** catalog + rotated webhook + webhook secret set,
+observability environment tagging implemented.
 
-**Gaps:** SPA not yet Git-deployed; Auth Site URL not configured; staging Edge
-Stripe secrets not set via Dashboard (CLI token limitation); custom domain DNS
-optional but preferred origin is already allowlisted.
+**Gap:** staging Edge `STRIPE_SECRET_KEY` (`sk_test_…`) not set — agent tooling
+cannot read Stripe Dashboard secret keys.
 
 ### Are auth, billing, entitlement, export, observability validated there?
 
 | Surface | Repo / infra | E2E smoke |
 |---------|--------------|-----------|
-| Auth | Origin allowlist + docs | **Not yet** (Auth Dashboard + SPA) |
-| Billing test mode | Catalog + webhook + fence | **Not yet** (needs `sk_test_` secrets) |
+| Auth | Origin allowlist + staging Auth config + SPA | **Partial** (config done; full signup email smoke open) |
+| Billing test mode | Catalog + webhook + fence + whsec | **Blocked** (needs `sk_test_`) |
 | Entitlement | TS/SQL allowlist + unit tests | **Not yet** (needs checkout smoke) |
 | Export/storage | Bucket + Edge deploy | **Not yet** |
-| Observability | Environment tags | **Not yet** (optional DSN) |
+| Observability | Environment tags + Edge `SENTRY_ENVIRONMENT` | **Partial** (optional DSN) |
 
 ### Are remaining risks known?
 

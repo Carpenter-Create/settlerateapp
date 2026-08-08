@@ -18,7 +18,8 @@
 | Product | `prod_V2FlK0MVh9ZmBh` |
 | Monthly price | `price_1U2BGAC56u2NxRItx3etGK2q` (`settlerate_professional_monthly_staging_test`) |
 | Annual price | `price_1U2BGBC56u2NxRIt8cw5cx2m` (`settlerate_professional_annual_staging_test`) |
-| Webhook endpoint | `we_1U2BGEC56u2NxRIt4U7MBnqg` → `https://gkhbalfpxjtleypbabjo.supabase.co/functions/v1/stripe-webhook` |
+| Webhook endpoint (active) | `we_1U2DA3C56u2NxRItrLZk7FMx` → `https://gkhbalfpxjtleypbabjo.supabase.co/functions/v1/stripe-webhook` |
+| Webhook endpoint (retired) | `we_1U2BGEC56u2NxRIt4U7MBnqg` (disabled after secret rotation) |
 
 Retired Phase 6 sandbox prices remain **non-granting**.
 
@@ -32,28 +33,30 @@ Retired Phase 6 sandbox prices remain **non-granting**.
 SQL `is_professional_price` includes both live and staging-test IDs so staging
 webhooks can grant. Live Stripe will not emit staging-test price IDs.
 
-## Operator: set staging Edge secrets (Dashboard)
+## Staging Edge secrets status
 
-CLI `supabase secrets set` may fail if the local access token is not an `sbp_…`
-personal token. Use **Staging** project → Edge Functions → Secrets:
-
-| Secret | Value |
+| Secret | Status |
 |--------|--------|
-| `STRIPE_SECRET_KEY` | Stripe Dashboard → test mode → Secret key (`sk_test_…`) |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook `we_1U2BGEC56u2NxRIt4U7MBnqg` signing secret (`whsec_…`) |
-| `CHECKOUT_MAINTENANCE` | `false` (staging only) |
-| `SENTRY_ENVIRONMENT` | `staging` (when using a staging DSN) |
+| `STRIPE_WEBHOOK_SECRET` | **Set** (rotated endpoint `we_1U2DA3C56u2NxRItrLZk7FMx`) |
+| `CHECKOUT_MAINTENANCE` | **Set** `false` (staging only) |
+| `SENTRY_ENVIRONMENT` | **Set** `staging` |
+| `STRIPE_SECRET_KEY` | **Open** — requires SettleRate Dashboard test-mode `sk_test_…` (not available via Stripe MCP / local Stripe CLI profiles) |
 
-Then redeploy billing functions:
+Set the remaining secret on **staging only**:
 
 ```bash
+# Requires SUPABASE_ACCESS_TOKEN=sbp_… and SettleRate sk_test_…
+supabase secrets set STRIPE_SECRET_KEY=sk_test_… --project-ref gkhbalfpxjtleypbabjo
 bash scripts/staging/deploy-staging-functions.sh
 ```
 
+Or Staging project → Edge Functions → Secrets in the Dashboard.
+
 ## Isolation falsification
 
-- [ ] Staging secrets list has `sk_test_` prefix only (no `sk_live_`)
-- [ ] Staging webhook URL host is `gkhbalfpxjtleypbabjo`
+- [x] Staging webhook URL host is `gkhbalfpxjtleypbabjo`
+- [x] Staging `CHECKOUT_MAINTENANCE=false` / `SENTRY_ENVIRONMENT=staging` set
+- [ ] Staging secrets list includes `STRIPE_SECRET_KEY` with `sk_test_` only (no `sk_live_`)
 - [ ] Production Edge Stripe secrets unchanged
 - [ ] Production `CHECKOUT_MAINTENANCE` still `true`
 - [ ] create-checkout with staging SPA selects staging test price IDs

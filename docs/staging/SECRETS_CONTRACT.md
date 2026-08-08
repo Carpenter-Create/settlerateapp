@@ -11,8 +11,11 @@
 | Supabase project name | SettleRate Staging |
 | Supabase project ref | `gkhbalfpxjtleypbabjo` |
 | Supabase region | `us-east-1` |
-| Planned custom app origin | `https://staging.settlerate.com` |
+| Active SPA origin | `https://settlerate-app-staging.vercel.app` |
+| Planned custom app origin | `https://staging.settlerate.com` (allowlisted; DNS optional) |
 | Vercel project | `settlerate-app-staging` (id `prj_GMmcFJmTAQnpXRtwux8VqUzM6wGo`; separate from production) |
+| Stripe test webhook (active) | `we_1U2DA3C56u2NxRItrLZk7FMx` |
+| Stripe test webhook (retired) | `we_1U2BGEC56u2NxRIt4U7MBnqg` (disabled) |
 | Production Supabase ref (do not use) | `vpcxzbaxhpucvevnkalo` |
 
 ## Client (Vercel staging project / `.env.staging`)
