@@ -2268,14 +2268,6 @@
       "schema": "public"
     },
     {
-      "grantee": "PUBLIC",
-      "isGrantable": false,
-      "objectName": "generate_share_token()",
-      "objectType": "function",
-      "privilege": "EXECUTE",
-      "schema": "public"
-    },
-    {
       "grantee": "postgres",
       "isGrantable": false,
       "objectName": "generate_share_token()",
@@ -3380,41 +3372,9 @@
       "schema": "public"
     },
     {
-      "grantee": "anon",
-      "isGrantable": false,
-      "objectName": "touch_comparison_share(p_token text)",
-      "objectType": "function",
-      "privilege": "EXECUTE",
-      "schema": "public"
-    },
-    {
-      "grantee": "authenticated",
-      "isGrantable": false,
-      "objectName": "touch_comparison_share(p_token text)",
-      "objectType": "function",
-      "privilege": "EXECUTE",
-      "schema": "public"
-    },
-    {
       "grantee": "postgres",
       "isGrantable": false,
       "objectName": "touch_comparison_share(p_token text)",
-      "objectType": "function",
-      "privilege": "EXECUTE",
-      "schema": "public"
-    },
-    {
-      "grantee": "anon",
-      "isGrantable": false,
-      "objectName": "validate_comparison_share(p_token text)",
-      "objectType": "function",
-      "privilege": "EXECUTE",
-      "schema": "public"
-    },
-    {
-      "grantee": "authenticated",
-      "isGrantable": false,
-      "objectName": "validate_comparison_share(p_token text)",
       "objectType": "function",
       "privilege": "EXECUTE",
       "schema": "public"
@@ -5211,8 +5171,8 @@
     }
   ],
   "meta": {
-    "capturedAt": "2026-08-08T03:32:00.297Z",
-    "gitSha": "9f46e289355dd85fcb520e49fb5102c8bb4b11f0",
+    "capturedAt": "2026-08-08T03:42:12.692Z",
+    "gitSha": "0b3bc8dfbca9ce9a9c0dd68e5f154a7a82828904",
     "projectRef": null,
     "readOnly": true,
     "schemas": [
@@ -5917,6 +5877,10 @@
       },
       {
         "file": "20260808030000_epic6_pr2f_rpc_execute_least_privilege.sql",
+        "status": "applied"
+      },
+      {
+        "file": "20260808040000_epic6_pr2h_legacy_share_rpc_execute.sql",
         "status": "applied"
       }
     ],

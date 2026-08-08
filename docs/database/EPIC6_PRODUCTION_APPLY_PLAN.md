@@ -53,12 +53,24 @@ Before any production apply:
 | Rollback | GRANT statements in `RPC_EXECUTE_REMEDIATION_PR2F.md` |
 | Blast radius | Privilege-only; deferred advisor/share/`has_role`/`is_admin` unchanged |
 
+### 3. `20260808040000_epic6_pr2h_legacy_share_rpc_execute.sql`
+
+| Field | Value |
+|-------|--------|
+| Purpose | Revoke client EXECUTE on unused legacy comparison-share RPCs |
+| Expected production change | No EXECUTE for anon/authenticated/PUBLIC on `generate_share_token`, `validate_comparison_share`, `touch_comparison_share` |
+| Precondition | PR 2H merged; tables remain retained |
+| Validation | `docs/database/DUAL_COMPARISON_EXPORT_DISPOSITION_PR2H.md` |
+| Rollback | `GRANT EXECUTE ... TO anon, authenticated` on the three functions |
+| Blast radius | Privilege-only; no App/Edge `.rpc` consumers found |
+
+## Docs-only slices (no production SQL)
+
+- PR 2E: `TYPES_RECONCILIATION_PR2E.md`
+- PR 2G: `STORAGE_PLATFORM_DRIFT_PR2G.md`
+- PR 2I: `ADVISOR_ADR0011_CHECK_PR2I.md` (HARD STOP for destructive advisor work)
+
 ## Not included yet
 
-Later Epic 6 tip migrations that introduce production-facing SQL will be
-appended here when merged.
-
-### PR 2E note
-
-`TYPES_RECONCILIATION_PR2E.md` — generated types only; **no production
-migration**.
+Later tip migrations appended when merged. Destructive legacy DROPs and
+advisor disposition remain unauthorized.

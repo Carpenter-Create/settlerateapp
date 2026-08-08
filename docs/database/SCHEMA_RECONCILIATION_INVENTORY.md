@@ -99,10 +99,10 @@ Still not asserted from capture alone (ADR 0007 / ops):
 | Object | Provenance (repo) | In `types.ts`? | Consumers (repo) | Disposition hint (not decided) |
 |--------|-------------------|----------------|------------------|--------------------------------|
 | `subscriptions` | PR 2A: `20260112193137_restore_subscriptions_profiles_provenance.sql` (production-backed); protect triggers in `20260112204012_*` | yes | Edge `stripe-webhook` best-effort; protect triggers | Structural match in PR 2B drift; grant breadth → security slice; ADR 0007 disposition still open |
-| `saved_comparisons`, `comparison_items`, `comparison_versions` | `20260111225012_*` | yes | No active App/Edge `.from`; still entitlement-triggered | Dual comparison model |
+| `saved_comparisons`, `comparison_items`, `comparison_versions` | `20260111225012_*` | yes | No active App/Edge `.from`; still entitlement-triggered | **legacy_temporarily_retained** (PR 2H) |
 | `comparison_shares` | `20260119150338_*` | yes | Share RPCs; no App/Edge rpc callers found | Dual comparison model |
 | `export_files`, `export_shares` | `20260113202811_*` | yes | No App/Edge `.from`; active path uses `pdf_exports` | Dual export model |
-| `advisor_access_requests` | `20260112073631_*` | yes | Deprecated advisor RPCs; Edge assign is 410 | Pending ADR 0011 |
+| `advisor_access_requests` | `20260112073631_*` | yes | Deprecated advisor RPCs; Edge assign is 410 | **legacy_temporarily_retained** until ADR 0011 (PR 2I check) |
 
 ---
 
@@ -189,12 +189,12 @@ Trigger helpers of note: `handle_new_user`, entitlement/ownership enforcers, `pr
 
 ## High-signal reconciliation candidates (post-PR 2C)
 
-1. **Grant / security remediation** — classified in `GRANT_SECURITY_DECISIONS_PR2C.md` / `grant-security-inventory-pr2c.json` (no GRANT/REVOKE in PR 2C).  
-2. **Generated types** — still missing `admin_bootstrap_tokens`, `stripe_webhook_events`, `entitlement_bypass_log`.  
-3. **Dual comparison models** and **dual export models** — both reconstruct; disposition still open (ADR 0007).  
-4. **Advisor leftovers** — blocked on ADR 0011.  
-5. **Storage / platform catalog** — expected env drift; excluded from app grant remediation (group D).  
-6. **`subscriptions` / `profiles` provenance** — PR 2A/2B complete structurally; grant least-privilege pending founder decisions.  
+1. **Grant / security remediation** — PR 2D/2F tip migrations in repo; production apply gated.  
+2. **Generated types** — PR 2E regenerated; `generated_types_mismatch` cleared.  
+3. **Dual comparison/export models** — **legacy_temporarily_retained** (PR 2H); no DROP.  
+4. **Advisor leftovers** — **legacy_temporarily_retained** until ADR 0011 (PR 2I check).  
+5. **Storage / platform catalog** — accepted platform variance (PR 2G).  
+6. **`subscriptions` / `profiles` provenance** — PR 2A/2B complete; PR 2D grant tip in repo.  
 
 ---
 
