@@ -33,7 +33,7 @@ is **unresolved** — do not invent the outcome in code.
 | 0005 | Shared package architecture | `0005-shared-package-architecture.md` | Epic 5 | accepted (Epic 5 complete on `main`) |
 | 0006 | Database schema source of truth | `0006-database-schema-source-of-truth.md` | Epic 6 | **accepted** (Epic 6 complete — repository + production tip remediation) |
 | 0007 | Legacy schema disposition | `0007-legacy-schema-disposition.md` | Epic 6 | **accepted** (Epic 6 complete — repository + production tip remediation; ADR 0011 still required for advisor drops) |
-| 0008 | Environment topology | `0008-environment-topology.md` | Epic 7 | required / not yet written |
+| 0008 | Environment topology | `0008-environment-topology.md` | Epic 7 | **accepted** (Epic 7 PR 0; separate staging Vercel + Supabase + Stripe test) |
 | 0009 | Billing recovery guarantee | `0009-billing-recovery-guarantee.md` | Epic 8 | required / not yet written |
 | 0010 | Backup and restore policy | `0010-backup-and-restore-policy.md` | Epic 10 | required / not yet written |
 | 0011 | Advisor model decision | `0011-advisor-model-decision.md` | Cross-cutting | required / not yet written |

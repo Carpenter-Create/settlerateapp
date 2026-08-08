@@ -70,8 +70,12 @@ disposition. Authority:
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` (execution record).
-**Epic 7 and later have not begun and still require separate explicit
-authorization.**
+**Epic 7 (Staging Environment)** is **in progress** under founder
+authorization. ADR 0008 is **accepted**. Authority:
+`docs/adr/0008-environment-topology.md`,
+`docs/environment/EPIC7_ENVIRONMENT_INVENTORY.md`. Do not resume Phase 7B
+from Epic 7. **Epic 8 and later have not begun** and still require separate
+explicit authorization.
 
 Do not begin AWS / Cloudflare / Next.js platform migration unless explicitly authorized.
 
@@ -92,11 +96,12 @@ npm run build
 **Allowed by default:** inspect the repo, create a dedicated branch, edit within authorized phase/epic/PR scope, run validation, create bounded commits, push the branch, open or update a **draft** PR.
 
 **Requires explicit authorization:** resume Phase 7B live smoke / beta /
-public checkout, begin Epic 7+, or mutate production outside an explicitly
+public checkout, begin Epic 8+, or mutate production outside an explicitly
 authorized package.
 
 **Epic 6 note:** repository + production tip remediation are complete.
-ADR 0011 and Epic 7+ remain founder-gated.
+ADR 0011 remains founder-gated. Epic 7 is in progress under separate
+authorization; Epic 8+ remain founder-gated.
 
 ## Phase boundaries
 

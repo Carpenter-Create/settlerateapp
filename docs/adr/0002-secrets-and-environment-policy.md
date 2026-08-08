@@ -86,7 +86,8 @@ Required preserve constraints for all Epic 2 work:
 ### 7. Environment topology
 
 - Epic 2 supports **production** and **local development** only.
-- Dedicated staging remains deferred to Epic 7 (`ADR 0008`).
+- Dedicated staging is defined by Epic 7 (`docs/adr/0008-environment-topology.md`,
+  **accepted**).
 - Do not invent a staging or preview deployment topology in Epic 2.
 
 ### 8. Environment validation

@@ -343,8 +343,9 @@ the ADR §11 sequence.
 **Status:** **COMPLETE** — repository closure and production remediation
 applied/verified (ADR 0006 + ADR 0007 **accepted**; PR 0–2J + closure;
 tip package applied 2026-08-08). Founder FD-* decisions are **ACCEPTED**.
-ADR 0011 remains required for destructive advisor disposition. Epic 7+
-unauthorized. See `docs/database/EPIC6_CLOSURE.md` and
+ADR 0011 remains required for destructive advisor disposition. Epic 7 is
+separately authorized (in progress). Epic 8+ unauthorized. See
+`docs/database/EPIC6_CLOSURE.md` and
 `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` (execution record).
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`,
@@ -377,7 +378,7 @@ the consolidated tip apply are complete.
   without a new founder-authorized package
 - Product/formula/export/billing/entitlement semantic changes
 - Destructive legacy drops without ADR 0007 evidence
-- Inventing advisor intent (ADR 0011); Epic 7+
+- Inventing advisor intent (ADR 0011); Epic 8+
 
 ### Epic 6 PR sequence (complete)
 
@@ -402,9 +403,16 @@ the consolidated tip apply are complete.
 
 ## Epic 7 — Staging Environment
 
+**Status:** **In progress** (founder-authorized). ADR 0008 **accepted**.
+PR 0 = ADR + inventory. Later PRs provision/wire staging under ADR 0008.
+
+Authority: `docs/adr/0008-environment-topology.md`,
+`docs/environment/EPIC7_ENVIRONMENT_INVENTORY.md`.
+
 Allowed when authorized: staging database/app, Stripe **test** configuration,
 staging admin process, deployment workflow.  
-Do not point staging at live Stripe secrets.
+Do not point staging at live Stripe secrets. Do not mutate production Auth /
+Stripe / Supabase secrets. Do not resume Phase 7B.
 
 ---
 
