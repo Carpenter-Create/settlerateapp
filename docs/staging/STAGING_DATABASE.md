@@ -19,8 +19,8 @@
 
 | Check | Result |
 |-------|--------|
-| Migration tip | `20260808040000` / `epic6_pr2h_legacy_share_rpc_execute` |
-| Migration versions applied | 33 (full git chain present in staging ledger) |
+| Migration tip | `20260808143109` / `epic7_staging_test_price_allowlist` |
+| Migration versions applied | 34 (full git chain + Epic 7 staging test price allowlist) |
 | Production tip after apply | unchanged at `20260808040000` (no production mutation) |
 | User data rows | `auth.users` / `profiles` / `scenarios` = **0** (no prod clone) |
 | Storage | private `exports` bucket present (from migrations) |

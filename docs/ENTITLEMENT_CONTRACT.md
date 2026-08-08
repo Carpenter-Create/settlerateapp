@@ -64,12 +64,20 @@ No custom grace period.
 
 ## Price allowlist
 
-Only these **live** price IDs grant Professional (Phase 7B catalog):
+**Live** price IDs grant Professional in production (Phase 7B catalog):
 
 - `price_1U0t2QC56u2NxRItya8dElyg` (monthly — lookup `settlerate_professional_monthly` · $19/mo)
 - `price_1U0t2jC56u2NxRItM185AYK9` (annual — lookup `settlerate_professional_annual` · $190/yr)
 
 Product: `prod_V0usthAF9WnoGJ` (SettleRate Professional, live Stripe account).
+
+**Staging test-mode** price IDs (Epic 7; Stripe `livemode=false` only) also grant
+via SQL/TS allowlist so staging webhooks work. `create-checkout` refuses to
+charge them under `sk_live_` and refuses live prices under `sk_test_`. See
+`docs/staging/STAGING_STRIPE.md`.
+
+- `price_1U2BGAC56u2NxRItx3etGK2q` / `price_1U2BGBC56u2NxRIt8cw5cx2m`
+- Product: `prod_V2FlK0MVh9ZmBh`
 
 ### Never grant (retired / legacy)
 
