@@ -4,8 +4,8 @@
 **Secrets map:** `docs/staging/SECRETS_CONTRACT.md`  
 **Database:** `docs/staging/STAGING_DATABASE.md`  
 **Seed:** `docs/staging/STAGING_SEED_POLICY.md`  
-**Status:** Database + Edge deploy path documented (PR 3). Stripe test-mode
-(PR 4) and smoke (PR 5) remain.
+**Status:** Epic 7 repository/infrastructure path documented through PR 5.
+Operator E2E activation remains open (`STAGING_SMOKE.md`).
 
 ## Topology (binding)
 

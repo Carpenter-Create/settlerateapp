@@ -403,11 +403,14 @@ the consolidated tip apply are complete.
 
 ## Epic 7 — Staging Environment
 
-**Status:** **In progress** (founder-authorized). ADR 0008 **accepted**.
+**Status:** **Repository/infrastructure complete** (founder-authorized).
+ADR 0008 **accepted**. End-to-end SPA/Auth/Stripe-secret smoke remains
+**operator-gated** — see `docs/staging/EPIC7_CLOSURE.md` and
+`docs/staging/STAGING_SMOKE.md`. Phase 7B is **not** resumed.
 
 Authority: `docs/adr/0008-environment-topology.md`,
 `docs/environment/EPIC7_ENVIRONMENT_INVENTORY.md`,
-`docs/staging/STAGING_DATABASE.md`.
+`docs/staging/EPIC7_CLOSURE.md`.
 
 Allowed when authorized: staging database/app, Stripe **test** configuration,
 staging admin process, deployment workflow.  
@@ -420,8 +423,8 @@ Stripe / Supabase secrets. Do not resume Phase 7B.
 | **PR 1** | Staging secrets contract / origin allowlist scaffold | **Complete / merged** |
 | **PR 2** | Staging Supabase migrations + seed/isolation docs | **Complete / merged** |
 | **PR 3** | Staging Edge / auth / export / observability wiring | **Complete / merged** |
-| **PR 4** | Stripe test-mode staging integration | **In progress** |
-| **PR 5** | Smoke / parity / Phase 7B readiness (not resume) | Not started |
+| **PR 4** | Stripe test-mode staging integration | **Complete / merged** |
+| **PR 5** | Smoke / parity / Phase 7B readiness (not resume) | **This PR** (E2E operator-gated after merge) |
 
 ---
 
