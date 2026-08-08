@@ -35,6 +35,7 @@ is **unresolved** — do not invent the outcome in code.
 | 0007 | Legacy schema disposition | `0007-legacy-schema-disposition.md` | Epic 6 | **accepted** (Epic 6 complete — repository + production tip remediation; ADR 0011 still required for advisor drops) |
 | 0008 | Environment topology | `0008-environment-topology.md` | Epic 7 | **accepted** (Epic 7 PR 0; separate staging Vercel + Supabase + Stripe test) |
 | 0009 | Billing recovery guarantee | `0009-billing-recovery-guarantee.md` | Epic 8 | **accepted** (Epic 8 complete; staging recovery verified) |
+| 0014 | Deployment pipeline | `0014-deployment-pipeline.md` | Epic 9 | **accepted** (Epic 9 PR 0; founder intent + discovery) |
 | 0010 | Backup and restore policy | `0010-backup-and-restore-policy.md` | Epic 10 | required / not yet written |
 | 0011 | Advisor model decision | `0011-advisor-model-decision.md` | Cross-cutting | required / not yet written |
 | 0012 | Entitlement logic location | `0012-entitlement-logic-location.md` | Epic 5 | required / not yet written |

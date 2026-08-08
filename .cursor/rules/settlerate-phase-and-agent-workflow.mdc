@@ -56,16 +56,23 @@ Epic 7 (`docs/staging/PHASE7B_READINESS_FROM_EPIC7.md`).
 **accepted**; staging drill verified). Authority:
 `docs/adr/0009-billing-recovery-guarantee.md`,
 `docs/billing/EPIC8_CLOSURE.md`. **Production mutation / recovery apply /
-Epic 8 production migration remain founder-gated.** Do not begin Epic 9+
+Epic 8 production migration remain founder-gated.**
+
+**Epic 9 — Deployment Pipeline** is **in progress** (founder-authorized;
+ADR 0014 **accepted**). Authority:
+`docs/adr/0014-deployment-pipeline.md`,
+`docs/deployment/EPIC9_DEPLOYMENT_INVENTORY.md`. Staging automation
+authorized; **production deploy execution blocked**. Do not begin Epic 10+
 or ADR 0011. Do not resume Phase 7B.
 
 ## Prohibited unless explicitly authorized
 
 - Supabase Auth Dashboard redirect-allowlist changes without founder authorization
 - Changing production Sentry DSNs, project routing, or capture scope without founder authorization
-- Beginning Epic 9+ ahead of sequence / dependency gates
+- Beginning Epic 10+ ahead of sequence / dependency gates
 - Mutating production databases (DDL/DML/GRANT) / `db push` / `migration repair` without founder authorization
 - Applying Epic 8 migrations / recovery / Edge deploy to production without a separate founder package
+- Executing production application deployment (SPA/Edge/schema) without a separate founder package
 - Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
 - Next.js platform migration
@@ -89,7 +96,7 @@ That means: do not redefine export fields, field meanings, omission rules, snaps
 
 **Epic 5 clarification:** when Shared Core Package work is authorized, Epic 5 **may** relocate export-related code and update imports. Epic 5 **may not** redefine export fields, meanings, or contract behavior.
 
-**Never begin the next phase or Epic 9+ automatically.**
+**Never begin the next phase or Epic 10+ automatically.**
 
 # Agent Autonomy
 
@@ -110,8 +117,9 @@ Agents **may not** without explicit authorization:
   prompt explicitly restores Epic-scoped autonomy)
 - Mutate production databases / apply migrations to production without a
   separate founder-authorized package
-- Begin Epic 9+ or resume Phase 7B live smoke / beta / public checkout
+- Begin Epic 10+ or resume Phase 7B live smoke / beta / public checkout
 - Apply Epic 8 recovery or migrations to production without a separate founder package
+- Execute production deployment apply without a separate founder package
 - Disable `CHECKOUT_MAINTENANCE` or open public Checkout while Phase 7B is paused
 
 # Conduct

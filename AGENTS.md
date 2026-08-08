@@ -79,8 +79,10 @@ verified. Phase 7B is **not** resumed
 `docs/staging/EPIC7_CLOSURE.md`. **Epic 8 (Billing Recovery Capability)** is
 **COMPLETE** (ADR 0009 **accepted**; staging recovery drill verified).
 Authority: `docs/adr/0009-billing-recovery-guarantee.md`,
-`docs/billing/EPIC8_CLOSURE.md`. Production activation of Epic 8 migrations /
-recovery, Phase 7B resume, ADR 0011, and Epic 9+ remain separately gated.
+`docs/billing/EPIC8_CLOSURE.md`. **Epic 9 (Deployment Pipeline)** is
+**authorized and in progress** (ADR 0014). Production deployment execution,
+Epic 8 production activation, Phase 7B resume, ADR 0011, and Epic 10+ remain
+separately gated.
 
 Do not begin AWS / Cloudflare / Next.js platform migration unless explicitly authorized.
 
@@ -101,13 +103,12 @@ npm run build
 **Allowed by default:** inspect the repo, create a dedicated branch, edit within authorized phase/epic/PR scope, run validation, create bounded commits, push the branch, open or update a **draft** PR.
 
 **Requires explicit authorization:** resume Phase 7B live smoke / beta /
-public checkout, begin Epic 9+, or mutate production outside an explicitly
-authorized package.
+public checkout, begin Epic 10+, execute production deployment, or mutate
+production outside an explicitly authorized package.
 
-**Epic 6–8 note:** Epic 6 tip remediation, Epic 7 staging, and Epic 8
-billing recovery (staging) are complete. ADR 0011 and Epic 9+ remain
-founder-gated. Do not apply Epic 8 migrations or recovery to production
-without a separate founder package.
+**Epic 6–9 note:** Epic 6–8 are complete. Epic 9 may automate staging and
+define production gates only — **not** execute production deploys or apply
+Epic 8 migrations to production. ADR 0011 and Epic 10+ remain founder-gated.
 
 ## Phase boundaries
 

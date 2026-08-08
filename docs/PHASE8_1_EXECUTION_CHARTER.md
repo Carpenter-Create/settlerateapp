@@ -162,7 +162,8 @@ Epic 6 is **COMPLETE** (repository closure and production tip remediation
 applied/verified). See `docs/database/EPIC6_CLOSURE.md` and
 `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` (execution record).
 Epic 7 is **COMPLETE**. Epic 8 is **COMPLETE** (ADR 0009; staging verified).
-Epic 9+ and ADR 0011 remain separately gated.
+Epic 9 is **authorized and in progress** (ADR 0014). Epic 10+ and ADR 0011
+remain separately gated.
 
 ## Required ADRs
 
