@@ -61,12 +61,23 @@ jobs:
           fetch-depth: 0
 
       - name: Refuse SHA not on main
-        run: |
-          git fetch origin main --depth=1
-          if ! git merge-base --is-ancestor "${DEPLOY_GIT_SHA}" origin/main; then
-            echo "REFUSE: ${DEPLOY_GIT_SHA} is not an ancestor of origin/main" >&2
-            exit 1
-          fi
+        # Use compare API (not shallow fetch + merge-base): depth=1 fetch cannot
+        # prove ancestry for older main commits.
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = process.env.DEPLOY_GIT_SHA;
+            const cmp = await github.rest.repos.compareCommitsWithBasehead({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              basehead: `main...${sha}`,
+            });
+            // SHA is on main iff it introduces no commits ahead of main.
+            if ((cmp.data.ahead_by || 0) > 0) {
+              core.setFailed(
+                `REFUSE: ${sha} is not contained in main (ahead_by=${cmp.data.ahead_by})`
+              );
+            }
 
       - name: Refuse SHA without successful CI validate
         if: ${{ github.event_name == 'workflow_dispatch' }}
