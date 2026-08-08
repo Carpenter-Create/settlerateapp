@@ -26,16 +26,18 @@
 | Staging Edge `CHECKOUT_MAINTENANCE` | `false` | Done |
 | Staging Edge `SENTRY_ENVIRONMENT` | `staging` | Done |
 | Staging Edge `STRIPE_WEBHOOK_SECRET` | set (rotated webhook) | Done |
-| Staging Edge `STRIPE_SECRET_KEY` | `sk_test_…` | **Open — HARD STOP** |
+| Staging Edge `STRIPE_SECRET_KEY` present | name in secrets list | Done (updated 2026-08-08T17:29Z) |
+| Staging Edge `STRIPE_SECRET_KEY` **valid at Stripe** | `create-checkout` → `cs_test_…` | **FAIL — HARD STOP** (`Invalid API Key`) |
+| Live price rejected under staging | 400 `PRICE_NOT_ALLOWED` | Done |
 
 ## Remaining operator activation
 
 | Step | Owner | Status |
 |------|-------|--------|
-| Set staging Edge `STRIPE_SECRET_KEY` (`sk_test_…` for SettleRate acct `acct_1U0irnC56u2NxRIt`) | Founder | **Open / HARD STOP** |
+| Re-set a **valid** SettleRate test-mode secret key on staging (`sk_test_…`, no quotes/whitespace) | Founder | **Open / HARD STOP** |
 | Optional DNS / TLS for `staging.settlerate.com` | Founder / ops | Optional |
 | Enable Vercel Deployment Protection if available | Founder / ops | Optional |
-| Full Auth/billing/export E2E after `sk_test_` | Founder / ops | Blocked on secret |
+| Full billing/export E2E after valid `sk_test_` | Founder / ops | Blocked on key validity |
 
 ## End-to-end smoke (after `sk_test_` secret)
 

@@ -40,17 +40,20 @@ webhooks can grant. Live Stripe will not emit staging-test price IDs.
 | `STRIPE_WEBHOOK_SECRET` | **Set** (rotated endpoint `we_1U2DA3C56u2NxRItrLZk7FMx`) |
 | `CHECKOUT_MAINTENANCE` | **Set** `false` (staging only) |
 | `SENTRY_ENVIRONMENT` | **Set** `staging` |
-| `STRIPE_SECRET_KEY` | **Open** — requires SettleRate Dashboard test-mode `sk_test_…` (not available via Stripe MCP / local Stripe CLI profiles) |
+| `STRIPE_SECRET_KEY` | **Present but invalid at runtime** — Stripe returns `Invalid API Key provided: sk_test_...` from staging `create-checkout` |
 
-Set the remaining secret on **staging only**:
+Re-set a fresh SettleRate **test-mode Secret key** on **staging only** (no quotes/newlines), then redeploy:
 
 ```bash
-# Requires SUPABASE_ACCESS_TOKEN=sbp_… and SettleRate sk_test_…
+# Requires SUPABASE_ACCESS_TOKEN=sbp_… and a valid SettleRate sk_test_…
 supabase secrets set STRIPE_SECRET_KEY=sk_test_… --project-ref gkhbalfpxjtleypbabjo
 bash scripts/staging/deploy-staging-functions.sh
 ```
 
-Or Staging project → Edge Functions → Secrets in the Dashboard.
+Dashboard: https://dashboard.stripe.com/acct_1U0irnC56u2NxRIt/test/apikeys  
+Or Staging project → Edge Functions → Secrets.
+
+**Falsification note:** secret **presence** alone is insufficient. Closure requires a Checkout Session with `cs_test_…` and staging test price IDs.
 
 ## Isolation falsification
 
