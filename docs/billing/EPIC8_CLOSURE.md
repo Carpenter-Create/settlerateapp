@@ -2,7 +2,9 @@
 
 - Status: **COMPLETE** (repository + staging drill)
 - Date: 2026-08-08
-- - Final main SHA: `6eafd0e7a66df8350ca77f6f0c7dfd31b1c3363e`
+- Final main SHA: `4a8120782b09f2e5b9382e04ce5305dd30658216`
+  (closure content landed in `6eafd0e7a66df8350ca77f6f0c7dfd31b1c3363e`;
+  subsequent commits only pin/polish this record)
 - Authority: `docs/adr/0009-billing-recovery-guarantee.md`
 
 ## PR train
@@ -11,7 +13,8 @@
 |----|--------|--------|
 | [#81](https://github.com/Carpenter-Create/settlerateapp/pull/81) | ADR 0009 + inventory + governance | Merged |
 | [#82](https://github.com/Carpenter-Create/settlerateapp/pull/82) | Evidence schema, webhook ingestion, reconstruction, CLI, tests, runbook | Merged |
-| This PR | Staging migration/Edge deploy + recovery drill evidence + closure + timestamp diff normalize | In progress |
+| [#83](https://github.com/Carpenter-Create/settlerateapp/pull/83) | Staging drill + closure + timestamp diff normalize | Merged |
+| [#84](https://github.com/Carpenter-Create/settlerateapp/pull/84) | Closure SHA pin | Merged |
 
 ## ADR 0009 decision summary
 
