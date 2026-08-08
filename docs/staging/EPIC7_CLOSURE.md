@@ -16,7 +16,7 @@ origin fail-closed behavior, and observability environment separation.
 - Epic 8 and ADR 0011 have **not** begun.
 - Production Supabase `vpcxzbaxhpucvevnkalo` was **not** mutated by Epic 7 ops.
 
-**Final `main` SHA:** `0da650bb75ea3652c66e80329d3b37d5662a9acc` (closure PR #78); SHA polish may follow.
+**Closure content SHA:** `0da650bb75ea3652c66e80329d3b37d5662a9acc` (#78). **Document tip at #79:** `b92dda54930f203888c09b424644a178f02afba0`. Later tip SHAs may only polish this table.
 
 ## Closure criteria
 
@@ -71,6 +71,7 @@ origin fail-closed behavior, and observability environment separation.
 | #76 | Auth/admin evidence | `b6c32a2` |
 | #77 | Invalid-key hard-stop record | `6d4e3c6` |
 | #78 | E2E completion / COMPLETE | `0da650bb75ea3652c66e80329d3b37d5662a9acc` |
+| #79 | Closure SHA polish | `b92dda54930f203888c09b424644a178f02afba0` |
 
 ## Runtime verification evidence (2026-08-08)
 
