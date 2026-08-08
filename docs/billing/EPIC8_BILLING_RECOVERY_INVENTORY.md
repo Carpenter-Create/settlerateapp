@@ -154,7 +154,9 @@ See full ADR. Short form:
    entitlement.
 2. Durable verified Event JSON is recovery authority; Stripe API is
    auxiliary.
-3. Store verified Event JSON + immutable scalars; never secrets/headers.
+3. Store verified Event JSON + (when applied) post-retrieve subscription
+   source + immutable scalars; never secrets/headers. Live path is
+   retrieve-first — Event JSON alone is not always parity-sufficient.
 4. Evidence append-only; ledger status mutable.
 5. Idempotent on `event.id`; recovery repeatable.
 6. Order by `event.created` then `event_id`; stale protection retained.

@@ -74,9 +74,19 @@ event.” Do not treat `billing` as proof of historical events.
 
 ### 3. Retained representation
 
-Persist the **verified Stripe Event JSON** (the object returned by
-`constructEvent` / `constructEventAsync`) as the recovery-authoritative
-payload.
+Persist **two** immutable evidence layers per authenticated event:
+
+**A. Verified Stripe Event JSON** — the object returned by `constructEvent` /
+`constructEventAsync` (required for every retained event).
+
+**B. Applied subscription source object (when billing is applied)** — the
+Subscription-shaped JSON that the live webhook actually passed into
+`mapSubscriptionToBillingSnapshot` **after**
+`resolveSubscriptionBillingSnapshot` / Stripe retrieve (when that path runs).
+If the live handler applies billing without a retrieve (rare), store the
+same object it mapped. If the live handler does **not** apply billing
+(ignored, unsupported, unresolved user, stale skip, error), omit B or store
+null — do not invent a snapshot.
 
 Also persist immutable scalar metadata extracted at ingest:
 
@@ -91,11 +101,12 @@ Also persist immutable scalar metadata extracted at ingest:
 secret keys, webhook signing secrets, Authorization values, cookies, or
 unrelated secrets.
 
-**Rationale vs raw body:** signature verification already authenticates the
-body into an Event object. The Event JSON is necessary and sufficient for
-deterministic reconstruction of the fields this product applies. Retaining
-headers/secrets adds risk without recovery value. Exact raw body retention
-is **not** required by this ADR.
+**Rationale:** Live ingestion is retrieve-first for subscription mapping
+(`resolveSubscriptionBillingSnapshot`); Event `data.object` alone can
+diverge from what was applied. Layer A authenticates “what Stripe
+delivered.” Layer B records “what SettleRate applied.” Offline recovery
+reconstructs from A+B without requiring Stripe network. Exact raw HTTP body
+retention is **not** required.
 
 Payloads remain sensitive (emails and other Stripe fields may appear).
 Treat as confidential service-role data (see §12).
@@ -117,7 +128,7 @@ Treat as confidential service-role data (see §12).
 - Recovery/replay over the same evidence set must be safely repeatable
   (second apply is a no-op when state already matches).
 
-### 6. Ordering
+### 6. Ordering and reconstruction parity
 
 - Primary ordering key for reconstruction: Stripe `event.created`
   ascending, with `event_id` as deterministic tie-break.
@@ -126,22 +137,47 @@ Treat as confidential service-role data (see §12).
   do not let an older `event.created` overwrite newer applied billing
   (`last_stripe_event_at` semantics), during live webhook processing **or**
   recovery apply.
-- Out-of-order evidence is folded by replaying the ordered history; the
-  resulting state must match applying newest-wins under the same rules as
-  the live webhook.
+- Out-of-order evidence is folded by replaying the ordered history.
+- **Parity rule:** reconstruction must apply the **same acceptance /
+  ignore / stale / admin-bypass / entitlement-mapping rules** as the live
+  webhook handlers for each event type. Prefer Layer B (applied
+  subscription source) when present; otherwise map from Event
+  `data.object` only when the live path would have done so without
+  retrieve. Do not claim bit-identical parity with historical retrieve
+  results when Layer B was never stored (pre-Epic-8 ledger rows) —
+  those subjects are incomplete for offline recovery unless an explicit
+  external-reconcile mode (§8) is used.
+
+### 6a. Side-effect parity (admin and non-apply paths)
+
+Recovery **must not** write `billing` for subjects the live webhook would
+have ignored (including admin entitlement bypass) or otherwise refused.
+Replayed ignored/unsupported/unresolved events contribute audit/status
+only, not manufactured entitlement.
 
 ### 7. Incomplete history
 
+“Complete enough” for a scoped subject means: durable evidence exists for
+the events needed to justify the proposed `billing` row under the same
+rules the live webhook uses, including Layer B for any retrieve-first apply
+that Epic 8 ingestion performed. Absence of pre-Epic-8 historical
+payloads is an explicit gap — fail closed for offline apply.
+
 Recovery must **fail closed** (unresolved) when:
 
-- required event types for the scoped subject are missing
+- evidence required to justify proposed entitlement is missing
 - evidence is malformed / not valid Event JSON
 - customer/user cannot be resolved under existing webhook rules
 - evidence conflicts cannot be reduced by ordering + stale rules
+- Layer B is missing for a retrieve-first apply that reconstruction would
+  need for offline parity (unless §8 external-reconcile is explicitly
+  invoked and labeled)
 - `livemode=true` evidence appears in a staging-only recovery run
 - environment targeting is ambiguous
 
-Do not manufacture entitlement to “help” the customer.
+Do not manufacture entitlement to “help” the customer. There is no
+fixed universal “must have checkout.session.completed” checklist —
+coverage is defined by live handler acceptance for the scoped outcome.
 
 ### 8. Stripe API as auxiliary evidence
 
@@ -254,8 +290,8 @@ scoped subjects before mutation.
 ## Consequences
 
 - Implementation must add durable evidence persistence after successful
-  signature verification and before (or atomically with) claim/processing,
-  without deleting evidence on retryable failure.
+  signature verification (Layer A immediately; Layer B when billing is
+  applied), without deleting evidence on retryable failure.
 - `release_stripe_webhook_event` DELETE-as-retry must be replaced or
   narrowed so evidence retention is not destroyed (ledger status machine).
 - Terminal webhook outcomes must record honest `action_taken` values.
