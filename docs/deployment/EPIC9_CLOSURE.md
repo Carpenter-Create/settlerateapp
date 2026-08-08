@@ -6,11 +6,11 @@
 - Runbook: `docs/deployment/DEPLOYMENT_RUNBOOK.md`
 - Inventory: `docs/deployment/EPIC9_DEPLOYMENT_INVENTORY.md`
 
-## Final main SHA (at closure writing)
+## Final main SHA
 
-Closure PR updates this tip after merge. Implementation merge SHA:
+`b49529177ea6012e18dbcc404869764684453b34` (#88 closure)
 
-`01ff92c0beb646f46c9b8b8225322bb1d63b4b9a` (#87)
+Implementation merge SHA: `01ff92c0beb646f46c9b8b8225322bb1d63b4b9a` (#87)
 
 ## PR train
 
