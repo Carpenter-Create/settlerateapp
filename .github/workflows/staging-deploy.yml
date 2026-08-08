@@ -62,7 +62,8 @@ jobs:
 
       - name: Refuse SHA not on main
         run: |
-          git fetch origin main --depth=1
+          # Full fetch of main — --depth=1 breaks merge-base ancestry for older pinned SHAs.
+          git fetch origin main
           if ! git merge-base --is-ancestor "${DEPLOY_GIT_SHA}" origin/main; then
             echo "REFUSE: ${DEPLOY_GIT_SHA} is not an ancestor of origin/main" >&2
             exit 1
