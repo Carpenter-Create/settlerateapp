@@ -7,6 +7,7 @@
 --     subscription source (Layer B) for retrieve-first parity
 --   - Stop DELETE-on-retry for the idempotency ledger (preserve evidence FK)
 --   - Allow reclaim of failed_retryable / stuck processing rows
+--     (processing reclaim only after stuck threshold; not in-flight duplicates)
 --   - Recovery-run audit table (no event payloads)
 --
 -- Excluded: production apply, entitlement semantic changes, ADR 0011
@@ -137,6 +138,9 @@ GRANT SELECT, INSERT ON TABLE public.billing_recovery_runs TO service_role;
 
 -- ---------------------------------------------------------------------------
 -- 3) Claim: reclaim failed_retryable / stuck processing; never require DELETE
+--    In-flight `processing` rows are NOT reclaimable (ADR 0009 §5 idempotency).
+--    Only reclaim `processing` after a stuck threshold so concurrent Stripe
+--    deliveries cannot double-apply billing mutations.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.claim_stripe_webhook_event(
   p_event_id text,
@@ -153,6 +157,7 @@ SET search_path = public
 AS $$
 DECLARE
   v_action text;
+  v_processed_at timestamptz;
 BEGIN
   INSERT INTO public.stripe_webhook_events (
     event_id, event_type, stripe_customer_id, app_user_id, action_taken, details
@@ -167,12 +172,17 @@ BEGIN
   RETURN true;
 EXCEPTION
   WHEN unique_violation THEN
-    SELECT action_taken INTO v_action
+    SELECT action_taken, processed_at INTO v_action, v_processed_at
     FROM public.stripe_webhook_events
     WHERE event_id = p_event_id
     FOR UPDATE;
 
-    IF v_action IN ('failed_retryable', 'processing') THEN
+    IF v_action = 'failed_retryable'
+       OR (
+         v_action = 'processing'
+         AND v_processed_at IS NOT NULL
+         AND v_processed_at < now() - interval '5 minutes'
+       ) THEN
       UPDATE public.stripe_webhook_events
       SET
         event_type = p_event_type,

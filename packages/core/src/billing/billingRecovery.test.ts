@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertRecoveryEnvironmentTarget,
   diffBillingState,
+  isProposedBillingStale,
   reconstructBillingFromEvidence,
   type BillingRecoveryEvidenceRecord,
 } from "./billingRecovery.ts";
@@ -193,6 +194,31 @@ describe("reconstructBillingFromEvidence", () => {
     ]);
     expect(result.status).toBe("unresolved");
   });
+
+  it("maps entitlement with wall-clock now like live webhook (not event.created)", () => {
+    const periodEndUnix = Math.floor(Date.now() / 1000) - 60;
+    const result = reconstructBillingFromEvidence([
+      evidence({
+        eventId: "evt_period_boundary",
+        eventType: "customer.subscription.updated",
+        eventCreated: 1_700_000_000,
+        appliedSubscriptionSource: subSource({
+          status: "active",
+          items: {
+            data: [
+              {
+                current_period_end: periodEndUnix,
+                price: { id: STAGING_PRICE, product: STAGING_PRODUCT },
+              },
+            ],
+          },
+        }),
+      }),
+    ]);
+    expect(result.status).toBe("reconstructed");
+    // Live webhook omits `now` → expired period → free (not entitled via event.created)
+    expect(result.proposed?.entitlementStatus).toBe("free");
+  });
 });
 
 describe("diffBillingState", () => {
@@ -220,6 +246,46 @@ describe("diffBillingState", () => {
       }),
     ]).proposed!;
     expect(diffBillingState(proposed, proposed)).toEqual([]);
+  });
+});
+
+describe("isProposedBillingStale", () => {
+  it("flags proposed lastStripeEventAt older than current", () => {
+    const proposed = reconstructBillingFromEvidence([
+      evidence({
+        eventId: "evt_old",
+        eventType: "customer.subscription.created",
+        eventCreated: 1_700_000_000,
+      }),
+    ]).proposed!;
+    expect(
+      isProposedBillingStale(
+        { lastStripeEventAtIso: new Date(1_700_000_500 * 1000).toISOString() },
+        proposed
+      )
+    ).toBe(true);
+  });
+
+  it("allows proposed equal or newer than current", () => {
+    const proposed = reconstructBillingFromEvidence([
+      evidence({
+        eventId: "evt_new",
+        eventType: "customer.subscription.created",
+        eventCreated: 1_700_000_500,
+      }),
+    ]).proposed!;
+    expect(
+      isProposedBillingStale(
+        { lastStripeEventAtIso: new Date(1_700_000_500 * 1000).toISOString() },
+        proposed
+      )
+    ).toBe(false);
+    expect(
+      isProposedBillingStale(
+        { lastStripeEventAtIso: new Date(1_700_000_000 * 1000).toISOString() },
+        proposed
+      )
+    ).toBe(false);
   });
 });
 

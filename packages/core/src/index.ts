@@ -107,6 +107,7 @@ export {
   BILLING_RECOVERY_HANDLED_EVENT_TYPES,
   reconstructBillingFromEvidence,
   diffBillingState,
+  isProposedBillingStale,
   assertRecoveryEnvironmentTarget,
   emptyReconstructedBillingState,
 } from "./billing/billingRecovery.ts";

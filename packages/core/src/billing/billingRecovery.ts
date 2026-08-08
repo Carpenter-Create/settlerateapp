@@ -253,6 +253,8 @@ export function reconstructBillingFromEvidence(
     }
 
     const planCode = resolvePlanCodeFromPrice(snapshot.priceId);
+    // Parity with live stripe-webhook: omit `now` so evaluateEntitlement uses
+    // wall clock at mapping time (ADR 0009 §6 entitlement-mapping rules).
     const decision = evaluateEntitlement({
       stripeStatus: snapshot.subscriptionStatus,
       priceId: snapshot.priceId,
@@ -262,7 +264,6 @@ export function reconstructBillingFromEvidence(
           ? new Date(snapshot.currentPeriodEnd * 1000).toISOString()
           : null,
       cancelAtPeriodEnd: snapshot.cancelAtPeriodEnd,
-      now: new Date(row.eventCreated * 1000),
     });
 
     proposed = {
@@ -343,6 +344,27 @@ export function diffBillingState(
     }
   }
   return diffs;
+}
+
+/**
+ * ADR 0009 §6 stale guard for recovery apply: same rule as live webhook —
+ * do not let an older proposed `lastStripeEventAt` overwrite newer billing.
+ */
+export function isProposedBillingStale(
+  current: Partial<ReconstructedBillingState> | null | undefined,
+  proposed: ReconstructedBillingState
+): boolean {
+  if (!current?.lastStripeEventAtIso || !proposed.lastStripeEventAtIso) {
+    return false;
+  }
+  const currentMs = new Date(current.lastStripeEventAtIso).getTime();
+  const proposedMs = new Date(proposed.lastStripeEventAtIso).getTime();
+  if (Number.isNaN(currentMs) || Number.isNaN(proposedMs)) {
+    return false;
+  }
+  const currentUnix = Math.floor(currentMs / 1000);
+  const proposedUnix = Math.floor(proposedMs / 1000);
+  return proposedUnix < currentUnix;
 }
 
 /** Guard helpers for operational tooling (pure). */

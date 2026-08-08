@@ -21,6 +21,7 @@ import { createClient } from "@supabase/supabase-js";
 import {
   assertRecoveryEnvironmentTarget,
   diffBillingState,
+  isProposedBillingStale,
   reconstructBillingFromEvidence,
 } from "../../packages/core/src/billing/billingRecovery.ts";
 
@@ -241,13 +242,19 @@ async function main() {
       ? diffBillingState(current, reconstruction.proposed)
       : [];
 
+  // ADR 0009 §6: same stale protection as live webhook before apply
+  const staleRelativeToCurrent =
+    reconstruction.status === "reconstructed" &&
+    reconstruction.proposed != null &&
+    isProposedBillingStale(current, reconstruction.proposed);
+
   const summary = {
     result:
       reconstruction.status === "reconstructed"
-        ? diffs.length === 0
-          ? "noop"
-          : args.mode === "apply"
-            ? "success"
+        ? staleRelativeToCurrent
+          ? "skipped_stale"
+          : diffs.length === 0
+            ? "noop"
             : "success"
         : reconstruction.status === "noop"
           ? "noop"
@@ -262,6 +269,7 @@ async function main() {
     unresolvedReasons: reconstruction.unresolvedReasons,
     appliedEventIds: reconstruction.appliedEventIds,
     skippedEventIds: reconstruction.skippedEventIds,
+    staleRelativeToCurrent,
     current,
     proposed: reconstruction.proposed,
     diffs,
@@ -271,7 +279,8 @@ async function main() {
     args.mode === "apply" &&
     reconstruction.status === "reconstructed" &&
     reconstruction.proposed &&
-    diffs.length > 0
+    diffs.length > 0 &&
+    !staleRelativeToCurrent
   ) {
     const p = reconstruction.proposed;
     const { error: applyErr } = await supabase.from("billing").upsert(
