@@ -2,15 +2,16 @@
  * Environment-aware application origin resolution for Supabase Auth email
  * redirects (signup confirmation, magic-link login, password reset).
  *
- * Authority: docs/adr/0002-secrets-and-environment-policy.md §3
- * (Phase 8.1 Epic 2, final code PR).
+ * Authority: docs/adr/0002-secrets-and-environment-policy.md §3;
+ * docs/adr/0008-environment-topology.md (Epic 7 staging origin).
  *
  * Design constraints (do not weaken without a new ADR decision):
  * - Production always resolves to DEFAULT_APP_ORIGIN unless VITE_APP_ORIGIN
- *   is explicitly set to one of the approved local-development origins below.
+ *   is explicitly set to one of the approved non-production origins below
+ *   (local development or staging).
  * - Matching is exact-string only — no prefix, suffix, substring, wildcard,
- *   or regex matching. This mirrors `supabase/functions/_shared/appOrigin.ts`
- *   and intentionally rejects lookalike/deceptive-suffix origins.
+ *   or regex matching. This mirrors `@settlerate/core/app-origin` and
+ *   intentionally rejects lookalike/deceptive-suffix origins.
  * - This module never reads `window.location.origin`. Auth redirect targets
  *   must not accept arbitrary runtime origins (open-redirect risk) — the
  *   only inputs are the build-time `VITE_APP_ORIGIN` value and the hardcoded
@@ -25,11 +26,17 @@
  * `src/lib/clientEnv.ts`.
  */
 
-/** Canonical production application origin used whenever VITE_APP_ORIGIN is absent or not an approved local-development origin. */
+/** Canonical production application origin used whenever VITE_APP_ORIGIN is absent or not an approved non-production origin. */
 export const DEFAULT_APP_ORIGIN = "https://app.settlerate.com";
 
-/** Approved local-development origins (exact match only). Mirrors the local-dev entries in `supabase/functions/_shared/appOrigin.ts`. */
-const APPROVED_LOCAL_ORIGINS = [
+/**
+ * Approved non-production origins for `VITE_APP_ORIGIN` (exact match only).
+ * Staging custom domain is listed per ADR 0008; arbitrary `*.vercel.app`
+ * hosts are intentionally NOT accepted (must be added as exact entries if
+ * used before DNS exists).
+ */
+const APPROVED_NON_PRODUCTION_ORIGINS = [
+  "https://staging.settlerate.com",
   "http://localhost:5173",
   "http://localhost:8080",
   "http://127.0.0.1:5173",
@@ -45,7 +52,7 @@ function isNonEmptyString(value: unknown): value is string {
  *
  * `rawEnvOrigin` should be `import.meta.env.VITE_APP_ORIGIN` — never
  * `window.location.origin`. Returns `DEFAULT_APP_ORIGIN` unless the value is
- * an exact string match for one of `APPROVED_LOCAL_ORIGINS`. Because
+ * an exact string match for one of `APPROVED_NON_PRODUCTION_ORIGINS`. Because
  * approval requires exact equality against a fixed allowlist (not URL
  * parsing or protocol inspection), unset, blank, malformed, non-http(s), and
  * lookalike/deceptive-suffix values are all rejected by construction.
@@ -57,7 +64,7 @@ export function resolveAuthOrigin(rawEnvOrigin: string | null | undefined): stri
 
   const trimmed = rawEnvOrigin.trim();
 
-  if ((APPROVED_LOCAL_ORIGINS as readonly string[]).includes(trimmed)) {
+  if ((APPROVED_NON_PRODUCTION_ORIGINS as readonly string[]).includes(trimmed)) {
     return trimmed;
   }
 

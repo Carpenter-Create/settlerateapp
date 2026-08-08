@@ -3,7 +3,8 @@
  *
  * Canonical: `@settlerate/core/app-origin`
  * Authority: docs/adr/0002-secrets-and-environment-policy.md;
- * docs/adr/0005-shared-package-architecture.md (Epic 5 PR 4).
+ * docs/adr/0005-shared-package-architecture.md (Epic 5 PR 4);
+ * docs/adr/0008-environment-topology.md (Epic 7 staging origin).
  *
  * Matching is exact-string only — no prefix, suffix, or substring matching.
  * This intentionally rejects lookalike / deceptive-suffix origins
@@ -19,6 +20,7 @@
 
 const ALLOWED_ORIGINS = [
   "https://app.settlerate.com",
+  "https://staging.settlerate.com",
   "http://localhost:5173",
   "http://localhost:8080",
   "http://127.0.0.1:5173",
