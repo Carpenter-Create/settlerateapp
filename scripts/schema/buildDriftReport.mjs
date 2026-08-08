@@ -319,6 +319,10 @@ function renderMarkdown({ meta, summary, records, harnessStubDelta, productionSu
     lines.push(
       "Privilege identity compared: schema + object type + object identity (function signature where applicable) + grantee + privilege type + is_grantable."
     );
+    lines.push("");
+    lines.push(
+      "After Epic 6 PR 2D tip migration (`20260808020000_*`), new `privilege_only_in_a` grant rows for revoked client privileges are **approved remediation pending production application** — not a regression. See `docs/database/GRANT_REMEDIATION_PR2D.md`. Production capture is unchanged until a founder-authorized apply."
+    );
   }
   lines.push("");
 

@@ -340,23 +340,21 @@ the ADR §11 sequence.
 
 ## Epic 6 — Schema Reconciliation
 
-**Status:** **In progress — PR 2C** (ADR 0006 + ADR 0007 **accepted**;
-PR 0–2B complete/merged). PR 2C = grant/security classification + founder
-decision package (evidence only). Founder decisions
-`FD-SUB-CLIENT-WRITES`, `FD-DEFAULT-BROAD-GRANTS`,
-`FD-LEGACY-DUAL-MODEL-GRANTS`, and `FD-RPC-EXECUTE-PUBLIC` are
-**ACCEPTED** (binding targets in `GRANT_SECURITY_DECISIONS_PR2C.md`);
-GRANT/REVOKE remediation remains unauthorized. Later PR 2 slices
-unauthorized. Epic 7+ unauthorized.
+**Status:** **In progress — autonomous repository completion train** (ADR 0006
++ ADR 0007 **accepted**; PR 0–2C complete/merged). Founder FD-* decisions
+are **ACCEPTED**. Bound by the Epic 6 Autonomous Completion Master Prompt:
+agents may implement, review, merge, and continue remaining **repository-side**
+Epic 6 slices without per-PR re-authorization. **Production mutation remains
+NOT authorized** until a consolidated apply package is founder-approved
+(`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`). Epic 7+ unauthorized.
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
 `docs/database/SCHEMA_DRIFT_REPORT.md`,
-`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`,
-`docs/database/SCHEMA_DRIFT_REFRESH_PR2B.md`,
 `docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`,
-`docs/database/grant-security-inventory-pr2c.json`.
+`docs/database/GRANT_REMEDIATION_PR2D.md`,
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`.
 
 **Goal:** Make the database schema reproducible from git, capture
 production reality read-only before mutation, classify drift (including
@@ -366,23 +364,21 @@ financial/export/entitlement semantics.
 **Requires Epic 4** (complete). ADR 0006 and ADR 0007 are accepted.
 Production capture must precede reconciliation/mutation. Baseline
 implementation (history + documented consolidated baseline boundary) is
-deferred to a later separately authorized Epic 6 slice.
+part of the autonomous train (PR 2J), still without production apply.
 
-### Allowed in Epic 6 PR 2C (this slice)
+### Allowed in Epic 6 autonomous train (repository only)
 
-- Classify production-vs-migration_only grant drift into a least-privilege
-  decision inventory (machine + human readable)
-- Founder decision package with recommended answers
-- Proposed later remediation grouping (non-executable)
-- Read-only production introspection if needed
-- Governance / inventory updates for PR 2C scope only
+- Sequential PR 2D–2J + closure slices as justified by evidence
+- Tip migrations, tests, types regeneration, docs/governance updates
+- Draft → Ready → merge of repository-only Epic 6 PRs after convergence
+- Maintain cumulative `EPIC6_PRODUCTION_APPLY_PLAN.md` (docs only)
 
-### Prohibited in Epic 6 PR 2C
+### Prohibited without HARD STOP / founder gate
 
-- Migrations; GRANT/REVOKE; production mutation; `db push`; migration repair
-- RLS / policy / function / RPC / types / app/Edge behavior changes
-- Dual comparison/export disposition; advisor/ADR 0011 object removal
-- Beginning later PR 2 slices or Epic 7+
+- Any production mutation (`db push`, GRANT/REVOKE/DDL/DML, migration repair)
+- Product/formula/export/billing/entitlement semantic changes
+- Destructive legacy drops without ADR 0007 evidence
+- Inventing advisor intent (ADR 0011); Epic 7+
 
 ### Proposed Epic 6 PR sequence
 
@@ -392,9 +388,15 @@ deferred to a later separately authorized Epic 6 slice.
 | **PR 1** | Read-only production schema capture + machine-readable drift report (no mutation) | **Complete / merged** |
 | **PR 2A** | Schema provenance / reconstruction blocker (`subscriptions` + scoped `profiles` columns) | **Complete / merged** |
 | **PR 2B** | Post-provenance drift refresh (evidence only) | **Complete / merged** |
-| **PR 2C** | Grant/security classification + founder decision package (evidence only) | **In progress** |
-| **PR 2+ (later)** | Separately authorized reconciliation slices by risk/domain | Not authorized |
-| **Closure** | Clean reconstruction proof; baseline/SoT docs; types regeneration as needed | Not authorized |
+| **PR 2C** | Grant/security classification + founder decision package (evidence only) | **Complete / merged** |
+| **PR 2D** | First least-privilege grant remediation (repo + local proof; prod apply gated) | **In progress** |
+| **PR 2E** | Generated types reconciliation | Authorized (autonomous train) |
+| **PR 2F** | RPC / function EXECUTE reconciliation | Authorized (autonomous train) |
+| **PR 2G** | Storage / platform drift normalization | Authorized (autonomous train) |
+| **PR 2H** | Dual comparison / export model disposition | Authorized (autonomous train) |
+| **PR 2I** | Advisor / ADR 0011 check | Authorized (autonomous train; HARD STOP if unresolved) |
+| **PR 2J** | Consolidated schema baseline | Authorized (autonomous train) |
+| **Closure** | Clean reconstruction proof; classified remaining drift; production apply package | Authorized (autonomous train) |
 
 ---
 

@@ -156,6 +156,19 @@ async function runSqlAssertions(client) {
   await psqlFile(client, join(root, "supabase/tests/phase6_entitlement.sql"));
   process.stdout.write("Running phase6_function_grants.sql assertions...\n");
   await psqlFile(client, join(root, "supabase/tests/phase6_function_grants.sql"));
+
+  // Epic 6 PR 2D privilege contract: the CI GRANT ALL overlay above is for
+  // RLS SET ROLE matrices (ADR 0004) and re-introduces privileges that the
+  // tip migration removes. Re-apply the PR 2D migration so privilege
+  // assertions see the repository least-privilege target without undoing
+  // earlier RLS behavioral coverage.
+  process.stdout.write("Re-applying Epic 6 PR 2D grant remediation for privilege assertions...\n");
+  await psqlFile(
+    client,
+    join(root, "supabase/migrations/20260808020000_epic6_pr2d_grant_least_privilege.sql")
+  );
+  process.stdout.write("Running epic6_pr2d_grant_privileges.sql assertions...\n");
+  await psqlFile(client, join(root, "supabase/tests/epic6_pr2d_grant_privileges.sql"));
 }
 
 async function runConcurrentLimitTest(client) {

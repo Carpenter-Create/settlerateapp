@@ -166,9 +166,10 @@ remains separately unauthorized until founder authorization.
 | **PR 1** | Read-only production schema capture + machine-readable drift report; no schema mutation | Complete / merged |
 | **PR 2A** | Schema provenance / reconstruction blocker (`subscriptions` + scoped `profiles` columns) | Complete / merged |
 | **PR 2B** | Post-provenance drift refresh (evidence only) | Complete / merged |
-| **PR 2C** | Grant/security classification + founder decision package (evidence only) | In progress |
-| **PR 2+** | Separately authorized reconciliation slices by risk/domain | Separate |
-| **Closure** | Prove clean reconstruction; update baseline/SoT docs; regenerate types as needed | Separate |
+| **PR 2C** | Grant/security classification + founder decision package (evidence only) | Complete / merged |
+| **PR 2D** | First least-privilege grant remediation (repo + local proof; prod apply gated) | In progress (autonomous train) |
+| **PR 2E–2J** | Types, RPC EXECUTE, storage, dual-model, advisor check, baseline | Autonomous train (repo only) |
+| **Closure** | Prove clean reconstruction; update baseline/SoT docs; regenerate types as needed | Autonomous train (repo only) |
 
 Suggested slice grouping (to refine from drift report):
 
@@ -195,9 +196,14 @@ checkout maintenance posture; security weakenings “to make green.”
 - Production capture is complete (Epic 6 PR 1). PR 2A restored orphan
   provenance in git without applying DDL to production in that PR.
 - PR 2B refreshed the post-provenance drift baseline (evidence only).
-- PR 2C classifies grant/security least-privilege decisions (evidence only;
-  no GRANT/REVOKE).
-- Baseline implementation remains deferred to a separately authorized slice.
+- PR 2C classified grant/security least-privilege decisions (founder FD-*
+  accepted).
+- PR 2D implements the first repository grant remediation tip migration;
+  production apply remains separately gated via
+  `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`.
+- Remaining repository Epic 6 slices proceed under the autonomous
+  completion train; production mutation still requires founder apply
+  authorization.
 
 ## Alternatives considered
 
