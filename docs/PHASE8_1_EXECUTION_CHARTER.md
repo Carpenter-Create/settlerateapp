@@ -46,7 +46,7 @@ Follow the roadmap epic sequence. Do not skip dependency gates:
 3. Epic 3 — Observability (**complete on `main` and production-activated/verified 2026-08-06** — see ADR 0003)  
 4. Epic 4 — RLS Security Test Expansion (**complete on `main`**; see ADR 0004)  
 5. Epic 5 — Shared Core Package (**complete on `main`**; ADR 0005 accepted; PR 0–6 merged)  
-6. Epic 6 — Schema Reconciliation (**In progress — PR 2B**; ADR 0006/0007 accepted; PR 0–2A complete/merged; PR 2B = post-provenance drift refresh; later PR 2 slices unauthorized; requires Epic 4)  
+6. Epic 6 — Schema Reconciliation (**In progress — PR 2C**; ADR 0006/0007 accepted; PR 0–2B complete/merged; PR 2C = grant/security classification + founder decision package; later PR 2 slices unauthorized; requires Epic 4)  
 7. Epic 7 — Staging Environment  
 8. Epic 8 — Billing Recovery Capability  
 9. Epic 9 — Deployment Pipeline  
@@ -146,19 +146,22 @@ application surfaces; Edge resolves package subpaths via per-function
 | **PR 0** | ADR 0006 + ADR 0007 (accepted) + repository schema inventory + methodology | **Complete / merged** |
 | **PR 1** | Read-only production schema capture + machine-readable drift report (no mutation) | **Complete / merged** |
 | **PR 2A** | Schema provenance / reconstruction blocker (`subscriptions` + scoped `profiles` columns) | **Complete / merged** |
-| **PR 2B** | Post-provenance drift refresh (evidence only) | **In progress** |
+| **PR 2B** | Post-provenance drift refresh (evidence only) | **Complete / merged** |
+| **PR 2C** | Grant/security classification + founder decision package (evidence only) | **In progress** |
 | **PR 2+ (later)** | Separately authorized reconciliation slices | Not authorized |
 
-Epic 6 **PR 2B** recomputes production-vs-repository drift after PR 2A
-made migration-only reconstruction succeed. Evidence only — no schema
-mutation, grant changes, or types regeneration. Do not begin later PR 2
-slices or Epic 7+ automatically. Authority (accepted):
+Epic 6 **PR 2C** classifies production-vs-migration_only grant drift into
+a least-privilege decision package. Founder FD-* decisions are **accepted**
+(see `docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`); evidence only —
+no GRANT/REVOKE, migrations, or production mutation in this PR. Do not
+begin later PR 2 slices or Epic 7+ automatically. Authority (accepted):
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
 `docs/database/SCHEMA_DRIFT_REPORT.md`,
 `docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`,
-`docs/database/SCHEMA_DRIFT_REFRESH_PR2B.md`. See
+`docs/database/SCHEMA_DRIFT_REFRESH_PR2B.md`,
+`docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`. See
 `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 
 ## Required ADRs

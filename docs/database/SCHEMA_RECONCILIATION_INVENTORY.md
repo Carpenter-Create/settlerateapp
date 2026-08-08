@@ -1,8 +1,8 @@
 # Schema Reconciliation Inventory
 
-**Phase:** 8.1 / Epic 6 PR 2B  
+**Phase:** 8.1 / Epic 6 PR 2C  
 **Date:** 2026-08-07  
-**Status:** REPOSITORY EVIDENCE + PRODUCTION CAPTURE (PR 1) + PROVENANCE REPAIR (PR 2A) + POST-PROVENANCE DRIFT REFRESH (PR 2B)
+**Status:** REPOSITORY EVIDENCE + PRODUCTION CAPTURE (PR 1) + PROVENANCE REPAIR (PR 2A) + POST-PROVENANCE DRIFT REFRESH (PR 2B) + GRANT/SECURITY CLASSIFICATION (PR 2C)
 
 This document inventories schema objects and consumers discoverable from
 the SettleRate **git repository**. Live production catalog evidence for
@@ -187,15 +187,14 @@ Trigger helpers of note: `handle_new_user`, entitlement/ownership enforcers, `pr
 
 ---
 
-## High-signal reconciliation candidates (post-PR 2B)
+## High-signal reconciliation candidates (post-PR 2C)
 
-1. **Grant / security surface** — largest residual non-match class; `subscriptions` table grants now match production (including broad DML/TRUNCATE) but need founder/security review; many other public tables still show production-broader privileges. See `SCHEMA_DRIFT_REFRESH_PR2B.md`.  
-2. **Generated types** — still missing `admin_bootstrap_tokens`, `stripe_webhook_events`, `entitlement_bypass_log` (types not regenerated in PR 2B).  
-3. **Function/RPC EXECUTE provenance** — e.g. `protect_admin_subscriptions` EXECUTE to `anon`/`authenticated`.  
-4. **Dual comparison models** and **dual export models** — both reconstruct; disposition still open (ADR 0007).  
-5. **Advisor leftovers** — blocked on ADR 0011.  
-6. **Storage / platform catalog** — expected env drift (`buckets` RLS/columns, platform tables, `foldername` fingerprint).  
-7. **`subscriptions` / `profiles` provenance** — PR 2A complete; structural match in PR 2B baseline.
+1. **Grant / security remediation** — classified in `GRANT_SECURITY_DECISIONS_PR2C.md` / `grant-security-inventory-pr2c.json` (no GRANT/REVOKE in PR 2C).  
+2. **Generated types** — still missing `admin_bootstrap_tokens`, `stripe_webhook_events`, `entitlement_bypass_log`.  
+3. **Dual comparison models** and **dual export models** — both reconstruct; disposition still open (ADR 0007).  
+4. **Advisor leftovers** — blocked on ADR 0011.  
+5. **Storage / platform catalog** — expected env drift; excluded from app grant remediation (group D).  
+6. **`subscriptions` / `profiles` provenance** — PR 2A/2B complete structurally; grant least-privilege pending founder decisions.  
 
 ---
 

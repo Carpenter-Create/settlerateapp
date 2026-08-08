@@ -38,15 +38,19 @@ accepted; PR 0–6 merged. See
 `docs/adr/0005-shared-package-architecture.md` and
 `docs/EXPORT_CONTRACT.md`.
 
-**Epic 6 — Schema Reconciliation** is **In progress — PR 2B** (ADR 0006
-and ADR 0007 **accepted**; PR 0–2A complete/merged). PR 2B = post-
-provenance drift refresh (evidence only). See
+**Epic 6 — Schema Reconciliation** is **In progress — PR 2C** (ADR 0006
+and ADR 0007 **accepted**; PR 0–2B complete/merged). PR 2C = grant/
+security classification + founder decision package (evidence only).
+Founder FD-* decisions are **accepted** in
+`docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`; GRANT/REVOKE
+remediation remains unauthorized. See
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
 `docs/database/SCHEMA_DRIFT_REPORT.md`,
-`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`, and
-`docs/database/SCHEMA_DRIFT_REFRESH_PR2B.md`. **Do not begin later
+`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`,
+`docs/database/SCHEMA_DRIFT_REFRESH_PR2B.md`, and
+`docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`. **Do not begin later
 Epic 6 PR 2 slices or Epic 7+ automatically. Do not mutate production
 schema/grants without separate founder authorization.**
 

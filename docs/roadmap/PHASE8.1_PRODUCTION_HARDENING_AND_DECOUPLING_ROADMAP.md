@@ -65,13 +65,14 @@ and export-summary mapping. Goal: prevent business-logic drift.
 
 ### Epic 6 --- Schema Reconciliation
 
-**Status: In progress — PR 2B** (ADR 0006 / ADR 0007 **accepted**; PR 0–2A
+**Status: In progress — PR 2C** (ADR 0006 / ADR 0007 **accepted**; PR 0–2B
 complete/merged — see `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
 `docs/database/SCHEMA_DRIFT_REPORT.md`,
 `docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`,
-`docs/database/SCHEMA_DRIFT_REFRESH_PR2B.md`).
+`docs/database/SCHEMA_DRIFT_REFRESH_PR2B.md`,
+`docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`).
 
 -   Compare production schema against migrations (after read-only capture).
 -   Identify undocumented differences.
@@ -80,7 +81,7 @@ complete/merged — see `docs/adr/0006-database-schema-source-of-truth.md`,
     preserve historical migrations **and** a documented consolidated
     baseline boundary; implementation deferred).
 
-Dependency: requires Epic 4 (met). PR 2B = post-provenance drift refresh
+Dependency: requires Epic 4 (met). PR 2C = grant/security classification
 (in progress). Later PR 2 slices unauthorized. Epic 7+ unauthorized.
 
 ### Epic 7 --- Staging Environment
@@ -142,13 +143,13 @@ deployment process documented - backups verified - monitoring available
 
 ## Next Approved Execution Step
 
-Epic 1–5 are complete on `main`. Epic 6 is **in progress — PR 2B**
-(ADR 0006 / ADR 0007 **accepted**; PR 0–2A complete/merged; post-
-provenance drift refresh).
+Epic 1–5 are complete on `main`. Epic 6 is **in progress — PR 2C**
+(ADR 0006 / ADR 0007 **accepted**; PR 0–2B complete/merged; grant/
+security classification + founder decision package).
 
-**Next implementation step after PR 2B (requires separate founder
-authorization):** later Epic 6 PR 2 slices (recommended: grant/security
-reconciliation) — never automatic. Baseline cutover remains separately
+**Next implementation step after PR 2C (requires separate founder
+authorization):** later Epic 6 PR 2 slices implementing approved grant
+remediation — never automatic. Baseline cutover remains separately
 authorized.
 
 Do not begin later Epic 6 PR 2 slices, Epic 7, or later epics automatically.

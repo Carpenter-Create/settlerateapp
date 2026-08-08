@@ -22,6 +22,7 @@
     "schema:capture": "node scripts/schema/captureFromDatabase.mjs",
     "schema:reconstruct": "node scripts/schema/reconstructLocal.mjs",
     "schema:drift": "node scripts/schema/buildDriftReport.mjs",
+    "schema:grant-security": "node scripts/schema/buildGrantSecurityInventory.mjs && node scripts/schema/renderGrantSecurityDecisions.mjs",
     "schema:epic6-pr1": "node scripts/schema/runEpic6Pr1.mjs",
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p packages/core/tsconfig.json --noEmit && npm run verify:core-boundaries",
     "verify:benchmarks": "node scripts/verify-benchmarks.mjs",
