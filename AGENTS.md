@@ -96,7 +96,7 @@ npm run build
 **Allowed by default:** inspect the repo, create a dedicated branch, edit within authorized phase/epic/PR scope, run validation, create bounded commits, push the branch, open or update a **draft** PR.
 
 **Requires explicit authorization:** resume Phase 7B live smoke / beta /
-public checkout, begin Epic 7+, or mutate production outside an explicitly
+public checkout, begin Epic 8+, or mutate production outside an explicitly
 authorized package.
 
 **Epic 6 note:** repository + production tip remediation are complete.

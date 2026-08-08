@@ -20,7 +20,7 @@
 | Surface | Value |
 |---------|--------|
 | GitHub repo | `Carpenter-Create/settlerateapp` |
-| Vercel homepage (repo metadata) | `https://settlerate-app.vercel.app` |
+| Vercel default hostname (GitHub `homepage` field) | `https://settlerate-app.vercel.app` (unverified in Vercel MCP this session; treat as metadata hint only) |
 | Canonical app origin | `https://app.settlerate.com` |
 | Supabase project ref | `vpcxzbaxhpucvevnkalo` |
 | Supabase API host | `https://vpcxzbaxhpucvevnkalo.supabase.co` |

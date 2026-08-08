@@ -76,8 +76,9 @@ closure — see `docs/database/EPIC6_CLOSURE.md` and
 -   Documented consolidated schema baseline boundary (PR 2J; history preserved).
 -   Tip privilege package applied to production (`20260808020000`–`40000`).
 
-Dependency: requires Epic 4 (met). Epic 7+ unauthorized. ADR 0011 remains
-open for destructive advisor disposition.
+Dependency: requires Epic 4 (met). Epic 7 authorized separately (in
+progress). Epic 8+ unauthorized. ADR 0011 remains open for destructive
+advisor disposition.
 
 ### Epic 7 --- Staging Environment
 

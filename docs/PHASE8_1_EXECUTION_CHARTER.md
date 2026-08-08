@@ -161,7 +161,8 @@ application surfaces; Edge resolves package subpaths via per-function
 Epic 6 is **COMPLETE** (repository closure and production tip remediation
 applied/verified). See `docs/database/EPIC6_CLOSURE.md` and
 `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` (execution record).
-Epic 7+ and ADR 0011 remain separately gated.
+Epic 7 is in progress under founder authorization. Epic 8+ and ADR 0011
+remain separately gated.
 
 ## Required ADRs
 
