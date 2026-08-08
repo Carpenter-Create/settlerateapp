@@ -148,8 +148,8 @@ application surfaces; Edge resolves package subpaths via per-function
 | **PR 2A** | Schema provenance / reconstruction blocker (`subscriptions` + scoped `profiles` columns) | **Complete / merged** |
 | **PR 2B** | Post-provenance drift refresh (evidence only) | **Complete / merged** |
 | **PR 2C** | Grant/security classification + founder decision package (evidence only) | **Complete / merged** |
-| **PR 2D** | First least-privilege grant remediation (repo + local proof; prod apply gated) | **In progress** |
-| **PR 2E** | Generated types reconciliation | Authorized (autonomous train) |
+| **PR 2D** | First least-privilege grant remediation (repo + local proof; prod apply gated) | **Complete / merged** |
+| **PR 2E** | Generated types reconciliation | **In progress** |
 | **PR 2F** | RPC / function EXECUTE reconciliation | Authorized (autonomous train) |
 | **PR 2G** | Storage / platform drift normalization | Authorized (autonomous train) |
 | **PR 2H** | Dual comparison / export model disposition | Authorized (autonomous train) |

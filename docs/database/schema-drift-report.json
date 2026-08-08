@@ -324,7 +324,7 @@
     }
   ],
   "meta": {
-    "generatedAt": "2026-08-08T03:12:39.589Z",
+    "generatedAt": "2026-08-08T03:22:04.729Z",
     "harnessStatus": "reconstruction succeeded",
     "migrationOnlyStatus": "reconstruction succeeded",
     "sources": {
@@ -41354,68 +41354,12 @@
       "objectType": "grant:table",
       "reason": null,
       "schema": "storage"
-    },
-    {
-      "class": "generated_types_mismatch",
-      "compareSurface": "types_vs_production",
-      "consumerNotes": "Absent from generated types.ts. Epic 1 first-admin bootstrap.",
-      "consumers": [
-        "Bootstrap RPCs",
-        "Epic 1 SQL tests"
-      ],
-      "details": {
-        "issue": "in_catalog_not_in_types",
-        "source": "production"
-      },
-      "highPriority": true,
-      "mutationRecommendation": "NONE",
-      "name": "admin_bootstrap_tokens",
-      "objectType": "table",
-      "reason": null,
-      "schema": "public"
-    },
-    {
-      "class": "generated_types_mismatch",
-      "compareSurface": "types_vs_production",
-      "consumerNotes": "Absent from generated types.ts.",
-      "consumers": [
-        "log_admin_entitlement_bypass RPC"
-      ],
-      "details": {
-        "issue": "in_catalog_not_in_types",
-        "source": "production"
-      },
-      "highPriority": false,
-      "mutationRecommendation": "NONE",
-      "name": "entitlement_bypass_log",
-      "objectType": "table",
-      "reason": null,
-      "schema": "public"
-    },
-    {
-      "class": "generated_types_mismatch",
-      "compareSurface": "types_vs_production",
-      "consumerNotes": "Absent from generated types.ts.",
-      "consumers": [
-        "Edge stripe-webhook"
-      ],
-      "details": {
-        "issue": "in_catalog_not_in_types",
-        "source": "production"
-      },
-      "highPriority": false,
-      "mutationRecommendation": "NONE",
-      "name": "stripe_webhook_events",
-      "objectType": "table",
-      "reason": null,
-      "schema": "public"
     }
   ],
   "summary": {
     "byClass": {
       "definition_mismatch": 4,
       "function_rpc_mismatch": 2,
-      "generated_types_mismatch": 3,
       "grant_mismatch": 1414,
       "match": 532,
       "policy_rls_mismatch": 2,
@@ -41424,10 +41368,9 @@
     },
     "bySurface": {
       "harness": 1061,
-      "migration_only": 1075,
-      "types_vs_production": 3
+      "migration_only": 1075
     },
-    "highPriorityNonMatchCount": 473,
-    "totalRecords": 2139
+    "highPriorityNonMatchCount": 472,
+    "totalRecords": 2136
   }
 }

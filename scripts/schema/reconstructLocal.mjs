@@ -169,10 +169,11 @@ GRANT authenticated TO authenticator;
 `;
 
 export function parseArgs(argv) {
-  const args = { mode: null };
+  const args = { mode: null, keepDb: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--mode") args.mode = argv[++i];
+    else if (arg === "--keep-db") args.keepDb = true;
     else throw new Error(`Unrecognized argument: ${arg}`);
   }
   if (!args.mode || !VALID_MODES.has(args.mode)) {
@@ -279,7 +280,7 @@ async function detectPgClientVersion() {
   }
 }
 
-export async function reconstructLocal({ mode }) {
+export async function reconstructLocal({ mode, keepDb = false }) {
   await ensureDockerPostgres();
   try {
     const client = new pg.Client({
@@ -358,13 +359,24 @@ export async function reconstructLocal({ mode }) {
       mkdirSync(dirname(outPath), { recursive: true });
       writeFileSync(outPath, `${serialized}\n`, "utf8");
 
-      return { outPath, success: artifact.reconstruction.success, failedAtMigration: artifact.reconstruction.failedAtMigration };
+      return {
+        outPath,
+        success: artifact.reconstruction.success,
+        failedAtMigration: artifact.reconstruction.failedAtMigration,
+        dbUrl: `postgresql://${DB_USER}:${DB_PASS}@127.0.0.1:${DB_PORT}/${DB_NAME}`,
+        keptDb: keepDb,
+      };
     } finally {
       await client.end();
     }
   } finally {
-    cleanupDockerPostgres();
+    if (!keepDb) cleanupDockerPostgres();
   }
+}
+
+/** Tear down the disposable reconstruction container (after --keep-db). */
+export function cleanupKeptReconstructionDb() {
+  cleanupDockerPostgres();
 }
 
 async function main() {
@@ -372,6 +384,9 @@ async function main() {
   const result = await reconstructLocal(args);
   if (result.success) {
     process.stdout.write(`Wrote ${result.outPath} (reconstruction succeeded)\n`);
+    if (result.keptDb) {
+      process.stdout.write(`Kept disposable DB at ${result.dbUrl}\n`);
+    }
   } else {
     process.stdout.write(
       `Wrote ${result.outPath} (reconstruction FAILED at ${result.failedAtMigration ?? "capture step"})\n`

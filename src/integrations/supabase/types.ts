@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.1"
-  }
   public: {
     Tables: {
       admin_audit_log: {
@@ -41,6 +36,33 @@ export type Database = {
           id?: string
           target_email?: string | null
           target_user_id?: string | null
+        }
+        Relationships: []
+      }
+      admin_bootstrap_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          token_hash: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          token_hash: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token_hash?: string
+          used_at?: string | null
+          used_by?: string | null
         }
         Relationships: []
       }
@@ -308,6 +330,33 @@ export type Database = {
         }
         Relationships: []
       }
+      entitlement_bypass_log: {
+        Row: {
+          created_at: string
+          details: Json
+          feature: string | null
+          id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          feature?: string | null
+          id?: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          feature?: string | null
+          id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       export_files: {
         Row: {
           checksum: string | null
@@ -538,6 +587,36 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_webhook_events: {
+        Row: {
+          action_taken: string | null
+          app_user_id: string | null
+          details: Json
+          event_id: string
+          event_type: string
+          processed_at: string
+          stripe_customer_id: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          app_user_id?: string | null
+          details?: Json
+          event_id: string
+          event_type: string
+          processed_at?: string
+          stripe_customer_id?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          app_user_id?: string | null
+          details?: Json
+          event_id?: string
+          event_type?: string
+          processed_at?: string
+          stripe_customer_id?: string | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
@@ -691,46 +770,34 @@ export type Database = {
         }
         Returns: boolean
       }
+      assert_feature_allowed: { Args: { p_feature: string }; Returns: Json }
+      claim_admin_bootstrap: { Args: { p_token: string }; Returns: boolean }
+      claim_stripe_webhook_event: {
+        Args: {
+          p_action_taken?: string
+          p_app_user_id?: string
+          p_details?: Json
+          p_event_id: string
+          p_event_type: string
+          p_stripe_customer_id?: string
+        }
+        Returns: boolean
+      }
       duplicate_scenario: {
         Args: { new_name?: string; source_scenario_id: string }
         Returns: string
       }
-      generate_share_token: { Args: never; Returns: string }
-      get_effective_tier: { Args: { target_user_id: string }; Returns: string }
       evaluate_entitlement: { Args: { p_user_id: string }; Returns: Json }
       feature_allowed: {
         Args: {
-          p_user_id: string
           p_feature: string
           p_scenario_count?: number
-        }
-        Returns: boolean
-      }
-      assert_feature_allowed: { Args: { p_feature: string }; Returns: Json }
-      claim_stripe_webhook_event: {
-        Args: {
-          p_event_id: string
-          p_event_type: string
-          p_stripe_customer_id?: string
-          p_app_user_id?: string
-          p_action_taken?: string
-          p_details?: Json
-        }
-        Returns: boolean
-      }
-      log_admin_entitlement_bypass: {
-        Args: {
           p_user_id: string
-          p_source: string
-          p_feature?: string
-          p_details?: Json
         }
-        Returns: undefined
+        Returns: boolean
       }
-      release_stripe_webhook_event: {
-        Args: { p_event_id: string }
-        Returns: undefined
-      }
+      generate_share_token: { Args: never; Returns: string }
+      get_effective_tier: { Args: { target_user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -740,6 +807,11 @@ export type Database = {
       }
       is_admin: { Args: { uid: string }; Returns: boolean }
       is_advisor: { Args: { uid: string }; Returns: boolean }
+      is_professional_price: { Args: { p_price_id: string }; Returns: boolean }
+      issue_admin_bootstrap_token: {
+        Args: { p_ttl_minutes?: number }
+        Returns: string
+      }
       list_admins: {
         Args: never
         Returns: {
@@ -783,11 +855,29 @@ export type Database = {
           target_user_id: string
         }[]
       }
+      log_admin_entitlement_bypass: {
+        Args: {
+          p_details?: Json
+          p_feature?: string
+          p_source: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       log_webhook_admin_ignored: {
         Args: { p_email: string; p_event_type: string; p_user_id: string }
         Returns: undefined
       }
+      maybe_log_admin_entitlement_write: {
+        Args: { p_feature: string; p_source: string; p_user_id: string }
+        Returns: undefined
+      }
       promote_to_admin: { Args: { p_email: string }; Returns: Json }
+      release_stripe_webhook_event: {
+        Args: { p_event_id: string }
+        Returns: undefined
+      }
+      resolve_plan_code: { Args: { p_price_id: string }; Returns: string }
       touch_comparison_share: { Args: { p_token: string }; Returns: undefined }
       validate_comparison_share: {
         Args: { p_token: string }
@@ -801,7 +891,8 @@ export type Database = {
           share_id: string
         }[]
       }
-    }
+    
+}
     Enums: {
       app_role: "admin" | "moderator" | "user" | "advisor"
       export_kind: "scenario" | "comparison"
@@ -939,3 +1030,4 @@ export const Constants = {
     },
   },
 } as const
+

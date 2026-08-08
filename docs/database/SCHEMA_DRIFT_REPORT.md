@@ -1,6 +1,6 @@
 # Schema Drift Report
 
-Generated: 2026-08-08T03:12:39.589Z
+Generated: 2026-08-08T03:22:04.729Z
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`, `docs/adr/0007-legacy-schema-disposition.md`. This report is evidence only — no mutation is authorized by its contents (`mutationRecommendation` is always `NONE`).
 
@@ -32,13 +32,12 @@ ADR 0006 requires both a TRUE migration-only reconstruction and a TEST-HARNESS r
 
 ## Summary
 
-Total classified drift records: **2139**. High-priority non-match records: **473**.
+Total classified drift records: **2136**. High-priority non-match records: **472**.
 
 | Class | Count |
 |---|---|
 | `definition_mismatch` | 4 |
 | `function_rpc_mismatch` | 2 |
-| `generated_types_mismatch` | 3 |
 | `grant_mismatch` | 1414 |
 | `match` | 532 |
 | `policy_rls_mismatch` | 2 |
@@ -49,7 +48,6 @@ Total classified drift records: **2139**. High-priority non-match records: **473
 |---|---|
 | `harness` | 1061 |
 | `migration_only` | 1075 |
-| `types_vs_production` | 3 |
 
 ## Grant mismatches
 
@@ -72,9 +70,9 @@ Object disposition remains governed by ADR 0007. `INTENTIONAL_LEGACY_MAP` is emp
 |---|---|---|---|
 | `subscriptions` | yes | `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
 | `profiles` | yes | `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
-| `admin_bootstrap_tokens` | yes | `generated_types_mismatch`, `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
-| `stripe_webhook_events` | yes | `generated_types_mismatch`, `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
-| `entitlement_bypass_log` | yes | `generated_types_mismatch`, `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
+| `admin_bootstrap_tokens` | yes | `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
+| `stripe_webhook_events` | yes | `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
+| `entitlement_bypass_log` | yes | `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
 | `user_comparisons` | yes | `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
 | `saved_comparisons` | yes | `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
 | `pdf_exports` | yes | `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
@@ -561,7 +559,6 @@ Also review grant_mismatch / policy_rls_mismatch / function_rpc_mismatch class t
 | `grant:table:public.user_comparisons` | harness | `grant_mismatch` | — |
 | `grant:table:public.user_comparisons` | harness | `grant_mismatch` | — |
 | `grant:table:public.user_comparisons` | harness | `grant_mismatch` | — |
-| `table:public.admin_bootstrap_tokens` | types_vs_production | `generated_types_mismatch` | Bootstrap RPCs, Epic 1 SQL tests |
 
 ## All classified findings
 
@@ -2171,9 +2168,6 @@ Also review grant_mismatch / policy_rls_mismatch / function_rpc_mismatch class t
 | `grant:table:storage.vector_indexes` | harness | `grant_mismatch` |  |
 | `grant:table:storage.vector_indexes` | harness | `grant_mismatch` |  |
 | `grant:table:storage.vector_indexes` | harness | `grant_mismatch` |  |
-| `table:public.admin_bootstrap_tokens` | types_vs_production | `generated_types_mismatch` | yes |
-| `table:public.entitlement_bypass_log` | types_vs_production | `generated_types_mismatch` |  |
-| `table:public.stripe_webhook_events` | types_vs_production | `generated_types_mismatch` |  |
 
 ## TEST-HARNESS-only delta (informational, not classified)
 
