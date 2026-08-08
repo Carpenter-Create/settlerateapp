@@ -340,16 +340,16 @@ the ADR §11 sequence.
 
 ## Epic 6 — Schema Reconciliation
 
-**Status:** **In progress — PR 2A** (ADR 0006 + ADR 0007 **accepted**;
-PR 0–1 complete/merged). PR 2A = schema provenance / reconstruction
-blocker (`subscriptions` + scoped `profiles` columns). Later PR 2 slices
-unauthorized. Epic 7+ unauthorized.
+**Status:** **In progress — PR 2B** (ADR 0006 + ADR 0007 **accepted**;
+PR 0–2A complete/merged). PR 2B = post-provenance drift refresh
+(evidence only). Later PR 2 slices unauthorized. Epic 7+ unauthorized.
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
 `docs/database/SCHEMA_DRIFT_REPORT.md`,
-`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`.
+`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`,
+`docs/database/SCHEMA_DRIFT_REFRESH_PR2B.md`.
 
 **Goal:** Make the database schema reproducible from git, capture
 production reality read-only before mutation, classify drift (including
@@ -361,20 +361,21 @@ Production capture must precede reconciliation/mutation. Baseline
 implementation (history + documented consolidated baseline boundary) is
 deferred to a later separately authorized Epic 6 slice.
 
-### Allowed in Epic 6 PR 2A (this slice)
+### Allowed in Epic 6 PR 2B (this slice)
 
-- Repository-side provenance restoration for `public.subscriptions` and the
-  four production `profiles` columns, using the orphan production migration
-  version `20260112193137` (already applied on production — not pending)
-- Fresh migration-only reconstruction proof without harness product stubs
-- Governance / inventory updates for PR 2A scope only
+- Reuse PR 1 production capture only after read-only verification of both
+  unchanged migration ledger **and** identical full normalized schema
+  fingerprint (or recapture if either differs)
+- Fresh migration-only (+ optional harness) reconstruction
+- Regenerate drift artifacts and before/after analysis vs PR 1
+- Grant-security **reporting** only (no GRANT mutation)
+- Governance / inventory updates for PR 2B scope only
 
-### Prohibited in Epic 6 PR 2A
+### Prohibited in Epic 6 PR 2B
 
-- Production DDL/DML/`db push` / `migration repair` without separate founder
-  authorization of the exact apply step
-- Dual comparison/export reconciliation, advisor leftovers, ADR 0011
-- Broad grant/storage/RPC cleanup; generated types regeneration
+- Migrations; production mutation; `db push`; migration repair
+- Grant / RLS / policy / function / types / app/Edge changes
+- Dual comparison/export cleanup; advisor/ADR 0011; security remediation
 - Beginning later PR 2 slices or Epic 7+
 
 ### Proposed Epic 6 PR sequence
@@ -383,7 +384,8 @@ deferred to a later separately authorized Epic 6 slice.
 |----|--------|--------|
 | **PR 0** | ADR 0006 + ADR 0007 (accepted) + repository inventory + methodology | **Complete / merged** |
 | **PR 1** | Read-only production schema capture + machine-readable drift report (no mutation) | **Complete / merged** |
-| **PR 2A** | Schema provenance / reconstruction blocker (`subscriptions` + scoped `profiles` columns) | **In progress** |
+| **PR 2A** | Schema provenance / reconstruction blocker (`subscriptions` + scoped `profiles` columns) | **Complete / merged** |
+| **PR 2B** | Post-provenance drift refresh (evidence only) | **In progress** |
 | **PR 2+ (later)** | Separately authorized reconciliation slices by risk/domain | Not authorized |
 | **Closure** | Clean reconstruction proof; baseline/SoT docs; types regeneration as needed | Not authorized |
 

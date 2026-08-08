@@ -1,18 +1,21 @@
 # Schema Reconciliation Inventory
 
-**Phase:** 8.1 / Epic 6 PR 2A  
+**Phase:** 8.1 / Epic 6 PR 2B  
 **Date:** 2026-08-07  
-**Status:** REPOSITORY EVIDENCE + PRODUCTION CAPTURE (PR 1) + PROVENANCE REPAIR (PR 2A)
+**Status:** REPOSITORY EVIDENCE + PRODUCTION CAPTURE (PR 1) + PROVENANCE REPAIR (PR 2A) + POST-PROVENANCE DRIFT REFRESH (PR 2B)
 
 This document inventories schema objects and consumers discoverable from
 the SettleRate **git repository**. Live production catalog evidence for
-PR 1 is in `docs/database/production-schema/` and
-`docs/database/SCHEMA_DRIFT_REPORT.md` (sanitized; no row payloads).
+PR 1 (reused in PR 2B after ledger **and** full normalized schema
+fingerprint verification) is in `docs/database/production-schema/` and
+the refreshed `docs/database/SCHEMA_DRIFT_REPORT.md` (sanitized; no row
+payloads). PR 2B before/after analysis:
+`docs/database/SCHEMA_DRIFT_REFRESH_PR2B.md`.
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md` (both **accepted**).
 Object-level disposition remains deferred pending classified
-reconciliation (PR 2+) and ADR 0011 where applicable.
+reconciliation (later PR 2 slices) and ADR 0011 where applicable.
 `INTENTIONAL_LEGACY_MAP` remains empty until a disposition is accepted.
 
 ---
@@ -32,7 +35,7 @@ Everything below is **REPOSITORY EVIDENCE** unless explicitly marked otherwise.
 
 | Surface | Path | Role |
 |---------|------|------|
-| Migration history | `supabase/migrations/*.sql` (29 files) | Chronological DDL evolution |
+| Migration history | `supabase/migrations/*.sql` (30 files; includes orphan-version restore `20260112193137`) | Chronological DDL evolution |
 | Generated types (**derived**) | `src/integrations/supabase/types.ts` | Past PostgREST introspection snapshot — **not** schema SoT |
 | RLS coverage inventory | `docs/security/RLS_COVERAGE_INVENTORY.md` | Catalog after full migration replay + harness |
 | RLS testing standard | `docs/adr/0004-rls-testing-standard.md` | Ephemeral Postgres / CI rules |
@@ -43,22 +46,21 @@ Everything below is **REPOSITORY EVIDENCE** unless explicitly marked otherwise.
 
 ---
 
-## PRODUCTION EVIDENCE NOT YET CAPTURED
+## Production evidence status
 
-The following cannot be asserted from the repository alone:
+PR 1 captured a sanitized production catalog
+(`2026-08-07T21:23:22.944Z`). PR 2B **reused** that capture after verifying
+both (1) unchanged migration ledger (31/31 identical) and (2) identical
+full normalized production schema fingerprint from a fresh read-only
+temporary capture (see `SCHEMA_DRIFT_REFRESH_PR2B.md`). Ledger equality
+alone is not treated as proof of schema equality.
 
-- Live `pg_catalog` / `information_schema` for production
-- Production `supabase_migrations.schema_migrations` apply history
-- Whether `public.subscriptions` exists / has RLS / which columns in production
-- Whether `profiles` has `plan_key` / `plan_status` / Stripe columns in production
-- Live grants, extensions, storage bucket drift
-- Row counts / recent activity (for legacy disposition)
-- Which environment `types.ts` was generated from
+Still not asserted from capture alone (ADR 0007 / ops):
+
+- Row counts / recent activity for legacy disposition
+- Which environment `types.ts` was originally generated from
 - Auth Dashboard / secrets / Edge deploy versions
-
-**Proposed capture method (PR 1, not this PR):** read-only schema-only
-introspection via Supabase CLI / Postgres using operator credentials
-outside git; machine-readable drift report; no customer data dumps.
+- Whether platform `storage.*` extras are environment-expected forever
 
 ---
 
@@ -96,7 +98,7 @@ outside git; machine-readable drift report; no customer data dumps.
 
 | Object | Provenance (repo) | In `types.ts`? | Consumers (repo) | Disposition hint (not decided) |
 |--------|-------------------|----------------|------------------|--------------------------------|
-| `subscriptions` | **No `CREATE TABLE` in migrations**; harness stub `supabase/tests/00_auth_stub.sql`; triggers in early admin migrations | yes | Edge `stripe-webhook` best-effort; protect triggers | ADR 0007 candidate — **unknown until production capture** |
+| `subscriptions` | PR 2A: `20260112193137_restore_subscriptions_profiles_provenance.sql` (production-backed); protect triggers in `20260112204012_*` | yes | Edge `stripe-webhook` best-effort; protect triggers | Structural match in PR 2B drift; grant breadth → security slice; ADR 0007 disposition still open |
 | `saved_comparisons`, `comparison_items`, `comparison_versions` | `20260111225012_*` | yes | No active App/Edge `.from`; still entitlement-triggered | Dual comparison model |
 | `comparison_shares` | `20260119150338_*` | yes | Share RPCs; no App/Edge rpc callers found | Dual comparison model |
 | `export_files`, `export_shares` | `20260113202811_*` | yes | No App/Edge `.from`; active path uses `pdf_exports` | Dual export model |
@@ -185,14 +187,15 @@ Trigger helpers of note: `handle_new_user`, entitlement/ownership enforcers, `pr
 
 ---
 
-## High-signal reconciliation candidates
+## High-signal reconciliation candidates (post-PR 2B)
 
-1. **`subscriptions`** — PR 2A restores orphan migration version `20260112193137` into git (production-backed definition); see `SCHEMA_PROVENANCE_REPAIR_PR2A.md`. Production apply not performed in PR 2A.  
-2. **`profiles` columns** — PR 2A captures the four production columns into the same orphan-version migration; entitlement SoT remains `billing`.  
-3. **Missing from types** — bootstrap/webhook/bypass tables and RPCs.  
-4. **Dual comparison models** and **dual export models**.  
-5. **Advisor leftovers** — blocked on ADR 0011 for removal decisions.  
-6. **Storage policy duplication** — confirm intentional supersession.  
+1. **Grant / security surface** — largest residual non-match class; `subscriptions` table grants now match production (including broad DML/TRUNCATE) but need founder/security review; many other public tables still show production-broader privileges. See `SCHEMA_DRIFT_REFRESH_PR2B.md`.  
+2. **Generated types** — still missing `admin_bootstrap_tokens`, `stripe_webhook_events`, `entitlement_bypass_log` (types not regenerated in PR 2B).  
+3. **Function/RPC EXECUTE provenance** — e.g. `protect_admin_subscriptions` EXECUTE to `anon`/`authenticated`.  
+4. **Dual comparison models** and **dual export models** — both reconstruct; disposition still open (ADR 0007).  
+5. **Advisor leftovers** — blocked on ADR 0011.  
+6. **Storage / platform catalog** — expected env drift (`buckets` RLS/columns, platform tables, `foldername` fingerprint).  
+7. **`subscriptions` / `profiles` provenance** — PR 2A complete; structural match in PR 2B baseline.
 
 ---
 

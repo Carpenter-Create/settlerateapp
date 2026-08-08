@@ -164,7 +164,8 @@ remains separately unauthorized until founder authorization.
 |----|--------|---------------|
 | **PR 0** | ADR 0006 + ADR 0007 + repository inventory + methodology + governance | Complete / merged |
 | **PR 1** | Read-only production schema capture + machine-readable drift report; no schema mutation | Complete / merged |
-| **PR 2A** | Schema provenance / reconstruction blocker (`subscriptions` + scoped `profiles` columns) | In progress |
+| **PR 2A** | Schema provenance / reconstruction blocker (`subscriptions` + scoped `profiles` columns) | Complete / merged |
+| **PR 2B** | Post-provenance drift refresh (evidence only) | In progress |
 | **PR 2+** | Separately authorized reconciliation slices by risk/domain | Separate |
 | **Closure** | Prove clean reconstruction; update baseline/SoT docs; regenerate types as needed | Separate |
 
@@ -190,8 +191,9 @@ checkout maintenance posture; security weakenings “to make green.”
 - Schema mutation PRs still require separate authorization and must follow
   production capture → classification → migration (when needed).
 - Agents treat generated types as derived until regeneration is authorized.
-- Production capture is complete (Epic 6 PR 1). PR 2A restores orphan
+- Production capture is complete (Epic 6 PR 1). PR 2A restored orphan
   provenance in git without applying DDL to production in that PR.
+- PR 2B refreshes the post-provenance drift baseline (evidence only).
 - Baseline implementation remains deferred to a separately authorized slice.
 
 ## Alternatives considered
