@@ -52,12 +52,21 @@ ADR 0008 **accepted**; PR 0–5 + activation/E2E). See
 (separate Supabase + Vercel + Stripe test). Do not resume Phase 7B from
 Epic 7 (`docs/staging/PHASE7B_READINESS_FROM_EPIC7.md`).
 
+**Epic 8 — Billing Recovery Capability** is **in progress** (founder-
+authorized; ADR 0009 **accepted**). Authority:
+`docs/adr/0009-billing-recovery-guarantee.md`,
+`docs/billing/EPIC8_BILLING_RECOVERY_INVENTORY.md`. Staging drills/
+migrations/Edge redeploys authorized; **production mutation and recovery
+apply blocked**. Do not change entitlement/price/checkout semantics.
+Do not begin Epic 9+ or ADR 0011.
+
 ## Prohibited unless explicitly authorized
 
 - Supabase Auth Dashboard redirect-allowlist changes without founder authorization
 - Changing production Sentry DSNs, project routing, or capture scope without founder authorization
-- Beginning Epic 8+ ahead of sequence / dependency gates
+- Beginning Epic 9+ ahead of sequence / dependency gates
 - Mutating production databases (DDL/DML/GRANT) / `db push` / `migration repair` without founder authorization
+- Applying Epic 8 migrations / recovery / Edge deploy to production without a separate founder package
 - Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
 - Next.js platform migration
@@ -81,7 +90,7 @@ That means: do not redefine export fields, field meanings, omission rules, snaps
 
 **Epic 5 clarification:** when Shared Core Package work is authorized, Epic 5 **may** relocate export-related code and update imports. Epic 5 **may not** redefine export fields, meanings, or contract behavior.
 
-**Never begin the next phase or Epic 8+ automatically.**
+**Never begin the next phase or Epic 9+ automatically.**
 
 # Agent Autonomy
 
@@ -102,7 +111,8 @@ Agents **may not** without explicit authorization:
   prompt explicitly restores Epic-scoped autonomy)
 - Mutate production databases / apply migrations to production without a
   separate founder-authorized package
-- Begin Epic 8+ or resume Phase 7B live smoke / beta / public checkout
+- Begin Epic 9+ or resume Phase 7B live smoke / beta / public checkout
+- Apply Epic 8 recovery or migrations to production without a separate founder package
 - Disable `CHECKOUT_MAINTENANCE` or open public Checkout while Phase 7B is paused
 
 # Conduct
