@@ -430,8 +430,8 @@ Stripe / Supabase secrets. Do not resume Phase 7B.
 
 ## Epic 8 — Billing Recovery Capability
 
-**Status:** **In progress** (founder-authorized autonomous train; ADR 0009
-**accepted** in PR 0).
+**Status:** **COMPLETE** (founder-authorized; ADR 0009 **accepted**; staging
+recovery drill verified). See `docs/billing/EPIC8_CLOSURE.md`.
 
 Authority: `docs/adr/0009-billing-recovery-guarantee.md`,
 `docs/billing/EPIC8_BILLING_RECOVERY_INVENTORY.md`.
@@ -470,8 +470,8 @@ Allowed under this authorization:
 | PR | Scope | Status |
 |----|--------|--------|
 | **PR 0** | ADR 0009 + inventory + governance | **Complete / merged** |
-| **PR 1** | Durable evidence schema + webhook ingestion + core reconstruction + recovery CLI + tests + runbook | **This PR** |
-| **PR 2+** | Staging migration/Edge deploy + recovery drill + closure | Pending |
+| **PR 1** | Durable evidence schema + webhook ingestion + core reconstruction + recovery CLI + tests + runbook | **Complete / merged** |
+| **PR 2** | Staging migration/Edge deploy + recovery drill + closure | **This PR** |
 
 Respect Phase 7B pause and maintenance gate; do not open public checkout.
 
