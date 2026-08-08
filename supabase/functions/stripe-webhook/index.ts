@@ -208,6 +208,51 @@ serve(async (req) => {
     }
     claimedEventId = event.id;
 
+    // ADR 0009 Layer A: durable verified Event JSON (never log the payload)
+    const { error: evidenceError } = await supabase.rpc("record_stripe_event_evidence", {
+      p_event_id: event.id,
+      p_event_type: eventType,
+      p_event_created: event.created,
+      p_livemode: Boolean(event.livemode),
+      p_api_version: event.api_version ?? null,
+      p_event_payload: event as unknown as Record<string, unknown>,
+    });
+    if (evidenceError) {
+      await releaseClaim();
+      logWebhook({
+        event_type: eventType,
+        stripe_customer_id: null,
+        app_user_id: null,
+        user_role: null,
+        action_taken: "error",
+        details: { error: evidenceError.message, phase: "record_evidence", event_id: event.id },
+      });
+      return new Response(JSON.stringify({ error: "Evidence persistence failed" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const finalizeLedger = async (
+      actionTaken: string,
+      fields: {
+        stripe_customer_id?: string | null;
+        app_user_id?: string | null;
+        details?: Record<string, unknown>;
+      } = {}
+    ) => {
+      await supabase
+        .from("stripe_webhook_events")
+        .update({
+          action_taken: actionTaken,
+          stripe_customer_id: fields.stripe_customer_id ?? null,
+          app_user_id: fields.app_user_id ?? null,
+          details: fields.details ?? {},
+        })
+        .eq("event_id", event.id);
+      claimedEventId = null;
+    };
+
     logWebhook({
       event_type: eventType,
       stripe_customer_id: null,
@@ -226,6 +271,7 @@ serve(async (req) => {
       eventType === "invoice.payment_failed";
 
     if (!handled) {
+      await finalizeLedger("unhandled", { details: { event_id: event.id } });
       logWebhook({
         event_type: eventType,
         stripe_customer_id: null,
@@ -247,15 +293,24 @@ serve(async (req) => {
     let currentPeriodEnd: number | null = null;
     let cancelAtPeriodEnd = false;
     let metadataUserId: string | null = null;
+    /** Layer B: retrieved Subscription JSON actually used for mapping (ADR 0009). */
+    let appliedSubscriptionSource: Record<string, unknown> | null = null;
 
     if (eventType.startsWith("customer.subscription")) {
       const eventSubscription = event.data.object as Stripe.Subscription;
       if (eventSubscription.id) {
         try {
+          let retrievedSub: Stripe.Subscription | null = null;
           const snapshot = await resolveSubscriptionBillingSnapshot(
             eventSubscription,
-            stripe.subscriptions.retrieve.bind(stripe.subscriptions)
+            async (id) => {
+              retrievedSub = await stripe.subscriptions.retrieve(id);
+              return retrievedSub;
+            }
           );
+          if (retrievedSub) {
+            appliedSubscriptionSource = retrievedSub as unknown as Record<string, unknown>;
+          }
           stripeCustomerId = snapshot.stripeCustomerId;
           subscriptionStatus = snapshot.subscriptionStatus;
           subscriptionId = snapshot.subscriptionId;
@@ -288,6 +343,7 @@ serve(async (req) => {
       metadataUserId = (session.metadata?.user_id as string) || null;
       if (subscriptionId) {
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        appliedSubscriptionSource = sub as unknown as Record<string, unknown>;
         subscriptionStatus = sub.status;
         currentPeriodEnd = extractSubscriptionPeriodEnd(sub);
         cancelAtPeriodEnd = Boolean(sub.cancel_at_period_end);
@@ -302,6 +358,7 @@ serve(async (req) => {
       subscriptionId = extractInvoiceSubscriptionId(invoice);
       if (subscriptionId) {
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        appliedSubscriptionSource = sub as unknown as Record<string, unknown>;
         subscriptionStatus = sub.status;
         currentPeriodEnd = extractSubscriptionPeriodEnd(sub);
         cancelAtPeriodEnd = Boolean(sub.cancel_at_period_end);
@@ -313,6 +370,9 @@ serve(async (req) => {
     }
 
     if (!stripeCustomerId) {
+      await finalizeLedger("skipped", {
+        details: { reason: "No customer ID in event", event_id: event.id },
+      });
       logWebhook({
         event_type: eventType,
         stripe_customer_id: null,
@@ -400,6 +460,20 @@ serve(async (req) => {
       .maybeSingle();
 
     if (adminRole) {
+      await supabase.rpc("log_admin_entitlement_bypass", {
+        p_user_id: appUserId,
+        p_source: "stripe-webhook",
+        p_feature: null,
+        p_details: { event_type: eventType, event_id: event.id, action: "billing_ignored" },
+      });
+      await finalizeLedger("ignored", {
+        stripe_customer_id: stripeCustomerId,
+        app_user_id: appUserId,
+        details: {
+          reason: "Admin user - billing changes do not affect access",
+          event_id: event.id,
+        },
+      });
       logWebhook({
         event_type: eventType,
         stripe_customer_id: stripeCustomerId,
@@ -410,12 +484,6 @@ serve(async (req) => {
           reason: "Admin user - billing changes do not affect access",
           event_id: event.id,
         },
-      });
-      await supabase.rpc("log_admin_entitlement_bypass", {
-        p_user_id: appUserId,
-        p_source: "stripe-webhook",
-        p_feature: null,
-        p_details: { event_type: eventType, event_id: event.id, action: "billing_ignored" },
       });
       return new Response(JSON.stringify({ received: true }), {
         status: 200,
@@ -516,6 +584,36 @@ serve(async (req) => {
       last_stripe_event_at: new Date(event.created * 1000).toISOString(),
     };
 
+    // ADR 0009 Layer B before derived billing write (fail closed if evidence incomplete)
+    if (appliedSubscriptionSource) {
+      const { error: layerBError } = await supabase.rpc(
+        "set_stripe_event_applied_subscription_source",
+        {
+          p_event_id: event.id,
+          p_applied_subscription_source: appliedSubscriptionSource,
+        }
+      );
+      if (layerBError) {
+        await releaseClaim();
+        logWebhook({
+          event_type: eventType,
+          stripe_customer_id: stripeCustomerId,
+          app_user_id: appUserId,
+          user_role: "user",
+          action_taken: "error",
+          details: {
+            error: layerBError.message,
+            phase: "record_applied_subscription_source",
+            event_id: event.id,
+          },
+        });
+        return new Response(JSON.stringify({ error: "Evidence Layer B persistence failed" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const { error: billingError } = await supabase
       .from("billing")
       .upsert(billingData, { onConflict: "user_id" });
@@ -563,19 +661,15 @@ serve(async (req) => {
       }
     }
 
-    await supabase
-      .from("stripe_webhook_events")
-      .update({
-        stripe_customer_id: stripeCustomerId,
-        app_user_id: appUserId,
-        action_taken: "updated",
-        details: {
-          entitlementStatus: decision.entitlementStatus,
-          planCode,
-          priceId,
-        },
-      })
-      .eq("event_id", event.id);
+    await finalizeLedger("updated", {
+      stripe_customer_id: stripeCustomerId,
+      app_user_id: appUserId,
+      details: {
+        entitlementStatus: decision.entitlementStatus,
+        planCode,
+        priceId,
+      },
+    });
 
     logWebhook({
       event_type: eventType,
@@ -591,7 +685,6 @@ serve(async (req) => {
       },
     });
 
-    claimedEventId = null;
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

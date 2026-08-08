@@ -129,6 +129,8 @@ DECLARE
     'public.profiles',
     'public.saved_comparisons',
     'public.scenarios',
+    'public.billing_recovery_runs',
+    'public.stripe_event_evidence',
     'public.stripe_webhook_events',
     'public.subscriptions',
     'public.user_comparisons',
@@ -159,8 +161,8 @@ BEGIN
     AND c.relrowsecurity = true;
 
   PERFORM test.assert_true(
-    format('inventory: exactly 20 RLS-enabled relations (got %s)', v_rel_count),
-    v_rel_count = 20
+    format('inventory: exactly 22 RLS-enabled relations (got %s)', v_rel_count),
+    v_rel_count = 22
   );
   PERFORM test.assert_true(
     format('inventory: exactly 56 effective policies (got %s)', v_pol_count),

@@ -3,13 +3,13 @@
 **Authority:** `docs/adr/0004-rls-testing-standard.md`  
 **Generated from:** ephemeral Postgres after full repository migration chain + harness FORCE on `public.scenarios`  
 **Epic 4 status:** Complete (PR 0–2 merged; PR 3 not required)  
-**Date:** 2026-08-07 (updated Epic 6 PR 2A — `public.subscriptions` RLS restored via provenance migration)  
-**Catalog fingerprint (SHA-256):** `cdedd143ea0ef71d0f61553f402c4dbe34d1db0c760445c5f74bbc3e75108973`  
+**Date:** 2026-08-08 (updated Epic 8 — `stripe_event_evidence` + `billing_recovery_runs`)  
+**Catalog fingerprint (SHA-256):** `939f5e11874f0569ac5dd97ca84b105cd8d11e967280620fee55a59b748e7996`  
 **Fingerprint fixture:** `supabase/tests/fixtures/epic4_pr1_rls_catalog.sha256`
 
 ## Summary
 
-- RLS-enabled relations: **20**
+- RLS-enabled relations: **22**
 - Policies: **56**
 - PR 1 behavioral coverage: core user-owned class (`supabase/tests/epic4_pr1_core_rls.sql`) — complete / merged
 - PR 2 behavioral coverage: export/share, billing/entitlement support, roles/admin, public-ish, storage (+ admin path matrix) — `supabase/tests/epic4_pr2_remaining_rls.sql` — complete / merged
@@ -25,6 +25,7 @@
 | `public` | `admin_bootstrap_tokens` | true | false | roles/admin | PR 2 executable | — |
 | `public` | `advisor_access_requests` | true | false | roles/admin | PR 2 executable | — |
 | `public` | `billing` | true | false | billing/entitlement support | PR 2 executable | — |
+| `public` | `billing_recovery_runs` | true | false | billing/entitlement support (Epic 8; deny-all) | Epic 8 SQL | — |
 | `public` | `comparison_items` | true | false | core user-owned | PR 1 executable | — |
 | `public` | `comparison_shares` | true | false | export/share | PR 2 executable | — |
 | `public` | `comparison_versions` | true | false | core user-owned | PR 1 executable | — |
@@ -36,6 +37,7 @@
 | `public` | `profiles` | true | false | core user-owned | PR 1 executable | — |
 | `public` | `saved_comparisons` | true | false | core user-owned | PR 1 executable | — |
 | `public` | `scenarios` | true | true (harness FORCE) | core user-owned | PR 1 executable | — |
+| `public` | `stripe_event_evidence` | true | false | billing/entitlement support (Epic 8; deny-all) | Epic 8 SQL | — |
 | `public` | `stripe_webhook_events` | true | false | billing/entitlement support | PR 2 executable | — |
 | `public` | `subscriptions` | true | false | billing/entitlement support (legacy sync; billing authoritative) | inventory after Epic 6 PR 2A provenance restore | — |
 | `public` | `user_comparisons` | true | false | core user-owned | PR 1 executable | — |
@@ -68,6 +70,14 @@ No effective policies
 | Policy | Command | Roles | USING | WITH CHECK |
 |--------|---------|-------|-------|------------|
 | `billing_select_own` | SELECT | authenticated | `(auth.uid() = user_id)` | `—` |
+
+### `public.billing_recovery_runs`
+
+No effective policies
+
+### `public.stripe_event_evidence`
+
+No effective policies
 
 ### `public.comparison_items`
 

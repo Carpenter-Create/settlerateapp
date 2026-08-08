@@ -118,6 +118,33 @@
       "type": "FOREIGN KEY"
     },
     {
+      "definition": "CHECK ((mode = ANY (ARRAY['dry_run'::text, 'apply'::text, 'external_reconcile'::text])))",
+      "name": "billing_recovery_runs_mode_check",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "billing_recovery_runs",
+      "type": "CHECK"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "billing_recovery_runs_pkey",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "billing_recovery_runs",
+      "type": "PRIMARY KEY"
+    },
+    {
+      "definition": "CHECK ((result = ANY (ARRAY['success'::text, 'unresolved'::text, 'failed'::text, 'blocked'::text, 'noop'::text])))",
+      "name": "billing_recovery_runs_result_check",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "billing_recovery_runs",
+      "type": "CHECK"
+    },
+    {
       "definition": "FOREIGN KEY (comparison_id) REFERENCES saved_comparisons(id) ON DELETE CASCADE",
       "name": "comparison_items_comparison_id_fkey",
       "referencedSchema": "public",
@@ -424,6 +451,33 @@
       "type": "FOREIGN KEY"
     },
     {
+      "definition": "CHECK ((event_created >= 0))",
+      "name": "stripe_event_evidence_created_nonneg",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "stripe_event_evidence",
+      "type": "CHECK"
+    },
+    {
+      "definition": "FOREIGN KEY (event_id) REFERENCES stripe_webhook_events(event_id) ON DELETE RESTRICT",
+      "name": "stripe_event_evidence_event_id_fkey",
+      "referencedSchema": "public",
+      "referencedTable": "stripe_webhook_events",
+      "schema": "public",
+      "table": "stripe_event_evidence",
+      "type": "FOREIGN KEY"
+    },
+    {
+      "definition": "PRIMARY KEY (event_id)",
+      "name": "stripe_event_evidence_pkey",
+      "referencedSchema": null,
+      "referencedTable": null,
+      "schema": "public",
+      "table": "stripe_event_evidence",
+      "type": "PRIMARY KEY"
+    },
+    {
       "definition": "FOREIGN KEY (app_user_id) REFERENCES auth.users(id) ON DELETE SET NULL",
       "name": "stripe_webhook_events_app_user_id_fkey",
       "referencedSchema": "auth",
@@ -709,7 +763,7 @@
     },
     {
       "containsSecretLikeLiteral": false,
-      "definitionFingerprint": "8c675cc608cff46423633f4bce4c74a2570957aeb353f97969dc45338ce289de",
+      "definitionFingerprint": "3bb762065c79417875a5795f3852bced5a87b93065509ec4e874580a27569200",
       "definitionRedacted": false,
       "identityArgs": "p_event_id text, p_event_type text, p_stripe_customer_id text, p_app_user_id uuid, p_action_taken text, p_details jsonb",
       "language": "plpgsql",
@@ -1034,6 +1088,19 @@
     },
     {
       "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "112c6c47e25731382fc098b31cdcdc34281ec4ad3a14e522f4f06d410f4f58e6",
+      "definitionRedacted": false,
+      "identityArgs": "p_environment text, p_project_ref text, p_mode text, p_scope jsonb, p_evidence_event_ids text[], p_result text, p_proposed_summary jsonb, p_applied_summary jsonb, p_unresolved jsonb, p_details jsonb",
+      "language": "plpgsql",
+      "name": "insert_billing_recovery_run",
+      "returnType": "uuid",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
       "definitionFingerprint": "a5668a4d254e443753cd0c31a0c67dc15cbb5cca18659b33f9bfc24696e0ba19",
       "definitionRedacted": false,
       "identityArgs": "uid uuid",
@@ -1060,7 +1127,7 @@
     },
     {
       "containsSecretLikeLiteral": false,
-      "definitionFingerprint": "4b63f24651cf53b220f7604cdb11da95282f42904d42fc9e35848f43c738fd10",
+      "definitionFingerprint": "2013f7b4d9d7e3f24381f531dda51c111c8244957ccebd8ea24114b26255aac0",
       "definitionRedacted": false,
       "identityArgs": "p_price_id text",
       "language": "sql",
@@ -1489,7 +1556,20 @@
     },
     {
       "containsSecretLikeLiteral": false,
-      "definitionFingerprint": "c5b246351560bafa6f99b911b48f511adc511d7ab6564230f0ca82d0e3af3681",
+      "definitionFingerprint": "eb29771ec23aeb684765f3a9e9e5c11c0617575d61f43b360e700b65024c0b54",
+      "definitionRedacted": false,
+      "identityArgs": "p_event_id text, p_event_type text, p_event_created bigint, p_livemode boolean, p_api_version text, p_event_payload jsonb",
+      "language": "plpgsql",
+      "name": "record_stripe_event_evidence",
+      "returnType": "void",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "36f9a9761a32de6b7e3b6f57e3ed91d9e91680c570a806a91fb129f51bf1dc5b",
       "definitionRedacted": false,
       "identityArgs": "p_event_id text",
       "language": "plpgsql",
@@ -1524,6 +1604,32 @@
       "schema": "public",
       "searchPath": "public",
       "securityDefiner": false,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "f3b9d1b88beabb4d5df1d73869e23e9f4f00c18373ed8eebc8d2db3d3dec3cdf",
+      "definitionRedacted": false,
+      "identityArgs": "p_event_id text, p_applied_subscription_source jsonb",
+      "language": "plpgsql",
+      "name": "set_stripe_event_applied_subscription_source",
+      "returnType": "void",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
+      "volatile": "VOLATILE"
+    },
+    {
+      "containsSecretLikeLiteral": false,
+      "definitionFingerprint": "69dc8a56cb8faecde0da747d456735d7814bcdf459e3f9ed8d2f9a3e2935e03d",
+      "definitionRedacted": false,
+      "identityArgs": "",
+      "language": "plpgsql",
+      "name": "stripe_event_evidence_immutability",
+      "returnType": "trigger",
+      "schema": "public",
+      "searchPath": "public",
+      "securityDefiner": true,
       "volatile": "VOLATILE"
     },
     {
@@ -2391,6 +2497,22 @@
       "grantee": "service_role",
       "isGrantable": false,
       "objectName": "hmac(text, text, text)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "insert_billing_recovery_run(p_environment text, p_project_ref text, p_mode text, p_scope jsonb, p_evidence_event_ids text[], p_result text, p_proposed_summary jsonb, p_applied_summary jsonb, p_unresolved jsonb, p_details jsonb)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "insert_billing_recovery_run(p_environment text, p_project_ref text, p_mode text, p_scope jsonb, p_evidence_event_ids text[], p_result text, p_proposed_summary jsonb, p_applied_summary jsonb, p_unresolved jsonb, p_details jsonb)",
       "objectType": "function",
       "privilege": "EXECUTE",
       "schema": "public"
@@ -3270,6 +3392,22 @@
     {
       "grantee": "postgres",
       "isGrantable": false,
+      "objectName": "record_stripe_event_evidence(p_event_id text, p_event_type text, p_event_created bigint, p_livemode boolean, p_api_version text, p_event_payload jsonb)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "record_stripe_event_evidence(p_event_id text, p_event_type text, p_event_created bigint, p_livemode boolean, p_api_version text, p_event_payload jsonb)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
       "objectName": "release_stripe_webhook_event(p_event_id text)",
       "objectType": "function",
       "privilege": "EXECUTE",
@@ -3303,6 +3441,30 @@
       "grantee": "service_role",
       "isGrantable": false,
       "objectName": "set_pdf_exports_updated_at()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "set_stripe_event_applied_subscription_source(p_event_id text, p_applied_subscription_source jsonb)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "set_stripe_event_applied_subscription_source(p_event_id text, p_applied_subscription_source jsonb)",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": false,
+      "objectName": "stripe_event_evidence_immutability()",
       "objectType": "function",
       "privilege": "EXECUTE",
       "schema": "public"
@@ -3614,6 +3776,78 @@
     {
       "grantee": "postgres",
       "isGrantable": true,
+      "objectName": "billing_recovery_runs",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "billing_recovery_runs",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "billing_recovery_runs",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "billing_recovery_runs",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "billing_recovery_runs",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "billing_recovery_runs",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "billing_recovery_runs",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "billing_recovery_runs",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "billing_recovery_runs",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
       "objectName": "comparison_items",
       "objectType": "table",
       "privilege": "DELETE",
@@ -4223,6 +4457,86 @@
       "grantee": "postgres",
       "isGrantable": true,
       "objectName": "scenarios",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "stripe_event_evidence",
+      "objectType": "table",
+      "privilege": "DELETE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "stripe_event_evidence",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "stripe_event_evidence",
+      "objectType": "table",
+      "privilege": "REFERENCES",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "stripe_event_evidence",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "stripe_event_evidence",
+      "objectType": "table",
+      "privilege": "TRIGGER",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "stripe_event_evidence",
+      "objectType": "table",
+      "privilege": "TRUNCATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
+      "isGrantable": true,
+      "objectName": "stripe_event_evidence",
+      "objectType": "table",
+      "privilege": "UPDATE",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "stripe_event_evidence",
+      "objectType": "table",
+      "privilege": "INSERT",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "stripe_event_evidence",
+      "objectType": "table",
+      "privilege": "SELECT",
+      "schema": "public"
+    },
+    {
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "stripe_event_evidence",
       "objectType": "table",
       "privilege": "UPDATE",
       "schema": "public"
@@ -4799,6 +5113,20 @@
       "unique": false
     },
     {
+      "definition": "CREATE INDEX billing_recovery_runs_created_at_idx ON public.billing_recovery_runs USING btree (created_at DESC)",
+      "name": "billing_recovery_runs_created_at_idx",
+      "schema": "public",
+      "table": "billing_recovery_runs",
+      "unique": false
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX billing_recovery_runs_pkey ON public.billing_recovery_runs USING btree (id)",
+      "name": "billing_recovery_runs_pkey",
+      "schema": "public",
+      "table": "billing_recovery_runs",
+      "unique": true
+    },
+    {
       "definition": "CREATE INDEX comparison_items_comparison_id_idx ON public.comparison_items USING btree (comparison_id)",
       "name": "comparison_items_comparison_id_idx",
       "schema": "public",
@@ -5072,6 +5400,27 @@
       "unique": false
     },
     {
+      "definition": "CREATE INDEX stripe_event_evidence_created_idx ON public.stripe_event_evidence USING btree (event_created, event_id)",
+      "name": "stripe_event_evidence_created_idx",
+      "schema": "public",
+      "table": "stripe_event_evidence",
+      "unique": false
+    },
+    {
+      "definition": "CREATE INDEX stripe_event_evidence_livemode_created_idx ON public.stripe_event_evidence USING btree (livemode, event_created, event_id)",
+      "name": "stripe_event_evidence_livemode_created_idx",
+      "schema": "public",
+      "table": "stripe_event_evidence",
+      "unique": false
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX stripe_event_evidence_pkey ON public.stripe_event_evidence USING btree (event_id)",
+      "name": "stripe_event_evidence_pkey",
+      "schema": "public",
+      "table": "stripe_event_evidence",
+      "unique": true
+    },
+    {
       "definition": "CREATE UNIQUE INDEX stripe_webhook_events_pkey ON public.stripe_webhook_events USING btree (event_id)",
       "name": "stripe_webhook_events_pkey",
       "schema": "public",
@@ -5171,8 +5520,8 @@
     }
   ],
   "meta": {
-    "capturedAt": "2026-08-08T03:47:36.043Z",
-    "gitSha": "ff6b764f48cdffab4e2197f7a98057cab21f44d0",
+    "capturedAt": "2026-08-08T18:25:02.954Z",
+    "gitSha": "b7b179e8a7aa90ebf500482f8715c9fe03d5c2bd",
     "projectRef": null,
     "readOnly": true,
     "schemas": [
@@ -5882,6 +6231,14 @@
       {
         "file": "20260808040000_epic6_pr2h_legacy_share_rpc_execute.sql",
         "status": "applied"
+      },
+      {
+        "file": "20260808143109_epic7_staging_test_price_allowlist.sql",
+        "status": "applied"
+      },
+      {
+        "file": "20260808200000_epic8_stripe_event_evidence.sql",
+        "status": "applied"
       }
     ],
     "error": null,
@@ -6375,6 +6732,158 @@
         }
       ],
       "name": "billing",
+      "rlsEnabled": true,
+      "rlsForced": false,
+      "schema": "public"
+    },
+    {
+      "columns": [
+        {
+          "dataType": "uuid",
+          "default": "gen_random_uuid()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "id",
+          "ordinalPosition": 1,
+          "udtName": "uuid"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "created_at",
+          "ordinalPosition": 2,
+          "udtName": "timestamptz"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "environment",
+          "ordinalPosition": 3,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "project_ref",
+          "ordinalPosition": 4,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "mode",
+          "ordinalPosition": 5,
+          "udtName": "text"
+        },
+        {
+          "dataType": "jsonb",
+          "default": "'{}'::jsonb",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "scope",
+          "ordinalPosition": 6,
+          "udtName": "jsonb"
+        },
+        {
+          "dataType": "ARRAY",
+          "default": "'{}'::text[]",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "evidence_event_ids",
+          "ordinalPosition": 7,
+          "udtName": "_text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "result",
+          "ordinalPosition": 8,
+          "udtName": "text"
+        },
+        {
+          "dataType": "jsonb",
+          "default": "'{}'::jsonb",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "proposed_summary",
+          "ordinalPosition": 9,
+          "udtName": "jsonb"
+        },
+        {
+          "dataType": "jsonb",
+          "default": "'{}'::jsonb",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "applied_summary",
+          "ordinalPosition": 10,
+          "udtName": "jsonb"
+        },
+        {
+          "dataType": "jsonb",
+          "default": "'[]'::jsonb",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "unresolved",
+          "ordinalPosition": 11,
+          "udtName": "jsonb"
+        },
+        {
+          "dataType": "jsonb",
+          "default": "'{}'::jsonb",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "details",
+          "ordinalPosition": 12,
+          "udtName": "jsonb"
+        }
+      ],
+      "name": "billing_recovery_runs",
       "rlsEnabled": true,
       "rlsForced": false,
       "schema": "public"
@@ -7682,6 +8191,110 @@
           "udtName": "text"
         },
         {
+          "dataType": "bigint",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "event_created",
+          "ordinalPosition": 3,
+          "udtName": "int8"
+        },
+        {
+          "dataType": "boolean",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "livemode",
+          "ordinalPosition": 4,
+          "udtName": "bool"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "api_version",
+          "ordinalPosition": 5,
+          "udtName": "text"
+        },
+        {
+          "dataType": "jsonb",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "event_payload",
+          "ordinalPosition": 6,
+          "udtName": "jsonb"
+        },
+        {
+          "dataType": "jsonb",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": true,
+          "name": "applied_subscription_source",
+          "ordinalPosition": 7,
+          "udtName": "jsonb"
+        },
+        {
+          "dataType": "timestamp with time zone",
+          "default": "now()",
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "ingested_at",
+          "ordinalPosition": 8,
+          "udtName": "timestamptz"
+        }
+      ],
+      "name": "stripe_event_evidence",
+      "rlsEnabled": true,
+      "rlsForced": false,
+      "schema": "public"
+    },
+    {
+      "columns": [
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "event_id",
+          "ordinalPosition": 1,
+          "udtName": "text"
+        },
+        {
+          "dataType": "text",
+          "default": null,
+          "generationExpression": null,
+          "identityGeneration": null,
+          "isGenerated": false,
+          "isIdentity": false,
+          "isNullable": false,
+          "name": "event_type",
+          "ordinalPosition": 2,
+          "udtName": "text"
+        },
+        {
           "dataType": "timestamp with time zone",
           "default": "now()",
           "generationExpression": null,
@@ -8327,6 +8940,20 @@
       "name": "trg_enforce_scenario_write_entitlement",
       "schema": "public",
       "table": "scenarios",
+      "timing": "BEFORE"
+    },
+    {
+      "enabled": true,
+      "events": [
+        "UPDATE",
+        "DELETE"
+      ],
+      "functionName": "stripe_event_evidence_immutability",
+      "functionSchema": "public",
+      "level": "ROW",
+      "name": "trg_stripe_event_evidence_immutability",
+      "schema": "public",
+      "table": "stripe_event_evidence",
       "timing": "BEFORE"
     },
     {

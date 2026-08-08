@@ -469,8 +469,9 @@ Allowed under this authorization:
 
 | PR | Scope | Status |
 |----|--------|--------|
-| **PR 0** | ADR 0009 + inventory + governance | **This PR** |
-| **A+** | Durable evidence → ingestion → reconstruction → tool → tests → staging drill → runbook → closure | Pending (derived from inventory §6) |
+| **PR 0** | ADR 0009 + inventory + governance | **Complete / merged** |
+| **PR 1** | Durable evidence schema + webhook ingestion + core reconstruction + recovery CLI + tests + runbook | **This PR** |
+| **PR 2+** | Staging migration/Edge deploy + recovery drill + closure | Pending |
 
 Respect Phase 7B pause and maintenance gate; do not open public checkout.
 
