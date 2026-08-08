@@ -90,6 +90,20 @@ None for current app/Edge paths if consumers match PR 2C evidence. If a regressi
 | **REPOSITORY TARGET** | Least-privilege after tip migration on clean reconstruction |
 | New `privilege_only_in_a` rows for revoked privileges | **Approved remediation pending production application** — not a regression |
 
+Observed after refreshing drift against tip migration (migration_only = 31 migrations):
+
+| Metric | Pre-PR2D (PR 2B/2C baseline) | Post-PR2D tip (repo target) |
+|--------|------------------------------|-----------------------------|
+| Total drift records | 2125 | 2139 |
+| `grant_mismatch` | 1400 | 1414 |
+| `privilege_only_in_a` | 1110 | 1124 |
+
+Delta (+14 grant mismatches / production-only privileges) matches the
+subscriptions client privilege revokes now present only in production.
+`docs/database/grant-security-inventory-pr2c.json` remains the **frozen**
+PR 2C decision package (700 public-facing inventory mismatches at accept
+time) and is not rewritten.
+
 Do not claim production is reconciled until this migration is applied under a separate founder gate.
 
 ## Production preconditions (NOT AUTHORIZED YET)

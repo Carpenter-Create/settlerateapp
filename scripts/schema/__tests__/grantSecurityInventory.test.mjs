@@ -28,9 +28,19 @@ describe("grant security inventory (Epic 6 PR 2C)", () => {
 
   it("includes subscriptions decision rows for anon/authenticated/service_role", () => {
     const subs = inventory.records.filter((r) => r.objectName === "subscriptions" && r.objectType === "table");
+    // Post-PR2D tip migration: client privileges become production_only mismatches
+    // (approved remediation pending production application) plus matched service_role/postgres.
     expect(subs.length).toBeGreaterThanOrEqual(21);
     expect(subs.some((r) => r.grantee === "anon" && r.privilege === "TRUNCATE")).toBe(true);
     expect(subs.some((r) => r.grantee === "service_role" && r.privilege === "INSERT")).toBe(true);
+    expect(
+      subs.some(
+        (r) =>
+          r.grantee === "anon" &&
+          r.privilege === "SELECT" &&
+          r.driftIssue === "privilege_only_in_a"
+      )
+    ).toBe(true);
   });
 
   it("flags protect_admin_subscriptions anon/authenticated EXECUTE as revoke candidates", () => {
@@ -46,6 +56,8 @@ describe("grant security inventory (Epic 6 PR 2C)", () => {
       expect(r.proposedLaterAction).toBe("REVOKE_CANDIDATE");
       expect(r.triggerOnly).toBe(true);
       expect(r.securityDefiner).toBe(true);
+      // After PR 2D tip migration these remain production-only until apply.
+      expect(r.driftIssue).toBe("privilege_only_in_a");
     }
   });
 
@@ -64,9 +76,23 @@ describe("grant security inventory (Epic 6 PR 2C)", () => {
     expect(inventory.meta.mutationAuthorized).toBe(false);
   });
 
-  it("committed JSON artifact stays in sync when present", () => {
+  it("committed PR2C JSON remains frozen historical evidence", () => {
+    // PR 2C inventory is a point-in-time decision package. After PR 2D tip
+    // migration, live rebuild against current migration_only intentionally
+    // diverges (production_only grant mismatches = approved remediation
+    // pending production application). Do not require live sync.
     const committed = load("docs/database/grant-security-inventory-pr2c.json");
-    expect(committed.summary.grantMismatchRecords).toBe(inventory.summary.grantMismatchRecords);
-    expect(committed.summary.publicSchemaMismatches).toBe(inventory.summary.publicSchemaMismatches);
+    expect(committed.meta.mutationAuthorized).toBe(false);
+    expect(committed.meta.founderDecisions).toEqual({
+      "FD-SUB-CLIENT-WRITES": "ACCEPTED",
+      "FD-DEFAULT-BROAD-GRANTS": "ACCEPTED",
+      "FD-LEGACY-DUAL-MODEL-GRANTS": "ACCEPTED",
+      "FD-RPC-EXECUTE-PUBLIC": "ACCEPTED",
+    });
+    expect(committed.summary.grantMismatchRecords).toBe(700);
+    expect(committed.summary.publicSchemaMismatches).toBe(579);
+    expect(inventory.summary.grantMismatchRecords).toBeGreaterThan(
+      committed.summary.grantMismatchRecords
+    );
   });
 });

@@ -1,6 +1,6 @@
 # Schema Drift Report
 
-Generated: 2026-08-07T22:42:27.997Z
+Generated: 2026-08-08T03:12:39.589Z
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`, `docs/adr/0007-legacy-schema-disposition.md`. This report is evidence only — no mutation is authorized by its contents (`mutationRecommendation` is always `NONE`).
 
@@ -20,7 +20,7 @@ ADR 0006 requires both a TRUE migration-only reconstruction and a TEST-HARNESS r
 ### A. Migration-only (TRUE reconstruction)
 
 - Result: **SUCCEEDED**
-- Applied migrations: 30
+- Applied migrations: 31
 - Tables reconstructed: 21
 
 ### B. Harness (TEST-HARNESS reconstruction)
@@ -32,14 +32,14 @@ ADR 0006 requires both a TRUE migration-only reconstruction and a TEST-HARNESS r
 
 ## Summary
 
-Total classified drift records: **2125**. High-priority non-match records: **459**.
+Total classified drift records: **2139**. High-priority non-match records: **473**.
 
 | Class | Count |
 |---|---|
 | `definition_mismatch` | 4 |
 | `function_rpc_mismatch` | 2 |
 | `generated_types_mismatch` | 3 |
-| `grant_mismatch` | 1400 |
+| `grant_mismatch` | 1414 |
 | `match` | 532 |
 | `policy_rls_mismatch` | 2 |
 | `production_missing_repo_object` | 74 |
@@ -48,19 +48,21 @@ Total classified drift records: **2125**. High-priority non-match records: **459
 | Compare surface | Count |
 |---|---|
 | `harness` | 1061 |
-| `migration_only` | 1061 |
+| `migration_only` | 1075 |
 | `types_vs_production` | 3 |
 
 ## Grant mismatches
 
-Total `grant_mismatch` records: **1400**.
+Total `grant_mismatch` records: **1414**.
 
 | Issue | Count |
 |---|---|
-| `privilege_only_in_a` | 1110 |
+| `privilege_only_in_a` | 1124 |
 | `privilege_only_in_b` | 290 |
 
 Privilege identity compared: schema + object type + object identity (function signature where applicable) + grantee + privilege type + is_grantable.
+
+After Epic 6 PR 2D tip migration (`20260808020000_*`), new `privilege_only_in_a` grant rows for revoked client privileges are **approved remediation pending production application** — not a regression. See `docs/database/GRANT_REMEDIATION_PR2D.md`. Production capture is unchanged until a founder-authorized apply.
 
 ## High-priority candidate resolutions (evidence only)
 
@@ -68,7 +70,7 @@ Object disposition remains governed by ADR 0007. `INTENTIONAL_LEGACY_MAP` is emp
 
 | Candidate | In production | Drift classes observed | ADR 0007 status |
 |---|---|---|---|
-| `subscriptions` | yes | (no non-match records) | unknown_founder_decision (no accepted disposition) |
+| `subscriptions` | yes | `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
 | `profiles` | yes | `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
 | `admin_bootstrap_tokens` | yes | `generated_types_mismatch`, `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
 | `stripe_webhook_events` | yes | `generated_types_mismatch`, `grant_mismatch` | unknown_founder_decision (no accepted disposition) |
@@ -295,6 +297,20 @@ Also review grant_mismatch / policy_rls_mismatch / function_rpc_mismatch class t
 | `grant:table:public.saved_comparisons` | migration_only | `grant_mismatch` | — |
 | `grant:table:public.saved_comparisons` | migration_only | `grant_mismatch` | — |
 | `grant:table:public.saved_comparisons` | migration_only | `grant_mismatch` | — |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | — |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | — |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | — |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | — |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | — |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | — |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | — |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | — |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | — |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | — |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | — |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | — |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | — |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | — |
 | `grant:table:public.user_comparisons` | migration_only | `grant_mismatch` | — |
 | `grant:table:public.user_comparisons` | migration_only | `grant_mismatch` | — |
 | `grant:table:public.user_comparisons` | migration_only | `grant_mismatch` | — |
@@ -1162,6 +1178,20 @@ Also review grant_mismatch / policy_rls_mismatch / function_rpc_mismatch class t
 | `grant:table:public.stripe_webhook_events` | migration_only | `grant_mismatch` |  |
 | `grant:table:public.stripe_webhook_events` | migration_only | `grant_mismatch` |  |
 | `grant:table:public.stripe_webhook_events` | migration_only | `grant_mismatch` |  |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | yes |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | yes |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | yes |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | yes |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | yes |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | yes |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | yes |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | yes |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | yes |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | yes |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | yes |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | yes |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | yes |
+| `grant:table:public.subscriptions` | migration_only | `grant_mismatch` | yes |
 | `grant:table:public.user_comparisons` | migration_only | `grant_mismatch` | yes |
 | `grant:table:public.user_comparisons` | migration_only | `grant_mismatch` | yes |
 | `grant:table:public.user_comparisons` | migration_only | `grant_mismatch` | yes |
@@ -2149,5 +2179,20 @@ Also review grant_mismatch / policy_rls_mismatch / function_rpc_mismatch class t
 
 Informational delta between harness and migration-only reconstructions. After PR 2A, migration-only is the principal repository surface; harness-only differences are **not** canonical production drift. Empty delta means the two reconstructions agree structurally for compared categories.
 
-_No delta detected between the two reconstructions._
+| Object | Class |
+|---|---|
+| `grant:table:public.subscriptions` | `grant_mismatch` |
+| `grant:table:public.subscriptions` | `grant_mismatch` |
+| `grant:table:public.subscriptions` | `grant_mismatch` |
+| `grant:table:public.subscriptions` | `grant_mismatch` |
+| `grant:table:public.subscriptions` | `grant_mismatch` |
+| `grant:table:public.subscriptions` | `grant_mismatch` |
+| `grant:table:public.subscriptions` | `grant_mismatch` |
+| `grant:table:public.subscriptions` | `grant_mismatch` |
+| `grant:table:public.subscriptions` | `grant_mismatch` |
+| `grant:table:public.subscriptions` | `grant_mismatch` |
+| `grant:table:public.subscriptions` | `grant_mismatch` |
+| `grant:table:public.subscriptions` | `grant_mismatch` |
+| `grant:table:public.subscriptions` | `grant_mismatch` |
+| `grant:table:public.subscriptions` | `grant_mismatch` |
 
