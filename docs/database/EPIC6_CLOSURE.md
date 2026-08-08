@@ -2,7 +2,7 @@
 
 **Phase:** 8.1 / Epic 6  
 **Status:** Repository work complete — **production apply NOT authorized**  
-**Closure SHA:** (set at merge)
+**Closure SHA:** `67a49801cdcd6cd25f3204a81c6cc872991fb365`
 
 ## Closure checklist
 
