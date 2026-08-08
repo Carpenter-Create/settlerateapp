@@ -90,7 +90,8 @@ Vercel project) - Stripe test configuration - staging administrator process
 
 ### Epic 8 --- Billing Recovery Capability
 
-**Status: In progress** (ADR 0009 accepted; PR 0). Per ADR 0009:
+**Status: COMPLETE** (ADR 0009 accepted; staging drill verified — see
+`docs/billing/EPIC8_CLOSURE.md`). Per ADR 0009:
 
 -   Preserve verified Stripe Event JSON (recovery-authoritative evidence).
 -   Create billing reconstruction process (dry-run / compare / apply).
@@ -146,7 +147,7 @@ deployment process documented - backups verified - monitoring available
 
 Epic 1–7 are complete on `main` (Epic 6 includes verified production tip
 remediation; Epic 7 staging E2E verified — see `docs/staging/EPIC7_CLOSURE.md`).
-Epic 8 is **authorized and in progress** (ADR 0009). ADR 0011 remains open
+Epic 8 is **COMPLETE** (ADR 0009; staging verified). ADR 0011 remains open
 for destructive advisor disposition. Epic 9+ require separate authorization.
 
 Do not begin Epic 9 or later epics automatically. Do not resume Phase 7B

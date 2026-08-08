@@ -221,6 +221,22 @@ describe("diffBillingState", () => {
     ]).proposed!;
     expect(diffBillingState(proposed, proposed)).toEqual([]);
   });
+
+  it("treats equivalent timestamp strings as equal", () => {
+    const proposed = reconstructBillingFromEvidence([
+      evidence({
+        eventId: "evt_1",
+        eventType: "customer.subscription.created",
+        eventCreated: 1_700_000_000,
+      }),
+    ]).proposed!;
+    const current = {
+      ...proposed,
+      currentPeriodEndIso: proposed.currentPeriodEndIso?.replace("Z", "+00:00") ?? null,
+      lastStripeEventAtIso: proposed.lastStripeEventAtIso?.replace("Z", "+00:00") ?? null,
+    };
+    expect(diffBillingState(current, proposed)).toEqual([]);
+  });
 });
 
 describe("assertRecoveryEnvironmentTarget", () => {

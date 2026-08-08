@@ -52,13 +52,12 @@ ADR 0008 **accepted**; PR 0–5 + activation/E2E). See
 (separate Supabase + Vercel + Stripe test). Do not resume Phase 7B from
 Epic 7 (`docs/staging/PHASE7B_READINESS_FROM_EPIC7.md`).
 
-**Epic 8 — Billing Recovery Capability** is **in progress** (founder-
-authorized; ADR 0009 **accepted**). Authority:
+**Epic 8 — Billing Recovery Capability** is **COMPLETE** (ADR 0009
+**accepted**; staging drill verified). Authority:
 `docs/adr/0009-billing-recovery-guarantee.md`,
-`docs/billing/EPIC8_BILLING_RECOVERY_INVENTORY.md`. Staging drills/
-migrations/Edge redeploys authorized; **production mutation and recovery
-apply blocked**. Do not change entitlement/price/checkout semantics.
-Do not begin Epic 9+ or ADR 0011.
+`docs/billing/EPIC8_CLOSURE.md`. **Production mutation / recovery apply /
+Epic 8 production migration remain founder-gated.** Do not begin Epic 9+
+or ADR 0011. Do not resume Phase 7B.
 
 ## Prohibited unless explicitly authorized
 

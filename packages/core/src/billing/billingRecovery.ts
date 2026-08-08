@@ -316,6 +316,16 @@ export interface BillingStateDiff {
   proposed: unknown;
 }
 
+function normalizeComparable(field: keyof ReconstructedBillingState, value: unknown): unknown {
+  if (value == null) return null;
+  if (field === "currentPeriodEndIso" || field === "lastStripeEventAtIso") {
+    const ms = Date.parse(String(value));
+    return Number.isFinite(ms) ? ms : String(value);
+  }
+  if (field === "cancelAtPeriodEnd") return Boolean(value);
+  return value;
+}
+
 export function diffBillingState(
   current: Partial<ReconstructedBillingState> | null | undefined,
   proposed: ReconstructedBillingState
@@ -336,10 +346,10 @@ export function diffBillingState(
 
   const diffs: BillingStateDiff[] = [];
   for (const field of fields) {
-    const cur = current?.[field] ?? null;
-    const next = proposed[field];
+    const cur = normalizeComparable(field, current?.[field] ?? null);
+    const next = normalizeComparable(field, proposed[field]);
     if (cur !== next) {
-      diffs.push({ field, current: cur, proposed: next });
+      diffs.push({ field, current: current?.[field] ?? null, proposed: proposed[field] });
     }
   }
   return diffs;
