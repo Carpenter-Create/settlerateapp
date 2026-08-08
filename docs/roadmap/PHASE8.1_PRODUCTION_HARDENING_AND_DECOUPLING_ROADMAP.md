@@ -141,9 +141,9 @@ deployment process documented - backups verified - monitoring available
 
 ## Next Approved Execution Step
 
-Epic 1–6 are complete on `main` (Epic 6 includes verified production tip
-remediation). Epic 7 is **in progress** under founder authorization (ADR
-0008). ADR 0011 remains open for destructive advisor disposition. Epic 8+
+Epic 1–7 are complete on `main` (Epic 6 includes verified production tip
+remediation; Epic 7 staging E2E verified — see `docs/staging/EPIC7_CLOSURE.md`).
+ADR 0011 remains open for destructive advisor disposition. Epic 8+
 is **not begun** and requires separate authorization.
 
 Do not begin Epic 8 or later epics automatically. Do not resume Phase 7B

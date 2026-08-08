@@ -40,29 +40,26 @@ webhooks can grant. Live Stripe will not emit staging-test price IDs.
 | `STRIPE_WEBHOOK_SECRET` | **Set** (rotated endpoint `we_1U2DA3C56u2NxRItrLZk7FMx`) |
 | `CHECKOUT_MAINTENANCE` | **Set** `false` (staging only) |
 | `SENTRY_ENVIRONMENT` | **Set** `staging` |
-| `STRIPE_SECRET_KEY` | **Present but invalid at runtime** — Stripe returns `Invalid API Key provided: sk_test_...` from staging `create-checkout` |
+| `STRIPE_SECRET_KEY` | **Set** — runtime-verified (`create-checkout` → `cs_test_…`) |
 
-Re-set a fresh SettleRate **test-mode Secret key** on **staging only** (no quotes/newlines), then redeploy:
+If the key is rotated, re-set on **staging only** and redeploy:
 
 ```bash
-# Requires SUPABASE_ACCESS_TOKEN=sbp_… and a valid SettleRate sk_test_…
 supabase secrets set STRIPE_SECRET_KEY=sk_test_… --project-ref gkhbalfpxjtleypbabjo
 bash scripts/staging/deploy-staging-functions.sh
 ```
 
-Dashboard: https://dashboard.stripe.com/acct_1U0irnC56u2NxRIt/test/apikeys  
-Or Staging project → Edge Functions → Secrets.
-
-**Falsification note:** secret **presence** alone is insufficient. Closure requires a Checkout Session with `cs_test_…` and staging test price IDs.
+**Falsification note:** secret **presence** alone is insufficient. Require a
+Checkout Session id prefixed `cs_test_` and staging test price IDs.
 
 ## Isolation falsification
 
 - [x] Staging webhook URL host is `gkhbalfpxjtleypbabjo`
-- [x] Staging `CHECKOUT_MAINTENANCE=false` / `SENTRY_ENVIRONMENT=staging` set
-- [ ] Staging secrets list includes `STRIPE_SECRET_KEY` with `sk_test_` only (no `sk_live_`)
-- [ ] Production Edge Stripe secrets unchanged
-- [ ] Production `CHECKOUT_MAINTENANCE` still `true`
-- [ ] create-checkout with staging SPA selects staging test price IDs
+- [x] Staging `CHECKOUT_MAINTENANCE=false` / `SENTRY_ENVIRONMENT=staging` set (digest-verified)
+- [x] `create-checkout` returns `cs_test_…` with staging test price IDs
+- [x] Live price IDs rejected under staging (`PRICE_NOT_ALLOWED`)
+- [x] Production `CHECKOUT_MAINTENANCE` digest remains `sha256("true")`
+- [x] Webhook events update staging `billing` only
 
 ## Phase 7B
 

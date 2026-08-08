@@ -47,7 +47,7 @@ Follow the roadmap epic sequence. Do not skip dependency gates:
 4. Epic 4 — RLS Security Test Expansion (**complete on `main`**; see ADR 0004)  
 5. Epic 5 — Shared Core Package (**complete on `main`**; ADR 0005 accepted; PR 0–6 merged)  
 6. Epic 6 — Schema Reconciliation (**COMPLETE** — repository + production tip remediation applied/verified 2026-08-08; ADR 0006/0007 accepted; PR 0–2J + closure; ADR 0011 still required for advisor drops; requires Epic 4)  
-7. Epic 7 — Staging Environment (**in progress**; ADR 0008 accepted; PR 0+)  
+7. Epic 7 — Staging Environment (**COMPLETE**; ADR 0008 accepted; E2E verified)  
 8. Epic 8 — Billing Recovery Capability  
 9. Epic 9 — Deployment Pipeline  
 10. Epic 10 — Backup and Restore Validation  
@@ -161,8 +161,7 @@ application surfaces; Edge resolves package subpaths via per-function
 Epic 6 is **COMPLETE** (repository closure and production tip remediation
 applied/verified). See `docs/database/EPIC6_CLOSURE.md` and
 `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` (execution record).
-Epic 7 is in progress under founder authorization. Epic 8+ and ADR 0011
-remain separately gated.
+Epic 7 is **COMPLETE**. Epic 8+ and ADR 0011 remain separately gated.
 
 ## Required ADRs
 

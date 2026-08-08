@@ -70,12 +70,12 @@ disposition. Authority:
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` (execution record).
-**Epic 7 (Staging Environment)** repository/infrastructure work is
-**complete** under founder authorization (ADR 0008 **accepted**; PR 0–5).
-Staging Supabase `gkhbalfpxjtleypbabjo`, Vercel `settlerate-app-staging`,
-Edge deploy, and Stripe test catalog are in place. End-to-end smoke remains
-operator-gated (`docs/staging/STAGING_SMOKE.md`). Phase 7B is **not**
-resumed (`docs/staging/PHASE7B_READINESS_FROM_EPIC7.md`). Authority:
+**Epic 7 (Staging Environment)** is **COMPLETE** under founder authorization
+(ADR 0008 **accepted**; PR 0–5 + activation/E2E). Staging Supabase
+`gkhbalfpxjtleypbabjo`, Vercel `settlerate-app-staging`, Edge deploy, Stripe
+test catalog/webhook, Auth, billing entitlement, and export/storage E2E are
+verified. Phase 7B is **not** resumed
+(`docs/staging/PHASE7B_READINESS_FROM_EPIC7.md`). Authority:
 `docs/staging/EPIC7_CLOSURE.md`. **Epic 8 and later have not begun** and
 still require separate explicit authorization.
 
@@ -102,8 +102,8 @@ public checkout, begin Epic 8+, or mutate production outside an explicitly
 authorized package.
 
 **Epic 6 note:** repository + production tip remediation are complete.
-ADR 0011 remains founder-gated. Epic 7 repository/infrastructure work is
-complete; E2E smoke remains operator-gated. Epic 8+ remain founder-gated.
+ADR 0011 remains founder-gated. Epic 7 is **COMPLETE**. Epic 8+ remain
+founder-gated.
 
 ## Phase boundaries
 

@@ -344,7 +344,7 @@ the ADR §11 sequence.
 applied/verified (ADR 0006 + ADR 0007 **accepted**; PR 0–2J + closure;
 tip package applied 2026-08-08). Founder FD-* decisions are **ACCEPTED**.
 ADR 0011 remains required for destructive advisor disposition. Epic 7 is
-separately authorized (in progress). Epic 8+ unauthorized. See
+**COMPLETE**. Epic 8+ unauthorized. See
 `docs/database/EPIC6_CLOSURE.md` and
 `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md` (execution record).
 
@@ -403,10 +403,9 @@ the consolidated tip apply are complete.
 
 ## Epic 7 — Staging Environment
 
-**Status:** **Repository/infrastructure complete** (founder-authorized).
-ADR 0008 **accepted**. End-to-end SPA/Auth/Stripe-secret smoke remains
-**operator-gated** — see `docs/staging/EPIC7_CLOSURE.md` and
-`docs/staging/STAGING_SMOKE.md`. Phase 7B is **not** resumed.
+**Status:** **COMPLETE** (founder-authorized; ADR 0008 **accepted**).
+Runtime E2E verified 2026-08-08 — see `docs/staging/EPIC7_CLOSURE.md`.
+Phase 7B is **not** resumed. Epic 8+ remain unauthorized.
 
 Authority: `docs/adr/0008-environment-topology.md`,
 `docs/environment/EPIC7_ENVIRONMENT_INVENTORY.md`,
@@ -424,7 +423,8 @@ Stripe / Supabase secrets. Do not resume Phase 7B.
 | **PR 2** | Staging Supabase migrations + seed/isolation docs | **Complete / merged** |
 | **PR 3** | Staging Edge / auth / export / observability wiring | **Complete / merged** |
 | **PR 4** | Stripe test-mode staging integration | **Complete / merged** |
-| **PR 5** | Smoke / parity / Phase 7B readiness (not resume) | **Complete / merged** (E2E operator-gated) |
+| **PR 5** | Smoke / parity / Phase 7B readiness (not resume) | **Complete / merged** |
+| **Activation / E2E** | Origin allowlist, Auth, Stripe runtime, export, closure | **Complete / merged** |
 
 ---
 
