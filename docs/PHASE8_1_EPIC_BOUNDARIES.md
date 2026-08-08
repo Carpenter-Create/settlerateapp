@@ -342,8 +342,12 @@ the ADR §11 sequence.
 
 **Status:** **In progress — PR 2C** (ADR 0006 + ADR 0007 **accepted**;
 PR 0–2B complete/merged). PR 2C = grant/security classification + founder
-decision package (evidence only). Later PR 2 slices unauthorized. Epic 7+
-unauthorized.
+decision package (evidence only). Founder decisions
+`FD-SUB-CLIENT-WRITES`, `FD-DEFAULT-BROAD-GRANTS`,
+`FD-LEGACY-DUAL-MODEL-GRANTS`, and `FD-RPC-EXECUTE-PUBLIC` are
+**ACCEPTED** (binding targets in `GRANT_SECURITY_DECISIONS_PR2C.md`);
+GRANT/REVOKE remediation remains unauthorized. Later PR 2 slices
+unauthorized. Epic 7+ unauthorized.
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,

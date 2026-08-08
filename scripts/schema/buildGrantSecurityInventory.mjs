@@ -740,9 +740,16 @@ export function buildGrantSecurityInventory({ prod, mig, driftReport }) {
       authority: ["docs/adr/0006-database-schema-source-of-truth.md", "docs/adr/0007-legacy-schema-disposition.md"],
       compareSurface: "production_vs_migration_only",
       mutationAuthorized: false,
-      note: "Classification only. No GRANT/REVOKE executed or authorized by this artifact.",
+      note: "Classification only. No GRANT/REVOKE executed or authorized by this artifact. Founder FD-* decisions accepted for documentation; remediation remains separately authorized.",
       productionCapturedAt: prod.meta?.capturedAt ?? null,
       migrationOnlyReconstruction: mig.reconstruction?.success ?? null,
+      founderDecisions: {
+        "FD-SUB-CLIENT-WRITES": "ACCEPTED",
+        "FD-DEFAULT-BROAD-GRANTS": "ACCEPTED",
+        "FD-LEGACY-DUAL-MODEL-GRANTS": "ACCEPTED",
+        "FD-RPC-EXECUTE-PUBLIC": "ACCEPTED",
+      },
+      founderDecisionBinding: "Recommended targets/answers in docs/database/GRANT_SECURITY_DECISIONS_PR2C.md are binding; GRANT/REVOKE and PR 2D remain unauthorized.",
     },
     summary: {
       totalRecords: records.length,

@@ -1,7 +1,7 @@
 # Grant Security Decisions — Epic 6 PR 2C
 
 **Phase:** 8.1 / Epic 6 PR 2C
-**Generated:** 2026-08-08T00:21:54.191Z
+**Generated:** 2026-08-08T00:44:48.115Z
 **Status:** EVIDENCE / CLASSIFICATION ONLY — no GRANT/REVOKE executed
 **Authority:** ADR 0006, ADR 0007; post-PR2B drift baseline
 **Machine inventory:** `docs/database/grant-security-inventory-pr2c.json`
@@ -217,7 +217,17 @@ Full per-signature rows are in the JSON inventory (`objectType=function`).
 
 Low-level PostgreSQL mechanics are pre-answered. Founder choices are limited to product/security posture.
 
+**Binding status:** all `FD-*` decisions below are recorded as
+**FOUNDER DECISION: ACCEPTED**. The **Recommended target** and
+**Recommended answer** rows are the binding targets. Acceptance
+authorizes documentation/governance within PR 2C only — it does
+**not** authorize GRANT/REVOKE execution, a remediation migration,
+production mutation, PR 2D, legacy object removal, ADR 0011
+decisions, or Epic 7+.
+
 ### FD-SUB-CLIENT-WRITES
+
+**FOUNDER DECISION: ACCEPTED**
 
 | Field | Value |
 |---|---|
@@ -228,8 +238,11 @@ Low-level PostgreSQL mechanics are pre-answered. Founder choices are limited to 
 | Behavior risk if reduced | None for current app if revoked — Edge sync and RPCs unaffected |
 | Production mutation required later? | yes |
 | Recommended answer | **Approve revoke of anon/authenticated non-essential privileges on subscriptions** |
+| Founder decision | **ACCEPTED** |
 
 ### FD-DEFAULT-BROAD-GRANTS
+
+**FOUNDER DECISION: ACCEPTED**
 
 | Field | Value |
 |---|---|
@@ -240,8 +253,11 @@ Low-level PostgreSQL mechanics are pre-answered. Founder choices are limited to 
 | Behavior risk if reduced | Low if authenticated policy-aligned privileges preserved; must regression-test app CRUD |
 | Production mutation required later? | yes |
 | Recommended answer | **Approve move to explicit least privilege on active tables** |
+| Founder decision | **ACCEPTED** |
 
 ### FD-LEGACY-DUAL-MODEL-GRANTS
+
+**FOUNDER DECISION: ACCEPTED**
 
 | Field | Value |
 |---|---|
@@ -252,8 +268,11 @@ Low-level PostgreSQL mechanics are pre-answered. Founder choices are limited to 
 | Behavior risk if reduced | Unknown external/marketing clients for contact/advisor; dual models unused in-repo |
 | Production mutation required later? | partial yes |
 | Recommended answer | **Approve TRUNCATE/REFERENCES/TRIGGER revokes now; keep DML/SELECT decisions tied to later disposition slices** |
+| Founder decision | **ACCEPTED** |
 
 ### FD-RPC-EXECUTE-PUBLIC
+
+**FOUNDER DECISION: ACCEPTED**
 
 | Field | Value |
 |---|---|
@@ -264,6 +283,7 @@ Low-level PostgreSQL mechanics are pre-answered. Founder choices are limited to 
 | Behavior risk if reduced | Must ensure intended authenticated/service_role grants remain; test admin + entitlement + webhook paths |
 | Production mutation required later? | yes |
 | Recommended answer | **Approve aligning EXECUTE to migration intent (revoke unintended anon/PUBLIC)** |
+| Founder decision | **ACCEPTED** |
 
 ---
 
@@ -275,7 +295,7 @@ Low-level PostgreSQL mechanics are pre-answered. Founder choices are limited to 
 | **B** | Obvious safe privilege reductions — anon TRUNCATE/REFERENCES/TRIGGER; trigger-only EXECUTE to anon/authenticated |
 | **C** | Behavior-sensitive reductions — authenticated DML on active tables; RPC EXECUTE tightening — needs tests |
 | **D** | Platform/storage exclusions — do not chase storage/extension grant noise as app drift |
-| **E** | Founder decisions (FD-* above) |
+| **E** | Founder decisions (FD-* above) — **ACCEPTED**; remediation still NOT AUTHORIZED in PR 2C |
 | **F** | Blocked by ADR 0007 / ADR 0011 — legacy dual-model/advisor object removal (grants may partially proceed in B) |
 
 ### Illustrative later statements (NON-EXECUTABLE / NOT AUTHORIZED)

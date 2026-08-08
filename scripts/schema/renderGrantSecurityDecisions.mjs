@@ -261,6 +261,14 @@ export function renderMarkdown(inventory) {
   lines.push("");
   lines.push("Low-level PostgreSQL mechanics are pre-answered. Founder choices are limited to product/security posture.");
   lines.push("");
+  lines.push("**Binding status:** all `FD-*` decisions below are recorded as");
+  lines.push("**FOUNDER DECISION: ACCEPTED**. The **Recommended target** and");
+  lines.push("**Recommended answer** rows are the binding targets. Acceptance");
+  lines.push("authorizes documentation/governance within PR 2C only — it does");
+  lines.push("**not** authorize GRANT/REVOKE execution, a remediation migration,");
+  lines.push("production mutation, PR 2D, legacy object removal, ADR 0011");
+  lines.push("decisions, or Epic 7+.");
+  lines.push("");
 
   const decisions = [
     {
@@ -272,6 +280,7 @@ export function renderMarkdown(inventory) {
       behaviorRisk: "None for current app if revoked — Edge sync and RPCs unaffected",
       mutationLater: "yes",
       recommended: "Approve revoke of anon/authenticated non-essential privileges on subscriptions",
+      founderDecision: "ACCEPTED",
     },
     {
       id: "FD-DEFAULT-BROAD-GRANTS",
@@ -282,6 +291,7 @@ export function renderMarkdown(inventory) {
       behaviorRisk: "Low if authenticated policy-aligned privileges preserved; must regression-test app CRUD",
       mutationLater: "yes",
       recommended: "Approve move to explicit least privilege on active tables",
+      founderDecision: "ACCEPTED",
     },
     {
       id: "FD-LEGACY-DUAL-MODEL-GRANTS",
@@ -292,6 +302,7 @@ export function renderMarkdown(inventory) {
       behaviorRisk: "Unknown external/marketing clients for contact/advisor; dual models unused in-repo",
       mutationLater: "partial yes",
       recommended: "Approve TRUNCATE/REFERENCES/TRIGGER revokes now; keep DML/SELECT decisions tied to later disposition slices",
+      founderDecision: "ACCEPTED",
     },
     {
       id: "FD-RPC-EXECUTE-PUBLIC",
@@ -302,11 +313,14 @@ export function renderMarkdown(inventory) {
       behaviorRisk: "Must ensure intended authenticated/service_role grants remain; test admin + entitlement + webhook paths",
       mutationLater: "yes",
       recommended: "Approve aligning EXECUTE to migration intent (revoke unintended anon/PUBLIC)",
+      founderDecision: "ACCEPTED",
     },
   ];
 
   for (const d of decisions) {
     lines.push(`### ${d.id}`);
+    lines.push("");
+    lines.push(`**FOUNDER DECISION: ${d.founderDecision}**`);
     lines.push("");
     lines.push(`| Field | Value |`);
     lines.push(`|---|---|`);
@@ -317,6 +331,7 @@ export function renderMarkdown(inventory) {
     lines.push(`| Behavior risk if reduced | ${d.behaviorRisk} |`);
     lines.push(`| Production mutation required later? | ${d.mutationLater} |`);
     lines.push(`| Recommended answer | **${d.recommended}** |`);
+    lines.push(`| Founder decision | **${d.founderDecision}** |`);
     lines.push("");
   }
 
@@ -330,7 +345,7 @@ export function renderMarkdown(inventory) {
   lines.push("| **B** | Obvious safe privilege reductions — anon TRUNCATE/REFERENCES/TRIGGER; trigger-only EXECUTE to anon/authenticated |");
   lines.push("| **C** | Behavior-sensitive reductions — authenticated DML on active tables; RPC EXECUTE tightening — needs tests |");
   lines.push("| **D** | Platform/storage exclusions — do not chase storage/extension grant noise as app drift |");
-  lines.push("| **E** | Founder decisions (FD-* above) |");
+  lines.push("| **E** | Founder decisions (FD-* above) — **ACCEPTED**; remediation still NOT AUTHORIZED in PR 2C |");
   lines.push("| **F** | Blocked by ADR 0007 / ADR 0011 — legacy dual-model/advisor object removal (grants may partially proceed in B) |");
   lines.push("");
   lines.push("### Illustrative later statements (NON-EXECUTABLE / NOT AUTHORIZED)");

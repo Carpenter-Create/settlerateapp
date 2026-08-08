@@ -63,8 +63,10 @@ accepted; PR 0–6 merged. Authority:
 
 **Epic 6 (Schema Reconciliation)** is **In progress — PR 2C** (ADR 0006
 and ADR 0007 **accepted**; PR 0–2B complete/merged). PR 2C = grant/
-security classification + founder decision package (evidence only). Later
-PR 2 slices remain unauthorized. Authority:
+security classification + founder decision package (evidence only).
+Founder FD-* decisions are **accepted** in
+`docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`; GRANT/REVOKE remediation
+remains unauthorized. Later PR 2 slices remain unauthorized. Authority:
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,

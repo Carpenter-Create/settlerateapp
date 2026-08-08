@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-08-08T00:21:54.191Z",
+    "generatedAt": "2026-08-08T00:44:48.115Z",
     "epic": "Phase 8.1 / Epic 6 PR 2C",
     "authority": [
       "docs/adr/0006-database-schema-source-of-truth.md",
@@ -8,9 +8,16 @@
     ],
     "compareSurface": "production_vs_migration_only",
     "mutationAuthorized": false,
-    "note": "Classification only. No GRANT/REVOKE executed or authorized by this artifact.",
+    "note": "Classification only. No GRANT/REVOKE executed or authorized by this artifact. Founder FD-* decisions accepted for documentation; remediation remains separately authorized.",
     "productionCapturedAt": "2026-08-07T21:23:22.944Z",
-    "migrationOnlyReconstruction": true
+    "migrationOnlyReconstruction": true,
+    "founderDecisions": {
+      "FD-SUB-CLIENT-WRITES": "ACCEPTED",
+      "FD-DEFAULT-BROAD-GRANTS": "ACCEPTED",
+      "FD-LEGACY-DUAL-MODEL-GRANTS": "ACCEPTED",
+      "FD-RPC-EXECUTE-PUBLIC": "ACCEPTED"
+    },
+    "founderDecisionBinding": "Recommended targets/answers in docs/database/GRANT_SECURITY_DECISIONS_PR2C.md are binding; GRANT/REVOKE and PR 2D remain unauthorized."
   },
   "summary": {
     "totalRecords": 879,

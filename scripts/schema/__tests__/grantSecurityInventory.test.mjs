@@ -54,6 +54,16 @@ describe("grant security inventory (Epic 6 PR 2C)", () => {
     expect(inventory.records.every((r) => r.evidencePaths?.length)).toBe(true);
   });
 
+  it("records accepted founder FD-* decisions without authorizing remediation", () => {
+    expect(inventory.meta.founderDecisions).toEqual({
+      "FD-SUB-CLIENT-WRITES": "ACCEPTED",
+      "FD-DEFAULT-BROAD-GRANTS": "ACCEPTED",
+      "FD-LEGACY-DUAL-MODEL-GRANTS": "ACCEPTED",
+      "FD-RPC-EXECUTE-PUBLIC": "ACCEPTED",
+    });
+    expect(inventory.meta.mutationAuthorized).toBe(false);
+  });
+
   it("committed JSON artifact stays in sync when present", () => {
     const committed = load("docs/database/grant-security-inventory-pr2c.json");
     expect(committed.summary.grantMismatchRecords).toBe(inventory.summary.grantMismatchRecords);

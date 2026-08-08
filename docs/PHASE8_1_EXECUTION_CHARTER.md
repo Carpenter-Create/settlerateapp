@@ -151,9 +151,10 @@ application surfaces; Edge resolves package subpaths via per-function
 | **PR 2+ (later)** | Separately authorized reconciliation slices | Not authorized |
 
 Epic 6 **PR 2C** classifies production-vs-migration_only grant drift into
-a least-privilege decision package. Evidence only — no GRANT/REVOKE,
-migrations, or production mutation. Do not begin later PR 2 slices or
-Epic 7+ automatically. Authority (accepted):
+a least-privilege decision package. Founder FD-* decisions are **accepted**
+(see `docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`); evidence only —
+no GRANT/REVOKE, migrations, or production mutation in this PR. Do not
+begin later PR 2 slices or Epic 7+ automatically. Authority (accepted):
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
 `docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
