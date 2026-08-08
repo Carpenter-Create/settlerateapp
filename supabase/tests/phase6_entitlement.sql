@@ -229,8 +229,12 @@ BEGIN
       p_action_taken := 'processing'
     )
   );
+  -- Epic 8: terminal success must not reclaim; stuck/failed_retryable may.
+  UPDATE public.stripe_webhook_events
+  SET action_taken = 'updated'
+  WHERE event_id = 'evt_test_1';
   PERFORM test.assert_true(
-    'claim duplicate false',
+    'claim duplicate false after terminal updated',
     public.claim_stripe_webhook_event(
       p_event_id := 'evt_test_1',
       p_event_type := 'test',
@@ -238,6 +242,13 @@ BEGIN
     ) IS FALSE
   );
   PERFORM public.release_stripe_webhook_event('evt_test_1');
+  PERFORM test.assert_true(
+    'release marks failed_retryable without delete',
+    EXISTS (
+      SELECT 1 FROM public.stripe_webhook_events
+      WHERE event_id = 'evt_test_1' AND action_taken = 'failed_retryable'
+    )
+  );
   PERFORM test.assert_true(
     'claim after release true',
     public.claim_stripe_webhook_event(

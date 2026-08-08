@@ -159,6 +159,51 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_recovery_runs: {
+        Row: {
+          applied_summary: Json
+          created_at: string
+          details: Json
+          environment: string
+          evidence_event_ids: string[]
+          id: string
+          mode: string
+          project_ref: string
+          proposed_summary: Json
+          result: string
+          scope: Json
+          unresolved: Json
+        }
+        Insert: {
+          applied_summary?: Json
+          created_at?: string
+          details?: Json
+          environment: string
+          evidence_event_ids?: string[]
+          id?: string
+          mode: string
+          project_ref: string
+          proposed_summary?: Json
+          result: string
+          scope?: Json
+          unresolved?: Json
+        }
+        Update: {
+          applied_summary?: Json
+          created_at?: string
+          details?: Json
+          environment?: string
+          evidence_event_ids?: string[]
+          id?: string
+          mode?: string
+          project_ref?: string
+          proposed_summary?: Json
+          result?: string
+          scope?: Json
+          unresolved?: Json
+        }
+        Relationships: []
+      }
       comparison_items: {
         Row: {
           comparison_id: string
@@ -587,6 +632,47 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_event_evidence: {
+        Row: {
+          api_version: string | null
+          applied_subscription_source: Json | null
+          event_created: number
+          event_id: string
+          event_payload: Json
+          event_type: string
+          ingested_at: string
+          livemode: boolean
+        }
+        Insert: {
+          api_version?: string | null
+          applied_subscription_source?: Json | null
+          event_created: number
+          event_id: string
+          event_payload: Json
+          event_type: string
+          ingested_at?: string
+          livemode: boolean
+        }
+        Update: {
+          api_version?: string | null
+          applied_subscription_source?: Json | null
+          event_created?: number
+          event_id?: string
+          event_payload?: Json
+          event_type?: string
+          ingested_at?: string
+          livemode?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_event_evidence_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "stripe_webhook_events"
+            referencedColumns: ["event_id"]
+          },
+        ]
+      }
       stripe_webhook_events: {
         Row: {
           action_taken: string | null
@@ -805,6 +891,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      insert_billing_recovery_run: {
+        Args: {
+          p_applied_summary?: Json
+          p_details?: Json
+          p_environment: string
+          p_evidence_event_ids?: string[]
+          p_mode: string
+          p_project_ref: string
+          p_proposed_summary?: Json
+          p_result?: string
+          p_scope?: Json
+          p_unresolved?: Json
+        }
+        Returns: string
+      }
       is_admin: { Args: { uid: string }; Returns: boolean }
       is_advisor: { Args: { uid: string }; Returns: boolean }
       is_professional_price: { Args: { p_price_id: string }; Returns: boolean }
@@ -873,11 +974,26 @@ export type Database = {
         Returns: undefined
       }
       promote_to_admin: { Args: { p_email: string }; Returns: Json }
+      record_stripe_event_evidence: {
+        Args: {
+          p_api_version: string
+          p_event_created: number
+          p_event_id: string
+          p_event_payload: Json
+          p_event_type: string
+          p_livemode: boolean
+        }
+        Returns: undefined
+      }
       release_stripe_webhook_event: {
         Args: { p_event_id: string }
         Returns: undefined
       }
       resolve_plan_code: { Args: { p_price_id: string }; Returns: string }
+      set_stripe_event_applied_subscription_source: {
+        Args: { p_applied_subscription_source: Json; p_event_id: string }
+        Returns: undefined
+      }
       touch_comparison_share: { Args: { p_token: string }; Returns: undefined }
       validate_comparison_share: {
         Args: { p_token: string }

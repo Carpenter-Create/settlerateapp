@@ -167,6 +167,13 @@ async function runSqlAssertions(client) {
     client,
     join(root, "supabase/migrations/20260808020000_epic6_pr2d_grant_least_privilege.sql")
   );
+  // Epic 8 tables are not in the PR 2D migration; re-apply Epic 8 revoke/grant
+  // before PR 2D structural assertions that now include those relations.
+  process.stdout.write("Re-applying Epic 8 stripe event evidence migration for privilege assertions...\n");
+  await psqlFile(
+    client,
+    join(root, "supabase/migrations/20260808200000_epic8_stripe_event_evidence.sql")
+  );
   process.stdout.write("Running epic6_pr2d_grant_privileges.sql assertions...\n");
   await psqlFile(client, join(root, "supabase/tests/epic6_pr2d_grant_privileges.sql"));
 
@@ -187,6 +194,9 @@ async function runSqlAssertions(client) {
   );
   process.stdout.write("Running epic6_pr2h_legacy_share_rpc.sql assertions...\n");
   await psqlFile(client, join(root, "supabase/tests/epic6_pr2h_legacy_share_rpc.sql"));
+
+  process.stdout.write("Running epic8_billing_recovery.sql assertions...\n");
+  await psqlFile(client, join(root, "supabase/tests/epic8_billing_recovery.sql"));
 }
 
 async function runConcurrentLimitTest(client) {

@@ -12,6 +12,7 @@
  * - `@settlerate/core/subscription-guard`
  * - `@settlerate/core/observability-redaction`
  * - `@settlerate/core/billing-snapshot` (pure mappers only)
+ * - `@settlerate/core/billing-recovery` (deterministic reconstruction; no I/O)
  * - `@settlerate/core/customer-resolution` (pure helpers only)
  * - `@settlerate/core/app-origin` (string Origin header policy)
  * - `@settlerate/core/edge-observability` (deterministic helpers only)
@@ -101,6 +102,24 @@ export type {
   StripeInvoiceLike,
   StripeSubscriptionBillingSnapshot,
 } from "./billing/stripeBillingSnapshot.ts";
+
+export {
+  BILLING_RECOVERY_HANDLED_EVENT_TYPES,
+  reconstructBillingFromEvidence,
+  diffBillingState,
+  assertRecoveryEnvironmentTarget,
+  emptyReconstructedBillingState,
+} from "./billing/billingRecovery.ts";
+
+export type {
+  BillingRecoveryHandledEventType,
+  BillingRecoveryEvidenceRecord,
+  ReconstructedBillingState,
+  BillingReconstructionStatus,
+  BillingReconstructionResult,
+  ReconstructBillingOptions,
+  BillingStateDiff,
+} from "./billing/billingRecovery.ts";
 
 export {
   resolveStripeCustomerByUserId,

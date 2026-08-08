@@ -88,6 +88,7 @@ const EXPECTED_PACKAGE_EXPORTS = [
   "./subscription-guard",
   "./observability-redaction",
   "./billing-snapshot",
+  "./billing-recovery",
   "./customer-resolution",
   "./app-origin",
   "./edge-observability",
@@ -115,6 +116,8 @@ const CORE_SUBPATH_TARGETS = {
     "packages/core/src/observability/observabilityRedaction.ts",
   "@settlerate/core/billing-snapshot":
     "packages/core/src/billing/stripeBillingSnapshot.ts",
+  "@settlerate/core/billing-recovery":
+    "packages/core/src/billing/billingRecovery.ts",
   "@settlerate/core/customer-resolution":
     "packages/core/src/billing/stripeCustomerResolve.ts",
   "@settlerate/core/app-origin": "packages/core/src/origin/appOrigin.ts",

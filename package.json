@@ -18,6 +18,7 @@
     "test:export-parity-deno": "deno test --allow-read --no-check --config supabase/functions/generate-pdf/deno.json supabase/functions/generate-pdf/mapDerivedForExport_test.ts",
     "test:core-deno-scaffold": "deno test --allow-read --no-check --config packages/core/deno.json packages/core/deno/ && deno test --allow-read --no-check --config supabase/functions/deno.json supabase/functions/_tests/",
     "test:entitlement-sql": "node scripts/test-entitlement-sql.mjs",
+    "billing:recover": "node --experimental-strip-types scripts/billing/recoverBilling.mjs",
     "test:schema-capture": "vitest run scripts/schema/__tests__",
     "schema:capture": "node scripts/schema/captureFromDatabase.mjs",
     "schema:reconstruct": "node scripts/schema/reconstructLocal.mjs",

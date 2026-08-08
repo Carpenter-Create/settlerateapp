@@ -6,6 +6,7 @@
     "@settlerate/core/subscription-guard": "./src/checkout/professionalSubscriptionGuard.ts",
     "@settlerate/core/observability-redaction": "./src/observability/observabilityRedaction.ts",
     "@settlerate/core/billing-snapshot": "./src/billing/stripeBillingSnapshot.ts",
+    "@settlerate/core/billing-recovery": "./src/billing/billingRecovery.ts",
     "@settlerate/core/customer-resolution": "./src/billing/stripeCustomerResolve.ts",
     "@settlerate/core/app-origin": "./src/origin/appOrigin.ts",
     "@settlerate/core/edge-observability": "./src/observability/edgeObservability.ts",

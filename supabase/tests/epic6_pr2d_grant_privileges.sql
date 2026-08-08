@@ -17,6 +17,8 @@ DECLARE
     'public.admin_bootstrap_tokens',
     'public.entitlement_bypass_log',
     'public.stripe_webhook_events',
+    'public.stripe_event_evidence',
+    'public.billing_recovery_runs',
     'public.saved_comparisons',
     'public.comparison_items',
     'public.comparison_versions',
