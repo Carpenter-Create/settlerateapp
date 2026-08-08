@@ -8,9 +8,14 @@
 
 ## Final main SHA
 
-`b22aacde9ccf8389af3470da3e108cfb21def43c` (#90 tip hygiene)
+| Milestone | SHA | PR |
+|-----------|-----|----|
+| Implementation | `01ff92c0beb646f46c9b8b8225322bb1d63b4b9a` | #87 |
+| Content closure | `b49529177ea6012e18dbcc404869764684453b34` | #88 |
+| Tip after hygiene | `2d3f949f0ae69c12a50b089e2fed30b3984cc418` | #91 |
 
-Implementation merge SHA: `01ff92c0beb646f46c9b8b8225322bb1d63b4b9a` (#87)
+Subsequent tip-pin commits are non-blocking; use `git rev-parse origin/main`
+for the absolute tip.
 
 ## PR train
 
