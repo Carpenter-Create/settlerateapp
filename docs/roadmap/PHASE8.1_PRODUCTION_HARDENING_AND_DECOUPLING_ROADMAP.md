@@ -65,14 +65,10 @@ and export-summary mapping. Goal: prevent business-logic drift.
 
 ### Epic 6 --- Schema Reconciliation
 
-**Status: In progress — PR 2C** (ADR 0006 / ADR 0007 **accepted**; PR 0–2B
+**Status: In progress — PR 2D** (ADR 0006 / ADR 0007 **accepted**; PR 0–2C
 complete/merged — see `docs/adr/0006-database-schema-source-of-truth.md`,
-`docs/adr/0007-legacy-schema-disposition.md`,
-`docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
-`docs/database/SCHEMA_DRIFT_REPORT.md`,
-`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`,
-`docs/database/SCHEMA_DRIFT_REFRESH_PR2B.md`,
-`docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`).
+`docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`,
+`docs/database/GRANT_REMEDIATION_PR2D.md`).
 
 -   Compare production schema against migrations (after read-only capture).
 -   Identify undocumented differences.
@@ -81,8 +77,9 @@ complete/merged — see `docs/adr/0006-database-schema-source-of-truth.md`,
     preserve historical migrations **and** a documented consolidated
     baseline boundary; implementation deferred).
 
-Dependency: requires Epic 4 (met). PR 2C = grant/security classification
-(in progress). Later PR 2 slices unauthorized. Epic 7+ unauthorized.
+Dependency: requires Epic 4 (met). PR 2D = first least-privilege grant
+remediation (in progress; production apply gated). Later PR 2 slices
+unauthorized. Epic 7+ unauthorized.
 
 ### Epic 7 --- Staging Environment
 
@@ -143,13 +140,12 @@ deployment process documented - backups verified - monitoring available
 
 ## Next Approved Execution Step
 
-Epic 1–5 are complete on `main`. Epic 6 is **in progress — PR 2C**
-(ADR 0006 / ADR 0007 **accepted**; PR 0–2B complete/merged; grant/
-security classification + founder decision package).
+Epic 1–5 are complete on `main`. Epic 6 is **in progress — autonomous
+repository completion train** (ADR 0006 / ADR 0007 **accepted**; PR 0–2C
+complete/merged; PR 2D+ repository slices authorized under master prompt;
+production apply gated via `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`).
 
-**Next implementation step after PR 2C (requires separate founder
-authorization):** later Epic 6 PR 2 slices implementing approved grant
-remediation — never automatic. Baseline cutover remains separately
-authorized.
+**Production apply** of Epic 6 tip migrations requires separate founder
+authorization of the consolidated apply package — never automatic.
 
-Do not begin later Epic 6 PR 2 slices, Epic 7, or later epics automatically.
+Do not begin Epic 7 or later epics automatically.

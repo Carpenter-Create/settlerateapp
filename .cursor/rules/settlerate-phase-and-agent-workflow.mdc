@@ -38,27 +38,22 @@ accepted; PR 0–6 merged. See
 `docs/adr/0005-shared-package-architecture.md` and
 `docs/EXPORT_CONTRACT.md`.
 
-**Epic 6 — Schema Reconciliation** is **In progress — PR 2C** (ADR 0006
-and ADR 0007 **accepted**; PR 0–2B complete/merged). PR 2C = grant/
-security classification + founder decision package (evidence only).
-Founder FD-* decisions are **accepted** in
-`docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`; GRANT/REVOKE
-remediation remains unauthorized. See
-`docs/adr/0006-database-schema-source-of-truth.md`,
-`docs/adr/0007-legacy-schema-disposition.md`,
-`docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
-`docs/database/SCHEMA_DRIFT_REPORT.md`,
-`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`,
-`docs/database/SCHEMA_DRIFT_REFRESH_PR2B.md`, and
-`docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`. **Do not begin later
-Epic 6 PR 2 slices or Epic 7+ automatically. Do not mutate production
-schema/grants without separate founder authorization.**
+**Epic 6 — Schema Reconciliation** is **In progress — autonomous
+repository completion train** (ADR 0006 and ADR 0007 **accepted**;
+PR 0–2C complete/merged). Founder FD-* decisions are **accepted**.
+Agents may implement, review, merge, and continue remaining
+**repository-side** Epic 6 slices under the Epic 6 Autonomous Completion
+Master Prompt. See `docs/adr/0006-database-schema-source-of-truth.md`,
+`docs/database/GRANT_REMEDIATION_PR2D.md`, and
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. **Do not mutate
+production without separate founder authorization of the consolidated
+apply package.**
 
 ## Prohibited unless explicitly authorized
 
 - Supabase Auth Dashboard redirect-allowlist changes without founder authorization
 - Changing production Sentry DSNs, project routing, or capture scope without founder authorization
-- Beginning later Epic 6 PR 2 slices or Epic 7+ ahead of sequence / dependency gates
+- Beginning Epic 7+ ahead of sequence / dependency gates
 - Mutating production databases (DDL/DML/GRANT) / `db push` / `migration repair` without founder authorization
 - Resuming Phase 7B live smoke subscription, beta opening, or public checkout
 - AWS / Cloudflare migration
@@ -83,7 +78,9 @@ That means: do not redefine export fields, field meanings, omission rules, snaps
 
 **Epic 5 clarification:** when Shared Core Package work is authorized, Epic 5 **may** relocate export-related code and update imports. Epic 5 **may not** redefine export fields, meanings, or contract behavior.
 
-**Never begin the next phase, epic, or PR automatically.**
+**Never begin the next phase or Epic 7+ automatically.** Within the authorized
+Epic 6 autonomous repository completion train, continue to the next safe
+Epic 6 slice after merge/convergence.
 
 # Agent Autonomy
 
@@ -97,13 +94,16 @@ Unless a prompt says otherwise, agents **may**:
 - Push the dedicated branch
 - Open or update a **draft** PR
 
+**Epic 6 autonomous exception (repository only):** after convergence loops,
+agents may mark Ready, merge Epic 6 PRs, delete merged branches, update
+main, and continue the next safe Epic 6 slice. Production apply remains
+founder-gated via `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`.
+
 Agents **may not** without explicit authorization:
 
-- Commit directly to `main`
-- Mark a draft PR ready for review
-- Approve or merge a PR
-- Delete branches after merge
-- Begin the next phase, epic, or PR
+- Commit directly to `main` outside Epic 6 merge-via-PR workflow
+- Mutate production databases / apply Epic 6 migrations to production
+- Begin Epic 7+ or resume Phase 7B live smoke / beta / public checkout
 - Disable `CHECKOUT_MAINTENANCE` or open public Checkout while Phase 7B is paused
 
 # Conduct
@@ -112,7 +112,8 @@ Agents **may not** without explicit authorization:
 - Match surrounding conventions
 - **Report uncertainty**; distinguish confirmed DEF-* defects from proposed improvements
 - Do not broaden scope during implementation
-- **Stop after the requested task** with a completion report
+- For Epic 6 autonomous train: continue until HARD STOP or Epic 6 closure;
+  otherwise stop after the requested task with a completion report
 
 # Bugbot Triage
 

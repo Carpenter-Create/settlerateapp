@@ -4364,118 +4364,6 @@
       "schema": "public"
     },
     {
-      "grantee": "anon",
-      "isGrantable": false,
-      "objectName": "subscriptions",
-      "objectType": "table",
-      "privilege": "DELETE",
-      "schema": "public"
-    },
-    {
-      "grantee": "anon",
-      "isGrantable": false,
-      "objectName": "subscriptions",
-      "objectType": "table",
-      "privilege": "INSERT",
-      "schema": "public"
-    },
-    {
-      "grantee": "anon",
-      "isGrantable": false,
-      "objectName": "subscriptions",
-      "objectType": "table",
-      "privilege": "REFERENCES",
-      "schema": "public"
-    },
-    {
-      "grantee": "anon",
-      "isGrantable": false,
-      "objectName": "subscriptions",
-      "objectType": "table",
-      "privilege": "SELECT",
-      "schema": "public"
-    },
-    {
-      "grantee": "anon",
-      "isGrantable": false,
-      "objectName": "subscriptions",
-      "objectType": "table",
-      "privilege": "TRIGGER",
-      "schema": "public"
-    },
-    {
-      "grantee": "anon",
-      "isGrantable": false,
-      "objectName": "subscriptions",
-      "objectType": "table",
-      "privilege": "TRUNCATE",
-      "schema": "public"
-    },
-    {
-      "grantee": "anon",
-      "isGrantable": false,
-      "objectName": "subscriptions",
-      "objectType": "table",
-      "privilege": "UPDATE",
-      "schema": "public"
-    },
-    {
-      "grantee": "authenticated",
-      "isGrantable": false,
-      "objectName": "subscriptions",
-      "objectType": "table",
-      "privilege": "DELETE",
-      "schema": "public"
-    },
-    {
-      "grantee": "authenticated",
-      "isGrantable": false,
-      "objectName": "subscriptions",
-      "objectType": "table",
-      "privilege": "INSERT",
-      "schema": "public"
-    },
-    {
-      "grantee": "authenticated",
-      "isGrantable": false,
-      "objectName": "subscriptions",
-      "objectType": "table",
-      "privilege": "REFERENCES",
-      "schema": "public"
-    },
-    {
-      "grantee": "authenticated",
-      "isGrantable": false,
-      "objectName": "subscriptions",
-      "objectType": "table",
-      "privilege": "SELECT",
-      "schema": "public"
-    },
-    {
-      "grantee": "authenticated",
-      "isGrantable": false,
-      "objectName": "subscriptions",
-      "objectType": "table",
-      "privilege": "TRIGGER",
-      "schema": "public"
-    },
-    {
-      "grantee": "authenticated",
-      "isGrantable": false,
-      "objectName": "subscriptions",
-      "objectType": "table",
-      "privilege": "TRUNCATE",
-      "schema": "public"
-    },
-    {
-      "grantee": "authenticated",
-      "isGrantable": false,
-      "objectName": "subscriptions",
-      "objectType": "table",
-      "privilege": "UPDATE",
-      "schema": "public"
-    },
-    {
       "grantee": "postgres",
       "isGrantable": true,
       "objectName": "subscriptions",
@@ -5363,8 +5251,8 @@
     }
   ],
   "meta": {
-    "capturedAt": "2026-08-07T22:42:08.131Z",
-    "gitSha": "25115df474ed1498472a200d7a16303a043d1cba",
+    "capturedAt": "2026-08-08T03:06:07.685Z",
+    "gitSha": "f8ded7514632adfbc07828f33f00cb383963176b",
     "projectRef": null,
     "readOnly": true,
     "schemas": [
@@ -6061,6 +5949,10 @@
       },
       {
         "file": "20260808010000_fix_admin_rpc_return_types.sql",
+        "status": "applied"
+      },
+      {
+        "file": "20260808020000_epic6_pr2d_grant_least_privilege.sql",
         "status": "applied"
       }
     ],

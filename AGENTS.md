@@ -61,19 +61,18 @@ accepted; PR 0–6 merged. Authority:
 `docs/adr/0005-shared-package-architecture.md`,
 `docs/EXPORT_CONTRACT.md`, and `docs/PHASE8_1_EPIC_BOUNDARIES.md`.
 
-**Epic 6 (Schema Reconciliation)** is **In progress — PR 2C** (ADR 0006
-and ADR 0007 **accepted**; PR 0–2B complete/merged). PR 2C = grant/
-security classification + founder decision package (evidence only).
-Founder FD-* decisions are **accepted** in
-`docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`; GRANT/REVOKE remediation
-remains unauthorized. Later PR 2 slices remain unauthorized. Authority:
+**Epic 6 (Schema Reconciliation)** is **In progress — autonomous repository
+completion train** (ADR 0006 and ADR 0007 **accepted**; PR 0–2C
+complete/merged). Founder FD-* decisions are **accepted**. Agents may
+implement, review, merge, and continue remaining **repository-side** Epic 6
+slices (PR 2D–2J + closure) under the Epic 6 Autonomous Completion Master
+Prompt. **Production mutation is NOT authorized** until founder approval of
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. Authority:
 `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
-`docs/database/SCHEMA_RECONCILIATION_INVENTORY.md`,
-`docs/database/SCHEMA_DRIFT_REPORT.md`,
-`docs/database/SCHEMA_PROVENANCE_REPAIR_PR2A.md`,
-`docs/database/SCHEMA_DRIFT_REFRESH_PR2B.md`,
-`docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`.
+`docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`,
+`docs/database/GRANT_REMEDIATION_PR2D.md`,
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`.
 **Epic 7 and later have not begun and still require separate explicit
 authorization.**
 
@@ -95,7 +94,14 @@ npm run build
 
 **Allowed by default:** inspect the repo, create a dedicated branch, edit within authorized phase/epic/PR scope, run validation, create bounded commits, push the branch, open or update a **draft** PR.
 
-**Requires explicit authorization:** commit to `main`, mark a draft PR ready, approve, merge, delete branches after merge, begin the next epic or PR, resume Phase 7B live smoke / beta / public checkout.
+**Requires explicit authorization:** commit to `main` outside the Epic 6
+autonomous train, resume Phase 7B live smoke / beta / public checkout,
+begin Epic 7+, or mutate production.
+
+**Epic 6 autonomous exception:** within repository-only Epic 6 slices,
+agents may mark Ready, merge, delete merged branches, and continue the next
+safe Epic 6 slice after convergence loops pass. Production apply remains
+founder-gated.
 
 ## Phase boundaries
 
