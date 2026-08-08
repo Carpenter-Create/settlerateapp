@@ -33,9 +33,9 @@
 | Variable | Secret? | Notes |
 |----------|---------|--------|
 | `SUPABASE_SERVICE_ROLE_KEY` | **Yes** | Staging project only — never production |
-| `STRIPE_SECRET_KEY` | **Yes** | `sk_test_…` only (PR 4) |
-| `STRIPE_WEBHOOK_SECRET` | **Yes** | Test-mode endpoint secret only (PR 4) |
-| `CHECKOUT_MAINTENANCE` | No | May be `false` on staging for test checkout (PR 4) |
+| `STRIPE_SECRET_KEY` | **Yes** | `sk_test_…` only (runtime-verified Epic 7 E2E) |
+| `STRIPE_WEBHOOK_SECRET` | **Yes** | Test-mode endpoint `we_1U2DA3C56u2NxRItrLZk7FMx` |
+| `CHECKOUT_MAINTENANCE` | No | `false` on staging for test checkout (digest-verified) |
 | `SENTRY_DSN` | No (public DSN) | Staging Edge project/DSN |
 | `SENTRY_ENVIRONMENT` | No | Must be `staging` when Edge DSN is set |
 
