@@ -2308,7 +2308,7 @@
       "schema": "public"
     },
     {
-      "grantee": "PUBLIC",
+      "grantee": "postgres",
       "isGrantable": false,
       "objectName": "handle_new_user()",
       "objectType": "function",
@@ -2316,7 +2316,7 @@
       "schema": "public"
     },
     {
-      "grantee": "postgres",
+      "grantee": "service_role",
       "isGrantable": false,
       "objectName": "handle_new_user()",
       "objectType": "function",
@@ -2436,14 +2436,6 @@
       "schema": "public"
     },
     {
-      "grantee": "PUBLIC",
-      "isGrantable": false,
-      "objectName": "is_professional_price(p_price_id text)",
-      "objectType": "function",
-      "privilege": "EXECUTE",
-      "schema": "public"
-    },
-    {
       "grantee": "postgres",
       "isGrantable": false,
       "objectName": "is_professional_price(p_price_id text)",
@@ -2463,14 +2455,6 @@
       "grantee": "service_role",
       "isGrantable": false,
       "objectName": "issue_admin_bootstrap_token(p_ttl_minutes integer)",
-      "objectType": "function",
-      "privilege": "EXECUTE",
-      "schema": "public"
-    },
-    {
-      "grantee": "PUBLIC",
-      "isGrantable": false,
-      "objectName": "list_admins()",
       "objectType": "function",
       "privilege": "EXECUTE",
       "schema": "public"
@@ -2503,14 +2487,6 @@
       "grantee": "postgres",
       "isGrantable": false,
       "objectName": "list_pending_advisor_requests()",
-      "objectType": "function",
-      "privilege": "EXECUTE",
-      "schema": "public"
-    },
-    {
-      "grantee": "PUBLIC",
-      "isGrantable": false,
-      "objectName": "list_recent_admin_promotions(p_limit integer)",
       "objectType": "function",
       "privilege": "EXECUTE",
       "schema": "public"
@@ -2580,7 +2556,7 @@
       "schema": "public"
     },
     {
-      "grantee": "PUBLIC",
+      "grantee": "postgres",
       "isGrantable": false,
       "objectName": "normalize_admin_billing_insert()",
       "objectType": "function",
@@ -2588,7 +2564,7 @@
       "schema": "public"
     },
     {
-      "grantee": "postgres",
+      "grantee": "service_role",
       "isGrantable": false,
       "objectName": "normalize_admin_billing_insert()",
       "objectType": "function",
@@ -3236,14 +3212,6 @@
       "schema": "public"
     },
     {
-      "grantee": "PUBLIC",
-      "isGrantable": false,
-      "objectName": "promote_to_admin(p_email text)",
-      "objectType": "function",
-      "privilege": "EXECUTE",
-      "schema": "public"
-    },
-    {
       "grantee": "authenticated",
       "isGrantable": false,
       "objectName": "promote_to_admin(p_email text)",
@@ -3260,14 +3228,6 @@
       "schema": "public"
     },
     {
-      "grantee": "PUBLIC",
-      "isGrantable": false,
-      "objectName": "protect_admin_billing()",
-      "objectType": "function",
-      "privilege": "EXECUTE",
-      "schema": "public"
-    },
-    {
       "grantee": "postgres",
       "isGrantable": false,
       "objectName": "protect_admin_billing()",
@@ -3276,7 +3236,15 @@
       "schema": "public"
     },
     {
-      "grantee": "PUBLIC",
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "protect_admin_billing()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
       "isGrantable": false,
       "objectName": "protect_admin_role_deletion()",
       "objectType": "function",
@@ -3284,7 +3252,7 @@
       "schema": "public"
     },
     {
-      "grantee": "postgres",
+      "grantee": "service_role",
       "isGrantable": false,
       "objectName": "protect_admin_role_deletion()",
       "objectType": "function",
@@ -3324,25 +3292,9 @@
       "schema": "public"
     },
     {
-      "grantee": "PUBLIC",
-      "isGrantable": false,
-      "objectName": "resolve_plan_code(p_price_id text)",
-      "objectType": "function",
-      "privilege": "EXECUTE",
-      "schema": "public"
-    },
-    {
       "grantee": "postgres",
       "isGrantable": false,
       "objectName": "resolve_plan_code(p_price_id text)",
-      "objectType": "function",
-      "privilege": "EXECUTE",
-      "schema": "public"
-    },
-    {
-      "grantee": "PUBLIC",
-      "isGrantable": false,
-      "objectName": "set_pdf_exports_updated_at()",
       "objectType": "function",
       "privilege": "EXECUTE",
       "schema": "public"
@@ -3356,9 +3308,9 @@
       "schema": "public"
     },
     {
-      "grantee": "PUBLIC",
+      "grantee": "service_role",
       "isGrantable": false,
-      "objectName": "tg_set_billing_updated_at()",
+      "objectName": "set_pdf_exports_updated_at()",
       "objectType": "function",
       "privilege": "EXECUTE",
       "schema": "public"
@@ -3372,9 +3324,9 @@
       "schema": "public"
     },
     {
-      "grantee": "PUBLIC",
+      "grantee": "service_role",
       "isGrantable": false,
-      "objectName": "tg_set_comparison_version_number()",
+      "objectName": "tg_set_billing_updated_at()",
       "objectType": "function",
       "privilege": "EXECUTE",
       "schema": "public"
@@ -3388,9 +3340,9 @@
       "schema": "public"
     },
     {
-      "grantee": "PUBLIC",
+      "grantee": "service_role",
       "isGrantable": false,
-      "objectName": "tg_set_scenarios_updated_at()",
+      "objectName": "tg_set_comparison_version_number()",
       "objectType": "function",
       "privilege": "EXECUTE",
       "schema": "public"
@@ -3404,7 +3356,15 @@
       "schema": "public"
     },
     {
-      "grantee": "PUBLIC",
+      "grantee": "service_role",
+      "isGrantable": false,
+      "objectName": "tg_set_scenarios_updated_at()",
+      "objectType": "function",
+      "privilege": "EXECUTE",
+      "schema": "public"
+    },
+    {
+      "grantee": "postgres",
       "isGrantable": false,
       "objectName": "tg_set_updated_at()",
       "objectType": "function",
@@ -3412,7 +3372,7 @@
       "schema": "public"
     },
     {
-      "grantee": "postgres",
+      "grantee": "service_role",
       "isGrantable": false,
       "objectName": "tg_set_updated_at()",
       "objectType": "function",
@@ -5251,8 +5211,8 @@
     }
   ],
   "meta": {
-    "capturedAt": "2026-08-08T03:25:48.528Z",
-    "gitSha": "04b9a9e0c469cb4d5bf97c158db903d2c60729ce",
+    "capturedAt": "2026-08-08T03:32:00.297Z",
+    "gitSha": "9f46e289355dd85fcb520e49fb5102c8bb4b11f0",
     "projectRef": null,
     "readOnly": true,
     "schemas": [
@@ -5953,6 +5913,10 @@
       },
       {
         "file": "20260808020000_epic6_pr2d_grant_least_privilege.sql",
+        "status": "applied"
+      },
+      {
+        "file": "20260808030000_epic6_pr2f_rpc_execute_least_privilege.sql",
         "status": "applied"
       }
     ],

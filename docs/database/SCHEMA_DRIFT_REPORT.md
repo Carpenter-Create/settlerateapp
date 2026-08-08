@@ -1,6 +1,6 @@
 # Schema Drift Report
 
-Generated: 2026-08-08T03:22:04.729Z
+Generated: 2026-08-08T03:32:00.817Z
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`, `docs/adr/0007-legacy-schema-disposition.md`. This report is evidence only — no mutation is authorized by its contents (`mutationRecommendation` is always `NONE`).
 
@@ -20,7 +20,7 @@ ADR 0006 requires both a TRUE migration-only reconstruction and a TEST-HARNESS r
 ### A. Migration-only (TRUE reconstruction)
 
 - Result: **SUCCEEDED**
-- Applied migrations: 31
+- Applied migrations: 32
 - Tables reconstructed: 21
 
 ### B. Harness (TEST-HARNESS reconstruction)
@@ -32,13 +32,13 @@ ADR 0006 requires both a TRUE migration-only reconstruction and a TEST-HARNESS r
 
 ## Summary
 
-Total classified drift records: **2136**. High-priority non-match records: **472**.
+Total classified drift records: **2141**. High-priority non-match records: **472**.
 
 | Class | Count |
 |---|---|
 | `definition_mismatch` | 4 |
 | `function_rpc_mismatch` | 2 |
-| `grant_mismatch` | 1414 |
+| `grant_mismatch` | 1419 |
 | `match` | 532 |
 | `policy_rls_mismatch` | 2 |
 | `production_missing_repo_object` | 74 |
@@ -47,15 +47,15 @@ Total classified drift records: **2136**. High-priority non-match records: **472
 | Compare surface | Count |
 |---|---|
 | `harness` | 1061 |
-| `migration_only` | 1075 |
+| `migration_only` | 1080 |
 
 ## Grant mismatches
 
-Total `grant_mismatch` records: **1414**.
+Total `grant_mismatch` records: **1419**.
 
 | Issue | Count |
 |---|---|
-| `privilege_only_in_a` | 1124 |
+| `privilege_only_in_a` | 1129 |
 | `privilege_only_in_b` | 290 |
 
 Privilege identity compared: schema + object type + object identity (function signature where applicable) + grantee + privilege type + is_grantable.
@@ -747,11 +747,14 @@ Also review grant_mismatch / policy_rls_mismatch / function_rpc_mismatch class t
 | `grant:function:public.is_professional_price(p_price_id text)` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.is_professional_price(p_price_id text)` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.is_professional_price(p_price_id text)` | migration_only | `grant_mismatch` |  |
+| `grant:function:public.is_professional_price(p_price_id text)` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.list_admins()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.list_admins()` | migration_only | `grant_mismatch` |  |
+| `grant:function:public.list_admins()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.list_pending_advisor_requests()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.list_pending_advisor_requests()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.list_pending_advisor_requests()` | migration_only | `grant_mismatch` |  |
+| `grant:function:public.list_recent_admin_promotions(p_limit integer)` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.list_recent_admin_promotions(p_limit integer)` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.list_recent_admin_promotions(p_limit integer)` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.log_webhook_admin_ignored(p_user_id uuid, p_email text, p_event_type text)` | migration_only | `grant_mismatch` |  |
@@ -841,6 +844,7 @@ Also review grant_mismatch / policy_rls_mismatch / function_rpc_mismatch class t
 | `grant:function:public.pgp_sym_encrypt_bytea(bytea, text, text)` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.promote_to_admin(p_email text)` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.promote_to_admin(p_email text)` | migration_only | `grant_mismatch` |  |
+| `grant:function:public.promote_to_admin(p_email text)` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.protect_admin_billing()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.protect_admin_billing()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.protect_admin_billing()` | migration_only | `grant_mismatch` |  |
@@ -849,6 +853,7 @@ Also review grant_mismatch / policy_rls_mismatch / function_rpc_mismatch class t
 | `grant:function:public.protect_admin_role_deletion()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.protect_admin_subscriptions()` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.protect_admin_subscriptions()` | migration_only | `grant_mismatch` |  |
+| `grant:function:public.resolve_plan_code(p_price_id text)` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.resolve_plan_code(p_price_id text)` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.resolve_plan_code(p_price_id text)` | migration_only | `grant_mismatch` |  |
 | `grant:function:public.resolve_plan_code(p_price_id text)` | migration_only | `grant_mismatch` |  |
@@ -2175,6 +2180,29 @@ Informational delta between harness and migration-only reconstructions. After PR
 
 | Object | Class |
 |---|---|
+| `grant:function:public.handle_new_user()` | `grant_mismatch` |
+| `grant:function:public.handle_new_user()` | `grant_mismatch` |
+| `grant:function:public.is_professional_price(p_price_id text)` | `grant_mismatch` |
+| `grant:function:public.list_admins()` | `grant_mismatch` |
+| `grant:function:public.list_recent_admin_promotions(p_limit integer)` | `grant_mismatch` |
+| `grant:function:public.normalize_admin_billing_insert()` | `grant_mismatch` |
+| `grant:function:public.normalize_admin_billing_insert()` | `grant_mismatch` |
+| `grant:function:public.promote_to_admin(p_email text)` | `grant_mismatch` |
+| `grant:function:public.protect_admin_billing()` | `grant_mismatch` |
+| `grant:function:public.protect_admin_billing()` | `grant_mismatch` |
+| `grant:function:public.protect_admin_role_deletion()` | `grant_mismatch` |
+| `grant:function:public.protect_admin_role_deletion()` | `grant_mismatch` |
+| `grant:function:public.resolve_plan_code(p_price_id text)` | `grant_mismatch` |
+| `grant:function:public.set_pdf_exports_updated_at()` | `grant_mismatch` |
+| `grant:function:public.set_pdf_exports_updated_at()` | `grant_mismatch` |
+| `grant:function:public.tg_set_billing_updated_at()` | `grant_mismatch` |
+| `grant:function:public.tg_set_billing_updated_at()` | `grant_mismatch` |
+| `grant:function:public.tg_set_comparison_version_number()` | `grant_mismatch` |
+| `grant:function:public.tg_set_comparison_version_number()` | `grant_mismatch` |
+| `grant:function:public.tg_set_scenarios_updated_at()` | `grant_mismatch` |
+| `grant:function:public.tg_set_scenarios_updated_at()` | `grant_mismatch` |
+| `grant:function:public.tg_set_updated_at()` | `grant_mismatch` |
+| `grant:function:public.tg_set_updated_at()` | `grant_mismatch` |
 | `grant:table:public.subscriptions` | `grant_mismatch` |
 | `grant:table:public.subscriptions` | `grant_mismatch` |
 | `grant:table:public.subscriptions` | `grant_mismatch` |
