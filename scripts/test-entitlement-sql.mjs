@@ -179,6 +179,14 @@ async function runSqlAssertions(client) {
   );
   process.stdout.write("Running epic6_pr2f_rpc_execute.sql assertions...\n");
   await psqlFile(client, join(root, "supabase/tests/epic6_pr2f_rpc_execute.sql"));
+
+  process.stdout.write("Re-applying Epic 6 PR 2H legacy share RPC EXECUTE remediation...\n");
+  await psqlFile(
+    client,
+    join(root, "supabase/migrations/20260808040000_epic6_pr2h_legacy_share_rpc_execute.sql")
+  );
+  process.stdout.write("Running epic6_pr2h_legacy_share_rpc.sql assertions...\n");
+  await psqlFile(client, join(root, "supabase/tests/epic6_pr2h_legacy_share_rpc.sql"));
 }
 
 async function runConcurrentLimitTest(client) {

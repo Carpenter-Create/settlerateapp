@@ -150,10 +150,10 @@ application surfaces; Edge resolves package subpaths via per-function
 | **PR 2C** | Grant/security classification + founder decision package (evidence only) | **Complete / merged** |
 | **PR 2D** | First least-privilege grant remediation (repo + local proof; prod apply gated) | **Complete / merged** |
 | **PR 2E** | Generated types reconciliation | **Complete / merged** |
-| **PR 2F** | RPC / function EXECUTE reconciliation | **In progress** |
-| **PR 2G** | Storage / platform drift normalization | Authorized (autonomous train) |
-| **PR 2H** | Dual comparison / export model disposition | Authorized (autonomous train) |
-| **PR 2I** | Advisor / ADR 0011 check | Authorized (HARD STOP if unresolved) |
+| **PR 2F** | RPC / function EXECUTE reconciliation | **Complete / merged** |
+| **PR 2G** | Storage / platform drift normalization | **In progress** |
+| **PR 2H** | Dual comparison / export model disposition | **In progress** |
+| **PR 2I** | Advisor / ADR 0011 check | **In progress** (retain; ADR 0011 still required) |
 | **PR 2J** | Consolidated schema baseline | Authorized (autonomous train) |
 | **Closure** | Reconstruction proof; classified drift; production apply package | Authorized (autonomous train) |
 

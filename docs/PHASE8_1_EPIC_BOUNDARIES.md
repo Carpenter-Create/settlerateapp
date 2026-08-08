@@ -391,10 +391,10 @@ part of the autonomous train (PR 2J), still without production apply.
 | **PR 2C** | Grant/security classification + founder decision package (evidence only) | **Complete / merged** |
 | **PR 2D** | First least-privilege grant remediation (repo + local proof; prod apply gated) | **Complete / merged** |
 | **PR 2E** | Generated types reconciliation | **Complete / merged** |
-| **PR 2F** | RPC / function EXECUTE reconciliation | **In progress** |
-| **PR 2G** | Storage / platform drift normalization | Authorized (autonomous train) |
-| **PR 2H** | Dual comparison / export model disposition | Authorized (autonomous train) |
-| **PR 2I** | Advisor / ADR 0011 check | Authorized (autonomous train; HARD STOP if unresolved) |
+| **PR 2F** | RPC / function EXECUTE reconciliation | **Complete / merged** |
+| **PR 2G** | Storage / platform drift normalization | **In progress** (docs) |
+| **PR 2H** | Dual comparison / export model disposition | **In progress** (retain + share RPC EXECUTE) |
+| **PR 2I** | Advisor / ADR 0011 check | **In progress** (retain under ADR 0007; ADR 0011 still required) |
 | **PR 2J** | Consolidated schema baseline | Authorized (autonomous train) |
 | **Closure** | Clean reconstruction proof; classified remaining drift; production apply package | Authorized (autonomous train) |
 

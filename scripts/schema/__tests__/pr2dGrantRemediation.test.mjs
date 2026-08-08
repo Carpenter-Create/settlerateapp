@@ -129,6 +129,11 @@ describe("PR 2D migration-only grant least privilege", () => {
     await expect(client.query(sql)).resolves.toBeTruthy();
   });
 
+  it("applies legacy share RPC assertions from epic6_pr2h_legacy_share_rpc.sql", async () => {
+    const sql = readFileSync(join(root, "supabase/tests/epic6_pr2h_legacy_share_rpc.sql"), "utf8");
+    await expect(client.query(sql)).resolves.toBeTruthy();
+  });
+
   it("keeps protect_admin triggers wired after privilege remediation", async () => {
     const { rows } = await client.query(`
       SELECT t.tgname
