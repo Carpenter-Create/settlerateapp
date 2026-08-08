@@ -292,12 +292,10 @@ dangerous production-broader privileges before any GRANT mutation.
 
 ## Governance
 
-Epic 6:
+Epic 6 (historical note for this PR 2B artifact):
 
-- PR 0 complete  
-- PR 1 complete  
-- PR 2A complete  
-- **PR 2B in progress:** post-provenance drift refresh  
-- Later PR 2 slices unauthorized  
+- PR 0–2B complete (PR 2B was this drift refresh)  
+- Subsequent authorized work: PR 2C grant/security classification  
+- Later PR 2 slices unauthorized until separately approved  
 - Epic 7+ unauthorized  
 - Epic 6 **not** complete  
