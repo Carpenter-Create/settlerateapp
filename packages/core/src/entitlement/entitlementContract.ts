@@ -58,8 +58,23 @@ export const PROFESSIONAL_PRICE_IDS = [
 export const PROFESSIONAL_PRODUCT_IDS = ["prod_V0usthAF9WnoGJ"] as const;
 
 /**
+ * Epic 7 staging Stripe **test-mode** Professional catalog (livemode=false).
+ * These IDs exist only in Stripe test mode on acct_1U0irnC56u2NxRIt.
+ * They are grant-eligible so staging webhooks/entitlement work, but must never
+ * be selected by create-checkout when `STRIPE_SECRET_KEY` is live (`sk_live_`).
+ * Authority: docs/adr/0008-environment-topology.md; docs/staging/STAGING_STRIPE.md.
+ */
+export const STAGING_TEST_PROFESSIONAL_PRICE_IDS = [
+  "price_1U2BGAC56u2NxRItx3etGK2q", // monthly — lookup: settlerate_professional_monthly_staging_test
+  "price_1U2BGBC56u2NxRIt8cw5cx2m", // annual — lookup: settlerate_professional_annual_staging_test
+] as const;
+
+export const STAGING_TEST_PROFESSIONAL_PRODUCT_IDS = ["prod_V2FlK0MVh9ZmBh"] as const;
+
+/**
  * Retired sandbox Professional price IDs — never grant features after Phase 7B.
- * Kept for regression tests and inventory (must stay out of PROFESSIONAL_PRICE_IDS).
+ * Kept for regression tests and inventory (must stay out of PROFESSIONAL_PRICE_IDS
+ * and STAGING_TEST_PROFESSIONAL_PRICE_IDS).
  */
 export const SANDBOX_RETIRED_PROFESSIONAL_PRICE_IDS = [
   "price_1U0k4DC2Fmi7ZUCbSniiEewZ",
@@ -131,7 +146,45 @@ function toDate(value: string | Date | null | undefined): Date | null {
 
 export function isAllowlistedProfessionalPrice(priceId: string | null | undefined): boolean {
   if (!priceId) return false;
-  return (PROFESSIONAL_PRICE_IDS as readonly string[]).includes(priceId);
+  return (
+    (PROFESSIONAL_PRICE_IDS as readonly string[]).includes(priceId) ||
+    (STAGING_TEST_PROFESSIONAL_PRICE_IDS as readonly string[]).includes(priceId)
+  );
+}
+
+/** True when the Edge Stripe secret is test-mode (`sk_test_…`). */
+export function isStripeTestSecretKey(stripeSecretKey: string | null | undefined): boolean {
+  return typeof stripeSecretKey === "string" && stripeSecretKey.trim().startsWith("sk_test_");
+}
+
+/**
+ * Default monthly/annual price map for create-checkout.
+ * Test secrets → staging test catalog; otherwise live catalog only.
+ */
+export function resolveCheckoutPriceByType(
+  priceType: "monthly" | "annual",
+  stripeSecretKey: string | null | undefined
+): string {
+  if (isStripeTestSecretKey(stripeSecretKey)) {
+    return priceType === "monthly"
+      ? STAGING_TEST_PROFESSIONAL_PRICE_IDS[0]
+      : STAGING_TEST_PROFESSIONAL_PRICE_IDS[1];
+  }
+  return priceType === "monthly" ? PROFESSIONAL_PRICE_IDS[0] : PROFESSIONAL_PRICE_IDS[1];
+}
+
+/**
+ * Rejects cross-mode price selection: live keys may only charge live prices;
+ * test keys may only charge staging test prices (plus never retired sandbox).
+ */
+export function isPriceAllowedForStripeSecret(
+  priceId: string | null | undefined,
+  stripeSecretKey: string | null | undefined
+): boolean {
+  if (!priceId || !isAllowlistedProfessionalPrice(priceId)) return false;
+  const isTestPrice = (STAGING_TEST_PROFESSIONAL_PRICE_IDS as readonly string[]).includes(priceId);
+  if (isStripeTestSecretKey(stripeSecretKey)) return isTestPrice;
+  return !isTestPrice;
 }
 
 export function resolvePlanCodeFromPrice(priceId: string | null | undefined): PlanCode {

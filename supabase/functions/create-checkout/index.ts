@@ -2,9 +2,10 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import {
-  PROFESSIONAL_PRICE_IDS,
   PROFESSIONAL_TRIAL_DAYS,
   isAllowlistedProfessionalPrice,
+  isPriceAllowedForStripeSecret,
+  resolveCheckoutPriceByType,
 } from "@settlerate/core/entitlement";
 import { resolveAppOrigin } from "../_shared/appOrigin.ts";
 import {
@@ -90,11 +91,6 @@ async function isEligibleForProfessionalTrial(
   return true;
 }
 
-const PRICE_BY_TYPE: Record<string, string> = {
-  monthly: PROFESSIONAL_PRICE_IDS[0],
-  annual: PROFESSIONAL_PRICE_IDS[1],
-};
-
 serve(async (req) => {
   const requestId = generateRequestId();
 
@@ -140,11 +136,11 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const priceType = body.priceType === "monthly" ? "monthly" : "annual";
     const requestedPriceId = typeof body.priceId === "string" ? body.priceId : null;
-    let priceId = PRICE_BY_TYPE[priceType];
+    let priceId = resolveCheckoutPriceByType(priceType, stripeKey);
 
     if (requestedPriceId) {
-      if (!isAllowlistedProfessionalPrice(requestedPriceId)) {
-        logStep("Rejected non-allowlisted price", { requestedPriceId });
+      if (!isPriceAllowedForStripeSecret(requestedPriceId, stripeKey)) {
+        logStep("Rejected price for Stripe mode", { requestedPriceId });
         return new Response(
           JSON.stringify({ error: "Invalid price", code: "PRICE_NOT_ALLOWED" }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -153,7 +149,7 @@ serve(async (req) => {
       priceId = requestedPriceId;
     }
 
-    if (!isAllowlistedProfessionalPrice(priceId)) {
+    if (!isPriceAllowedForStripeSecret(priceId, stripeKey)) {
       return new Response(
         JSON.stringify({ error: "Invalid price", code: "PRICE_NOT_ALLOWED" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }

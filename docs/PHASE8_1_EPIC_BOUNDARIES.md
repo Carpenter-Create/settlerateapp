@@ -419,8 +419,8 @@ Stripe / Supabase secrets. Do not resume Phase 7B.
 | **PR 0** | ADR 0008 + environment inventory | **Complete / merged** |
 | **PR 1** | Staging secrets contract / origin allowlist scaffold | **Complete / merged** |
 | **PR 2** | Staging Supabase migrations + seed/isolation docs | **Complete / merged** |
-| **PR 3** | Staging Edge / auth / export / observability wiring | **In progress** (Edge deployed; Vercel project created) |
-| **PR 4** | Stripe test-mode staging integration | Not started |
+| **PR 3** | Staging Edge / auth / export / observability wiring | **Complete / merged** |
+| **PR 4** | Stripe test-mode staging integration | **In progress** |
 | **PR 5** | Smoke / parity / Phase 7B readiness (not resume) | Not started |
 
 ---

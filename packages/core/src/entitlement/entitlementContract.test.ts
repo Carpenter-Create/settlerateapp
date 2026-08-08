@@ -4,10 +4,13 @@ import {
   LEGACY_DELETED_PROFESSIONAL_PRICE_IDS,
   PROFESSIONAL_PRICE_IDS,
   SANDBOX_RETIRED_PROFESSIONAL_PRICE_IDS,
+  STAGING_TEST_PROFESSIONAL_PRICE_IDS,
   evaluateEntitlement,
   featureAccessFromDecision,
   isFeatureAllowed,
+  isPriceAllowedForStripeSecret,
   planCodeToLegacyTier,
+  resolveCheckoutPriceByType,
   resolvePlanCodeFromPrice,
 } from "@settlerate/core/entitlement";
 
@@ -24,6 +27,7 @@ describe("entitlementContract", () => {
   it("maps only allowlisted professional prices", () => {
     expect(resolvePlanCodeFromPrice(proMonthlyPrice)).toBe("professional");
     expect(resolvePlanCodeFromPrice(proAnnualPrice)).toBe("professional");
+    expect(resolvePlanCodeFromPrice(STAGING_TEST_PROFESSIONAL_PRICE_IDS[0])).toBe("professional");
     expect(resolvePlanCodeFromPrice(deletedProMonthlyPrice)).toBe("analytical");
     expect(resolvePlanCodeFromPrice(deletedProAnnualPrice)).toBe("analytical");
     expect(resolvePlanCodeFromPrice(advisorPrice)).toBe("analytical");
@@ -31,6 +35,21 @@ describe("entitlementContract", () => {
     for (const sandboxPrice of SANDBOX_RETIRED_PROFESSIONAL_PRICE_IDS) {
       expect(resolvePlanCodeFromPrice(sandboxPrice)).toBe("analytical");
     }
+  });
+
+  it("selects staging test prices only under sk_test_ secrets", () => {
+    expect(resolveCheckoutPriceByType("monthly", "sk_test_abc")).toBe(
+      STAGING_TEST_PROFESSIONAL_PRICE_IDS[0]
+    );
+    expect(resolveCheckoutPriceByType("annual", "sk_live_abc")).toBe(PROFESSIONAL_PRICE_IDS[1]);
+    expect(isPriceAllowedForStripeSecret(STAGING_TEST_PROFESSIONAL_PRICE_IDS[0], "sk_test_x")).toBe(
+      true
+    );
+    expect(isPriceAllowedForStripeSecret(STAGING_TEST_PROFESSIONAL_PRICE_IDS[0], "sk_live_x")).toBe(
+      false
+    );
+    expect(isPriceAllowedForStripeSecret(PROFESSIONAL_PRICE_IDS[0], "sk_live_x")).toBe(true);
+    expect(isPriceAllowedForStripeSecret(PROFESSIONAL_PRICE_IDS[0], "sk_test_x")).toBe(false);
   });
 
   it("grants entitled for active professional subscription", () => {

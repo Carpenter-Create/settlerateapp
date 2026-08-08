@@ -13,7 +13,7 @@
 |-------|---------|------------|
 | SPA host | Separate Vercel project `settlerate-app-staging` (provision/link) | Existing production Vercel project |
 | Backend | Supabase `gkhbalfpxjtleypbabjo` | Supabase `vpcxzbaxhpucvevnkalo` |
-| Schema tip | `20260808040000` (git migrations applied) | `20260808040000` |
+| Schema tip | `20260808143109` (includes staging test price allowlist) | `20260808040000` (Epic 7 migration not production-applied) |
 | Stripe | Test mode only (PR 4) | Phase 7B paused / ops-controlled |
 | App origin | `https://staging.settlerate.com` (and/or staging Vercel hostname once allowlisted) | `https://app.settlerate.com` |
 
