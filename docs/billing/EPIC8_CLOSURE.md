@@ -2,7 +2,7 @@
 
 - Status: **COMPLETE** (repository + staging drill)
 - Date: 2026-08-08
-- Final main SHA at closure drafting: see git tip after this PR merges
+- - Final main SHA: `6eafd0e7a66df8350ca77f6f0c7dfd31b1c3363e`
 - Authority: `docs/adr/0009-billing-recovery-guarantee.md`
 
 ## PR train
