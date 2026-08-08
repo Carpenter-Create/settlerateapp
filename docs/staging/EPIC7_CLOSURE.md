@@ -7,9 +7,10 @@
 ## Status
 
 **Repository / infrastructure foundation: COMPLETE**  
-**Staging Auth + SPA origin activation: IN PROGRESS (this train)**  
-**Stripe test checkout E2E: BLOCKED** — SettleRate `sk_test_…` not available to agent tooling  
-**Phase 7B resume: NOT authorized**
+**Staging Auth + SPA origin + admin bootstrap: PROVEN**  
+**Stripe test checkout E2E: BLOCKED** — SettleRate `sk_test_…` not available to agent tooling (**HARD STOP**)  
+**Phase 7B resume: NOT authorized**  
+**Final main SHA (activation PR):** `5eae5ae87d56fc9399a20ffc05201fe155d067cd`
 
 ## Closure criteria
 
@@ -20,11 +21,12 @@
 | 3 | Production isolation proven (project refs, empty data, tip divergence) | **Met** |
 | 4 | Staging environment reproducible (scripts + docs) | **Met** |
 | 5 | Database reconstruction/migrations work on staging | **Met** (tip `20260808143109`) |
-| 6 | Auth works in staging | **Partial** — Site URL + redirects configured on staging; SPA origin allowlisted; signup E2E pending redeploy + email |
-| 7 | Edge Functions work in staging | **Met** (deployed ACTIVE); billing invoke needs `sk_test_` |
+| 6 | Auth works in staging | **Met** — Site URL/redirects on staging; password login proven for synthetic user; production Auth unchanged |
+| 7 | Edge Functions work in staging | **Met** (7 ACTIVE); `create-checkout` fail-closed without `sk_test_` |
 | 8 | Export/storage paths work | **Partial** — bucket + functions present; E2E open |
 | 9 | Observability environment-separated | **Met** in code; Edge `SENTRY_ENVIRONMENT=staging`; DSN optional |
-| 10 | Stripe test-mode path works if included | **Partial** — catalog/webhook/fence + webhook secret; **`STRIPE_SECRET_KEY` HARD STOP** |
+| 10 | Stripe test-mode path works if included | **Blocked** — catalog/webhook/fence + webhook secret set; **`STRIPE_SECRET_KEY` HARD STOP** |
+| 10b | Staging admin bootstrap | **Met** — `issue` + `claim` succeeded; second issue fail-closed |
 | 11 | Synthetic data strategy documented | **Met** (`STAGING_SEED_POLICY.md`) |
 | 12 | No production secrets/data in staging | **Met** (empty tables; secrets contract) |
 | 13 | CI/deployment path documented | **Met** |
@@ -43,7 +45,7 @@
 | #72 PR4 Stripe test catalog | `d7c6cf1` |
 | #73 PR5 smoke/closure | `c4f92be140298f8fca5f53bb67f95f26c031b335` |
 | #74 closure SHA polish | `e43e4dd` |
-| Staging Vercel origin activation | this PR (pending merge) |
+| #75 staging Vercel origin activation | `5eae5ae87d56fc9399a20ffc05201fe155d067cd` |
 
 ## Identifiers
 

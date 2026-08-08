@@ -20,6 +20,9 @@
 | Staging Auth Site URL | staging Vercel origin | Done |
 | Staging Auth redirects | staging (+ optional custom/local) | Done |
 | Production Auth Site URL unchanged | `https://app.settlerate.com` | Done (read-only verified) |
+| Staging Auth login (synthetic user) | password grant OK | Done |
+| Staging admin bootstrap | issue + claim; re-issue fail-closed | Done |
+| `create-checkout` without `sk_test_` | HTTP 500 `STRIPE_SECRET_KEY is not set` | Done (fail-closed) |
 | Staging Edge `CHECKOUT_MAINTENANCE` | `false` | Done |
 | Staging Edge `SENTRY_ENVIRONMENT` | `staging` | Done |
 | Staging Edge `STRIPE_WEBHOOK_SECRET` | set (rotated webhook) | Done |
