@@ -30,3 +30,6 @@ three previously omitted public tables for typed PostgREST access.
 - `scripts/schema/generateTypesFromMigrationOnly.mjs`
 - `reconstructLocal.mjs --keep-db` support for disposable typegen
 - Does **not** use production `--linked` / `--project-id`
+- Post-processes generated `Functions` to strip disposable **pgcrypto**
+  entries installed into `public` by the reconstruction stub (not part of
+  the production PostgREST SettleRate RPC contract)

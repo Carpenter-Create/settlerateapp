@@ -783,7 +783,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      dearmor: { Args: { "": string }; Returns: string }
       duplicate_scenario: {
         Args: { new_name?: string; source_scenario_id: string }
         Returns: string
@@ -797,8 +796,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      gen_random_uuid: { Args: never; Returns: string }
-      gen_salt: { Args: { "": string }; Returns: string }
       generate_share_token: { Args: never; Returns: string }
       get_effective_tier: { Args: { target_user_id: string }; Returns: string }
       has_role: {
@@ -875,10 +872,6 @@ export type Database = {
         Args: { p_feature: string; p_source: string; p_user_id: string }
         Returns: undefined
       }
-      pgp_armor_headers: {
-        Args: { "": string }
-        Returns: Record<string, unknown>[]
-      }
       promote_to_admin: { Args: { p_email: string }; Returns: Json }
       release_stripe_webhook_event: {
         Args: { p_event_id: string }
@@ -898,7 +891,8 @@ export type Database = {
           share_id: string
         }[]
       }
-    }
+    
+}
     Enums: {
       app_role: "admin" | "moderator" | "user" | "advisor"
       export_kind: "scenario" | "comparison"
