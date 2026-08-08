@@ -58,12 +58,11 @@ Epic 7 (`docs/staging/PHASE7B_READINESS_FROM_EPIC7.md`).
 `docs/billing/EPIC8_CLOSURE.md`. **Production mutation / recovery apply /
 Epic 8 production migration remain founder-gated.**
 
-**Epic 9 — Deployment Pipeline** is **in progress** (founder-authorized;
-ADR 0014 **accepted**). Authority:
+**Epic 9 — Deployment Pipeline** is **COMPLETE** (ADR 0014 **accepted**;
+staging pipeline + production approval gate proven). Authority:
 `docs/adr/0014-deployment-pipeline.md`,
-`docs/deployment/EPIC9_DEPLOYMENT_INVENTORY.md`. Staging automation
-authorized; **production deploy execution blocked**. Do not begin Epic 10+
-or ADR 0011. Do not resume Phase 7B.
+`docs/deployment/EPIC9_CLOSURE.md`. **Production deploy apply remains
+founder-gated.** Do not begin Epic 10+ or ADR 0011. Do not resume Phase 7B.
 
 ## Prohibited unless explicitly authorized
 

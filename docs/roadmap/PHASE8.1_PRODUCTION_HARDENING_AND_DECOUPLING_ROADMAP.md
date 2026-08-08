@@ -99,7 +99,8 @@ Vercel project) - Stripe test configuration - staging administrator process
 
 ### Epic 9 --- Deployment Pipeline
 
-**Status: In progress** (ADR 0014 accepted). Target:
+**Status: COMPLETE** (ADR 0014 accepted; staging proven; production gate
+proven without mutation — see `docs/deployment/EPIC9_CLOSURE.md`). Target:
 
 Development → Staging → Production
 
@@ -147,9 +148,10 @@ deployment process documented - backups verified - monitoring available
 
 Epic 1–7 are complete on `main` (Epic 6 includes verified production tip
 remediation; Epic 7 staging E2E verified — see `docs/staging/EPIC7_CLOSURE.md`).
-Epic 8 is **COMPLETE** (ADR 0009; staging verified). Epic 9 is **authorized
-and in progress** (ADR 0014). ADR 0011 remains open for destructive advisor
-disposition. Epic 10+ require separate authorization.
+Epic 8–9 are **COMPLETE** (ADR 0009 / ADR 0014; staging verified). ADR 0011
+remains open for destructive advisor disposition. Epic 10+ require separate
+authorization. Production deploy apply and Epic 8 production activation
+remain separately founder-gated.
 
 Do not begin Epic 10 or later epics automatically. Do not resume Phase 7B
-from Epic 7–9. Do not execute production deploys under Epic 9 alone.
+from Epic 7–9.
