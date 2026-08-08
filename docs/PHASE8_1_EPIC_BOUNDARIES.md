@@ -340,13 +340,11 @@ the ADR §11 sequence.
 
 ## Epic 6 — Schema Reconciliation
 
-**Status:** **In progress — autonomous repository completion train** (ADR 0006
-+ ADR 0007 **accepted**; PR 0–2C complete/merged). Founder FD-* decisions
-are **ACCEPTED**. Bound by the Epic 6 Autonomous Completion Master Prompt:
-agents may implement, review, merge, and continue remaining **repository-side**
-Epic 6 slices without per-PR re-authorization. **Production mutation remains
-NOT authorized** until a consolidated apply package is founder-approved
-(`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`). Epic 7+ unauthorized.
+**Status:** **Complete on `main` (repository)** (ADR 0006 + ADR 0007
+**accepted**; PR 0–2J + closure). Founder FD-* decisions are **ACCEPTED**.
+**Production mutation remains NOT authorized** until founder approval of
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. ADR 0011 remains required
+for destructive advisor disposition. Epic 7+ unauthorized.
 
 Authority: `docs/adr/0006-database-schema-source-of-truth.md`,
 `docs/adr/0007-legacy-schema-disposition.md`,
@@ -392,11 +390,11 @@ part of the autonomous train (PR 2J), still without production apply.
 | **PR 2D** | First least-privilege grant remediation (repo + local proof; prod apply gated) | **Complete / merged** |
 | **PR 2E** | Generated types reconciliation | **Complete / merged** |
 | **PR 2F** | RPC / function EXECUTE reconciliation | **Complete / merged** |
-| **PR 2G** | Storage / platform drift normalization | **In progress** (docs) |
-| **PR 2H** | Dual comparison / export model disposition | **In progress** (retain + share RPC EXECUTE) |
-| **PR 2I** | Advisor / ADR 0011 check | **In progress** (retain under ADR 0007; ADR 0011 still required) |
-| **PR 2J** | Consolidated schema baseline | Authorized (autonomous train) |
-| **Closure** | Clean reconstruction proof; classified remaining drift; production apply package | Authorized (autonomous train) |
+| **PR 2G** | Storage / platform drift normalization | **Complete / merged** |
+| **PR 2H** | Dual comparison / export model disposition | **Complete / merged** |
+| **PR 2I** | Advisor / ADR 0011 check | **Complete / merged** (retain; ADR 0011 still required for drops) |
+| **PR 2J** | Consolidated schema baseline | **Complete** (this PR) |
+| **Closure** | Clean reconstruction proof; classified remaining drift; production apply package | **Complete** (this PR) |
 
 ---
 

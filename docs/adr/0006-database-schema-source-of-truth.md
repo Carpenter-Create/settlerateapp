@@ -128,9 +128,9 @@ Once Epic 6 closes under this accepted ADR:
 audit/history **and** establish a documented consolidated reproducible
 baseline boundary for new environments.
 
-Implementation of that baseline artifact and CI cutover is **deferred** to
-a later separately authorized Epic 6 slice. Epic 6 PR 0 does **not** create
-the baseline.
+Implementation of that baseline artifact is delivered in Epic 6 PR 2J as a
+**documented boundary** over the preserved historical migration chain (see
+`docs/database/SCHEMA_BASELINE_PR2J.md`). No history squash.
 
 Tradeoffs considered:
 
@@ -167,10 +167,8 @@ remains separately unauthorized until founder authorization.
 | **PR 2A** | Schema provenance / reconstruction blocker (`subscriptions` + scoped `profiles` columns) | Complete / merged |
 | **PR 2B** | Post-provenance drift refresh (evidence only) | Complete / merged |
 | **PR 2C** | Grant/security classification + founder decision package (evidence only) | Complete / merged |
-| **PR 2D** | First least-privilege grant remediation (repo + local proof; prod apply gated) | Complete / merged |
-| **PR 2E** | Generated types reconciliation | In progress (autonomous train) |
-| **PR 2F–2J** | RPC EXECUTE, storage, dual-model, advisor check, baseline | Autonomous train (repo only) |
-| **Closure** | Prove clean reconstruction; update baseline/SoT docs; regenerate types as needed | Autonomous train (repo only) |
+| **PR 2D–2J** | Grant remediation, types, RPC EXECUTE, storage, dual-model, advisor check, baseline | Complete (repository) |
+| **Closure** | Prove clean reconstruction; update baseline/SoT docs; regenerate types as needed | Complete (repository) |
 
 Suggested slice grouping (to refine from drift report):
 
@@ -199,12 +197,9 @@ checkout maintenance posture; security weakenings “to make green.”
 - PR 2B refreshed the post-provenance drift baseline (evidence only).
 - PR 2C classified grant/security least-privilege decisions (founder FD-*
   accepted).
-- PR 2D implements the first repository grant remediation tip migration;
-  production apply remains separately gated via
-  `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`.
-- Remaining repository Epic 6 slices proceed under the autonomous
-  completion train; production mutation still requires founder apply
-  authorization.
+- PR 2D–2J + closure complete on the repository; production apply remains
+  separately gated via `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`.
+- Baseline boundary documented in `docs/database/SCHEMA_BASELINE_PR2J.md`.
 
 ## Alternatives considered
 
@@ -215,4 +210,4 @@ checkout maintenance posture; security weakenings “to make green.”
 - **Immediate squash of all history in PR 0.** Rejected — out of scope;
   loses audit trail without an accepted baseline plan.
 - **Replay-forever without a baseline boundary.** Rejected in favor of
-  history + documented baseline boundary (implementation deferred).
+  history + documented baseline boundary (PR 2J).

@@ -38,16 +38,12 @@ accepted; PR 0–6 merged. See
 `docs/adr/0005-shared-package-architecture.md` and
 `docs/EXPORT_CONTRACT.md`.
 
-**Epic 6 — Schema Reconciliation** is **In progress — autonomous
-repository completion train** (ADR 0006 and ADR 0007 **accepted**;
-PR 0–2C complete/merged). Founder FD-* decisions are **accepted**.
-Agents may implement, review, merge, and continue remaining
-**repository-side** Epic 6 slices under the Epic 6 Autonomous Completion
-Master Prompt. See `docs/adr/0006-database-schema-source-of-truth.md`,
-`docs/database/GRANT_REMEDIATION_PR2D.md`, and
+**Epic 6 — Schema Reconciliation** is **complete on `main` (repository)**
+(ADR 0006 and ADR 0007 **accepted**; PR 0–2J + closure). See
+`docs/database/EPIC6_CLOSURE.md` and
 `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. **Do not mutate
 production without separate founder authorization of the consolidated
-apply package.**
+apply package.** ADR 0011 remains required for destructive advisor work.
 
 ## Prohibited unless explicitly authorized
 
@@ -78,9 +74,7 @@ That means: do not redefine export fields, field meanings, omission rules, snaps
 
 **Epic 5 clarification:** when Shared Core Package work is authorized, Epic 5 **may** relocate export-related code and update imports. Epic 5 **may not** redefine export fields, meanings, or contract behavior.
 
-**Never begin the next phase or Epic 7+ automatically.** Within the authorized
-Epic 6 autonomous repository completion train, continue to the next safe
-Epic 6 slice after merge/convergence.
+**Never begin the next phase or Epic 7+ automatically.**
 
 # Agent Autonomy
 
@@ -94,14 +88,11 @@ Unless a prompt says otherwise, agents **may**:
 - Push the dedicated branch
 - Open or update a **draft** PR
 
-**Epic 6 autonomous exception (repository only):** after convergence loops,
-agents may mark Ready, merge Epic 6 PRs, delete merged branches, update
-main, and continue the next safe Epic 6 slice. Production apply remains
-founder-gated via `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`.
-
 Agents **may not** without explicit authorization:
 
-- Commit directly to `main` outside Epic 6 merge-via-PR workflow
+- Commit directly to `main`
+- Mark a draft PR ready for review / approve / merge (except when a later
+  prompt explicitly restores Epic-scoped autonomy)
 - Mutate production databases / apply Epic 6 migrations to production
 - Begin Epic 7+ or resume Phase 7B live smoke / beta / public checkout
 - Disable `CHECKOUT_MAINTENANCE` or open public Checkout while Phase 7B is paused
@@ -112,8 +103,7 @@ Agents **may not** without explicit authorization:
 - Match surrounding conventions
 - **Report uncertainty**; distinguish confirmed DEF-* defects from proposed improvements
 - Do not broaden scope during implementation
-- For Epic 6 autonomous train: continue until HARD STOP or Epic 6 closure;
-  otherwise stop after the requested task with a completion report
+- **Stop after the requested task** with a completion report
 
 # Bugbot Triage
 

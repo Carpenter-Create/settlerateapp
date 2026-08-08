@@ -9,6 +9,29 @@
         "grantee": "PUBLIC",
         "isGrantable": false,
         "issue": "privilege_only_in_b",
+        "objectName": "generate_share_token()",
+        "objectType": "function",
+        "presentIn": "b",
+        "privilege": "EXECUTE",
+        "schema": "public"
+      },
+      "highPriority": false,
+      "mutationRecommendation": "NONE",
+      "name": "generate_share_token()",
+      "note": "Harness vs migration-only delta (informational). Not canonical repository drift; migration_only is the principal repo surface after PR 2A.",
+      "objectType": "grant:function",
+      "reason": null,
+      "schema": "public"
+    },
+    {
+      "class": "grant_mismatch",
+      "compareSurface": "harness_vs_migration_only",
+      "consumerNotes": null,
+      "consumers": [],
+      "details": {
+        "grantee": "PUBLIC",
+        "isGrantable": false,
+        "issue": "privilege_only_in_b",
         "objectName": "handle_new_user()",
         "objectType": "function",
         "presentIn": "b",
@@ -538,6 +561,98 @@
         "grantee": "anon",
         "isGrantable": false,
         "issue": "privilege_only_in_b",
+        "objectName": "touch_comparison_share(p_token text)",
+        "objectType": "function",
+        "presentIn": "b",
+        "privilege": "EXECUTE",
+        "schema": "public"
+      },
+      "highPriority": false,
+      "mutationRecommendation": "NONE",
+      "name": "touch_comparison_share(p_token text)",
+      "note": "Harness vs migration-only delta (informational). Not canonical repository drift; migration_only is the principal repo surface after PR 2A.",
+      "objectType": "grant:function",
+      "reason": null,
+      "schema": "public"
+    },
+    {
+      "class": "grant_mismatch",
+      "compareSurface": "harness_vs_migration_only",
+      "consumerNotes": null,
+      "consumers": [],
+      "details": {
+        "grantee": "authenticated",
+        "isGrantable": false,
+        "issue": "privilege_only_in_b",
+        "objectName": "touch_comparison_share(p_token text)",
+        "objectType": "function",
+        "presentIn": "b",
+        "privilege": "EXECUTE",
+        "schema": "public"
+      },
+      "highPriority": false,
+      "mutationRecommendation": "NONE",
+      "name": "touch_comparison_share(p_token text)",
+      "note": "Harness vs migration-only delta (informational). Not canonical repository drift; migration_only is the principal repo surface after PR 2A.",
+      "objectType": "grant:function",
+      "reason": null,
+      "schema": "public"
+    },
+    {
+      "class": "grant_mismatch",
+      "compareSurface": "harness_vs_migration_only",
+      "consumerNotes": null,
+      "consumers": [],
+      "details": {
+        "grantee": "anon",
+        "isGrantable": false,
+        "issue": "privilege_only_in_b",
+        "objectName": "validate_comparison_share(p_token text)",
+        "objectType": "function",
+        "presentIn": "b",
+        "privilege": "EXECUTE",
+        "schema": "public"
+      },
+      "highPriority": false,
+      "mutationRecommendation": "NONE",
+      "name": "validate_comparison_share(p_token text)",
+      "note": "Harness vs migration-only delta (informational). Not canonical repository drift; migration_only is the principal repo surface after PR 2A.",
+      "objectType": "grant:function",
+      "reason": null,
+      "schema": "public"
+    },
+    {
+      "class": "grant_mismatch",
+      "compareSurface": "harness_vs_migration_only",
+      "consumerNotes": null,
+      "consumers": [],
+      "details": {
+        "grantee": "authenticated",
+        "isGrantable": false,
+        "issue": "privilege_only_in_b",
+        "objectName": "validate_comparison_share(p_token text)",
+        "objectType": "function",
+        "presentIn": "b",
+        "privilege": "EXECUTE",
+        "schema": "public"
+      },
+      "highPriority": false,
+      "mutationRecommendation": "NONE",
+      "name": "validate_comparison_share(p_token text)",
+      "note": "Harness vs migration-only delta (informational). Not canonical repository drift; migration_only is the principal repo surface after PR 2A.",
+      "objectType": "grant:function",
+      "reason": null,
+      "schema": "public"
+    },
+    {
+      "class": "grant_mismatch",
+      "compareSurface": "harness_vs_migration_only",
+      "consumerNotes": null,
+      "consumers": [],
+      "details": {
+        "grantee": "anon",
+        "isGrantable": false,
+        "issue": "privilege_only_in_b",
         "objectName": "subscriptions",
         "objectType": "table",
         "presentIn": "b",
@@ -853,7 +968,7 @@
     }
   ],
   "meta": {
-    "generatedAt": "2026-08-08T03:32:00.817Z",
+    "generatedAt": "2026-08-08T03:46:03.823Z",
     "harnessStatus": "reconstruction succeeded",
     "migrationOnlyStatus": "reconstruction succeeded",
     "sources": {
@@ -7190,6 +7305,28 @@
       "consumerNotes": null,
       "consumers": [],
       "details": {
+        "grantee": "PUBLIC",
+        "isGrantable": false,
+        "issue": "privilege_only_in_a",
+        "objectName": "generate_share_token()",
+        "objectType": "function",
+        "presentIn": "a",
+        "privilege": "EXECUTE",
+        "schema": "public"
+      },
+      "highPriority": false,
+      "mutationRecommendation": "NONE",
+      "name": "generate_share_token()",
+      "objectType": "grant:function",
+      "reason": null,
+      "schema": "public"
+    },
+    {
+      "class": "grant_mismatch",
+      "compareSurface": "migration_only",
+      "consumerNotes": null,
+      "consumers": [],
+      "details": {
         "grantee": "anon",
         "isGrantable": false,
         "issue": "privilege_only_in_a",
@@ -10502,6 +10639,50 @@
       "highPriority": false,
       "mutationRecommendation": "NONE",
       "name": "tg_set_updated_at()",
+      "objectType": "grant:function",
+      "reason": null,
+      "schema": "public"
+    },
+    {
+      "class": "grant_mismatch",
+      "compareSurface": "migration_only",
+      "consumerNotes": null,
+      "consumers": [],
+      "details": {
+        "grantee": "anon",
+        "isGrantable": false,
+        "issue": "privilege_only_in_a",
+        "objectName": "touch_comparison_share(p_token text)",
+        "objectType": "function",
+        "presentIn": "a",
+        "privilege": "EXECUTE",
+        "schema": "public"
+      },
+      "highPriority": false,
+      "mutationRecommendation": "NONE",
+      "name": "touch_comparison_share(p_token text)",
+      "objectType": "grant:function",
+      "reason": null,
+      "schema": "public"
+    },
+    {
+      "class": "grant_mismatch",
+      "compareSurface": "migration_only",
+      "consumerNotes": null,
+      "consumers": [],
+      "details": {
+        "grantee": "authenticated",
+        "isGrantable": false,
+        "issue": "privilege_only_in_a",
+        "objectName": "touch_comparison_share(p_token text)",
+        "objectType": "function",
+        "presentIn": "a",
+        "privilege": "EXECUTE",
+        "schema": "public"
+      },
+      "highPriority": false,
+      "mutationRecommendation": "NONE",
+      "name": "touch_comparison_share(p_token text)",
       "objectType": "grant:function",
       "reason": null,
       "schema": "public"
@@ -10524,6 +10705,50 @@
       "highPriority": false,
       "mutationRecommendation": "NONE",
       "name": "touch_comparison_share(p_token text)",
+      "objectType": "grant:function",
+      "reason": null,
+      "schema": "public"
+    },
+    {
+      "class": "grant_mismatch",
+      "compareSurface": "migration_only",
+      "consumerNotes": null,
+      "consumers": [],
+      "details": {
+        "grantee": "anon",
+        "isGrantable": false,
+        "issue": "privilege_only_in_a",
+        "objectName": "validate_comparison_share(p_token text)",
+        "objectType": "function",
+        "presentIn": "a",
+        "privilege": "EXECUTE",
+        "schema": "public"
+      },
+      "highPriority": false,
+      "mutationRecommendation": "NONE",
+      "name": "validate_comparison_share(p_token text)",
+      "objectType": "grant:function",
+      "reason": null,
+      "schema": "public"
+    },
+    {
+      "class": "grant_mismatch",
+      "compareSurface": "migration_only",
+      "consumerNotes": null,
+      "consumers": [],
+      "details": {
+        "grantee": "authenticated",
+        "isGrantable": false,
+        "issue": "privilege_only_in_a",
+        "objectName": "validate_comparison_share(p_token text)",
+        "objectType": "function",
+        "presentIn": "a",
+        "privilege": "EXECUTE",
+        "schema": "public"
+      },
+      "highPriority": false,
+      "mutationRecommendation": "NONE",
+      "name": "validate_comparison_share(p_token text)",
       "objectType": "grant:function",
       "reason": null,
       "schema": "public"
@@ -41999,7 +42224,7 @@
     "byClass": {
       "definition_mismatch": 4,
       "function_rpc_mismatch": 2,
-      "grant_mismatch": 1419,
+      "grant_mismatch": 1424,
       "match": 532,
       "policy_rls_mismatch": 2,
       "production_missing_repo_object": 74,
@@ -42007,9 +42232,9 @@
     },
     "bySurface": {
       "harness": 1061,
-      "migration_only": 1080
+      "migration_only": 1085
     },
     "highPriorityNonMatchCount": 472,
-    "totalRecords": 2141
+    "totalRecords": 2146
   }
 }

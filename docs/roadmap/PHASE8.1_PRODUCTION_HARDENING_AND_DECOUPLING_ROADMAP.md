@@ -65,21 +65,17 @@ and export-summary mapping. Goal: prevent business-logic drift.
 
 ### Epic 6 --- Schema Reconciliation
 
-**Status: In progress — PR 2D** (ADR 0006 / ADR 0007 **accepted**; PR 0–2C
-complete/merged — see `docs/adr/0006-database-schema-source-of-truth.md`,
-`docs/database/GRANT_SECURITY_DECISIONS_PR2C.md`,
-`docs/database/GRANT_REMEDIATION_PR2D.md`).
+**Status: Complete on `main` (repository)** (ADR 0006 / ADR 0007
+**accepted**; PR 0–2J + closure — see `docs/database/EPIC6_CLOSURE.md`).
 
 -   Compare production schema against migrations (after read-only capture).
 -   Identify undocumented differences.
 -   Resolve schema drift under classified, authorized PRs.
--   Create consolidated schema baseline when authorized (accepted strategy:
-    preserve historical migrations **and** a documented consolidated
-    baseline boundary; implementation deferred).
+-   Documented consolidated schema baseline boundary (PR 2J; history preserved).
 
-Dependency: requires Epic 4 (met). PR 2D = first least-privilege grant
-remediation (in progress; production apply gated). Later PR 2 slices
-unauthorized. Epic 7+ unauthorized.
+Dependency: requires Epic 4 (met). Production apply of tip migrations remains
+founder-gated via `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. Epic 7+
+unauthorized.
 
 ### Epic 7 --- Staging Environment
 
@@ -140,12 +136,9 @@ deployment process documented - backups verified - monitoring available
 
 ## Next Approved Execution Step
 
-Epic 1–5 are complete on `main`. Epic 6 is **in progress — autonomous
-repository completion train** (ADR 0006 / ADR 0007 **accepted**; PR 0–2C
-complete/merged; PR 2D+ repository slices authorized under master prompt;
-production apply gated via `docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`).
-
-**Production apply** of Epic 6 tip migrations requires separate founder
-authorization of the consolidated apply package — never automatic.
+Epic 1–6 (repository) are complete on `main`. Epic 6 production apply is
+**not** authorized until founder approval of
+`docs/database/EPIC6_PRODUCTION_APPLY_PLAN.md`. ADR 0011 remains open for
+destructive advisor disposition.
 
 Do not begin Epic 7 or later epics automatically.
