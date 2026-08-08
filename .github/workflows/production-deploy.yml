@@ -37,10 +37,9 @@ jobs:
     name: Production gate (${{ inputs.mode }})
     runs-on: ubuntu-latest
     environment: production-deploy
+    # No deploy token at job level — only on the gate step after status checks.
     env:
       DEPLOY_GIT_SHA: ${{ inputs.git_sha }}
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      # Epic 9: keep apply unlock unset. Do not set these secrets/vars for Epic 9.
       ALLOW_PRODUCTION_DEPLOY: ${{ vars.ALLOW_PRODUCTION_DEPLOY }}
       PRODUCTION_DEPLOY_CONFIRM: ${{ vars.PRODUCTION_DEPLOY_CONFIRM }}
     steps:
@@ -64,19 +63,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
+        # No npm ci: productionDeployGate uses only Node builtins + fetch.
 
       - name: Resolve staging-verified status
         id: verified
         uses: actions/github-script@v7
         with:
           script: |
+            const path = await import('node:path');
+            const { pathToFileURL } = await import('node:url');
+            const helperUrl = pathToFileURL(
+              path.join(process.env.GITHUB_WORKSPACE, 'scripts/deploy/stagingVerifiedStatus.mjs')
+            ).href;
+            const { isTrustedStagingVerifiedSuccess } = await import(helperUrl);
             const sha = context.payload.inputs.git_sha;
             // Newest statuses first — require the latest staging-verified
-            // result to be success (stale historical success must not promote).
+            // result to be a trusted GitHub Actions success (not forged).
             const statuses = await github.rest.repos.listCommitStatusesForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -84,12 +86,12 @@ jobs:
               per_page: 100,
             });
             const latest = statuses.data.find((s) => s.context === 'staging-verified');
-            const ok = latest && latest.state === 'success';
-            core.setOutput('sha', ok ? sha : '');
-            if (!ok) {
+            const trust = isTrustedStagingVerifiedSuccess(latest);
+            core.setOutput('sha', trust.ok ? sha : '');
+            if (!trust.ok) {
               core.warning(
                 latest
-                  ? `Latest staging-verified state is ${latest.state}`
+                  ? `Latest staging-verified rejected (${trust.reason})`
                   : 'No staging-verified status for SHA'
               );
             }
@@ -98,6 +100,7 @@ jobs:
         env:
           STAGING_VERIFIED_SHA: ${{ steps.verified.outputs.sha }}
           GITHUB_SHA: ${{ inputs.git_sha }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           EXTRA=()
           if [ "${{ inputs.allow_unverified_sha }}" = "true" ]; then
