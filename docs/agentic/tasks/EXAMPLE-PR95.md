@@ -78,33 +78,63 @@ retroactively treat a merge as proof of independent approval.
   - `AGENTS.md`
   - `docs/agentic/AGENTIC_ENGINEERING_V1.md`
   - `docs/agentic/tasks/.gitkeep`
+- **Evidence provenance categories used below:**
+  1. **Repository/GitHub-preserved evidence** — independently inspectable in
+     Git history, PR #95, or its GitHub Actions run.
+  2. **Reported off-platform coordination/evidence** — reported during
+     founder-supervised Cursor/Codex coordination but not retained as a
+     repository or GitHub artifact.
+  3. **Evidence gaps / artifacts not retained** — an event may have occurred,
+     but the corresponding log, review artifact, or session identifier is not
+     preserved in the repository or PR.
 - **Validation result:**
-  - The full required sequence passed locally before the initial commit and
+  - **Reported off-platform coordination/evidence:** The Implementer reported
+    that the full required local sequence passed before the initial commit and
     again after Repair Cycle 1.
-  - GitHub `validate` passed:
+  - **Repository/GitHub-preserved evidence:** The GitHub Actions `validate` job
+    passed on repaired head
+    `b5c580c746d9d8ae322dec057c38e8315c0f9223`:
     <https://github.com/Carpenter-Create/settlerateapp/actions/runs/31288213663/job/93180772122>
-- **Benchmark result:** `npm run verify:benchmarks` passed.
+  - **Evidence gap / artifact not retained:** Separate command logs or
+    artifacts for the two reported local validation runs were not committed or
+    attached to PR #95.
+- **Benchmark result:**
+  - **Reported off-platform coordination/evidence:** The Implementer reported
+    that `npm run verify:benchmarks` passed in both local validation runs.
+  - **Repository/GitHub-preserved evidence:** The successful GitHub Actions
+    `validate` job includes the repository benchmark gate.
 - **Independent Reviewer decision:**
-  - Initial Codex review at
-    `2daa35e5f8b0c293327d23e6e288063289f1ef40`: `REPAIR`
-  - Findings: one medium and two low
-  - Final external rereview decision: not retained in repository/PR evidence
-- **Implementer identity / session:** Cursor Implementer; repository commit
-  co-author `cursoragent`
-- **Reviewer identity / session:** Separate Codex reviewer; session identifier
-  not retained in repository/PR evidence
+  - **Reported off-platform coordination/evidence:** The initial independent
+    Codex review of
+    `2daa35e5f8b0c293327d23e6e288063289f1ef40` reportedly returned `REPAIR`
+    with one MEDIUM and two LOW findings.
+  - **Evidence gap / artifact not retained:** The actual initial Codex review
+    artifact is not preserved in the repository or PR. This example does not
+    reconstruct or invent it.
+- **Implementer identity / session:**
+  - **Repository/GitHub-preserved evidence:** Git history identifies
+    `cursoragent` as a commit co-author.
+- **Reviewer identity / session:**
+  - **Reported off-platform coordination/evidence:** Founder-supervised
+    coordination reported that Codex reviewed in a separate session from the
+    Cursor Implementer.
+  - **Evidence gap / artifact not retained:** The Codex session identifier and
+    review artifact are not preserved in GitHub or the repository.
 - **Repair-cycle count:** `1` of `2`
-- **Repair commit:**
-  `b5c580c746d9d8ae322dec057c38e8315c0f9223`
-  (`docs(agentic): resolve PR 0 review findings`)
+- **Repair commit — Repository/GitHub-preserved evidence:** Git history
+  preserves `b5c580c746d9d8ae322dec057c38e8315c0f9223`
+  (`docs(agentic): resolve PR 0 review findings`) and its three targeted
+  changes.
 - **Repairs applied:**
   1. One failed repair attempt for the same material finding now causes STOP.
   2. Charter status changed to active upon merge to `main`.
   3. The undeclared `GATE` outcome was replaced with the declared
      `FOUNDER_REVIEW` outcome.
 - **Unresolved findings / evidence gaps:**
-  - The final separate Codex rereview artifact and session identifier were not
-    committed or attached to PR #95.
+  - The final Codex rereview artifact is not preserved.
+  - The initial Codex review artifact is not preserved.
+  - The Codex reviewer session identifier is not preserved.
+  - Separate local validation command logs/artifacts are not preserved.
   - Cursor Bugbot raised a separate validation-failure transition finding on
     the initial head. PR #95 does not retain a governance triage disposition
     for that review input.
