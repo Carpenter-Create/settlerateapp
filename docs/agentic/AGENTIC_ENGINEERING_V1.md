@@ -1,7 +1,7 @@
 # SettleRate Agentic Engineering v1
 
 **Classification:** `governance/agentic-engineering-v1`  
-**Status:** Active as repository operating procedure (Phase A / PR 0)  
+**Status:** Active upon merge to main (Phase A / PR 0)\
 **Authority level:** Agentic procedure only — does **not** supersede domain contracts, accepted ADRs, phase/epic bounds, or `TEST_BASELINE.md`
 
 ## 1. Governance positioning
@@ -121,7 +121,7 @@ VALIDATING
          ├─ APPROVE → PASS
          ├─ REPAIR → REPAIRING → VALIDATING → REVIEWING
          ├─ BLOCK → BLOCKED
-         └─ GATE → FOUNDER_REVIEW
+         └─ FOUNDER_REVIEW → FOUNDER_REVIEW
 ```
 
 ### Hard STOP (immediate halt of autonomous progression)
@@ -132,7 +132,7 @@ Stop if any of the following occur:
 - authorized scope / path boundaries must be crossed;
 - a required ADR or founder decision is missing;
 - `MAX_REPAIR_CYCLES` is exhausted;
-- substantially the same finding survives repair twice;
+- substantially the same material finding survives a repair attempt;
 - the Implementer disputes a material Independent Reviewer finding that cannot be resolved mechanically;
 - the authorized base / repository state has materially drifted;
 - the proposed action would weaken CI, financial benchmarks, RLS/security tests, production fences, or active regressions;
