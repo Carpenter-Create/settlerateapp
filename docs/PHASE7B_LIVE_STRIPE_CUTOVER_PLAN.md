@@ -1,10 +1,14 @@
 # Phase 7B — Live Stripe Cutover Plan
 
-**Status:** Phase 7B.1 live catalog **created in Stripe**; cutover code on `main`. Checklist Section 0 complete.  
-**Cutover authorization:** **AUTHORIZED TO BEGIN CUTOVER** — Operator: Founder / Adam Carpenter. Scope: **live Stripe activation only**.  
-**Production cutover (secrets, deploy, SQL apply):** **not executed** — proceed G0→I sequentially per checklist; verify after each gate.  
+**Status:** **PAUSED — production Stripe activation pending final application infrastructure deployment.**  
+**Reason:** SettleRate frontend and infrastructure architecture migration pending.  
+**Cutover authorization:** Was **AUTHORIZED TO BEGIN CUTOVER** (Founder / Adam Carpenter; live Stripe activation only).  
+**Smoke:** Controlled smoke authorized; I.1 maintenance OFF verified then **restored**. Live customer smoke subscription **not** completed.  
+**Completed before pause:** live catalog SQL (C) · live secrets (E) · edge D1/D2 · smoke auth + maintenance restore.  
+**Not completed:** live smoke subscription · beta launch · public checkout opening.  
+**Safety:** `CHECKOUT_MAINTENANCE=true` — `create-checkout` returns **503** / `CHECKOUT_MAINTENANCE`.  
 **Scope:** Move SettleRate production billing from Stripe **sandbox/test** to Stripe **live**.  
-**Operator checklist (maintenance window):** `docs/PHASE7B_LIVE_STRIPE_CUTOVER_CHECKLIST.md`
+**Operator checklist:** `docs/PHASE7B_LIVE_STRIPE_CUTOVER_CHECKLIST.md`
 
 ## Authority model (unchanged)
 
