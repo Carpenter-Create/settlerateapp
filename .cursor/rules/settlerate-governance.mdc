@@ -25,6 +25,7 @@ Use the authoritative document for each domain. Do not invent a universal rankin
 | Billing recovery (Epic 8) | `docs/adr/0009-billing-recovery-guarantee.md`, `docs/billing/EPIC8_BILLING_RECOVERY_INVENTORY.md` |
 | Deployment pipeline (Epic 9) | `docs/adr/0014-deployment-pipeline.md`, `docs/deployment/EPIC9_CLOSURE.md` |
 | Phase 7B cutover (paused) | `docs/PHASE7B_LIVE_STRIPE_CUTOVER_PLAN.md`, `docs/PHASE7B_LIVE_STRIPE_CUTOVER_CHECKLIST.md` |
+| Agentic engineering procedure | `docs/agentic/AGENTIC_ENGINEERING_V1.md` (does not supersede domain/phase authority) |
 | Current implemented behavior | Source code and **active tests** |
 
 ## Documentation vs implementation

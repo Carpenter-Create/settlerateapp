@@ -26,10 +26,17 @@ This repository is the **authenticated SettleRate application** — auth, `/app/
 | Phase 8.1 roadmap | `docs/roadmap/PHASE8.1_PRODUCTION_HARDENING_AND_DECOUPLING_ROADMAP.md` |
 | ADRs | `docs/adr/README.md` |
 | Phase 7B (paused) | `docs/PHASE7B_LIVE_STRIPE_CUTOVER_PLAN.md`, `docs/PHASE7B_LIVE_STRIPE_CUTOVER_CHECKLIST.md` |
+| Agentic engineering (procedure) | `docs/agentic/AGENTIC_ENGINEERING_V1.md` |
 
 Documentation defines **approved target behavior**. Source code and **active tests** define **current implemented behavior**. When they conflict, report the conflict — do not silently reconcile.
 
 Detailed agent rules: `.cursor/rules/`.
+
+## Agentic Engineering v1
+
+Operating procedure for bounded multi-agent loops (Authorization Packet → implement → validate → independent review → Completion Packet): `docs/agentic/AGENTIC_ENGINEERING_V1.md`.
+
+Classification: `governance/agentic-engineering-v1`. It does **not** authorize Epic 10+, Phase 7B resume, Epic 8 production activation, ADR 0011, or production mutation. `PASS` never means merge. Broader autonomous push/merge is not enabled by this document alone (see charter §11 — GitHub `main` protection prerequisite).
 
 ## Current phase
 
